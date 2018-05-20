@@ -17,7 +17,7 @@ While current release of CCF supports code generation for several performance-cr
 we hope to integrate the enhanced functionality in the future releases.
 
 
-# How does it Work?
+### How does it Work?
 
 The steps for executing a C/C++ application with CCF are as follows:
 
@@ -48,7 +48,7 @@ It also supports execution of all the loops from few MiBench applications.
 You can locate these benchmarks under the directory $path/ccf/benchmarks/MiBench.
 We plan to support (and release) the code generation for more benchmarks.
 
-# Setting-Up the infrastructure:
+### Setting-Up the Infrastructure:
 
 Once you clone this repository, you need to give execution access to installation scripts i.e. $path/ccf/install and $path/scripts/install_dependencies. 
 Then, just execute the installation script by typing -
@@ -64,7 +64,7 @@ However, we plan to integrate support for CCF on the latest Ubuntu release.
 Moreover, if you encounter any error pertaining to the locations of the framework tools, please feel free to modify the installation script, or to manually fix the paths.
 
 
-# Implementation of CCF:
+### Implementation of CCF:
 
 The diagram below shows the steps involved in CCF's code generation process. 
 
@@ -76,8 +76,10 @@ The diagram below shows the steps involved in CCF's code generation process.
     CCF compiler’s front-end (implemented by modifying clang) identifies and extracts the loops from C/C++ code, 
     annotated by the programmer. 
     Then, it generates the intermediate representation (IR). 
-    In compiling the application, CCF targets the highest optimization, i.e. optimization level 3, including auto-vectorization enabled. 
-    The part of the IR corresponding to the annotated loop contains the metadata so that CCF compiler can apply analysis and transformation passes on it.
+    In compiling the application, CCF targets the highest optimization, i.e. optimization level 3, 
+    including auto-vectorization enabled. 
+    The part of the IR corresponding to the annotated loop contains the metadata so that 
+    CCF compiler can apply analysis and transformation passes on it.
     CCF compiler analyzes whether it will generate the code for this loop for its execution on CGRA, or not.  
     If it can, it acts on the part of the IR corresponding to the loop, generating the data dependency graph (DDG).
  
@@ -85,7 +87,7 @@ The diagram below shows the steps involved in CCF's code generation process.
     which can be visualized using the dot tool. In DDG, the circles show the operations to be performed
     and the arcs show the data dependencies. 
      
-    It is important to note that to communicate the necessary variables or the live data, 
+    To communicate the necessary variables or the live data, 
     our CCF compiler inserts instructions to manage the data automatically through global variables. 
     This compilation strategy avoids inserting mem copies, rather by adopting a shared memory model. 
     It is because we visualize CGRA accelerator as tightly coupled with the core, 
@@ -93,8 +95,10 @@ The diagram below shows the steps involved in CCF's code generation process.
     The library call pertaining to the loop execution on CGRA is inserted and IR corresponding to the loop body is purged. 
     This modified IR is then taken to the machine code generation for the CPU.
  
- 3.	**Mapping of DDG on the Target CGRA**: The mapping technique maps the DDG on the target CGRA, and generates the prologue, kernel, and the epilogue of the mapping. 
-    Mapping process includes iterative modulo scheduling of the DDG and a place and route of scheduled DDG on the CGRA's architectural resources.
+ 3.	**Mapping of DDG on the Target CGRA**: The mapping technique maps the DDG on the target CGRA, 
+    and generates the prologue, kernel, and the epilogue of the mapping. 
+    Mapping process includes iterative modulo scheduling of the DDG 
+    and a place and route of scheduled DDG on the CGRA's architectural resources.
     Register allocation is also done during the mapping.
     
 4.	**Generation of Machine Instructions**:  ThIs phase generates the machine instructions to configure the PEs,
@@ -115,7 +119,7 @@ The diagram below shows the steps involved in CCF's code generation process.
     Shrihari Rajendran Radhika.
     
 
-# Contact Us
+### Contact Us
 
 For any questions or comments on CCF development, please email us at cmlasu@gmail.com
 
