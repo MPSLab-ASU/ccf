@@ -118,6 +118,10 @@ The diagram below shows the steps involved in CCF's code generation process.
     Shail Dave, and
     Shrihari Rajendran Radhika.
     
+### Additional Resources for Getting Started
+
+- [Intro to CGRAs](https://youtu.be/4h2Po78be-Q)
+- [A short demo of CCF](https://www.youtube.com/watch?v=iGV1lHsjy4w&t=1s)
 
 ### Contact Us
 
