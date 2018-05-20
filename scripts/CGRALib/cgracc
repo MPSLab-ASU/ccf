@@ -1,0 +1,183 @@
+#!/bin/bash
+#Author: Shail Dave
+#Last Edited: June 20, 2017
+
+#Expected arguments or inputs - .c or .cpp files
+
+#Set Paths
+toolchain="$HOME/shail/ccf"
+llvmbuild="$toolchain/llvm/build"
+llvmbin="$llvmbuild/bin"
+obj="obj"
+objFound=0;
+searchstring=".o"
+src="$llvmbin/clang -w -g -O3 --target=armv7a-linux-eabi -isystem /usr/arm-linux-gnueabi/include";
+srcIR="$llvmbin/clang -w -g -O3 --target=armv7a-linux-eabi -isystem /usr/arm-linux-gnueabi/include -S -o - -emit-llvm";
+linkModule="";
+combineObj=0;
+objNum=0;
+MakeType=2;
+LIB="";
+
+#Check if file exists
+[ ! -f ./combinedIR.ll ] && 
+$llvmbin/clang -w -O3 -g -fno-vectorize -fno-unroll-loops -fno-slp-vectorize --target=armv7a-linux-eabi -isystem /usr/arm-linux-gnueabi/include $toolchain/scripts/CGRALib/cgra.c -S -o - -emit-llvm -o combinedIR.ll
+
+j=1;
+for i in "$@"
+do
+	#If switch is beginning with -o, check for object file name
+	if [[ "$i" == *-o* ]]
+	then
+		objNum=$(( j + 1 ))
+        fi
+	if [[ $j -eq $objNum ]]		
+	then
+	    obj="${i##*/}"
+	    if [[ "$obj" != *.* ]]
+	    then
+		objFound=1;
+		MakeType=1;
+		obj="$i"; 
+		break;
+	    else
+		MakeType=2;
+	    fi
+
+	fi
+	((j = j + 1))
+done
+
+if [[ $objFound -gt $zero ]]
+then
+	MakeType=1;
+	for i in "$@"
+	do
+		if [[ "$i" == *.o ]]
+		then
+			MakeType=3;
+			break;
+		fi
+	done
+else
+	#TypeTwo
+	for i in "$@"
+	do 
+    	    src+=" $i"
+	    if [[ "$i" == *.o ]]
+  	    then
+	    	objFound=1;    
+	        srcIR+=" temp.ll"
+		echo "$i" >> tempObjList.txt
+	    else
+	        srcIR+=" $i"
+	    fi	
+	    if [ -f "$i" ] && [[ "$i" != *.o ]]
+	    then
+		tempString=`echo $i | sed -e 's/\.[^.]*$//'`
+		echo "./$tempString.o" >> tempObjList.txt
+            fi
+	done	
+	$src
+	if [[ $objFound -eq $zero ]]
+	then
+	    srcIR+=" -o temp.ll"
+	fi
+	$srcIR
+	llvm-link temp.ll combinedIR.ll -S -o combinedIR.ll
+	exit
+fi
+
+objFound=0;
+
+if [ $MakeType -eq 1 ]
+then
+    #TypeOne
+    for i in "$@"
+    do 
+    	src+=" $i"
+    done
+    $src	
+    for i in "$@"
+    do 
+
+	if [ $objFound -eq 1 ] && [ ! -f "$i" ]
+	then
+	    LIB+=" $i"
+        fi
+
+	if [[ "$i" == *-o* ]]
+	then
+	     objFound=1;
+    	fi
+
+	if [ $objFound -ne 1 ] && [ ! -f "$i" ]
+	then
+	    srcIR+=" $i"
+        fi
+
+	if [ -f "$i" ] && [[ "$i" != "$obj" ]]
+	then
+	    srcNew="$srcIR";
+	    srcNew+=" $i"
+            srcNew+=" -o temp.ll"
+	    $srcNew
+	    llvm-link temp.ll combinedIR.ll -S -o combinedIR.ll 
+	fi
+    done
+else
+    for i in "$@"
+    do 
+
+	if [ "$i" == "$obj" ] 
+	then
+	     objFound=1;
+    	fi
+
+	if [ -f "$i" ] && [[ "$i" != "$obj" ]] 
+	then
+	    if ! grep -q "$i" tempObjList.txt
+	    then
+	        LIB+=" $i"
+      	    fi
+	fi	
+
+	if [ $objFound -eq 1 ] && [ ! -f "$i" ] && [[ "$i" != "$obj" ]]
+	then
+	    LIB+=" $i"
+        fi
+    done	
+fi
+
+$toolchain/scripts/opt.sh combinedIR.ll
+
+llvm-dis combinedIR.bc -o newIR.ll
+
+llc -march="arm" newIR.ll
+
+#apply remaining optimizations here such as vectoirize
+clang-5.0 -w -O3 -static -pthread -target armv7a-none-linux-eabi newIR.s -o $obj -lm
+
+#Delete temporary files
+rm *.s *.bc #*.ll
+
+# Check if CGRAExec exists.
+if [ -d "CGRAExec" ]; then
+	#Change directory
+	cd CGRAExec
+
+	noDir=$(ls -lR | grep ^d | wc -l)
+	echo "Total Loops Compiled for CGRA: " $noDir
+	i=0;
+	#For each of the loop folders, copy and execute run file to generate CGRA instructions
+	for ((i=1; i<=noDir; i++));
+	do
+		cd L"$i"
+		cp $toolchain/scripts/CGRALib/run.sh ./
+		./run.sh ../../$obj
+		cd ..
+	done
+	cd ..
+fi
+
+exit

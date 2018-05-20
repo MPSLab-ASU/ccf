@@ -1,0 +1,18 @@
+LEVEL = ../../..
+PROG = Obsequi
+CPPFLAGS += -DCOUNTBITS16 -DLASTBIT16 -DCOUNTMOVES_TABLE
+CPPFLAGS += -DTWO_STAGE_GENERATION
+
+ifdef SMALL_PROBLEM_SIZE
+CPPFLAGS += -DHASHCODEBITS=15
+else
+CPPFLAGS += -DHASHCODEBITS=23
+endif
+
+ifeq (,$(filter $(ARCH),PowerPC Mips))
+LDFLAGS = -lsupc++
+LIBS += -lsupc++
+endif
+
+STDIN_FILENAME=$(PROJ_SRC_DIR)/input
+include ../../Makefile.multisrc

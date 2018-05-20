@@ -1,0 +1,356 @@
+{
+    "name": null, 
+    "sim_quantum": 0, 
+    "system": {
+        "membus": {
+            "slave": {
+                "peer": [
+                    "system.system_port", 
+                    "system.cpu0.icache_port", 
+                    "system.cpu0.dcache_port", 
+                    "system.cpu0.itb.walker.port", 
+                    "system.cpu0.dtb.walker.port", 
+                    "system.cpu1.icache_port", 
+                    "system.cpu1.dcache_port", 
+                    "system.cpu1.itb.walker.port", 
+                    "system.cpu1.dtb.walker.port"
+                ], 
+                "role": "SLAVE"
+            }, 
+            "name": "membus", 
+            "header_cycles": 1, 
+            "width": 8, 
+            "eventq_index": 0, 
+            "master": {
+                "peer": [
+                    "system.mem_ctrls.port"
+                ], 
+                "role": "MASTER"
+            }, 
+            "cxx_class": "CoherentBus", 
+            "path": "system.membus", 
+            "type": "CoherentBus", 
+            "use_default_range": false
+        }, 
+        "voltage_domain": {
+            "eventq_index": 0, 
+            "path": "system.voltage_domain", 
+            "type": "VoltageDomain", 
+            "name": "voltage_domain", 
+            "cxx_class": "VoltageDomain"
+        }, 
+        "cxx_class": "System", 
+        "work_end_ckpt_count": 0, 
+        "work_begin_ckpt_count": 0, 
+        "clk_domain": {
+            "name": "clk_domain", 
+            "clock": 1e-09, 
+            "eventq_index": 0, 
+            "cxx_class": "SrcClockDomain", 
+            "path": "system.clk_domain", 
+            "type": "SrcClockDomain"
+        }, 
+        "eventq_index": 0, 
+        "work_end_exit_count": 0, 
+        "type": "System", 
+        "cache_line_size": 64, 
+        "work_cpus_ckpt_count": 0, 
+        "work_begin_exit_count": 0, 
+        "path": "system", 
+        "cpu_clk_domain": {
+            "name": "cpu_clk_domain", 
+            "clock": 5e-10, 
+            "eventq_index": 0, 
+            "cxx_class": "SrcClockDomain", 
+            "path": "system.cpu_clk_domain", 
+            "type": "SrcClockDomain"
+        }, 
+        "mem_mode": "atomic", 
+        "name": "system", 
+        "init_param": 0, 
+        "system_port": {
+            "peer": "system.membus.slave[0]", 
+            "role": "MASTER"
+        }, 
+        "load_addr_mask": 1099511627775, 
+        "work_item_id": -1, 
+        "cpu_voltage_domain": {
+            "eventq_index": 0, 
+            "path": "system.cpu_voltage_domain", 
+            "type": "VoltageDomain", 
+            "name": "cpu_voltage_domain", 
+            "cxx_class": "VoltageDomain"
+        }, 
+        "mem_ctrls": [
+            {
+                "latency": 3.0000000000000004e-08, 
+                "name": "mem_ctrls", 
+                "eventq_index": 0, 
+                "latency_var": 0.0, 
+                "conf_table_reported": true, 
+                "cxx_class": "SimpleMemory", 
+                "path": "system.mem_ctrls", 
+                "null": false, 
+                "type": "SimpleMemory", 
+                "port": {
+                    "peer": "system.membus.master[0]", 
+                    "role": "SLAVE"
+                }, 
+                "in_addr_map": true
+            }
+        ], 
+        "num_work_ids": 16, 
+        "cpu": [
+            {
+                "simpoint_interval": 100000000, 
+                "do_statistics_insts": true, 
+                "numThreads": 1, 
+                "itb": {
+                    "name": "itb", 
+                    "eventq_index": 0, 
+                    "cxx_class": "ArmISA::TLB", 
+                    "walker": {
+                        "name": "walker", 
+                        "eventq_index": 0, 
+                        "cxx_class": "ArmISA::TableWalker", 
+                        "path": "system.cpu0.itb.walker", 
+                        "type": "ArmTableWalker", 
+                        "port": {
+                            "peer": "system.membus.slave[3]", 
+                            "role": "MASTER"
+                        }, 
+                        "num_squash_per_cycle": 2
+                    }, 
+                    "path": "system.cpu0.itb", 
+                    "type": "ArmTLB", 
+                    "size": 64
+                }, 
+                "function_trace": false, 
+                "do_checkpoint_insts": true, 
+                "cxx_class": "AtomicSimpleCPU", 
+                "max_loads_all_threads": 0, 
+                "simpoint_profile": false, 
+                "simulate_data_stalls": false, 
+                "function_trace_start": 0, 
+                "cpu_id": 0, 
+                "width": 1, 
+                "eventq_index": 0, 
+                "do_quiesce": true, 
+                "type": "AtomicSimpleCPU", 
+                "fastmem": false, 
+                "profile": 0.0, 
+                "icache_port": {
+                    "peer": "system.membus.slave[1]", 
+                    "role": "MASTER"
+                }, 
+                "interrupts": {
+                    "eventq_index": 0, 
+                    "path": "system.cpu0.interrupts", 
+                    "type": "ArmInterrupts", 
+                    "name": "interrupts", 
+                    "cxx_class": "ArmISA::Interrupts"
+                }, 
+                "max_insts_all_threads": 0, 
+                "path": "system.cpu0", 
+                "isa": [
+                    {
+                        "fpsid": 1090793632, 
+                        "id_mmfr0": 3, 
+                        "name": "isa", 
+                        "id_mmfr2": 19070976, 
+                        "id_mmfr3": 4027589137, 
+                        "midr": 890224640, 
+                        "id_pfr1": 1, 
+                        "id_pfr0": 49, 
+                        "id_isar5": 0, 
+                        "id_isar1": 34677009, 
+                        "id_isar0": 34607377, 
+                        "id_isar3": 17899825, 
+                        "id_isar2": 555950401, 
+                        "eventq_index": 0, 
+                        "id_isar4": 268501314, 
+                        "cxx_class": "ArmISA::ISA", 
+                        "path": "system.cpu0.isa", 
+                        "type": "ArmISA", 
+                        "id_mmfr1": 0
+                    }
+                ], 
+                "switched_out": false, 
+                "workload": [
+                    {
+                        "gid": 100, 
+                        "ppid": 99, 
+                        "name": "workload", 
+                        "pid": 100, 
+                        "simpoint": 0, 
+                        "egid": 100, 
+                        "eventq_index": 0, 
+                        "euid": 100, 
+                        "cxx_class": "LiveProcess", 
+                        "path": "system.cpu0.workload", 
+                        "max_stack_size": 67108864, 
+                        "type": "LiveProcess", 
+                        "uid": 100
+                    }
+                ], 
+                "name": "cpu0", 
+                "dtb": {
+                    "name": "dtb", 
+                    "eventq_index": 0, 
+                    "cxx_class": "ArmISA::TLB", 
+                    "walker": {
+                        "name": "walker", 
+                        "eventq_index": 0, 
+                        "cxx_class": "ArmISA::TableWalker", 
+                        "path": "system.cpu0.dtb.walker", 
+                        "type": "ArmTableWalker", 
+                        "port": {
+                            "peer": "system.membus.slave[4]", 
+                            "role": "MASTER"
+                        }, 
+                        "num_squash_per_cycle": 2
+                    }, 
+                    "path": "system.cpu0.dtb", 
+                    "type": "ArmTLB", 
+                    "size": 64
+                }, 
+                "max_insts_any_thread": 0, 
+                "simulate_inst_stalls": false, 
+                "progress_interval": 0.0, 
+                "dcache_port": {
+                    "peer": "system.membus.slave[2]", 
+                    "role": "MASTER"
+                }, 
+                "max_loads_any_thread": 0, 
+                "tracer": {
+                    "eventq_index": 0, 
+                    "path": "system.cpu0.tracer", 
+                    "type": "ExeTracer", 
+                    "name": "tracer", 
+                    "cxx_class": "Trace::ExeTracer"
+                }
+            }, 
+            {
+                "simpoint_interval": 100000000, 
+                "do_statistics_insts": true, 
+                "numThreads": 1, 
+                "itb": {
+                    "name": "itb", 
+                    "eventq_index": 0, 
+                    "cxx_class": "ArmISA::TLB", 
+                    "walker": {
+                        "name": "walker", 
+                        "eventq_index": 0, 
+                        "cxx_class": "ArmISA::TableWalker", 
+                        "path": "system.cpu1.itb.walker", 
+                        "type": "ArmTableWalker", 
+                        "port": {
+                            "peer": "system.membus.slave[7]", 
+                            "role": "MASTER"
+                        }, 
+                        "num_squash_per_cycle": 2
+                    }, 
+                    "path": "system.cpu1.itb", 
+                    "type": "ArmTLB", 
+                    "size": 64
+                }, 
+                "function_trace": false, 
+                "do_checkpoint_insts": true, 
+                "cxx_class": "AtomicCGRA", 
+                "max_loads_all_threads": 0, 
+                "simpoint_profile": false, 
+                "simulate_data_stalls": false, 
+                "function_trace_start": 0, 
+                "cpu_id": 1, 
+                "width": 1, 
+                "eventq_index": 0, 
+                "do_quiesce": true, 
+                "type": "AtomicCGRA", 
+                "fastmem": false, 
+                "profile": 0.0, 
+                "icache_port": {
+                    "peer": "system.membus.slave[5]", 
+                    "role": "MASTER"
+                }, 
+                "interrupts": {
+                    "eventq_index": 0, 
+                    "path": "system.cpu1.interrupts", 
+                    "type": "ArmInterrupts", 
+                    "name": "interrupts", 
+                    "cxx_class": "ArmISA::Interrupts"
+                }, 
+                "max_insts_all_threads": 0, 
+                "path": "system.cpu1", 
+                "isa": [
+                    {
+                        "fpsid": 1090793632, 
+                        "id_mmfr0": 3, 
+                        "name": "isa", 
+                        "id_mmfr2": 19070976, 
+                        "id_mmfr3": 4027589137, 
+                        "midr": 890224640, 
+                        "id_pfr1": 1, 
+                        "id_pfr0": 49, 
+                        "id_isar5": 0, 
+                        "id_isar1": 34677009, 
+                        "id_isar0": 34607377, 
+                        "id_isar3": 17899825, 
+                        "id_isar2": 555950401, 
+                        "eventq_index": 0, 
+                        "id_isar4": 268501314, 
+                        "cxx_class": "ArmISA::ISA", 
+                        "path": "system.cpu1.isa", 
+                        "type": "ArmISA", 
+                        "id_mmfr1": 0
+                    }
+                ], 
+                "switched_out": false, 
+                "name": "cpu1", 
+                "dtb": {
+                    "name": "dtb", 
+                    "eventq_index": 0, 
+                    "cxx_class": "ArmISA::TLB", 
+                    "walker": {
+                        "name": "walker", 
+                        "eventq_index": 0, 
+                        "cxx_class": "ArmISA::TableWalker", 
+                        "path": "system.cpu1.dtb.walker", 
+                        "type": "ArmTableWalker", 
+                        "port": {
+                            "peer": "system.membus.slave[8]", 
+                            "role": "MASTER"
+                        }, 
+                        "num_squash_per_cycle": 2
+                    }, 
+                    "path": "system.cpu1.dtb", 
+                    "type": "ArmTLB", 
+                    "size": 64
+                }, 
+                "max_insts_any_thread": 0, 
+                "simulate_inst_stalls": false, 
+                "progress_interval": 0.0, 
+                "dcache_port": {
+                    "peer": "system.membus.slave[6]", 
+                    "role": "MASTER"
+                }, 
+                "max_loads_any_thread": 0, 
+                "tracer": {
+                    "eventq_index": 0, 
+                    "path": "system.cpu1.tracer", 
+                    "type": "ExeTracer", 
+                    "name": "tracer", 
+                    "cxx_class": "Trace::ExeTracer"
+                }
+            }
+        ], 
+        "work_begin_cpu_id_exit": -1
+    }, 
+    "time_sync_period": 0.1, 
+    "eventq_index": 0, 
+    "time_sync_spin_threshold": 9.999999999999999e-05, 
+    "cxx_class": "Root", 
+    "path": "root", 
+    "time_sync_enable": false, 
+    "type": "Root", 
+    "full_system": false
+}

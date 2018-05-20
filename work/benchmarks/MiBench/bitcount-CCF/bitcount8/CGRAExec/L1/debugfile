@@ -1,0 +1,29 @@
+Curerent II: 2	rec_MII: 2
+
+Trying to schedule DDG at II: 2
+14
+14
+Feasible II is 2	Schedule Len is 8
+
+II after scheduling is: 2
+Start Placement for II = 2
+Node 0 is scheduled at 2
+Node 1 is scheduled at 1
+Node 2 is scheduled at 1
+Node 3 is scheduled at 2
+Node 4 is scheduled at 3
+Node 5 is scheduled at 2
+Node 6 is scheduled at 2
+Node 7 is scheduled at 3
+Node 8 is scheduled at 3
+Node 9 is scheduled at 4
+Node 17 is scheduled at 3
+Node 19 is scheduled at 4
+Node 21 is scheduled at 4
+Node 22 is scheduled at 5
+Graph has n = 224 vertices.
+Find a Clique of size at least k = 14
+Attempt total number 1, Clique Size: 13
+Attempt total number 1, Clique Size: 14
+
+MII = 2	 Current II=2

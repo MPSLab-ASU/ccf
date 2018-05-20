@@ -1,0 +1,189 @@
+digraph current { 
+{
+0 [color=red ];
+
+1 [color=red ];
+
+2 [color=red ];
+
+3 [color=red ];
+
+4 [color=red ];
+
+5 [color=red ];
+
+6 [color=red ];
+
+7 [color=red ];
+
+8 [color=red ];
+
+9 [color=red ];
+
+10 [color=red ];
+
+11 [color=red ];
+
+12 [color=red ];
+
+13 [color=red ];
+
+14 [color=red ];
+
+15 [color=red ];
+
+16 [color=red ];
+
+17 [color=red ];
+
+18 [color=red ];
+
+19 [color=red ];
+
+20 [color=red ];
+
+21 [color=red ];
+
+22 [color=red ];
+
+23 [color=red ];
+
+24 [color=red ];
+
+25 [color=red ];
+24 -> 0 [style=bold, color=red, label=1] 
+22 -> 1 [style=bold, color=red, label=1] 
+23 -> 2 [style=bold, color=red, label=1] 
+0 -> 3
+3 -> 4
+0 -> 5
+4 -> 6
+5 -> 6
+6 -> 7
+7 -> 8
+6 -> 9
+8 -> 10
+9 -> 10
+10 -> 11
+11 -> 12
+10 -> 13
+12 -> 14
+13 -> 14
+14 -> 15
+15 -> 16
+14 -> 17
+16 -> 18
+17 -> 18
+18 -> 19
+18 -> 20
+20 -> 21
+1 -> 21
+21 -> 22
+19 -> 22
+2 -> 23
+0 -> 24
+23 -> 25
+
+}
+
+{
+ node [shape=plaintext]; 
+ T0  -> T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11 -> T12 -> T13 -> T14 -> T15 -> T16 -> T17 -> T18 -> T19 -> T20 -> T21 -> T22 -> T23 -> T24 -> T25 -> T26 -> T27 -> T28 -> T29 -> T30;
+}{ rank = source; 
+T0;
+ }; 
+{ rank = same; 
+
+ }; 
+{ rank = same; 
+
+ }; 
+{ rank = same; 
+0; 2; T2;
+ }; 
+{ rank = same; 
+3; 5; 23; 24; T3;
+ }; 
+{ rank = same; 
+4; 25; T4;
+ }; 
+{ rank = same; 
+6; T5;
+ }; 
+{ rank = same; 
+7; 9; T6;
+ }; 
+{ rank = same; 
+8; T7;
+ }; 
+{ rank = same; 
+10; T8;
+ }; 
+{ rank = same; 
+11; 13; T9;
+ }; 
+{ rank = same; 
+12; T10;
+ }; 
+{ rank = same; 
+14; T11;
+ }; 
+{ rank = same; 
+15; 17; T12;
+ }; 
+{ rank = same; 
+16; T13;
+ }; 
+{ rank = same; 
+18; T14;
+ }; 
+{ rank = same; 
+1; 19; 20; T15;
+ }; 
+{ rank = same; 
+21; T16;
+ }; 
+{ rank = same; 
+22; T17;
+ }; 
+{ rank = same; 
+
+ }; 
+{ rank = same; 
+
+ }; 
+{ rank = same; 
+
+ }; 
+{ rank = same; 
+
+ }; 
+{ rank = same; 
+
+ }; 
+{ rank = same; 
+
+ }; 
+{ rank = same; 
+
+ }; 
+{ rank = same; 
+
+ }; 
+{ rank = same; 
+
+ }; 
+{ rank = same; 
+
+ }; 
+{ rank = same; 
+
+ }; 
+{ rank = same; 
+
+ }; 
+{ rank = same; 
+
+ }; 
+
+}

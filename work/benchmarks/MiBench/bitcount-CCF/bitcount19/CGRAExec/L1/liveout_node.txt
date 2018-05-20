@@ -1,0 +1,4 @@
+22	0	22	0
+149	30	gVar5	0
+150	21	st_add_gVar5	4
+151	22	st_data_gVar5	0

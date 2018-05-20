@@ -1,0 +1,66 @@
+digraph current { 
+{
+0 [color=red ];
+
+1 [color=red ];
+
+2 [color=red ];
+
+3 [color=red ];
+
+4 [color=red ];
+
+5 [color=red ];
+
+13 [color=red ];
+
+15 [color=red ];
+
+17 [color=red ];
+
+18 [color=red ];
+4 -> 0 [style=bold, color=red, label=1] 
+2 -> 1 [style=bold, color=red, label=1] 
+1 -> 2
+0 -> 3
+3 -> 4
+0 -> 4
+4 -> 5
+5 -> 13 [style=bold, color=red, label=1] 
+13 -> 15
+2 -> 17
+18 -> 17 [style=bold, color=red, label=1] 
+13 -> 17 [style=bold, color=blue ]
+17 -> 18
+
+}
+
+{
+ node [shape=plaintext]; 
+ T0  -> T1 -> T2 -> T3 -> T4 -> T5 -> T6;
+}{ rank = source; 
+T0;
+ }; 
+{ rank = same; 
+
+ }; 
+{ rank = same; 
+
+ }; 
+{ rank = same; 
+0; 1; T2;
+ }; 
+{ rank = same; 
+2; 3; 13; T3;
+ }; 
+{ rank = same; 
+4; 15; 17; T4;
+ }; 
+{ rank = same; 
+5; 18; T5;
+ }; 
+{ rank = same; 
+
+ }; 
+
+}

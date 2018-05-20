@@ -1,0 +1,46 @@
+gem5 Simulator System.  http://gem5.org
+gem5 is copyrighted software; use the --copyright option for details.
+
+gem5 compiled Mar  8 2018 23:13:24
+gem5 started Mar 10 2018 23:40:49
+gem5 executing on ubuntu
+command line: /home/shail/gem5/build/ARM/gem5.opt --debug-flags=CGRA,CGRA_Detailed /home/shail/gem5/configs/example/se_hetro.py -n 2 --cpu-type atomic -c ./bitcnts --options=75000
+Global frequency set at 1000000000000 ticks per second
+      0: system.cpu1: Setting Up CGRA
+      0: system.cpu1: CGRA instantiated
+
+MASTER system_port binds to SLAVE system.membus.slave[0]
+
+MASTER system.membus.master[0] binds to SLAVE system.mem_ctrls.port
+
+MASTER system.cpu0.icache_port binds to SLAVE system.membus.slave[1]
+
+MASTER system.cpu0.dcache_port binds to SLAVE system.membus.slave[2]
+
+MASTER system.cpu0.dtb.walker.dma binds to SLAVE system.membus.slave[4]
+
+MASTER system.cpu0.itb.walker.dma binds to SLAVE system.membus.slave[3]
+
+MASTER system.cpu1.icache_portdcache_port binds to SLAVE system.membus.slave[5]
+
+MASTER system.cpu1.dcache_portdcache_port binds to SLAVE system.membus.slave[6]
+
+MASTER system.cpu1.dtb.walker.dma binds to SLAVE system.membus.slave[8]
+
+MASTER system.cpu1.itb.walker.dma binds to SLAVE system.membus.slave[7]
+**** REAL SIMULATION ****
+info: Entering event queue @ 0.  Starting simulation...
+info: Increasing stack size by one page.
+Bit counter algorithm benchmark
+
+Optimized 1 bit/loop counter          > Time:  -0.000 sec.; Bits: 1250098
+Ratko's mystery algorithm             > Time: -1983.490 sec.; Bits: 1099133
+Recursive bit count by nybbles        > Time: -1984.294 sec.; Bits: 1064678
+Non-recursive bit count by nybbles    > Time: -1884.779 sec.; Bits: 1193637
+Non-recursive bit count by bytes (BW) > Time: -1983.579 sec.; Bits: 1280734
+Non-recursive bit count by bytes (AR) > Time: -1983.336 sec.; Bits: 1095696
+Shift and count bits                  > Time: -1984.870 sec.; Bits: 1237855
+
+Best  > Shift and count bits
+Worst > Optimized 1 bit/loop counter
+Exiting @ tick 24019734000 because target called exit()

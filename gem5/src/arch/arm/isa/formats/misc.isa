@@ -1,0 +1,250 @@
+// -*- mode:c++ -*-
+
+// Copyright (c) 2010-2012 ARM Limited
+// All rights reserved
+//
+// The license below extends only to copyright in the software and shall
+// not be construed as granting a license to any other intellectual
+// property including but not limited to intellectual property relating
+// to a hardware implementation of the functionality of the software
+// licensed hereunder.  You may use the software subject to the license
+// terms below provided that you ensure that this notice is replicated
+// unmodified and in its entirety in all distributions of the software,
+// modified or unmodified, in source code or in binary form.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met: redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer;
+// redistributions in binary form must reproduce the above copyright
+// notice, this list of conditions and the following disclaimer in the
+// documentation and/or other materials provided with the distribution;
+// neither the name of the copyright holders nor the names of its
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+// Authors: Gabe Black
+
+def format Svc() {{
+    decode_block = "return new Svc(machInst);"
+}};
+
+def format ArmMsrMrs() {{
+    decode_block = '''
+    {
+        const uint8_t byteMask = bits(machInst, 19, 16);
+        const IntRegIndex rn = (IntRegIndex)(uint32_t)bits(machInst, 3, 0);
+        const IntRegIndex rd = (IntRegIndex)(uint32_t)bits(machInst, 15, 12);
+        const uint32_t opcode = bits(machInst, 24, 21);
+        const bool useImm = bits(machInst, 25);
+
+        const uint32_t unrotated = bits(machInst, 7, 0);
+        const uint32_t rotation = (bits(machInst, 11, 8) << 1);
+        const uint32_t imm = rotate_imm(unrotated, rotation);
+
+        switch (opcode) {
+          case 0x8:
+            return new MrsCpsr(machInst, rd);
+          case 0x9:
+            if (useImm) {
+                return new MsrCpsrImm(machInst, imm, byteMask);
+            } else {
+                return new MsrCpsrReg(machInst, rn, byteMask);
+            }
+          case 0xa:
+            return new MrsSpsr(machInst, rd);
+          case 0xb:
+            if (useImm) {
+                return new MsrSpsrImm(machInst, imm, byteMask);
+            } else {
+                return new MsrSpsrReg(machInst, rn, byteMask);
+            }
+          default:
+            return new Unknown(machInst);
+        }
+    }
+    '''
+}};
+
+let {{
+    header_output = '''
+    StaticInstPtr
+    decodeMcrMrc14(ExtMachInst machInst);
+    '''
+    decoder_output = '''
+    StaticInstPtr
+    decodeMcrMrc14(ExtMachInst machInst)
+    {
+        const uint32_t opc1 = bits(machInst, 23, 21);
+        const uint32_t crn = bits(machInst, 19, 16);
+        const uint32_t opc2 = bits(machInst, 7, 5);
+        const uint32_t crm = bits(machInst, 3, 0);
+        const MiscRegIndex miscReg = decodeCP14Reg(crn, opc1, crm, opc2);
+        const IntRegIndex rt = (IntRegIndex)(uint32_t)bits(machInst, 15, 12);
+
+        const bool isRead = bits(machInst, 20);
+
+        switch (miscReg) {
+          case MISCREG_NOP:
+            return new NopInst(machInst);
+          case NUM_MISCREGS:
+            return new FailUnimplemented(
+                    csprintf("miscreg crn:%d opc1:%d crm:%d opc2:%d %s unknown",
+                    crn, opc1, crm, opc2, isRead ? "read" : "write").c_str(),
+                    machInst);
+          default:
+            if (isRead) {
+                return new Mrc14(machInst, rt, (IntRegIndex)miscReg);
+            } else {
+                return new Mcr14(machInst, (IntRegIndex)miscReg, rt);
+            }
+        }
+    }
+    '''
+}};
+
+def format McrMrc14() {{
+    decode_block = '''
+    return decodeMcrMrc14(machInst);
+    '''
+}};
+
+let {{
+    header_output = '''
+    StaticInstPtr
+    decodeMcrMrc15(ExtMachInst machInst);
+    '''
+    decoder_output = '''
+    StaticInstPtr
+    decodeMcrMrc15(ExtMachInst machInst)
+    {
+        const uint32_t opc1 = bits(machInst, 23, 21);
+        const uint32_t crn = bits(machInst, 19, 16);
+        const uint32_t opc2 = bits(machInst, 7, 5);
+        const uint32_t crm = bits(machInst, 3, 0);
+        const MiscRegIndex miscReg = decodeCP15Reg(crn, opc1, crm, opc2);
+        const IntRegIndex rt = (IntRegIndex)(uint32_t)bits(machInst, 15, 12);
+
+        const bool isRead = bits(machInst, 20);
+
+        switch (miscReg) {
+          case MISCREG_NOP:
+            return new NopInst(machInst);
+          case NUM_MISCREGS:
+            return new FailUnimplemented(
+                    csprintf("miscreg crn:%d opc1:%d crm:%d opc2:%d %s unknown",
+                    crn, opc1, crm, opc2, isRead ? "read" : "write").c_str(),
+                    machInst);
+          case MISCREG_DCCISW:
+            return new WarnUnimplemented(
+                    isRead ? "mrc dccisw" : "mcr dcisw", machInst);
+          case MISCREG_DCCIMVAC:
+            return new WarnUnimplemented(
+                    isRead ? "mrc dccimvac" : "mcr dccimvac", machInst);
+          case MISCREG_DCIMVAC:
+            return new WarnUnimplemented(
+                    isRead ? "mrc dcimvac" : "mcr dcimvac", machInst);
+          case MISCREG_DCCMVAC:
+            return new FlushPipeInst(
+                    isRead ? "mrc dccmvac" : "mcr dccmvac", machInst);
+          case MISCREG_DCCMVAU:
+            return new WarnUnimplemented(
+                    isRead ? "mrc dccmvau" : "mcr dccmvau", machInst);
+          case MISCREG_CP15ISB:
+            return new Isb(machInst);
+          case MISCREG_CP15DSB:
+            return new Dsb(machInst);
+          case MISCREG_CP15DMB:
+            return new Dmb(machInst);
+          case MISCREG_ICIALLUIS:
+            return new WarnUnimplemented(
+                    isRead ? "mrc icialluis" : "mcr icialluis", machInst);
+          case MISCREG_ICIMVAU:
+            return new WarnUnimplemented(
+                    isRead ? "mrc icimvau" : "mcr icimvau", machInst);
+          case MISCREG_BPIMVA:
+            return new WarnUnimplemented(
+                    isRead ? "mrc bpimva" : "mcr bpimva", machInst);
+          case MISCREG_BPIALLIS:
+            return new WarnUnimplemented(
+                    isRead ? "mrc bpiallis" : "mcr bpiallis", machInst);
+          case MISCREG_BPIALL:
+            return new WarnUnimplemented(
+                    isRead ? "mrc bpiall" : "mcr bpiall", machInst);
+          case MISCREG_L2LATENCY:
+            return new WarnUnimplemented(
+                    isRead ? "mrc l2latency" : "mcr l2latency", machInst);
+          case MISCREG_CRN15:
+            return new WarnUnimplemented(
+                    isRead ? "mrc crn15" : "mcr crn15", machInst);
+
+            // Write only.
+          case MISCREG_TLBIALLIS:
+          case MISCREG_TLBIMVAIS:
+          case MISCREG_TLBIASIDIS:
+          case MISCREG_TLBIMVAAIS:
+          case MISCREG_ITLBIALL:
+          case MISCREG_ITLBIMVA:
+          case MISCREG_ITLBIASID:
+          case MISCREG_DTLBIALL:
+          case MISCREG_DTLBIMVA:
+          case MISCREG_DTLBIASID:
+          case MISCREG_TLBIALL:
+          case MISCREG_TLBIMVA:
+          case MISCREG_TLBIASID:
+          case MISCREG_TLBIMVAA:
+            if (isRead) {
+                return new Unknown(machInst);
+            } else {
+                return new Mcr15(machInst, (IntRegIndex)miscReg, rt);
+            }
+
+            // Read only in user mode.
+          case MISCREG_TPIDRURO:
+            if (isRead) {
+                return new Mrc15User(machInst, rt, (IntRegIndex)miscReg);
+            } else {
+                return new Mcr15(machInst, (IntRegIndex)miscReg, rt);
+            }
+
+            // Read/write in user mode.
+          case MISCREG_TPIDRURW:
+            if (isRead) {
+                return new Mrc15User(machInst, rt, (IntRegIndex)miscReg);
+            } else {
+                return new Mcr15User(machInst, (IntRegIndex)miscReg, rt);
+            }
+
+            // Read/write, priveleged only.
+          default:
+            if (miscReg >= MISCREG_CP15_UNIMP_START)
+                return new FailUnimplemented(csprintf("%s %s",
+                    isRead ? "mrc" : "mcr", miscRegName[miscReg]).c_str(),
+                    machInst);
+            if (isRead) {
+                return new Mrc15(machInst, rt, (IntRegIndex)miscReg);
+            } else {
+                return new Mcr15(machInst, (IntRegIndex)miscReg, rt);
+            }
+        }
+    }
+    '''
+}};
+
+def format McrMrc15() {{
+    decode_block = '''
+    return decodeMcrMrc15(machInst);
+    '''
+}};

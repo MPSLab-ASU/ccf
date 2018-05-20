@@ -1,0 +1,8 @@
+0	29	0
+32	30	gVar4
+133	19	ld_add_gVar4
+134	20	ld_data_gVar4
+31	10	31
+58	30	gVar5
+159	19	ld_add_gVar5
+160	20	ld_data_gVar5

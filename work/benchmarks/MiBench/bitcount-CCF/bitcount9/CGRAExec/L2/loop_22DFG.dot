@@ -1,0 +1,63 @@
+digraph loop_22 { 
+{
+0 [color=red, label="0"];
+
+1 [color=red, label="1"];
+
+2 [color=black, label="2"];
+
+3 [color=black, label="3"];
+
+4 [color=black, label="4"];
+
+5 [color=black, label="5"];
+
+6 [color=gray, label="gVar3"];
+
+9 [color=gray, label="ConstInt0"];
+
+10 [color=gray, label="ConstInt1"];
+
+11 [color=gray, label="ConstInt-1"];
+
+112 [color=gray, label="gVar4"];
+
+13 [color=red, label="13"];
+
+14 [color=gray, label="ConstInt0"];
+
+15 [color=black, label="15"];
+
+16 [color=gray, label="ConstInt0"];
+
+17 [color=black, label="17"];
+
+18 [color=black, label="18"];
+
+19 [color=gray, label="ConstInt0"];
+4 -> 0 [style=bold, color=red, label=1] 
+6 -> 0 [color=orange, label=4] 
+2 -> 1 [style=bold, color=red, label=1] 
+9 -> 1 [color=gray]
+1 -> 2
+10 -> 2 [color=gray]
+0 -> 3
+11 -> 3 [color=gray]
+3 -> 4
+0 -> 4
+4 -> 5
+9 -> 5 [color=gray]
+5 -> 13 [style=bold, color=red, label=1] 
+14 -> 13 [color=gray]
+13 -> 15
+16 -> 15 [color=gray]
+2 -> 17
+18 -> 17 [style=bold, color=red, label=1] 
+13 -> 17 [color=green ]
+17 -> 18
+19 -> 18 [color=gray]
+18 -> 112 [color=orange, label=4] 
+
+}
+
+}

@@ -1,0 +1,22 @@
+Loop 1 is located at line: 55	isqrt.c
+Loop 2 is located at line: 80	basicmath_small.c
+Loop 3 is located at line: 
+Loop 4 is located at line: 63	basicmath_small.c
+Loop 5 is located at line: 52	basicmath_small.c
+Loop 6 is located at line: 52	basicmath_small.c
+Loop 7 is located at line: 52	basicmath_small.c
+Loop 8 is located at line: 52	basicmath_small.c
+Loop 9 is located at line: 52	basicmath_small.c
+Loop 10 is located at line: 52	basicmath_small.c
+Loop 11 is located at line: 52	basicmath_small.c
+Loop 12 is located at line: 52	basicmath_small.c
+Loop 13 is located at line: 52	basicmath_small.c
+Loop 14 is located at line: 52	basicmath_small.c
+Loop 15 is located at line: 8	basicmath_small.c
+Loop 16 is located at line: 
+Loop 17 is located at line: 
+Loop 18 is located at line: 42	basicmath_small.c
+Loop 19 is located at line: 37	basicmath_small.c
+Loop 20 is located at line: 32	basicmath_small.c
+Loop 21 is located at line: 26	basicmath_small.c
+Loop 22 is located at line: 23	/home/shail/CGRA/scripts/Profiling/tcFunctions.c

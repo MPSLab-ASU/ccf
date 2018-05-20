@@ -1,0 +1,116 @@
+digraph current { 
+{
+0 [color=red ];
+
+1 [color=red ];
+
+2 [color=red ];
+
+3 [color=red ];
+
+4 [color=red ];
+
+5 [color=red ];
+
+6 [color=red ];
+
+7 [color=red ];
+
+8 [color=red ];
+
+9 [color=red ];
+
+10 [color=red ];
+
+11 [color=red ];
+
+12 [color=red ];
+
+13 [color=red ];
+
+14 [color=red ];
+
+15 [color=red ];
+
+16 [color=red ];
+
+17 [color=red ];
+
+18 [color=red ];
+17 -> 0 [style=bold, color=red, label=1] 
+16 -> 1 [style=bold, color=red, label=1] 
+14 -> 2 [style=bold, color=red, label=1] 
+7 -> 3 [style=bold, color=red, label=1] 
+1 -> 4
+3 -> 5
+5 -> 6
+4 -> 6
+3 -> 7
+2 -> 8
+2 -> 9
+9 -> 10
+6 -> 11
+10 -> 11
+11 -> 12
+12 -> 13
+8 -> 14
+13 -> 14
+11 -> 15 [style=bold, color=blue ]
+10 -> 15
+6 -> 16
+15 -> 16
+0 -> 17
+17 -> 18
+
+}
+
+{
+ node [shape=plaintext]; 
+ T0  -> T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11 -> T12;
+}{ rank = source; 
+T0;
+ }; 
+{ rank = same; 
+
+ }; 
+{ rank = same; 
+
+ }; 
+{ rank = same; 
+
+ }; 
+{ rank = same; 
+
+ }; 
+{ rank = same; 
+
+ }; 
+{ rank = same; 
+
+ }; 
+{ rank = same; 
+0; 1; 2; 3; T6;
+ }; 
+{ rank = same; 
+4; 5; 7; 8; 9; 17; T7;
+ }; 
+{ rank = same; 
+6; 10; 18; T8;
+ }; 
+{ rank = same; 
+11; T9;
+ }; 
+{ rank = same; 
+12; 15; T10;
+ }; 
+{ rank = same; 
+13; 16; T11;
+ }; 
+{ rank = same; 
+14; T12;
+ }; 
+{ rank = same; 
+
+ }; 
+
+}

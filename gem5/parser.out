@@ -1,0 +1,1802 @@
+Created by PLY version 3.2 (http://www.dabeaz.com/ply)
+
+Grammar
+
+Rule 0     S' -> specification
+Rule 1     specification -> opt_defs_and_outputs name_decl opt_defs_and_outputs decode_block
+Rule 2     name_decl -> NAMESPACE ID SEMI
+Rule 3     opt_defs_and_outputs -> empty
+Rule 4     opt_defs_and_outputs -> defs_and_outputs
+Rule 5     defs_and_outputs -> def_or_output
+Rule 6     defs_and_outputs -> defs_and_outputs def_or_output
+Rule 7     def_or_output -> def_format
+Rule 8     def_or_output -> def_bitfield
+Rule 9     def_or_output -> def_bitfield_struct
+Rule 10    def_or_output -> def_template
+Rule 11    def_or_output -> def_operand_types
+Rule 12    def_or_output -> def_operands
+Rule 13    def_or_output -> output_header
+Rule 14    def_or_output -> output_decoder
+Rule 15    def_or_output -> output_exec
+Rule 16    def_or_output -> global_let
+Rule 17    output_header -> OUTPUT HEADER CODELIT SEMI
+Rule 18    output_decoder -> OUTPUT DECODER CODELIT SEMI
+Rule 19    output_exec -> OUTPUT EXEC CODELIT SEMI
+Rule 20    global_let -> LET CODELIT SEMI
+Rule 21    def_operand_types -> DEF OPERAND_TYPES CODELIT SEMI
+Rule 22    def_operands -> DEF OPERANDS CODELIT SEMI
+Rule 23    def_bitfield -> DEF opt_signed BITFIELD ID LESS INTLIT COLON INTLIT GREATER SEMI
+Rule 24    def_bitfield -> DEF opt_signed BITFIELD ID LESS INTLIT GREATER SEMI
+Rule 25    def_bitfield_struct -> DEF opt_signed BITFIELD ID id_with_dot SEMI
+Rule 26    id_with_dot -> ID
+Rule 27    id_with_dot -> ID DOT id_with_dot
+Rule 28    opt_signed -> SIGNED
+Rule 29    opt_signed -> empty
+Rule 30    def_template -> DEF TEMPLATE ID CODELIT SEMI
+Rule 31    def_format -> DEF FORMAT ID LPAREN param_list RPAREN CODELIT SEMI
+Rule 32    param_list -> positional_param_list COMMA nonpositional_param_list
+Rule 33    param_list -> positional_param_list
+Rule 34    param_list -> nonpositional_param_list
+Rule 35    positional_param_list -> empty
+Rule 36    positional_param_list -> ID
+Rule 37    positional_param_list -> positional_param_list COMMA ID
+Rule 38    nonpositional_param_list -> keyword_param_list COMMA excess_args_param
+Rule 39    nonpositional_param_list -> keyword_param_list
+Rule 40    nonpositional_param_list -> excess_args_param
+Rule 41    keyword_param_list -> keyword_param
+Rule 42    keyword_param_list -> keyword_param_list COMMA keyword_param
+Rule 43    keyword_param -> ID EQUALS expr
+Rule 44    excess_args_param -> ASTERISK ID
+Rule 45    decode_block -> DECODE ID opt_default LBRACE decode_stmt_list RBRACE
+Rule 46    opt_default -> empty
+Rule 47    opt_default -> DEFAULT inst
+Rule 48    decode_stmt_list -> decode_stmt
+Rule 49    decode_stmt_list -> decode_stmt decode_stmt_list
+Rule 50    decode_stmt -> CPPDIRECTIVE
+Rule 51    decode_stmt -> FORMAT push_format_id LBRACE decode_stmt_list RBRACE
+Rule 52    push_format_id -> ID
+Rule 53    decode_stmt -> case_label COLON decode_block
+Rule 54    decode_stmt -> case_label COLON inst SEMI
+Rule 55    case_label -> intlit_list
+Rule 56    case_label -> DEFAULT
+Rule 57    intlit_list -> INTLIT
+Rule 58    intlit_list -> intlit_list COMMA INTLIT
+Rule 59    inst -> ID LPAREN arg_list RPAREN
+Rule 60    inst -> ID DBLCOLON ID LPAREN arg_list RPAREN
+Rule 61    arg_list -> positional_arg_list COMMA keyword_arg_list
+Rule 62    arg_list -> positional_arg_list
+Rule 63    arg_list -> keyword_arg_list
+Rule 64    positional_arg_list -> empty
+Rule 65    positional_arg_list -> expr
+Rule 66    positional_arg_list -> positional_arg_list COMMA expr
+Rule 67    keyword_arg_list -> keyword_arg
+Rule 68    keyword_arg_list -> keyword_arg_list COMMA keyword_arg
+Rule 69    keyword_arg -> ID EQUALS expr
+Rule 70    expr -> ID
+Rule 71    expr -> INTLIT
+Rule 72    expr -> STRLIT
+Rule 73    expr -> CODELIT
+Rule 74    expr -> LBRACKET list_expr RBRACKET
+Rule 75    list_expr -> expr
+Rule 76    list_expr -> list_expr COMMA expr
+Rule 77    list_expr -> empty
+Rule 78    empty -> <empty>
+
+Terminals, with rules where they appear
+
+ASTERISK             : 44
+BITFIELD             : 23 24 25
+CODELIT              : 17 18 19 20 21 22 30 31 73
+COLON                : 23 53 54
+COMMA                : 32 37 38 42 58 61 66 68 76
+CPPDIRECTIVE         : 50
+DBLCOLON             : 60
+DECODE               : 45
+DECODER              : 18
+DEF                  : 21 22 23 24 25 30 31
+DEFAULT              : 47 56
+DOT                  : 27
+EQUALS               : 43 69
+EXEC                 : 19
+FORMAT               : 31 51
+GREATER              : 23 24
+HEADER               : 17
+ID                   : 2 23 24 25 26 27 30 31 36 37 43 44 45 52 59 60 60 69 70
+INTLIT               : 23 23 24 57 58 71
+LBRACE               : 45 51
+LBRACKET             : 74
+LESS                 : 23 24
+LET                  : 20
+LPAREN               : 31 59 60
+NAMESPACE            : 2
+OPERANDS             : 22
+OPERAND_TYPES        : 21
+OUTPUT               : 17 18 19
+RBRACE               : 45 51
+RBRACKET             : 74
+RPAREN               : 31 59 60
+SEMI                 : 2 17 18 19 20 21 22 23 24 25 30 31 54
+SIGNED               : 28
+STRLIT               : 72
+TEMPLATE             : 30
+error                : 
+
+Nonterminals, with rules where they appear
+
+arg_list             : 59 60
+case_label           : 53 54
+decode_block         : 1 53
+decode_stmt          : 48 49
+decode_stmt_list     : 45 49 51
+def_bitfield         : 8
+def_bitfield_struct  : 9
+def_format           : 7
+def_operand_types    : 11
+def_operands         : 12
+def_or_output        : 5 6
+def_template         : 10
+defs_and_outputs     : 4 6
+empty                : 3 29 35 46 64 77
+excess_args_param    : 38 40
+expr                 : 43 65 66 69 75 76
+global_let           : 16
+id_with_dot          : 25 27
+inst                 : 47 54
+intlit_list          : 55 58
+keyword_arg          : 67 68
+keyword_arg_list     : 61 63 68
+keyword_param        : 41 42
+keyword_param_list   : 38 39 42
+list_expr            : 74 76
+name_decl            : 1
+nonpositional_param_list : 32 34
+opt_default          : 45
+opt_defs_and_outputs : 1 1
+opt_signed           : 23 24 25
+output_decoder       : 14
+output_exec          : 15
+output_header        : 13
+param_list           : 31
+positional_arg_list  : 61 62 66
+positional_param_list : 32 33 37
+push_format_id       : 51
+specification        : 0
+
+Parsing method: LALR
+
+state 0
+
+    (0) S' -> . specification
+    (1) specification -> . opt_defs_and_outputs name_decl opt_defs_and_outputs decode_block
+    (3) opt_defs_and_outputs -> . empty
+    (4) opt_defs_and_outputs -> . defs_and_outputs
+    (78) empty -> .
+    (5) defs_and_outputs -> . def_or_output
+    (6) defs_and_outputs -> . defs_and_outputs def_or_output
+    (7) def_or_output -> . def_format
+    (8) def_or_output -> . def_bitfield
+    (9) def_or_output -> . def_bitfield_struct
+    (10) def_or_output -> . def_template
+    (11) def_or_output -> . def_operand_types
+    (12) def_or_output -> . def_operands
+    (13) def_or_output -> . output_header
+    (14) def_or_output -> . output_decoder
+    (15) def_or_output -> . output_exec
+    (16) def_or_output -> . global_let
+    (31) def_format -> . DEF FORMAT ID LPAREN param_list RPAREN CODELIT SEMI
+    (23) def_bitfield -> . DEF opt_signed BITFIELD ID LESS INTLIT COLON INTLIT GREATER SEMI
+    (24) def_bitfield -> . DEF opt_signed BITFIELD ID LESS INTLIT GREATER SEMI
+    (25) def_bitfield_struct -> . DEF opt_signed BITFIELD ID id_with_dot SEMI
+    (30) def_template -> . DEF TEMPLATE ID CODELIT SEMI
+    (21) def_operand_types -> . DEF OPERAND_TYPES CODELIT SEMI
+    (22) def_operands -> . DEF OPERANDS CODELIT SEMI
+    (17) output_header -> . OUTPUT HEADER CODELIT SEMI
+    (18) output_decoder -> . OUTPUT DECODER CODELIT SEMI
+    (19) output_exec -> . OUTPUT EXEC CODELIT SEMI
+    (20) global_let -> . LET CODELIT SEMI
+
+    NAMESPACE       reduce using rule 78 (empty -> .)
+    DEF             shift and go to state 4
+    OUTPUT          shift and go to state 16
+    LET             shift and go to state 15
+
+    output_header                  shift and go to state 12
+    output_exec                    shift and go to state 1
+    def_format                     shift and go to state 5
+    global_let                     shift and go to state 10
+    defs_and_outputs               shift and go to state 11
+    specification                  shift and go to state 6
+    def_operand_types              shift and go to state 7
+    opt_defs_and_outputs           shift and go to state 2
+    def_or_output                  shift and go to state 3
+    def_bitfield_struct            shift and go to state 14
+    def_bitfield                   shift and go to state 8
+    def_operands                   shift and go to state 13
+    output_decoder                 shift and go to state 17
+    def_template                   shift and go to state 18
+    empty                          shift and go to state 9
+
+state 1
+
+    (15) def_or_output -> output_exec .
+
+    DEF             reduce using rule 15 (def_or_output -> output_exec .)
+    OUTPUT          reduce using rule 15 (def_or_output -> output_exec .)
+    LET             reduce using rule 15 (def_or_output -> output_exec .)
+    NAMESPACE       reduce using rule 15 (def_or_output -> output_exec .)
+    DECODE          reduce using rule 15 (def_or_output -> output_exec .)
+
+
+state 2
+
+    (1) specification -> opt_defs_and_outputs . name_decl opt_defs_and_outputs decode_block
+    (2) name_decl -> . NAMESPACE ID SEMI
+
+    NAMESPACE       shift and go to state 19
+
+    name_decl                      shift and go to state 20
+
+state 3
+
+    (5) defs_and_outputs -> def_or_output .
+
+    DEF             reduce using rule 5 (defs_and_outputs -> def_or_output .)
+    OUTPUT          reduce using rule 5 (defs_and_outputs -> def_or_output .)
+    LET             reduce using rule 5 (defs_and_outputs -> def_or_output .)
+    NAMESPACE       reduce using rule 5 (defs_and_outputs -> def_or_output .)
+    DECODE          reduce using rule 5 (defs_and_outputs -> def_or_output .)
+
+
+state 4
+
+    (31) def_format -> DEF . FORMAT ID LPAREN param_list RPAREN CODELIT SEMI
+    (23) def_bitfield -> DEF . opt_signed BITFIELD ID LESS INTLIT COLON INTLIT GREATER SEMI
+    (24) def_bitfield -> DEF . opt_signed BITFIELD ID LESS INTLIT GREATER SEMI
+    (25) def_bitfield_struct -> DEF . opt_signed BITFIELD ID id_with_dot SEMI
+    (30) def_template -> DEF . TEMPLATE ID CODELIT SEMI
+    (21) def_operand_types -> DEF . OPERAND_TYPES CODELIT SEMI
+    (22) def_operands -> DEF . OPERANDS CODELIT SEMI
+    (28) opt_signed -> . SIGNED
+    (29) opt_signed -> . empty
+    (78) empty -> .
+
+    FORMAT          shift and go to state 23
+    TEMPLATE        shift and go to state 24
+    OPERAND_TYPES   shift and go to state 26
+    OPERANDS        shift and go to state 22
+    SIGNED          shift and go to state 25
+    BITFIELD        reduce using rule 78 (empty -> .)
+
+    opt_signed                     shift and go to state 21
+    empty                          shift and go to state 27
+
+state 5
+
+    (7) def_or_output -> def_format .
+
+    DEF             reduce using rule 7 (def_or_output -> def_format .)
+    OUTPUT          reduce using rule 7 (def_or_output -> def_format .)
+    LET             reduce using rule 7 (def_or_output -> def_format .)
+    NAMESPACE       reduce using rule 7 (def_or_output -> def_format .)
+    DECODE          reduce using rule 7 (def_or_output -> def_format .)
+
+
+state 6
+
+    (0) S' -> specification .
+
+
+
+state 7
+
+    (11) def_or_output -> def_operand_types .
+
+    DEF             reduce using rule 11 (def_or_output -> def_operand_types .)
+    OUTPUT          reduce using rule 11 (def_or_output -> def_operand_types .)
+    LET             reduce using rule 11 (def_or_output -> def_operand_types .)
+    NAMESPACE       reduce using rule 11 (def_or_output -> def_operand_types .)
+    DECODE          reduce using rule 11 (def_or_output -> def_operand_types .)
+
+
+state 8
+
+    (8) def_or_output -> def_bitfield .
+
+    DEF             reduce using rule 8 (def_or_output -> def_bitfield .)
+    OUTPUT          reduce using rule 8 (def_or_output -> def_bitfield .)
+    LET             reduce using rule 8 (def_or_output -> def_bitfield .)
+    NAMESPACE       reduce using rule 8 (def_or_output -> def_bitfield .)
+    DECODE          reduce using rule 8 (def_or_output -> def_bitfield .)
+
+
+state 9
+
+    (3) opt_defs_and_outputs -> empty .
+
+    NAMESPACE       reduce using rule 3 (opt_defs_and_outputs -> empty .)
+    DECODE          reduce using rule 3 (opt_defs_and_outputs -> empty .)
+
+
+state 10
+
+    (16) def_or_output -> global_let .
+
+    DEF             reduce using rule 16 (def_or_output -> global_let .)
+    OUTPUT          reduce using rule 16 (def_or_output -> global_let .)
+    LET             reduce using rule 16 (def_or_output -> global_let .)
+    NAMESPACE       reduce using rule 16 (def_or_output -> global_let .)
+    DECODE          reduce using rule 16 (def_or_output -> global_let .)
+
+
+state 11
+
+    (4) opt_defs_and_outputs -> defs_and_outputs .
+    (6) defs_and_outputs -> defs_and_outputs . def_or_output
+    (7) def_or_output -> . def_format
+    (8) def_or_output -> . def_bitfield
+    (9) def_or_output -> . def_bitfield_struct
+    (10) def_or_output -> . def_template
+    (11) def_or_output -> . def_operand_types
+    (12) def_or_output -> . def_operands
+    (13) def_or_output -> . output_header
+    (14) def_or_output -> . output_decoder
+    (15) def_or_output -> . output_exec
+    (16) def_or_output -> . global_let
+    (31) def_format -> . DEF FORMAT ID LPAREN param_list RPAREN CODELIT SEMI
+    (23) def_bitfield -> . DEF opt_signed BITFIELD ID LESS INTLIT COLON INTLIT GREATER SEMI
+    (24) def_bitfield -> . DEF opt_signed BITFIELD ID LESS INTLIT GREATER SEMI
+    (25) def_bitfield_struct -> . DEF opt_signed BITFIELD ID id_with_dot SEMI
+    (30) def_template -> . DEF TEMPLATE ID CODELIT SEMI
+    (21) def_operand_types -> . DEF OPERAND_TYPES CODELIT SEMI
+    (22) def_operands -> . DEF OPERANDS CODELIT SEMI
+    (17) output_header -> . OUTPUT HEADER CODELIT SEMI
+    (18) output_decoder -> . OUTPUT DECODER CODELIT SEMI
+    (19) output_exec -> . OUTPUT EXEC CODELIT SEMI
+    (20) global_let -> . LET CODELIT SEMI
+
+    NAMESPACE       reduce using rule 4 (opt_defs_and_outputs -> defs_and_outputs .)
+    DECODE          reduce using rule 4 (opt_defs_and_outputs -> defs_and_outputs .)
+    DEF             shift and go to state 4
+    OUTPUT          shift and go to state 16
+    LET             shift and go to state 15
+
+    output_header                  shift and go to state 12
+    def_format                     shift and go to state 5
+    global_let                     shift and go to state 10
+    def_template                   shift and go to state 18
+    def_operand_types              shift and go to state 7
+    def_or_output                  shift and go to state 28
+    def_bitfield_struct            shift and go to state 14
+    def_bitfield                   shift and go to state 8
+    def_operands                   shift and go to state 13
+    output_decoder                 shift and go to state 17
+    output_exec                    shift and go to state 1
+
+state 12
+
+    (13) def_or_output -> output_header .
+
+    DEF             reduce using rule 13 (def_or_output -> output_header .)
+    OUTPUT          reduce using rule 13 (def_or_output -> output_header .)
+    LET             reduce using rule 13 (def_or_output -> output_header .)
+    NAMESPACE       reduce using rule 13 (def_or_output -> output_header .)
+    DECODE          reduce using rule 13 (def_or_output -> output_header .)
+
+
+state 13
+
+    (12) def_or_output -> def_operands .
+
+    DEF             reduce using rule 12 (def_or_output -> def_operands .)
+    OUTPUT          reduce using rule 12 (def_or_output -> def_operands .)
+    LET             reduce using rule 12 (def_or_output -> def_operands .)
+    NAMESPACE       reduce using rule 12 (def_or_output -> def_operands .)
+    DECODE          reduce using rule 12 (def_or_output -> def_operands .)
+
+
+state 14
+
+    (9) def_or_output -> def_bitfield_struct .
+
+    DEF             reduce using rule 9 (def_or_output -> def_bitfield_struct .)
+    OUTPUT          reduce using rule 9 (def_or_output -> def_bitfield_struct .)
+    LET             reduce using rule 9 (def_or_output -> def_bitfield_struct .)
+    NAMESPACE       reduce using rule 9 (def_or_output -> def_bitfield_struct .)
+    DECODE          reduce using rule 9 (def_or_output -> def_bitfield_struct .)
+
+
+state 15
+
+    (20) global_let -> LET . CODELIT SEMI
+
+    CODELIT         shift and go to state 29
+
+
+state 16
+
+    (17) output_header -> OUTPUT . HEADER CODELIT SEMI
+    (18) output_decoder -> OUTPUT . DECODER CODELIT SEMI
+    (19) output_exec -> OUTPUT . EXEC CODELIT SEMI
+
+    HEADER          shift and go to state 31
+    DECODER         shift and go to state 32
+    EXEC            shift and go to state 30
+
+
+state 17
+
+    (14) def_or_output -> output_decoder .
+
+    DEF             reduce using rule 14 (def_or_output -> output_decoder .)
+    OUTPUT          reduce using rule 14 (def_or_output -> output_decoder .)
+    LET             reduce using rule 14 (def_or_output -> output_decoder .)
+    NAMESPACE       reduce using rule 14 (def_or_output -> output_decoder .)
+    DECODE          reduce using rule 14 (def_or_output -> output_decoder .)
+
+
+state 18
+
+    (10) def_or_output -> def_template .
+
+    DEF             reduce using rule 10 (def_or_output -> def_template .)
+    OUTPUT          reduce using rule 10 (def_or_output -> def_template .)
+    LET             reduce using rule 10 (def_or_output -> def_template .)
+    NAMESPACE       reduce using rule 10 (def_or_output -> def_template .)
+    DECODE          reduce using rule 10 (def_or_output -> def_template .)
+
+
+state 19
+
+    (2) name_decl -> NAMESPACE . ID SEMI
+
+    ID              shift and go to state 33
+
+
+state 20
+
+    (1) specification -> opt_defs_and_outputs name_decl . opt_defs_and_outputs decode_block
+    (3) opt_defs_and_outputs -> . empty
+    (4) opt_defs_and_outputs -> . defs_and_outputs
+    (78) empty -> .
+    (5) defs_and_outputs -> . def_or_output
+    (6) defs_and_outputs -> . defs_and_outputs def_or_output
+    (7) def_or_output -> . def_format
+    (8) def_or_output -> . def_bitfield
+    (9) def_or_output -> . def_bitfield_struct
+    (10) def_or_output -> . def_template
+    (11) def_or_output -> . def_operand_types
+    (12) def_or_output -> . def_operands
+    (13) def_or_output -> . output_header
+    (14) def_or_output -> . output_decoder
+    (15) def_or_output -> . output_exec
+    (16) def_or_output -> . global_let
+    (31) def_format -> . DEF FORMAT ID LPAREN param_list RPAREN CODELIT SEMI
+    (23) def_bitfield -> . DEF opt_signed BITFIELD ID LESS INTLIT COLON INTLIT GREATER SEMI
+    (24) def_bitfield -> . DEF opt_signed BITFIELD ID LESS INTLIT GREATER SEMI
+    (25) def_bitfield_struct -> . DEF opt_signed BITFIELD ID id_with_dot SEMI
+    (30) def_template -> . DEF TEMPLATE ID CODELIT SEMI
+    (21) def_operand_types -> . DEF OPERAND_TYPES CODELIT SEMI
+    (22) def_operands -> . DEF OPERANDS CODELIT SEMI
+    (17) output_header -> . OUTPUT HEADER CODELIT SEMI
+    (18) output_decoder -> . OUTPUT DECODER CODELIT SEMI
+    (19) output_exec -> . OUTPUT EXEC CODELIT SEMI
+    (20) global_let -> . LET CODELIT SEMI
+
+    DECODE          reduce using rule 78 (empty -> .)
+    DEF             shift and go to state 4
+    OUTPUT          shift and go to state 16
+    LET             shift and go to state 15
+
+    output_header                  shift and go to state 12
+    def_format                     shift and go to state 5
+    global_let                     shift and go to state 10
+    defs_and_outputs               shift and go to state 11
+    def_template                   shift and go to state 18
+    def_operand_types              shift and go to state 7
+    opt_defs_and_outputs           shift and go to state 34
+    def_or_output                  shift and go to state 3
+    def_bitfield_struct            shift and go to state 14
+    def_bitfield                   shift and go to state 8
+    def_operands                   shift and go to state 13
+    output_decoder                 shift and go to state 17
+    output_exec                    shift and go to state 1
+    empty                          shift and go to state 9
+
+state 21
+
+    (23) def_bitfield -> DEF opt_signed . BITFIELD ID LESS INTLIT COLON INTLIT GREATER SEMI
+    (24) def_bitfield -> DEF opt_signed . BITFIELD ID LESS INTLIT GREATER SEMI
+    (25) def_bitfield_struct -> DEF opt_signed . BITFIELD ID id_with_dot SEMI
+
+    BITFIELD        shift and go to state 35
+
+
+state 22
+
+    (22) def_operands -> DEF OPERANDS . CODELIT SEMI
+
+    CODELIT         shift and go to state 36
+
+
+state 23
+
+    (31) def_format -> DEF FORMAT . ID LPAREN param_list RPAREN CODELIT SEMI
+
+    ID              shift and go to state 37
+
+
+state 24
+
+    (30) def_template -> DEF TEMPLATE . ID CODELIT SEMI
+
+    ID              shift and go to state 38
+
+
+state 25
+
+    (28) opt_signed -> SIGNED .
+
+    BITFIELD        reduce using rule 28 (opt_signed -> SIGNED .)
+
+
+state 26
+
+    (21) def_operand_types -> DEF OPERAND_TYPES . CODELIT SEMI
+
+    CODELIT         shift and go to state 39
+
+
+state 27
+
+    (29) opt_signed -> empty .
+
+    BITFIELD        reduce using rule 29 (opt_signed -> empty .)
+
+
+state 28
+
+    (6) defs_and_outputs -> defs_and_outputs def_or_output .
+
+    DEF             reduce using rule 6 (defs_and_outputs -> defs_and_outputs def_or_output .)
+    OUTPUT          reduce using rule 6 (defs_and_outputs -> defs_and_outputs def_or_output .)
+    LET             reduce using rule 6 (defs_and_outputs -> defs_and_outputs def_or_output .)
+    NAMESPACE       reduce using rule 6 (defs_and_outputs -> defs_and_outputs def_or_output .)
+    DECODE          reduce using rule 6 (defs_and_outputs -> defs_and_outputs def_or_output .)
+
+
+state 29
+
+    (20) global_let -> LET CODELIT . SEMI
+
+    SEMI            shift and go to state 40
+
+
+state 30
+
+    (19) output_exec -> OUTPUT EXEC . CODELIT SEMI
+
+    CODELIT         shift and go to state 41
+
+
+state 31
+
+    (17) output_header -> OUTPUT HEADER . CODELIT SEMI
+
+    CODELIT         shift and go to state 42
+
+
+state 32
+
+    (18) output_decoder -> OUTPUT DECODER . CODELIT SEMI
+
+    CODELIT         shift and go to state 43
+
+
+state 33
+
+    (2) name_decl -> NAMESPACE ID . SEMI
+
+    SEMI            shift and go to state 44
+
+
+state 34
+
+    (1) specification -> opt_defs_and_outputs name_decl opt_defs_and_outputs . decode_block
+    (45) decode_block -> . DECODE ID opt_default LBRACE decode_stmt_list RBRACE
+
+    DECODE          shift and go to state 46
+
+    decode_block                   shift and go to state 45
+
+state 35
+
+    (23) def_bitfield -> DEF opt_signed BITFIELD . ID LESS INTLIT COLON INTLIT GREATER SEMI
+    (24) def_bitfield -> DEF opt_signed BITFIELD . ID LESS INTLIT GREATER SEMI
+    (25) def_bitfield_struct -> DEF opt_signed BITFIELD . ID id_with_dot SEMI
+
+    ID              shift and go to state 47
+
+
+state 36
+
+    (22) def_operands -> DEF OPERANDS CODELIT . SEMI
+
+    SEMI            shift and go to state 48
+
+
+state 37
+
+    (31) def_format -> DEF FORMAT ID . LPAREN param_list RPAREN CODELIT SEMI
+
+    LPAREN          shift and go to state 49
+
+
+state 38
+
+    (30) def_template -> DEF TEMPLATE ID . CODELIT SEMI
+
+    CODELIT         shift and go to state 50
+
+
+state 39
+
+    (21) def_operand_types -> DEF OPERAND_TYPES CODELIT . SEMI
+
+    SEMI            shift and go to state 51
+
+
+state 40
+
+    (20) global_let -> LET CODELIT SEMI .
+
+    DEF             reduce using rule 20 (global_let -> LET CODELIT SEMI .)
+    OUTPUT          reduce using rule 20 (global_let -> LET CODELIT SEMI .)
+    LET             reduce using rule 20 (global_let -> LET CODELIT SEMI .)
+    NAMESPACE       reduce using rule 20 (global_let -> LET CODELIT SEMI .)
+    DECODE          reduce using rule 20 (global_let -> LET CODELIT SEMI .)
+
+
+state 41
+
+    (19) output_exec -> OUTPUT EXEC CODELIT . SEMI
+
+    SEMI            shift and go to state 52
+
+
+state 42
+
+    (17) output_header -> OUTPUT HEADER CODELIT . SEMI
+
+    SEMI            shift and go to state 53
+
+
+state 43
+
+    (18) output_decoder -> OUTPUT DECODER CODELIT . SEMI
+
+    SEMI            shift and go to state 54
+
+
+state 44
+
+    (2) name_decl -> NAMESPACE ID SEMI .
+
+    DEF             reduce using rule 2 (name_decl -> NAMESPACE ID SEMI .)
+    OUTPUT          reduce using rule 2 (name_decl -> NAMESPACE ID SEMI .)
+    LET             reduce using rule 2 (name_decl -> NAMESPACE ID SEMI .)
+    DECODE          reduce using rule 2 (name_decl -> NAMESPACE ID SEMI .)
+
+
+state 45
+
+    (1) specification -> opt_defs_and_outputs name_decl opt_defs_and_outputs decode_block .
+
+    $end            reduce using rule 1 (specification -> opt_defs_and_outputs name_decl opt_defs_and_outputs decode_block .)
+
+
+state 46
+
+    (45) decode_block -> DECODE . ID opt_default LBRACE decode_stmt_list RBRACE
+
+    ID              shift and go to state 55
+
+
+state 47
+
+    (23) def_bitfield -> DEF opt_signed BITFIELD ID . LESS INTLIT COLON INTLIT GREATER SEMI
+    (24) def_bitfield -> DEF opt_signed BITFIELD ID . LESS INTLIT GREATER SEMI
+    (25) def_bitfield_struct -> DEF opt_signed BITFIELD ID . id_with_dot SEMI
+    (26) id_with_dot -> . ID
+    (27) id_with_dot -> . ID DOT id_with_dot
+
+    LESS            shift and go to state 56
+    ID              shift and go to state 58
+
+    id_with_dot                    shift and go to state 57
+
+state 48
+
+    (22) def_operands -> DEF OPERANDS CODELIT SEMI .
+
+    DEF             reduce using rule 22 (def_operands -> DEF OPERANDS CODELIT SEMI .)
+    OUTPUT          reduce using rule 22 (def_operands -> DEF OPERANDS CODELIT SEMI .)
+    LET             reduce using rule 22 (def_operands -> DEF OPERANDS CODELIT SEMI .)
+    NAMESPACE       reduce using rule 22 (def_operands -> DEF OPERANDS CODELIT SEMI .)
+    DECODE          reduce using rule 22 (def_operands -> DEF OPERANDS CODELIT SEMI .)
+
+
+state 49
+
+    (31) def_format -> DEF FORMAT ID LPAREN . param_list RPAREN CODELIT SEMI
+    (32) param_list -> . positional_param_list COMMA nonpositional_param_list
+    (33) param_list -> . positional_param_list
+    (34) param_list -> . nonpositional_param_list
+    (35) positional_param_list -> . empty
+    (36) positional_param_list -> . ID
+    (37) positional_param_list -> . positional_param_list COMMA ID
+    (38) nonpositional_param_list -> . keyword_param_list COMMA excess_args_param
+    (39) nonpositional_param_list -> . keyword_param_list
+    (40) nonpositional_param_list -> . excess_args_param
+    (78) empty -> .
+    (41) keyword_param_list -> . keyword_param
+    (42) keyword_param_list -> . keyword_param_list COMMA keyword_param
+    (44) excess_args_param -> . ASTERISK ID
+    (43) keyword_param -> . ID EQUALS expr
+
+    ID              shift and go to state 67
+    COMMA           reduce using rule 78 (empty -> .)
+    RPAREN          reduce using rule 78 (empty -> .)
+    ASTERISK        shift and go to state 61
+
+    positional_param_list          shift and go to state 59
+    param_list                     shift and go to state 60
+    excess_args_param              shift and go to state 62
+    nonpositional_param_list       shift and go to state 64
+    keyword_param                  shift and go to state 65
+    keyword_param_list             shift and go to state 66
+    empty                          shift and go to state 63
+
+state 50
+
+    (30) def_template -> DEF TEMPLATE ID CODELIT . SEMI
+
+    SEMI            shift and go to state 68
+
+
+state 51
+
+    (21) def_operand_types -> DEF OPERAND_TYPES CODELIT SEMI .
+
+    DEF             reduce using rule 21 (def_operand_types -> DEF OPERAND_TYPES CODELIT SEMI .)
+    OUTPUT          reduce using rule 21 (def_operand_types -> DEF OPERAND_TYPES CODELIT SEMI .)
+    LET             reduce using rule 21 (def_operand_types -> DEF OPERAND_TYPES CODELIT SEMI .)
+    DECODE          reduce using rule 21 (def_operand_types -> DEF OPERAND_TYPES CODELIT SEMI .)
+    NAMESPACE       reduce using rule 21 (def_operand_types -> DEF OPERAND_TYPES CODELIT SEMI .)
+
+
+state 52
+
+    (19) output_exec -> OUTPUT EXEC CODELIT SEMI .
+
+    DEF             reduce using rule 19 (output_exec -> OUTPUT EXEC CODELIT SEMI .)
+    OUTPUT          reduce using rule 19 (output_exec -> OUTPUT EXEC CODELIT SEMI .)
+    LET             reduce using rule 19 (output_exec -> OUTPUT EXEC CODELIT SEMI .)
+    NAMESPACE       reduce using rule 19 (output_exec -> OUTPUT EXEC CODELIT SEMI .)
+    DECODE          reduce using rule 19 (output_exec -> OUTPUT EXEC CODELIT SEMI .)
+
+
+state 53
+
+    (17) output_header -> OUTPUT HEADER CODELIT SEMI .
+
+    DEF             reduce using rule 17 (output_header -> OUTPUT HEADER CODELIT SEMI .)
+    OUTPUT          reduce using rule 17 (output_header -> OUTPUT HEADER CODELIT SEMI .)
+    LET             reduce using rule 17 (output_header -> OUTPUT HEADER CODELIT SEMI .)
+    NAMESPACE       reduce using rule 17 (output_header -> OUTPUT HEADER CODELIT SEMI .)
+    DECODE          reduce using rule 17 (output_header -> OUTPUT HEADER CODELIT SEMI .)
+
+
+state 54
+
+    (18) output_decoder -> OUTPUT DECODER CODELIT SEMI .
+
+    DEF             reduce using rule 18 (output_decoder -> OUTPUT DECODER CODELIT SEMI .)
+    OUTPUT          reduce using rule 18 (output_decoder -> OUTPUT DECODER CODELIT SEMI .)
+    LET             reduce using rule 18 (output_decoder -> OUTPUT DECODER CODELIT SEMI .)
+    NAMESPACE       reduce using rule 18 (output_decoder -> OUTPUT DECODER CODELIT SEMI .)
+    DECODE          reduce using rule 18 (output_decoder -> OUTPUT DECODER CODELIT SEMI .)
+
+
+state 55
+
+    (45) decode_block -> DECODE ID . opt_default LBRACE decode_stmt_list RBRACE
+    (46) opt_default -> . empty
+    (47) opt_default -> . DEFAULT inst
+    (78) empty -> .
+
+    DEFAULT         shift and go to state 69
+    LBRACE          reduce using rule 78 (empty -> .)
+
+    empty                          shift and go to state 70
+    opt_default                    shift and go to state 71
+
+state 56
+
+    (23) def_bitfield -> DEF opt_signed BITFIELD ID LESS . INTLIT COLON INTLIT GREATER SEMI
+    (24) def_bitfield -> DEF opt_signed BITFIELD ID LESS . INTLIT GREATER SEMI
+
+    INTLIT          shift and go to state 72
+
+
+state 57
+
+    (25) def_bitfield_struct -> DEF opt_signed BITFIELD ID id_with_dot . SEMI
+
+    SEMI            shift and go to state 73
+
+
+state 58
+
+    (26) id_with_dot -> ID .
+    (27) id_with_dot -> ID . DOT id_with_dot
+
+    SEMI            reduce using rule 26 (id_with_dot -> ID .)
+    DOT             shift and go to state 74
+
+
+state 59
+
+    (32) param_list -> positional_param_list . COMMA nonpositional_param_list
+    (33) param_list -> positional_param_list .
+    (37) positional_param_list -> positional_param_list . COMMA ID
+
+    COMMA           shift and go to state 75
+    RPAREN          reduce using rule 33 (param_list -> positional_param_list .)
+
+
+state 60
+
+    (31) def_format -> DEF FORMAT ID LPAREN param_list . RPAREN CODELIT SEMI
+
+    RPAREN          shift and go to state 76
+
+
+state 61
+
+    (44) excess_args_param -> ASTERISK . ID
+
+    ID              shift and go to state 77
+
+
+state 62
+
+    (40) nonpositional_param_list -> excess_args_param .
+
+    RPAREN          reduce using rule 40 (nonpositional_param_list -> excess_args_param .)
+
+
+state 63
+
+    (35) positional_param_list -> empty .
+
+    COMMA           reduce using rule 35 (positional_param_list -> empty .)
+    RPAREN          reduce using rule 35 (positional_param_list -> empty .)
+
+
+state 64
+
+    (34) param_list -> nonpositional_param_list .
+
+    RPAREN          reduce using rule 34 (param_list -> nonpositional_param_list .)
+
+
+state 65
+
+    (41) keyword_param_list -> keyword_param .
+
+    COMMA           reduce using rule 41 (keyword_param_list -> keyword_param .)
+    RPAREN          reduce using rule 41 (keyword_param_list -> keyword_param .)
+
+
+state 66
+
+    (38) nonpositional_param_list -> keyword_param_list . COMMA excess_args_param
+    (39) nonpositional_param_list -> keyword_param_list .
+    (42) keyword_param_list -> keyword_param_list . COMMA keyword_param
+
+    COMMA           shift and go to state 78
+    RPAREN          reduce using rule 39 (nonpositional_param_list -> keyword_param_list .)
+
+
+state 67
+
+    (36) positional_param_list -> ID .
+    (43) keyword_param -> ID . EQUALS expr
+
+    COMMA           reduce using rule 36 (positional_param_list -> ID .)
+    RPAREN          reduce using rule 36 (positional_param_list -> ID .)
+    EQUALS          shift and go to state 79
+
+
+state 68
+
+    (30) def_template -> DEF TEMPLATE ID CODELIT SEMI .
+
+    DEF             reduce using rule 30 (def_template -> DEF TEMPLATE ID CODELIT SEMI .)
+    OUTPUT          reduce using rule 30 (def_template -> DEF TEMPLATE ID CODELIT SEMI .)
+    LET             reduce using rule 30 (def_template -> DEF TEMPLATE ID CODELIT SEMI .)
+    NAMESPACE       reduce using rule 30 (def_template -> DEF TEMPLATE ID CODELIT SEMI .)
+    DECODE          reduce using rule 30 (def_template -> DEF TEMPLATE ID CODELIT SEMI .)
+
+
+state 69
+
+    (47) opt_default -> DEFAULT . inst
+    (59) inst -> . ID LPAREN arg_list RPAREN
+    (60) inst -> . ID DBLCOLON ID LPAREN arg_list RPAREN
+
+    ID              shift and go to state 81
+
+    inst                           shift and go to state 80
+
+state 70
+
+    (46) opt_default -> empty .
+
+    LBRACE          reduce using rule 46 (opt_default -> empty .)
+
+
+state 71
+
+    (45) decode_block -> DECODE ID opt_default . LBRACE decode_stmt_list RBRACE
+
+    LBRACE          shift and go to state 82
+
+
+state 72
+
+    (23) def_bitfield -> DEF opt_signed BITFIELD ID LESS INTLIT . COLON INTLIT GREATER SEMI
+    (24) def_bitfield -> DEF opt_signed BITFIELD ID LESS INTLIT . GREATER SEMI
+
+    COLON           shift and go to state 84
+    GREATER         shift and go to state 83
+
+
+state 73
+
+    (25) def_bitfield_struct -> DEF opt_signed BITFIELD ID id_with_dot SEMI .
+
+    DEF             reduce using rule 25 (def_bitfield_struct -> DEF opt_signed BITFIELD ID id_with_dot SEMI .)
+    OUTPUT          reduce using rule 25 (def_bitfield_struct -> DEF opt_signed BITFIELD ID id_with_dot SEMI .)
+    LET             reduce using rule 25 (def_bitfield_struct -> DEF opt_signed BITFIELD ID id_with_dot SEMI .)
+    DECODE          reduce using rule 25 (def_bitfield_struct -> DEF opt_signed BITFIELD ID id_with_dot SEMI .)
+    NAMESPACE       reduce using rule 25 (def_bitfield_struct -> DEF opt_signed BITFIELD ID id_with_dot SEMI .)
+
+
+state 74
+
+    (27) id_with_dot -> ID DOT . id_with_dot
+    (26) id_with_dot -> . ID
+    (27) id_with_dot -> . ID DOT id_with_dot
+
+    ID              shift and go to state 58
+
+    id_with_dot                    shift and go to state 85
+
+state 75
+
+    (32) param_list -> positional_param_list COMMA . nonpositional_param_list
+    (37) positional_param_list -> positional_param_list COMMA . ID
+    (38) nonpositional_param_list -> . keyword_param_list COMMA excess_args_param
+    (39) nonpositional_param_list -> . keyword_param_list
+    (40) nonpositional_param_list -> . excess_args_param
+    (41) keyword_param_list -> . keyword_param
+    (42) keyword_param_list -> . keyword_param_list COMMA keyword_param
+    (44) excess_args_param -> . ASTERISK ID
+    (43) keyword_param -> . ID EQUALS expr
+
+    ID              shift and go to state 87
+    ASTERISK        shift and go to state 61
+
+    excess_args_param              shift and go to state 62
+    nonpositional_param_list       shift and go to state 86
+    keyword_param                  shift and go to state 65
+    keyword_param_list             shift and go to state 66
+
+state 76
+
+    (31) def_format -> DEF FORMAT ID LPAREN param_list RPAREN . CODELIT SEMI
+
+    CODELIT         shift and go to state 88
+
+
+state 77
+
+    (44) excess_args_param -> ASTERISK ID .
+
+    RPAREN          reduce using rule 44 (excess_args_param -> ASTERISK ID .)
+
+
+state 78
+
+    (38) nonpositional_param_list -> keyword_param_list COMMA . excess_args_param
+    (42) keyword_param_list -> keyword_param_list COMMA . keyword_param
+    (44) excess_args_param -> . ASTERISK ID
+    (43) keyword_param -> . ID EQUALS expr
+
+    ASTERISK        shift and go to state 61
+    ID              shift and go to state 91
+
+    excess_args_param              shift and go to state 89
+    keyword_param                  shift and go to state 90
+
+state 79
+
+    (43) keyword_param -> ID EQUALS . expr
+    (70) expr -> . ID
+    (71) expr -> . INTLIT
+    (72) expr -> . STRLIT
+    (73) expr -> . CODELIT
+    (74) expr -> . LBRACKET list_expr RBRACKET
+
+    ID              shift and go to state 97
+    INTLIT          shift and go to state 96
+    STRLIT          shift and go to state 92
+    CODELIT         shift and go to state 95
+    LBRACKET        shift and go to state 94
+
+    expr                           shift and go to state 93
+
+state 80
+
+    (47) opt_default -> DEFAULT inst .
+
+    LBRACE          reduce using rule 47 (opt_default -> DEFAULT inst .)
+
+
+state 81
+
+    (59) inst -> ID . LPAREN arg_list RPAREN
+    (60) inst -> ID . DBLCOLON ID LPAREN arg_list RPAREN
+
+    LPAREN          shift and go to state 99
+    DBLCOLON        shift and go to state 98
+
+
+state 82
+
+    (45) decode_block -> DECODE ID opt_default LBRACE . decode_stmt_list RBRACE
+    (48) decode_stmt_list -> . decode_stmt
+    (49) decode_stmt_list -> . decode_stmt decode_stmt_list
+    (50) decode_stmt -> . CPPDIRECTIVE
+    (51) decode_stmt -> . FORMAT push_format_id LBRACE decode_stmt_list RBRACE
+    (53) decode_stmt -> . case_label COLON decode_block
+    (54) decode_stmt -> . case_label COLON inst SEMI
+    (55) case_label -> . intlit_list
+    (56) case_label -> . DEFAULT
+    (57) intlit_list -> . INTLIT
+    (58) intlit_list -> . intlit_list COMMA INTLIT
+
+    CPPDIRECTIVE    shift and go to state 106
+    FORMAT          shift and go to state 103
+    DEFAULT         shift and go to state 104
+    INTLIT          shift and go to state 107
+
+    case_label                     shift and go to state 105
+    decode_stmt_list               shift and go to state 102
+    intlit_list                    shift and go to state 100
+    decode_stmt                    shift and go to state 101
+
+state 83
+
+    (24) def_bitfield -> DEF opt_signed BITFIELD ID LESS INTLIT GREATER . SEMI
+
+    SEMI            shift and go to state 108
+
+
+state 84
+
+    (23) def_bitfield -> DEF opt_signed BITFIELD ID LESS INTLIT COLON . INTLIT GREATER SEMI
+
+    INTLIT          shift and go to state 109
+
+
+state 85
+
+    (27) id_with_dot -> ID DOT id_with_dot .
+
+    SEMI            reduce using rule 27 (id_with_dot -> ID DOT id_with_dot .)
+
+
+state 86
+
+    (32) param_list -> positional_param_list COMMA nonpositional_param_list .
+
+    RPAREN          reduce using rule 32 (param_list -> positional_param_list COMMA nonpositional_param_list .)
+
+
+state 87
+
+    (37) positional_param_list -> positional_param_list COMMA ID .
+    (43) keyword_param -> ID . EQUALS expr
+
+    COMMA           reduce using rule 37 (positional_param_list -> positional_param_list COMMA ID .)
+    RPAREN          reduce using rule 37 (positional_param_list -> positional_param_list COMMA ID .)
+    EQUALS          shift and go to state 79
+
+
+state 88
+
+    (31) def_format -> DEF FORMAT ID LPAREN param_list RPAREN CODELIT . SEMI
+
+    SEMI            shift and go to state 110
+
+
+state 89
+
+    (38) nonpositional_param_list -> keyword_param_list COMMA excess_args_param .
+
+    RPAREN          reduce using rule 38 (nonpositional_param_list -> keyword_param_list COMMA excess_args_param .)
+
+
+state 90
+
+    (42) keyword_param_list -> keyword_param_list COMMA keyword_param .
+
+    COMMA           reduce using rule 42 (keyword_param_list -> keyword_param_list COMMA keyword_param .)
+    RPAREN          reduce using rule 42 (keyword_param_list -> keyword_param_list COMMA keyword_param .)
+
+
+state 91
+
+    (43) keyword_param -> ID . EQUALS expr
+
+    EQUALS          shift and go to state 79
+
+
+state 92
+
+    (72) expr -> STRLIT .
+
+    RBRACKET        reduce using rule 72 (expr -> STRLIT .)
+    COMMA           reduce using rule 72 (expr -> STRLIT .)
+    RPAREN          reduce using rule 72 (expr -> STRLIT .)
+
+
+state 93
+
+    (43) keyword_param -> ID EQUALS expr .
+
+    COMMA           reduce using rule 43 (keyword_param -> ID EQUALS expr .)
+    RPAREN          reduce using rule 43 (keyword_param -> ID EQUALS expr .)
+
+
+state 94
+
+    (74) expr -> LBRACKET . list_expr RBRACKET
+    (75) list_expr -> . expr
+    (76) list_expr -> . list_expr COMMA expr
+    (77) list_expr -> . empty
+    (70) expr -> . ID
+    (71) expr -> . INTLIT
+    (72) expr -> . STRLIT
+    (73) expr -> . CODELIT
+    (74) expr -> . LBRACKET list_expr RBRACKET
+    (78) empty -> .
+
+    ID              shift and go to state 97
+    INTLIT          shift and go to state 96
+    STRLIT          shift and go to state 92
+    CODELIT         shift and go to state 95
+    LBRACKET        shift and go to state 94
+    RBRACKET        reduce using rule 78 (empty -> .)
+    COMMA           reduce using rule 78 (empty -> .)
+
+    expr                           shift and go to state 112
+    list_expr                      shift and go to state 111
+    empty                          shift and go to state 113
+
+state 95
+
+    (73) expr -> CODELIT .
+
+    RBRACKET        reduce using rule 73 (expr -> CODELIT .)
+    COMMA           reduce using rule 73 (expr -> CODELIT .)
+    RPAREN          reduce using rule 73 (expr -> CODELIT .)
+
+
+state 96
+
+    (71) expr -> INTLIT .
+
+    RBRACKET        reduce using rule 71 (expr -> INTLIT .)
+    COMMA           reduce using rule 71 (expr -> INTLIT .)
+    RPAREN          reduce using rule 71 (expr -> INTLIT .)
+
+
+state 97
+
+    (70) expr -> ID .
+
+    RBRACKET        reduce using rule 70 (expr -> ID .)
+    COMMA           reduce using rule 70 (expr -> ID .)
+    RPAREN          reduce using rule 70 (expr -> ID .)
+
+
+state 98
+
+    (60) inst -> ID DBLCOLON . ID LPAREN arg_list RPAREN
+
+    ID              shift and go to state 114
+
+
+state 99
+
+    (59) inst -> ID LPAREN . arg_list RPAREN
+    (61) arg_list -> . positional_arg_list COMMA keyword_arg_list
+    (62) arg_list -> . positional_arg_list
+    (63) arg_list -> . keyword_arg_list
+    (64) positional_arg_list -> . empty
+    (65) positional_arg_list -> . expr
+    (66) positional_arg_list -> . positional_arg_list COMMA expr
+    (67) keyword_arg_list -> . keyword_arg
+    (68) keyword_arg_list -> . keyword_arg_list COMMA keyword_arg
+    (78) empty -> .
+    (70) expr -> . ID
+    (71) expr -> . INTLIT
+    (72) expr -> . STRLIT
+    (73) expr -> . CODELIT
+    (74) expr -> . LBRACKET list_expr RBRACKET
+    (69) keyword_arg -> . ID EQUALS expr
+
+    COMMA           reduce using rule 78 (empty -> .)
+    RPAREN          reduce using rule 78 (empty -> .)
+    ID              shift and go to state 119
+    INTLIT          shift and go to state 96
+    STRLIT          shift and go to state 92
+    CODELIT         shift and go to state 95
+    LBRACKET        shift and go to state 94
+
+    expr                           shift and go to state 115
+    keyword_arg                    shift and go to state 116
+    positional_arg_list            shift and go to state 117
+    keyword_arg_list               shift and go to state 118
+    empty                          shift and go to state 120
+    arg_list                       shift and go to state 121
+
+state 100
+
+    (55) case_label -> intlit_list .
+    (58) intlit_list -> intlit_list . COMMA INTLIT
+
+    COLON           reduce using rule 55 (case_label -> intlit_list .)
+    COMMA           shift and go to state 122
+
+
+state 101
+
+    (48) decode_stmt_list -> decode_stmt .
+    (49) decode_stmt_list -> decode_stmt . decode_stmt_list
+    (48) decode_stmt_list -> . decode_stmt
+    (49) decode_stmt_list -> . decode_stmt decode_stmt_list
+    (50) decode_stmt -> . CPPDIRECTIVE
+    (51) decode_stmt -> . FORMAT push_format_id LBRACE decode_stmt_list RBRACE
+    (53) decode_stmt -> . case_label COLON decode_block
+    (54) decode_stmt -> . case_label COLON inst SEMI
+    (55) case_label -> . intlit_list
+    (56) case_label -> . DEFAULT
+    (57) intlit_list -> . INTLIT
+    (58) intlit_list -> . intlit_list COMMA INTLIT
+
+    RBRACE          reduce using rule 48 (decode_stmt_list -> decode_stmt .)
+    CPPDIRECTIVE    shift and go to state 106
+    FORMAT          shift and go to state 103
+    DEFAULT         shift and go to state 104
+    INTLIT          shift and go to state 107
+
+    case_label                     shift and go to state 105
+    decode_stmt_list               shift and go to state 123
+    intlit_list                    shift and go to state 100
+    decode_stmt                    shift and go to state 101
+
+state 102
+
+    (45) decode_block -> DECODE ID opt_default LBRACE decode_stmt_list . RBRACE
+
+    RBRACE          shift and go to state 124
+
+
+state 103
+
+    (51) decode_stmt -> FORMAT . push_format_id LBRACE decode_stmt_list RBRACE
+    (52) push_format_id -> . ID
+
+    ID              shift and go to state 126
+
+    push_format_id                 shift and go to state 125
+
+state 104
+
+    (56) case_label -> DEFAULT .
+
+    COLON           reduce using rule 56 (case_label -> DEFAULT .)
+
+
+state 105
+
+    (53) decode_stmt -> case_label . COLON decode_block
+    (54) decode_stmt -> case_label . COLON inst SEMI
+
+    COLON           shift and go to state 127
+
+
+state 106
+
+    (50) decode_stmt -> CPPDIRECTIVE .
+
+    CPPDIRECTIVE    reduce using rule 50 (decode_stmt -> CPPDIRECTIVE .)
+    FORMAT          reduce using rule 50 (decode_stmt -> CPPDIRECTIVE .)
+    DEFAULT         reduce using rule 50 (decode_stmt -> CPPDIRECTIVE .)
+    INTLIT          reduce using rule 50 (decode_stmt -> CPPDIRECTIVE .)
+    RBRACE          reduce using rule 50 (decode_stmt -> CPPDIRECTIVE .)
+
+
+state 107
+
+    (57) intlit_list -> INTLIT .
+
+    COMMA           reduce using rule 57 (intlit_list -> INTLIT .)
+    COLON           reduce using rule 57 (intlit_list -> INTLIT .)
+
+
+state 108
+
+    (24) def_bitfield -> DEF opt_signed BITFIELD ID LESS INTLIT GREATER SEMI .
+
+    DEF             reduce using rule 24 (def_bitfield -> DEF opt_signed BITFIELD ID LESS INTLIT GREATER SEMI .)
+    OUTPUT          reduce using rule 24 (def_bitfield -> DEF opt_signed BITFIELD ID LESS INTLIT GREATER SEMI .)
+    LET             reduce using rule 24 (def_bitfield -> DEF opt_signed BITFIELD ID LESS INTLIT GREATER SEMI .)
+    NAMESPACE       reduce using rule 24 (def_bitfield -> DEF opt_signed BITFIELD ID LESS INTLIT GREATER SEMI .)
+    DECODE          reduce using rule 24 (def_bitfield -> DEF opt_signed BITFIELD ID LESS INTLIT GREATER SEMI .)
+
+
+state 109
+
+    (23) def_bitfield -> DEF opt_signed BITFIELD ID LESS INTLIT COLON INTLIT . GREATER SEMI
+
+    GREATER         shift and go to state 128
+
+
+state 110
+
+    (31) def_format -> DEF FORMAT ID LPAREN param_list RPAREN CODELIT SEMI .
+
+    DEF             reduce using rule 31 (def_format -> DEF FORMAT ID LPAREN param_list RPAREN CODELIT SEMI .)
+    OUTPUT          reduce using rule 31 (def_format -> DEF FORMAT ID LPAREN param_list RPAREN CODELIT SEMI .)
+    LET             reduce using rule 31 (def_format -> DEF FORMAT ID LPAREN param_list RPAREN CODELIT SEMI .)
+    NAMESPACE       reduce using rule 31 (def_format -> DEF FORMAT ID LPAREN param_list RPAREN CODELIT SEMI .)
+    DECODE          reduce using rule 31 (def_format -> DEF FORMAT ID LPAREN param_list RPAREN CODELIT SEMI .)
+
+
+state 111
+
+    (74) expr -> LBRACKET list_expr . RBRACKET
+    (76) list_expr -> list_expr . COMMA expr
+
+    RBRACKET        shift and go to state 129
+    COMMA           shift and go to state 130
+
+
+state 112
+
+    (75) list_expr -> expr .
+
+    RBRACKET        reduce using rule 75 (list_expr -> expr .)
+    COMMA           reduce using rule 75 (list_expr -> expr .)
+
+
+state 113
+
+    (77) list_expr -> empty .
+
+    RBRACKET        reduce using rule 77 (list_expr -> empty .)
+    COMMA           reduce using rule 77 (list_expr -> empty .)
+
+
+state 114
+
+    (60) inst -> ID DBLCOLON ID . LPAREN arg_list RPAREN
+
+    LPAREN          shift and go to state 131
+
+
+state 115
+
+    (65) positional_arg_list -> expr .
+
+    COMMA           reduce using rule 65 (positional_arg_list -> expr .)
+    RPAREN          reduce using rule 65 (positional_arg_list -> expr .)
+
+
+state 116
+
+    (67) keyword_arg_list -> keyword_arg .
+
+    COMMA           reduce using rule 67 (keyword_arg_list -> keyword_arg .)
+    RPAREN          reduce using rule 67 (keyword_arg_list -> keyword_arg .)
+
+
+state 117
+
+    (61) arg_list -> positional_arg_list . COMMA keyword_arg_list
+    (62) arg_list -> positional_arg_list .
+    (66) positional_arg_list -> positional_arg_list . COMMA expr
+
+    COMMA           shift and go to state 132
+    RPAREN          reduce using rule 62 (arg_list -> positional_arg_list .)
+
+
+state 118
+
+    (63) arg_list -> keyword_arg_list .
+    (68) keyword_arg_list -> keyword_arg_list . COMMA keyword_arg
+
+    RPAREN          reduce using rule 63 (arg_list -> keyword_arg_list .)
+    COMMA           shift and go to state 133
+
+
+state 119
+
+    (70) expr -> ID .
+    (69) keyword_arg -> ID . EQUALS expr
+
+    COMMA           reduce using rule 70 (expr -> ID .)
+    RPAREN          reduce using rule 70 (expr -> ID .)
+    EQUALS          shift and go to state 134
+
+
+state 120
+
+    (64) positional_arg_list -> empty .
+
+    COMMA           reduce using rule 64 (positional_arg_list -> empty .)
+    RPAREN          reduce using rule 64 (positional_arg_list -> empty .)
+
+
+state 121
+
+    (59) inst -> ID LPAREN arg_list . RPAREN
+
+    RPAREN          shift and go to state 135
+
+
+state 122
+
+    (58) intlit_list -> intlit_list COMMA . INTLIT
+
+    INTLIT          shift and go to state 136
+
+
+state 123
+
+    (49) decode_stmt_list -> decode_stmt decode_stmt_list .
+
+    RBRACE          reduce using rule 49 (decode_stmt_list -> decode_stmt decode_stmt_list .)
+
+
+state 124
+
+    (45) decode_block -> DECODE ID opt_default LBRACE decode_stmt_list RBRACE .
+
+    CPPDIRECTIVE    reduce using rule 45 (decode_block -> DECODE ID opt_default LBRACE decode_stmt_list RBRACE .)
+    FORMAT          reduce using rule 45 (decode_block -> DECODE ID opt_default LBRACE decode_stmt_list RBRACE .)
+    DEFAULT         reduce using rule 45 (decode_block -> DECODE ID opt_default LBRACE decode_stmt_list RBRACE .)
+    INTLIT          reduce using rule 45 (decode_block -> DECODE ID opt_default LBRACE decode_stmt_list RBRACE .)
+    RBRACE          reduce using rule 45 (decode_block -> DECODE ID opt_default LBRACE decode_stmt_list RBRACE .)
+    $end            reduce using rule 45 (decode_block -> DECODE ID opt_default LBRACE decode_stmt_list RBRACE .)
+
+
+state 125
+
+    (51) decode_stmt -> FORMAT push_format_id . LBRACE decode_stmt_list RBRACE
+
+    LBRACE          shift and go to state 137
+
+
+state 126
+
+    (52) push_format_id -> ID .
+
+    LBRACE          reduce using rule 52 (push_format_id -> ID .)
+
+
+state 127
+
+    (53) decode_stmt -> case_label COLON . decode_block
+    (54) decode_stmt -> case_label COLON . inst SEMI
+    (45) decode_block -> . DECODE ID opt_default LBRACE decode_stmt_list RBRACE
+    (59) inst -> . ID LPAREN arg_list RPAREN
+    (60) inst -> . ID DBLCOLON ID LPAREN arg_list RPAREN
+
+    DECODE          shift and go to state 46
+    ID              shift and go to state 81
+
+    decode_block                   shift and go to state 138
+    inst                           shift and go to state 139
+
+state 128
+
+    (23) def_bitfield -> DEF opt_signed BITFIELD ID LESS INTLIT COLON INTLIT GREATER . SEMI
+
+    SEMI            shift and go to state 140
+
+
+state 129
+
+    (74) expr -> LBRACKET list_expr RBRACKET .
+
+    RBRACKET        reduce using rule 74 (expr -> LBRACKET list_expr RBRACKET .)
+    COMMA           reduce using rule 74 (expr -> LBRACKET list_expr RBRACKET .)
+    RPAREN          reduce using rule 74 (expr -> LBRACKET list_expr RBRACKET .)
+
+
+state 130
+
+    (76) list_expr -> list_expr COMMA . expr
+    (70) expr -> . ID
+    (71) expr -> . INTLIT
+    (72) expr -> . STRLIT
+    (73) expr -> . CODELIT
+    (74) expr -> . LBRACKET list_expr RBRACKET
+
+    ID              shift and go to state 97
+    INTLIT          shift and go to state 96
+    STRLIT          shift and go to state 92
+    CODELIT         shift and go to state 95
+    LBRACKET        shift and go to state 94
+
+    expr                           shift and go to state 141
+
+state 131
+
+    (60) inst -> ID DBLCOLON ID LPAREN . arg_list RPAREN
+    (61) arg_list -> . positional_arg_list COMMA keyword_arg_list
+    (62) arg_list -> . positional_arg_list
+    (63) arg_list -> . keyword_arg_list
+    (64) positional_arg_list -> . empty
+    (65) positional_arg_list -> . expr
+    (66) positional_arg_list -> . positional_arg_list COMMA expr
+    (67) keyword_arg_list -> . keyword_arg
+    (68) keyword_arg_list -> . keyword_arg_list COMMA keyword_arg
+    (78) empty -> .
+    (70) expr -> . ID
+    (71) expr -> . INTLIT
+    (72) expr -> . STRLIT
+    (73) expr -> . CODELIT
+    (74) expr -> . LBRACKET list_expr RBRACKET
+    (69) keyword_arg -> . ID EQUALS expr
+
+    COMMA           reduce using rule 78 (empty -> .)
+    RPAREN          reduce using rule 78 (empty -> .)
+    ID              shift and go to state 119
+    INTLIT          shift and go to state 96
+    STRLIT          shift and go to state 92
+    CODELIT         shift and go to state 95
+    LBRACKET        shift and go to state 94
+
+    expr                           shift and go to state 115
+    keyword_arg                    shift and go to state 116
+    positional_arg_list            shift and go to state 117
+    keyword_arg_list               shift and go to state 118
+    empty                          shift and go to state 120
+    arg_list                       shift and go to state 142
+
+state 132
+
+    (61) arg_list -> positional_arg_list COMMA . keyword_arg_list
+    (66) positional_arg_list -> positional_arg_list COMMA . expr
+    (67) keyword_arg_list -> . keyword_arg
+    (68) keyword_arg_list -> . keyword_arg_list COMMA keyword_arg
+    (70) expr -> . ID
+    (71) expr -> . INTLIT
+    (72) expr -> . STRLIT
+    (73) expr -> . CODELIT
+    (74) expr -> . LBRACKET list_expr RBRACKET
+    (69) keyword_arg -> . ID EQUALS expr
+
+    ID              shift and go to state 119
+    INTLIT          shift and go to state 96
+    STRLIT          shift and go to state 92
+    CODELIT         shift and go to state 95
+    LBRACKET        shift and go to state 94
+
+    keyword_arg_list               shift and go to state 144
+    keyword_arg                    shift and go to state 116
+    expr                           shift and go to state 143
+
+state 133
+
+    (68) keyword_arg_list -> keyword_arg_list COMMA . keyword_arg
+    (69) keyword_arg -> . ID EQUALS expr
+
+    ID              shift and go to state 146
+
+    keyword_arg                    shift and go to state 145
+
+state 134
+
+    (69) keyword_arg -> ID EQUALS . expr
+    (70) expr -> . ID
+    (71) expr -> . INTLIT
+    (72) expr -> . STRLIT
+    (73) expr -> . CODELIT
+    (74) expr -> . LBRACKET list_expr RBRACKET
+
+    ID              shift and go to state 97
+    INTLIT          shift and go to state 96
+    STRLIT          shift and go to state 92
+    CODELIT         shift and go to state 95
+    LBRACKET        shift and go to state 94
+
+    expr                           shift and go to state 147
+
+state 135
+
+    (59) inst -> ID LPAREN arg_list RPAREN .
+
+    LBRACE          reduce using rule 59 (inst -> ID LPAREN arg_list RPAREN .)
+    SEMI            reduce using rule 59 (inst -> ID LPAREN arg_list RPAREN .)
+
+
+state 136
+
+    (58) intlit_list -> intlit_list COMMA INTLIT .
+
+    COMMA           reduce using rule 58 (intlit_list -> intlit_list COMMA INTLIT .)
+    COLON           reduce using rule 58 (intlit_list -> intlit_list COMMA INTLIT .)
+
+
+state 137
+
+    (51) decode_stmt -> FORMAT push_format_id LBRACE . decode_stmt_list RBRACE
+    (48) decode_stmt_list -> . decode_stmt
+    (49) decode_stmt_list -> . decode_stmt decode_stmt_list
+    (50) decode_stmt -> . CPPDIRECTIVE
+    (51) decode_stmt -> . FORMAT push_format_id LBRACE decode_stmt_list RBRACE
+    (53) decode_stmt -> . case_label COLON decode_block
+    (54) decode_stmt -> . case_label COLON inst SEMI
+    (55) case_label -> . intlit_list
+    (56) case_label -> . DEFAULT
+    (57) intlit_list -> . INTLIT
+    (58) intlit_list -> . intlit_list COMMA INTLIT
+
+    CPPDIRECTIVE    shift and go to state 106
+    FORMAT          shift and go to state 103
+    DEFAULT         shift and go to state 104
+    INTLIT          shift and go to state 107
+
+    case_label                     shift and go to state 105
+    decode_stmt_list               shift and go to state 148
+    intlit_list                    shift and go to state 100
+    decode_stmt                    shift and go to state 101
+
+state 138
+
+    (53) decode_stmt -> case_label COLON decode_block .
+
+    CPPDIRECTIVE    reduce using rule 53 (decode_stmt -> case_label COLON decode_block .)
+    FORMAT          reduce using rule 53 (decode_stmt -> case_label COLON decode_block .)
+    DEFAULT         reduce using rule 53 (decode_stmt -> case_label COLON decode_block .)
+    INTLIT          reduce using rule 53 (decode_stmt -> case_label COLON decode_block .)
+    RBRACE          reduce using rule 53 (decode_stmt -> case_label COLON decode_block .)
+
+
+state 139
+
+    (54) decode_stmt -> case_label COLON inst . SEMI
+
+    SEMI            shift and go to state 149
+
+
+state 140
+
+    (23) def_bitfield -> DEF opt_signed BITFIELD ID LESS INTLIT COLON INTLIT GREATER SEMI .
+
+    DEF             reduce using rule 23 (def_bitfield -> DEF opt_signed BITFIELD ID LESS INTLIT COLON INTLIT GREATER SEMI .)
+    OUTPUT          reduce using rule 23 (def_bitfield -> DEF opt_signed BITFIELD ID LESS INTLIT COLON INTLIT GREATER SEMI .)
+    LET             reduce using rule 23 (def_bitfield -> DEF opt_signed BITFIELD ID LESS INTLIT COLON INTLIT GREATER SEMI .)
+    NAMESPACE       reduce using rule 23 (def_bitfield -> DEF opt_signed BITFIELD ID LESS INTLIT COLON INTLIT GREATER SEMI .)
+    DECODE          reduce using rule 23 (def_bitfield -> DEF opt_signed BITFIELD ID LESS INTLIT COLON INTLIT GREATER SEMI .)
+
+
+state 141
+
+    (76) list_expr -> list_expr COMMA expr .
+
+    RBRACKET        reduce using rule 76 (list_expr -> list_expr COMMA expr .)
+    COMMA           reduce using rule 76 (list_expr -> list_expr COMMA expr .)
+
+
+state 142
+
+    (60) inst -> ID DBLCOLON ID LPAREN arg_list . RPAREN
+
+    RPAREN          shift and go to state 150
+
+
+state 143
+
+    (66) positional_arg_list -> positional_arg_list COMMA expr .
+
+    COMMA           reduce using rule 66 (positional_arg_list -> positional_arg_list COMMA expr .)
+    RPAREN          reduce using rule 66 (positional_arg_list -> positional_arg_list COMMA expr .)
+
+
+state 144
+
+    (61) arg_list -> positional_arg_list COMMA keyword_arg_list .
+    (68) keyword_arg_list -> keyword_arg_list . COMMA keyword_arg
+
+    RPAREN          reduce using rule 61 (arg_list -> positional_arg_list COMMA keyword_arg_list .)
+    COMMA           shift and go to state 133
+
+
+state 145
+
+    (68) keyword_arg_list -> keyword_arg_list COMMA keyword_arg .
+
+    COMMA           reduce using rule 68 (keyword_arg_list -> keyword_arg_list COMMA keyword_arg .)
+    RPAREN          reduce using rule 68 (keyword_arg_list -> keyword_arg_list COMMA keyword_arg .)
+
+
+state 146
+
+    (69) keyword_arg -> ID . EQUALS expr
+
+    EQUALS          shift and go to state 134
+
+
+state 147
+
+    (69) keyword_arg -> ID EQUALS expr .
+
+    COMMA           reduce using rule 69 (keyword_arg -> ID EQUALS expr .)
+    RPAREN          reduce using rule 69 (keyword_arg -> ID EQUALS expr .)
+
+
+state 148
+
+    (51) decode_stmt -> FORMAT push_format_id LBRACE decode_stmt_list . RBRACE
+
+    RBRACE          shift and go to state 151
+
+
+state 149
+
+    (54) decode_stmt -> case_label COLON inst SEMI .
+
+    CPPDIRECTIVE    reduce using rule 54 (decode_stmt -> case_label COLON inst SEMI .)
+    FORMAT          reduce using rule 54 (decode_stmt -> case_label COLON inst SEMI .)
+    DEFAULT         reduce using rule 54 (decode_stmt -> case_label COLON inst SEMI .)
+    INTLIT          reduce using rule 54 (decode_stmt -> case_label COLON inst SEMI .)
+    RBRACE          reduce using rule 54 (decode_stmt -> case_label COLON inst SEMI .)
+
+
+state 150
+
+    (60) inst -> ID DBLCOLON ID LPAREN arg_list RPAREN .
+
+    LBRACE          reduce using rule 60 (inst -> ID DBLCOLON ID LPAREN arg_list RPAREN .)
+    SEMI            reduce using rule 60 (inst -> ID DBLCOLON ID LPAREN arg_list RPAREN .)
+
+
+state 151
+
+    (51) decode_stmt -> FORMAT push_format_id LBRACE decode_stmt_list RBRACE .
+
+    CPPDIRECTIVE    reduce using rule 51 (decode_stmt -> FORMAT push_format_id LBRACE decode_stmt_list RBRACE .)
+    FORMAT          reduce using rule 51 (decode_stmt -> FORMAT push_format_id LBRACE decode_stmt_list RBRACE .)
+    DEFAULT         reduce using rule 51 (decode_stmt -> FORMAT push_format_id LBRACE decode_stmt_list RBRACE .)
+    INTLIT          reduce using rule 51 (decode_stmt -> FORMAT push_format_id LBRACE decode_stmt_list RBRACE .)
+    RBRACE          reduce using rule 51 (decode_stmt -> FORMAT push_format_id LBRACE decode_stmt_list RBRACE .)
+

@@ -1,0 +1,112 @@
+digraph loop_42 { 
+{
+0 [color=red, label="0"];
+
+1 [color=red, label="1"];
+
+2 [color=black, label="2"];
+
+3 [color=black, label="3"];
+
+4 [color=black, label="4"];
+
+5 [color=black, label="5"];
+
+6 [color=black, label="6"];
+
+7 [color=black, label="7"];
+
+8 [color=blue, label="8"];
+
+9 [color=blue, label="9"];
+
+10 [color=black, label="10"];
+
+11 [color=black, label="11"];
+
+12 [color=black, label="12"];
+
+13 [color=black, label="13"];
+
+14 [color=black, label="14"];
+
+15 [color=blue, label="15"];
+
+16 [color=blue, label="16"];
+
+18 [color=black, label="18"];
+
+19 [color=gray, label="gVar1"];
+
+22 [color=gray, label="gPtr1"];
+
+25 [color=gray, label="ConstInt-1"];
+
+26 [color=gray, label="gVar2"];
+
+29 [color=gray, label="ConstInt1"];
+
+30 [color=gray, label="ConstInt48"];
+
+31 [color=gray, label="ConstInt255"];
+
+32 [color=gray, label="ConstInt3"];
+
+33 [color=gray, label="ConstInt0"];
+
+34 [color=gray, label="ConstInt2"];
+
+35 [color=gray, label="ConstInt32"];
+
+36 [color=black, label="36"];
+
+137 [color=gray, label="gPtr2"];
+
+40 [color=black, label="40"];
+
+41 [color=gray, label="dmy_CGRAst_1"];
+2 -> 0 [style=bold, color=red, label=1] 
+19 -> 0 [color=orange, label=4] 
+22 -> 1 [color=orange, label=4] 
+0 -> 2
+25 -> 2 [color=gray]
+26 -> 3 [color=orange, label=4] 
+2 -> 3
+3 -> 4
+29 -> 4 [color=gray]
+4 -> 5
+30 -> 5 [color=gray]
+31 -> 6 [color=gray]
+5 -> 6
+1 -> 7
+29 -> 7 [color=gray]
+6 -> 9
+1 -> 8
+2 -> 10
+32 -> 10 [color=gray]
+10 -> 11
+33 -> 11 [color=gray]
+2 -> 12
+33 -> 12 [color=gray]
+12 -> 13
+11 -> 13
+1 -> 14
+34 -> 14 [color=gray]
+35 -> 16 [color=gray]
+14 -> 36
+7 -> 36
+13 -> 36 [color=green ]
+36 -> 1 [style=bold, color=red, label=1] 
+0 -> 18
+29 -> 18 [color=gray]
+36 -> 137 [color=orange, label=4] 
+7 -> 40
+41 -> 40 [color=gray]
+12 -> 40 [color=green ]
+40 -> 15
+8 -> 9 [style=dotted, color=blue, label="1"]
+15 -> 16 [style=dotted, color=blue, label="1"]
+
+}
+
+}

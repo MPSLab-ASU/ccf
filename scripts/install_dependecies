@@ -1,0 +1,199 @@
+#!/bin/bash
+# Author: Shail Dave
+# Last Modified: April 30, 2018
+# This script installs packages necessary for 
+# code generation and simulation through CCF
+# IMPORTANT!! This installation is non-interactive
+# So, it will install all packages needed.
+
+path="$(pwd)"
+
+if [[ "$OSTYPE" == "linux-gnu" ]]; then
+		sudo apt-get update
+		sudo apt-get upgrade
+
+		# =============================================================
+		# Install dependecies for plugin-llvm-gold
+		# linux-headers-$(uname -r) cmake bash csh gawk automake libtool bison flex libncurses5-dev
+		# git g++ gcc
+		# apt-file texinfo texi2html
+
+		if [ $(dpkg-query -W -f='${Status}' linux-headers-$(uname -r) 2>/dev/null | grep -c "ok installed") -eq 0 ];
+		then
+			sudo apt-get install -y linux-headers-$(uname -r);
+		fi
+
+		if [ $(dpkg-query -W -f='${Status}' cmake 2>/dev/null | grep -c "ok installed") -eq 0 ];
+		then
+			sudo apt-get install -y cmake;
+		fi
+   
+    cmake_version="$(cmake -version | grep -Eo '[+-]?[0-9]+([.][0-9]+)?' | head -1)"
+    if [ $(echo "$cmake_$version > 3.4" | bc) -eq 0 ];
+    then
+      echo "need to install";
+      mkdir $path/software
+      cd $path/software
+      wget https://cmake.org/files/v3.11/cmake-3.11.1.tar.gz
+      tar xvzf cmake-3.11.1.tar.gz
+      rm cmake-3.11.1.tar.gz
+      cd cmake-3.11.1/
+      ./configure
+      sudo make
+      sudo make install
+    fi
+
+		if [ $(dpkg-query -W -f='${Status}' bash 2>/dev/null | grep -c "ok installed") -eq 0 ];
+		then
+			sudo apt-get install -y bash;
+		fi
+
+		if [ $(dpkg-query -W -f='${Status}' csh 2>/dev/null | grep -c "ok installed") -eq 0 ];
+		then
+			sudo apt-get install -y csh;
+		fi
+
+		if [ $(dpkg-query -W -f='${Status}' gawk 2>/dev/null | grep -c "ok installed") -eq 0 ];
+		then
+			sudo apt-get install -y gawk;
+		fi
+
+		if [ $(dpkg-query -W -f='${Status}' automake 2>/dev/null | grep -c "ok installed") -eq 0 ];
+		then
+			sudo apt-get install -y automake;
+		fi
+
+		if [ $(dpkg-query -W -f='${Status}' libtool 2>/dev/null | grep -c "ok installed") -eq 0 ];
+		then
+			sudo apt-get install -y libtool;
+		fi
+
+		if [ $(dpkg-query -W -f='${Status}' bison 2>/dev/null | grep -c "ok installed") -eq 0 ];
+		then
+			sudo apt-get install -y bison;
+		fi
+
+		if [ $(dpkg-query -W -f='${Status}' flex 2>/dev/null | grep -c "ok installed") -eq 0 ];
+		then
+			sudo apt-get install -y flex;
+		fi
+
+		if [ $(dpkg-query -W -f='${Status}' libncurses5-dev 2>/dev/null | grep -c "ok installed") -eq 0 ];
+		then
+			sudo apt-get install -y libncurses5-dev;
+		fi
+
+		if [ $(dpkg-query -W -f='${Status}' apt-file 2>/dev/null | grep -c "ok installed") -eq 0 ];
+		then
+			sudo apt-get install -y apt-file;
+		fi
+
+		if [ $(dpkg-query -W -f='${Status}' texinfo 2>/dev/null | grep -c "ok installed") -eq 0 ];
+		then
+			sudo apt-get install -y texinfo;
+		fi
+
+		if [ $(dpkg-query -W -f='${Status}' texi2html 2>/dev/null | grep -c "ok installed") -eq 0 ];
+		then
+			sudo apt-get install -y texi2html;
+		fi
+
+		if [ $(sudo apt-file search makeinfo | grep -c "makeinfo") -eq 0 ];
+		then
+			sudo apt-file update;
+		fi
+
+		# =============================================================
+		# Install dependecies for llvm
+
+		if [ $(dpkg-query -W -f='${Status}' subversion 2>/dev/null | grep -c "ok installed") -eq 0 ];
+		then
+			sudo apt-get install -y subversion;
+		fi
+
+		if [ $(dpkg-query -W -f='${Status}' autoconf 2>/dev/null | grep -c "ok installed") -eq 0 ];
+		then
+			sudo apt-get install -y autoconf;
+		fi
+
+		if [ $(dpkg-query -W -f='${Status}' lib32stdc++6 2>/dev/null | grep -c "ok installed") -eq 0 ];
+		then
+			sudo apt-get install -y lib32stdc++6;
+		fi
+
+		if [ $(dpkg-query -W -f='${Status}' libxml2-dev 2>/dev/null | grep -c "ok installed") -eq 0 ];
+		then
+			sudo apt-get install -y libxml2-dev;
+		fi
+
+		if [ $(dpkg-query -W -f='${Status}' libtinfo-dev 2>/dev/null | grep -c "ok installed") -eq 0 ];
+		then
+			sudo apt-get install -y libtinfo-dev;
+		fi
+
+		if [ $(dpkg-query -W -f='${Status}' gcc-arm-linux-gnueabi 2>/dev/null | grep -c "ok installed") -eq 0 ];
+		then
+				sudo apt-get install -y gcc-arm-linux-gnueabi;
+		fi
+
+		# =============================================================
+		# Install dependecies for gem5
+		# mercurial scons swig m4 python python-dev
+	  # libgoogle-perftools-devzlib1g-dev gcc g++ git
+
+		if [ $(dpkg-query -W -f='${Status}' mercurial 2>/dev/null | grep -c "ok installed") -eq 0 ];
+		then
+		 sudo apt-get install -y mercurial;
+		fi
+
+		if [ $(dpkg-query -W -f='${Status}' scons 2>/dev/null | grep -c "ok installed") -eq 0 ];
+		then
+		 sudo apt-get install -y scons;
+		fi
+
+		if [ $(dpkg-query -W -f='${Status}' swig 2>/dev/null | grep -c "ok installed") -eq 0 ];
+		then
+		 sudo apt-get install -y swig;
+		fi
+
+		if [ $(dpkg-query -W -f='${Status}' m4 2>/dev/null | grep -c "ok installed") -eq 0 ];
+		then
+			sudo apt-get install -y m4;
+		fi
+
+		if [ $(dpkg-query -W -f='${Status}' python 2>/dev/null | grep -c "ok installed") -eq 0 ];
+		then
+			sudo apt-get install -y python;
+		fi
+
+		if [ $(dpkg-query -W -f='${Status}' python-dev 2>/dev/null | grep -c "ok installed") -eq 0 ];
+		then
+			sudo apt-get install -y python-dev;
+		fi
+
+		if [ $(dpkg-query -W -f='${Status}' libgoogle-perftools-dev 2>/dev/null | grep -c "ok installed") -eq 0 ];
+		then
+			 	sudo apt-get install -y libgoogle-perftools-dev;
+		fi
+
+
+		if [ $(dpkg-query -W -f='${Status}' zlib1g-dev 2>/dev/null | grep -c "ok installed") -eq 0 ];
+		then
+				sudo apt-get install -y zlib1g-dev;
+		fi
+
+		if [ $(dpkg-query -W -f='${Status}' gcc 2>/dev/null | grep -c "ok installed") -eq 0 ];
+		then
+				sudo apt-get install -y gcc;
+		fi
+
+		if [ $(dpkg-query -W -f='${Status}' g++ 2>/dev/null | grep -c "ok installed") -eq 0 ];
+		then
+				sudo apt-get install -y g++;
+		fi
+   
+   	sudo apt-get update
+		sudo apt-get upgrade
+
+
+fi #end OS linux-gnu

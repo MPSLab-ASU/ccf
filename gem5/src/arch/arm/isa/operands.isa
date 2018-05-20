@@ -1,0 +1,281 @@
+// -*- mode:c++ -*-
+// Copyright (c) 2010 ARM Limited
+// All rights reserved
+//
+// The license below extends only to copyright in the software and shall
+// not be construed as granting a license to any other intellectual
+// property including but not limited to intellectual property relating
+// to a hardware implementation of the functionality of the software
+// licensed hereunder.  You may use the software subject to the license
+// terms below provided that you ensure that this notice is replicated
+// unmodified and in its entirety in all distributions of the software,
+// modified or unmodified, in source code or in binary form.
+//
+// Copyright (c) 2007-2008 The Florida State University
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met: redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer;
+// redistributions in binary form must reproduce the above copyright
+// notice, this list of conditions and the following disclaimer in the
+// documentation and/or other materials provided with the distribution;
+// neither the name of the copyright holders nor the names of its
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+// Authors: Stephen Hines
+
+def operand_types {{
+    'sb' : 'int8_t',
+    'ub' : 'uint8_t',
+    'sh' : 'int16_t',
+    'uh' : 'uint16_t',
+    'sw' : 'int32_t',
+    'uw' : 'uint32_t',
+    'ud' : 'uint64_t',
+    'tud' : 'Twin64_t',
+    'sf' : 'float',
+    'df' : 'double'
+}};
+
+let {{
+    maybePCRead = '''
+        ((%(reg_idx)s == PCReg) ? readPC(xc) : xc->%(func)s(this, %(op_idx)s))
+    '''
+    maybeAlignedPCRead = '''
+        ((%(reg_idx)s == PCReg) ? (roundDown(readPC(xc), 4)) :
+         xc->%(func)s(this, %(op_idx)s))
+    '''
+    maybePCWrite = '''
+        ((%(reg_idx)s == PCReg) ? setNextPC(xc, %(final_val)s) :
+         xc->%(func)s(this, %(op_idx)s, %(final_val)s))
+    '''
+    maybeIWPCWrite = '''
+        ((%(reg_idx)s == PCReg) ? setIWNextPC(xc, %(final_val)s) :
+         xc->%(func)s(this, %(op_idx)s, %(final_val)s))
+    '''
+    maybeAIWPCWrite = '''
+        if (%(reg_idx)s == PCReg) {
+            bool thumb = THUMB;
+            if (thumb) {
+                setNextPC(xc, %(final_val)s);
+            } else {
+                setIWNextPC(xc, %(final_val)s);
+            }
+        } else {
+            xc->%(func)s(this, %(op_idx)s, %(final_val)s);
+        }
+    '''
+
+    #PCState operands need to have a sorting index (the number at the end)
+    #less than all the integer registers which might update the PC. That way
+    #if the flag bits of the pc state are updated and a branch happens through
+    #R15, the updates are layered properly and the R15 update isn't lost.
+    srtNormal = 5
+    srtCpsr = 4
+    srtBase = 3
+    srtPC = 2
+    srtMode = 1
+    srtEPC = 0
+
+    def floatReg(idx):
+        return ('FloatReg', 'sf', idx, 'IsFloating', srtNormal)
+
+    def intReg(idx):
+        return ('IntReg', 'uw', idx, 'IsInteger', srtNormal,
+                maybePCRead, maybePCWrite)
+
+    def intRegNPC(idx):
+        return ('IntReg', 'uw', idx, 'IsInteger', srtNormal)
+
+    def intRegAPC(idx, id = srtNormal):
+        return ('IntReg', 'uw', idx, 'IsInteger', id,
+                maybeAlignedPCRead, maybePCWrite)
+
+    def intRegIWPC(idx):
+        return ('IntReg', 'uw', idx, 'IsInteger', srtNormal,
+                maybePCRead, maybeIWPCWrite)
+
+    def intRegAIWPC(idx):
+        return ('IntReg', 'uw', idx, 'IsInteger', srtNormal,
+                maybePCRead, maybeAIWPCWrite)
+
+    def intRegCC(idx):
+        return ('IntReg', 'uw', idx, None, srtNormal)
+
+    def cntrlReg(idx, id = srtNormal, type = 'uw'):
+        return ('ControlReg', type, idx, None, id)
+
+    def cntrlRegNC(idx, id = srtNormal, type = 'uw'):
+        return ('ControlReg', type, idx, None, id)
+
+    def pcStateReg(idx, id):
+        return ('PCState', 'uw', idx, (None, None, 'IsControl'), id)
+}};
+
+def operands {{
+    #Abstracted integer reg operands
+    'Dest': intReg('dest'),
+    'IWDest': intRegIWPC('dest'),
+    'AIWDest': intRegAIWPC('dest'),
+    'Dest2': intReg('dest2'),
+    'Result': intReg('result'),
+    'Base': intRegAPC('base', id = srtBase),
+    'Index': intReg('index'),
+    'Shift': intReg('shift'),
+    'Op1': intReg('op1'),
+    'Op2': intReg('op2'),
+    'Op3': intReg('op3'),
+    'Reg0': intReg('reg0'),
+    'Reg1': intReg('reg1'),
+    'Reg2': intReg('reg2'),
+    'Reg3': intReg('reg3'),
+
+    #Fixed index integer reg operands
+    'SpMode': intRegNPC('intRegInMode((OperatingMode)regMode, INTREG_SP)'),
+    'LR': intRegNPC('INTREG_LR'),
+    'R7': intRegNPC('7'),
+    # First four arguments are passed in registers
+    'R0': intRegNPC('0'),
+    'R1': intRegNPC('1'),
+    'R2': intRegNPC('2'),
+    'R3': intRegNPC('3'),
+
+    #Pseudo integer condition code registers
+    'CondCodesNZ': intRegCC('INTREG_CONDCODES_NZ'),
+    'CondCodesC': intRegCC('INTREG_CONDCODES_C'),
+    'CondCodesV': intRegCC('INTREG_CONDCODES_V'),
+    'CondCodesGE': intRegCC('INTREG_CONDCODES_GE'),
+    'OptCondCodesNZ': intRegCC(
+            '''(condCode == COND_AL || condCode == COND_UC ||
+                condCode == COND_CC || condCode == COND_CS ||
+                condCode == COND_VS || condCode == COND_VC) ?
+               INTREG_ZERO : INTREG_CONDCODES_NZ'''),
+    'OptCondCodesC': intRegCC(
+            '''(condCode == COND_HI || condCode == COND_LS ||
+                condCode == COND_CS || condCode == COND_CC) ?
+               INTREG_CONDCODES_C : INTREG_ZERO'''),
+    'OptShiftRmCondCodesC': intRegCC(
+            '''(condCode == COND_HI || condCode == COND_LS ||
+                condCode == COND_CS || condCode == COND_CC ||
+                shiftType == ROR) ?
+               INTREG_CONDCODES_C : INTREG_ZERO'''),
+    'OptCondCodesV': intRegCC(
+            '''(condCode == COND_VS || condCode == COND_VC ||
+                condCode == COND_GE || condCode == COND_LT ||
+                condCode == COND_GT || condCode == COND_LE) ?
+               INTREG_CONDCODES_V : INTREG_ZERO'''),
+    'FpCondCodes': intRegCC('INTREG_FPCONDCODES'),
+
+    #Abstracted floating point reg operands
+    'FpDest': floatReg('(dest + 0)'),
+    'FpDestP0': floatReg('(dest + 0)'),
+    'FpDestP1': floatReg('(dest + 1)'),
+    'FpDestP2': floatReg('(dest + 2)'),
+    'FpDestP3': floatReg('(dest + 3)'),
+    'FpDestP4': floatReg('(dest + 4)'),
+    'FpDestP5': floatReg('(dest + 5)'),
+    'FpDestP6': floatReg('(dest + 6)'),
+    'FpDestP7': floatReg('(dest + 7)'),
+    'FpDestS0P0': floatReg('(dest + step * 0 + 0)'),
+    'FpDestS0P1': floatReg('(dest + step * 0 + 1)'),
+    'FpDestS1P0': floatReg('(dest + step * 1 + 0)'),
+    'FpDestS1P1': floatReg('(dest + step * 1 + 1)'),
+    'FpDestS2P0': floatReg('(dest + step * 2 + 0)'),
+    'FpDestS2P1': floatReg('(dest + step * 2 + 1)'),
+    'FpDestS3P0': floatReg('(dest + step * 3 + 0)'),
+    'FpDestS3P1': floatReg('(dest + step * 3 + 1)'),
+
+    'FpDest2': floatReg('(dest2 + 0)'),
+    'FpDest2P0': floatReg('(dest2 + 0)'),
+    'FpDest2P1': floatReg('(dest2 + 1)'),
+    'FpDest2P2': floatReg('(dest2 + 2)'),
+    'FpDest2P3': floatReg('(dest2 + 3)'),
+
+    'FpOp1': floatReg('(op1 + 0)'),
+    'FpOp1P0': floatReg('(op1 + 0)'),
+    'FpOp1P1': floatReg('(op1 + 1)'),
+    'FpOp1P2': floatReg('(op1 + 2)'),
+    'FpOp1P3': floatReg('(op1 + 3)'),
+    'FpOp1P4': floatReg('(op1 + 4)'),
+    'FpOp1P5': floatReg('(op1 + 5)'),
+    'FpOp1P6': floatReg('(op1 + 6)'),
+    'FpOp1P7': floatReg('(op1 + 7)'),
+    'FpOp1S0P0': floatReg('(op1 + step * 0 + 0)'),
+    'FpOp1S0P1': floatReg('(op1 + step * 0 + 1)'),
+    'FpOp1S1P0': floatReg('(op1 + step * 1 + 0)'),
+    'FpOp1S1P1': floatReg('(op1 + step * 1 + 1)'),
+    'FpOp1S2P0': floatReg('(op1 + step * 2 + 0)'),
+    'FpOp1S2P1': floatReg('(op1 + step * 2 + 1)'),
+    'FpOp1S3P0': floatReg('(op1 + step * 3 + 0)'),
+    'FpOp1S3P1': floatReg('(op1 + step * 3 + 1)'),
+
+    'FpOp2': floatReg('(op2 + 0)'),
+    'FpOp2P0': floatReg('(op2 + 0)'),
+    'FpOp2P1': floatReg('(op2 + 1)'),
+    'FpOp2P2': floatReg('(op2 + 2)'),
+    'FpOp2P3': floatReg('(op2 + 3)'),
+
+    #Abstracted control reg operands
+    'MiscDest': cntrlReg('dest'),
+    'MiscOp1': cntrlReg('op1'),
+
+    #Fixed index control regs
+    'Cpsr': cntrlReg('MISCREG_CPSR', srtCpsr),
+    'CpsrQ': cntrlReg('MISCREG_CPSR_Q', srtCpsr),
+    'Spsr': cntrlRegNC('MISCREG_SPSR'),
+    'Fpsr': cntrlRegNC('MISCREG_FPSR'),
+    'Fpsid': cntrlRegNC('MISCREG_FPSID'),
+    'Fpscr': cntrlRegNC('MISCREG_FPSCR'),
+    'FpscrQc': cntrlRegNC('MISCREG_FPSCR_QC'),
+    'FpscrExc': cntrlRegNC('MISCREG_FPSCR_EXC'),
+    'Cpacr': cntrlReg('MISCREG_CPACR'),
+    'Fpexc': cntrlRegNC('MISCREG_FPEXC'),
+    'Sctlr': cntrlRegNC('MISCREG_SCTLR'),
+    'SevMailbox': cntrlRegNC('MISCREG_SEV_MAILBOX'),
+    'LLSCLock': cntrlRegNC('MISCREG_LOCKFLAG'),
+
+    #Register fields for microops
+    'URa' : intReg('ura'),
+    'IWRa' : intRegIWPC('ura'),
+    'Fa' : floatReg('ura'),
+    'URb' : intReg('urb'),
+    'URc' : intReg('urc'),
+
+    #Memory Operand
+    'Mem': ('Mem', 'uw', None, ('IsMemRef', 'IsLoad', 'IsStore'), srtNormal),
+
+    #PCState fields
+    'PC': pcStateReg('instPC', srtPC),
+    'NPC': pcStateReg('instNPC', srtPC),
+    'pNPC': pcStateReg('instNPC', srtEPC),
+    'IWNPC': pcStateReg('instIWNPC', srtPC),
+    'Thumb': pcStateReg('thumb', srtPC),
+    'NextThumb': pcStateReg('nextThumb', srtMode),
+    'NextJazelle': pcStateReg('nextJazelle', srtMode),
+    'NextItState': pcStateReg('nextItstate', srtMode),
+    'Itstate': pcStateReg('itstate', srtMode),
+
+    #Register operands depending on a field in the instruction encoding. These
+    #should be avoided since they may not be portable across different
+    #encodings of the same instruction.
+    'Rd': intReg('RD'),
+    'Rm': intReg('RM'),
+    'Rs': intReg('RS'),
+    'Rn': intReg('RN'),
+    'Rt': intReg('RT')
+}};

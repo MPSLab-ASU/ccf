@@ -1,0 +1,5 @@
+add_subdirectory(Applications)
+add_subdirectory(Benchmarks)
+if(NOT TEST_SUITE_BENCHMARKING_ONLY)
+  add_subdirectory(UnitTests)
+endif()

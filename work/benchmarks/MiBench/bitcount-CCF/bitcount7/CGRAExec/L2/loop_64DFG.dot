@@ -1,0 +1,186 @@
+digraph loop_64 { 
+{
+0 [color=red, label="0"];
+
+1 [color=red, label="1"];
+
+2 [color=red, label="2"];
+
+3 [color=black, label="3"];
+
+4 [color=black, label="4"];
+
+5 [color=black, label="5"];
+
+6 [color=black, label="6"];
+
+7 [color=black, label="7"];
+
+8 [color=blue, label="8"];
+
+9 [color=blue, label="9"];
+
+10 [color=black, label="10"];
+
+11 [color=black, label="11"];
+
+12 [color=black, label="12"];
+
+13 [color=blue, label="13"];
+
+14 [color=blue, label="14"];
+
+15 [color=black, label="15"];
+
+16 [color=black, label="16"];
+
+17 [color=blue, label="17"];
+
+18 [color=blue, label="18"];
+
+19 [color=black, label="19"];
+
+20 [color=black, label="20"];
+
+21 [color=black, label="21"];
+
+22 [color=blue, label="22"];
+
+23 [color=blue, label="23"];
+
+24 [color=black, label="24"];
+
+25 [color=black, label="25"];
+
+26 [color=black, label="26"];
+
+27 [color=black, label="27"];
+
+28 [color=black, label="28"];
+
+29 [color=black, label="29"];
+
+30 [color=black, label="30"];
+
+31 [color=black, label="31"];
+
+32 [color=gray, label="gVar4"];
+
+35 [color=gray, label="ConstInt0"];
+
+36 [color=gray, label="ConstInt8"];
+
+37 [color=gray, label="ConstInt16"];
+
+38 [color=gray, label="ConstInt24"];
+
+39 [color=gray, label="ConstInt255"];
+
+40 [color=gray, label="bits"];
+
+41 [color=black, label="idxprom1"];
+
+42 [color=gray, label="ConstInt1"];
+
+43 [color=gray, label="ConstInt255"];
+
+44 [color=gray, label="bits"];
+
+45 [color=black, label="idxprom2"];
+
+46 [color=gray, label="ConstInt1"];
+
+47 [color=gray, label="ConstInt255"];
+
+48 [color=gray, label="bits"];
+
+49 [color=black, label="idxprom3"];
+
+50 [color=gray, label="ConstInt1"];
+
+51 [color=gray, label="ConstInt255"];
+
+52 [color=gray, label="bits"];
+
+53 [color=black, label="idxprom4"];
+
+54 [color=gray, label="ConstInt1"];
+
+55 [color=gray, label="ConstInt255"];
+
+56 [color=gray, label="ConstInt1"];
+
+57 [color=gray, label="ConstInt13"];
+
+58 [color=gray, label="gVar5"];
+
+161 [color=gray, label="gVar6"];
+32 -> 0 [color=orange, label=4] 
+30 -> 0 [style=bold, color=red, label=1] 
+35 -> 1 [color=gray]
+28 -> 1 [style=bold, color=red, label=1] 
+35 -> 2 [color=gray]
+29 -> 2 [style=bold, color=red, label=1] 
+0 -> 3
+36 -> 3 [color=gray]
+0 -> 4
+37 -> 4 [color=gray]
+0 -> 5
+38 -> 5 [color=gray]
+0 -> 6
+39 -> 6 [color=gray]
+40 -> 7 [color=gray]
+6 -> 41
+42 -> 41 [color=gray]
+41 -> 7
+7 -> 8
+43 -> 10 [color=gray]
+9 -> 10
+3 -> 11
+39 -> 11 [color=gray]
+44 -> 12 [color=gray]
+11 -> 45
+46 -> 45 [color=gray]
+45 -> 12
+12 -> 13
+47 -> 15 [color=gray]
+14 -> 15
+48 -> 16 [color=gray]
+5 -> 49
+50 -> 49 [color=gray]
+49 -> 16
+16 -> 17
+51 -> 19 [color=gray]
+18 -> 19
+4 -> 20
+39 -> 20 [color=gray]
+52 -> 21 [color=gray]
+20 -> 53
+54 -> 53 [color=gray]
+53 -> 21
+21 -> 22
+55 -> 24 [color=gray]
+23 -> 24
+1 -> 25
+10 -> 25
+25 -> 26
+15 -> 26
+26 -> 27
+19 -> 27
+27 -> 28
+24 -> 28
+2 -> 29
+56 -> 29 [color=gray]
+0 -> 30
+57 -> 30 [color=gray]
+29 -> 31
+58 -> 31 [color=orange, label=4] 
+28 -> 161 [color=orange, label=4] 
+8 -> 9 [style=dotted, color=blue, label="1"]
+13 -> 14 [style=dotted, color=blue, label="1"]
+17 -> 18 [style=dotted, color=blue, label="1"]
+22 -> 23 [style=dotted, color=blue, label="1"]
+
+}
+
+}

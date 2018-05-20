@@ -1,0 +1,54 @@
+Curerent II: 5	rec_MII: 5
+
+Trying to schedule DDG at II: 5
+36
+36
+Feasible II is 5	Schedule Len is 20
+
+II after scheduling is: 5
+Start Placement for II = 5
+Node 0 is scheduled at 4
+Node 1 is scheduled at 10
+Node 2 is scheduled at 4
+Node 3 is scheduled at 5
+Node 4 is scheduled at 5
+Node 5 is scheduled at 5
+Node 6 is scheduled at 5
+Node 7 is scheduled at 7
+Node 8 is scheduled at 8
+Node 9 is scheduled at 9
+Node 10 is scheduled at 10
+Node 11 is scheduled at 6
+Node 12 is scheduled at 8
+Node 13 is scheduled at 9
+Node 14 is scheduled at 10
+Node 15 is scheduled at 11
+Node 16 is scheduled at 6
+Node 17 is scheduled at 8
+Node 18 is scheduled at 9
+Node 19 is scheduled at 10
+Node 20 is scheduled at 11
+Node 21 is scheduled at 7
+Node 22 is scheduled at 8
+Node 23 is scheduled at 9
+Node 24 is scheduled at 10
+Node 25 is scheduled at 11
+Node 26 is scheduled at 12
+Node 27 is scheduled at 13
+Node 28 is scheduled at 14
+Node 29 is scheduled at 5
+Node 30 is scheduled at 5
+Node 31 is scheduled at 6
+Node 41 is scheduled at 6
+Node 45 is scheduled at 7
+Node 49 is scheduled at 7
+Node 53 is scheduled at 6
+Graph has n = 576 vertices.
+Find a Clique of size at least k = 36
+Attempt total number 1, Clique Size: 33
+Attempt total number 1, Clique Size: 35
+Attempt total number 2, Clique Size: 34
+Attempt total number 2, Clique Size: 36
+
+
+MII = 5	 Current II=5

@@ -1,0 +1,7 @@
+list(APPEND LDFLAGS -lm -lstdc++)
+if(ARCH STREQUAL "XCore")
+  if(NOT DEFINED SMALL_PROBLEM_SIZE)
+    set(XCORE_TARGET_NEEDS_MEMORY 128)
+  endif()
+endif()
+llvm_singlesource()

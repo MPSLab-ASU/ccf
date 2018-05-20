@@ -1,0 +1,4 @@
+28	0	28	0
+161	30	gVar6	0
+162	21	st_add_gVar6	4
+163	22	st_data_gVar6	0

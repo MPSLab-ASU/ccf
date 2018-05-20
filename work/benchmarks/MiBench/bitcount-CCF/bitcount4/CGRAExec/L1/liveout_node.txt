@@ -1,0 +1,4 @@
+36	26	36	0
+137	30	gPtr2	0
+138	21	st_add_gPtr2	4
+139	22	st_data_gPtr2	0

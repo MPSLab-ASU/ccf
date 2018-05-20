@@ -1,0 +1,5 @@
+protocol "Network_test";
+include "RubySlicc_interfaces.slicc";
+include "Network_test-msg.sm";
+include "Network_test-cache.sm";
+include "Network_test-dir.sm";

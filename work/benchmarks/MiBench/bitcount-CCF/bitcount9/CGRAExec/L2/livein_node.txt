@@ -1,0 +1,4 @@
+0	29	0
+6	30	gVar3
+107	19	ld_add_gVar3
+108	20	ld_data_gVar3

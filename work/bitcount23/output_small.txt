@@ -1,0 +1,8 @@
+gem5 Simulator System.  http://gem5.org
+gem5 is copyrighted software; use the --copyright option for details.
+
+gem5 compiled Apr 29 2018 12:19:46
+gem5 started Apr 29 2018 12:21:08
+gem5 executing on en4079729l
+command line: /home/local/ASUAD/sjdave/shail/ccf/gem5/build/ARM/gem5.opt /home/local/ASUAD/sjdave/shail/ccf/gem5/configs/example/se_hetro.py -n 2 --cpu-type atomic -c ./bitcnts --options=75000
+Global frequency set at 1000000000000 ticks per second

@@ -1,0 +1,497 @@
+latency cannot be less than 1
+latency cannot be less than 1
+Curerent II: 3	rec_MII: 3
+
+Trying to schedule DDG at II: 3
+latency cannot be less than 1
+latency cannot be less than 1
+20
+20
+Feasible II is 3	Schedule Len is 12
+
+II after scheduling is: 3
+Start Placement for II = 3
+Node 0 is scheduled at 2
+Node 1 is scheduled at 5
+Node 2 is scheduled at 3
+Node 3 is scheduled at 4
+Node 4 is scheduled at 5
+Node 5 is scheduled at 6
+Node 6 is scheduled at 7
+Node 7 is scheduled at 6
+Node 8 is scheduled at 8
+Node 9 is scheduled at 8
+Node 10 is scheduled at 4
+Node 11 is scheduled at 5
+Node 12 is scheduled at 4
+Node 13 is scheduled at 6
+Node 14 is scheduled at 6
+Node 15 is scheduled at 8
+Node 16 is scheduled at 8
+Node 18 is scheduled at 3
+Node 36 is scheduled at 7
+Node 40 is scheduled at 7
+Graph has n = 320 vertices.
+Find a Clique of size at least k = 20
+Attempt total number 1, Clique Size: 17
+Attempt total number 1, Clique Size: 18
+Attempt total number 2, Clique Size: 16
+Attempt total number 2, Clique Size: 18
+Attempt total number 3, Clique Size: 17
+Attempt total number 3, Clique Size: 18
+Attempt total number 4, Clique Size: 16
+Attempt total number 4, Clique Size: 18
+Attempt total number 5, Clique Size: 18
+Attempt total number 5, Clique Size: 18
+Attempt total number 6, Clique Size: 17
+Attempt total number 6, Clique Size: 18
+Attempt total number 7, Clique Size: 16
+Attempt total number 7, Clique Size: 18
+
+
+
+
+
+
+
+Left nodes: 1
+Left nodes: 12
+latency cannot be less than 1
+latency cannot be less than 1
+Left node 1
+Failed due to reg requirement for node 1	attempt: 0
+here1	
+here2
+
+Rescheduling pair: 36 -> 1
+36 is left mapped: 0
+36 and 1 are Compatible.
+Discarding Left node 1
+here3	
+here4
+
+Rescheduling pair: 1 -> 8
+8 is left mapped: 0
+Rescheduling pair: 1 -> 8
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+
+II: 3	In Route Through RF Reschedule
+Node 0 is scheduled at 2
+Node 1 is scheduled at 5
+Node 2 is scheduled at 3
+Node 3 is scheduled at 4
+Node 4 is scheduled at 5
+Node 5 is scheduled at 6
+Node 6 is scheduled at 7
+Node 7 is scheduled at 6
+Node 8 is scheduled at 8
+Node 9 is scheduled at 8
+Node 10 is scheduled at 4
+Node 11 is scheduled at 5
+Node 12 is scheduled at 4
+Node 13 is scheduled at 6
+Node 14 is scheduled at 6
+Node 15 is scheduled at 8
+Node 16 is scheduled at 8
+Node 18 is scheduled at 3
+Node 36 is scheduled at 7
+Node 40 is scheduled at 7
+Graph has n = 320 vertices.
+Find a Clique of size at least k = 20
+Attempt total number 1, Clique Size: 17
+Attempt total number 1, Clique Size: 18
+Attempt total number 2, Clique Size: 16
+Attempt total number 2, Clique Size: 18
+Attempt total number 3, Clique Size: 17
+Attempt total number 3, Clique Size: 18
+Attempt total number 4, Clique Size: 16
+Attempt total number 4, Clique Size: 18
+Attempt total number 5, Clique Size: 18
+Attempt total number 5, Clique Size: 18
+Attempt total number 6, Clique Size: 17
+Attempt total number 6, Clique Size: 18
+Attempt total number 7, Clique Size: 16
+Attempt total number 7, Clique Size: 18
+
+
+
+
+
+
+
+left node is: 1	succ: 8
+Rmin = 4	Rmax = 4
+start_time: 7	end_time: 6
+Printing ARCs
+latency cannot be less than 1
+latency cannot be less than 1
+At time: 7  Inserted Route Read Node 42 between nodes 1 and 8
+in reschedule. success = 1
+II in ASAP Feasible is 3	Last Time is 12	Resources are 16
+Feasible II is 3
+1
+Node 0 is scheduled at 2
+Node 1 is scheduled at 5
+Node 2 is scheduled at 3
+Node 3 is scheduled at 4
+Node 4 is scheduled at 5
+Node 5 is scheduled at 6
+Node 6 is scheduled at 7
+Node 7 is scheduled at 6
+Node 8 is scheduled at 8
+Node 9 is scheduled at 8
+Node 10 is scheduled at 4
+Node 11 is scheduled at 5
+Node 12 is scheduled at 4
+Node 13 is scheduled at 6
+Node 14 is scheduled at 6
+Node 15 is scheduled at 8
+Node 16 is scheduled at 8
+Node 18 is scheduled at 3
+Node 36 is scheduled at 7
+Node 40 is scheduled at 7
+Node 42 is scheduled at 7
+Graph has n = 336 vertices.
+Find a Clique of size at least k = 21
+Attempt total number 1, Clique Size: 18
+Attempt total number 1, Clique Size: 20
+Attempt total number 2, Clique Size: 17
+Attempt total number 2, Clique Size: 20
+Attempt total number 3, Clique Size: 18
+Attempt total number 3, Clique Size: 20
+Attempt total number 4, Clique Size: 18
+Attempt total number 4, Clique Size: 20
+Attempt total number 5, Clique Size: 17
+Attempt total number 5, Clique Size: 20
+Attempt total number 6, Clique Size: 18
+Attempt total number 6, Clique Size: 20
+Attempt total number 7, Clique Size: 18
+Attempt total number 7, Clique Size: 20
+
+
+
+
+
+
+
+Mapped node successfully
+found! mapped node successfully
+Left node is: 12
+latency cannot be less than 1
+latency cannot be less than 1
+new_node is: 42
+
+II: 3	In Route Reschedule
+attempt i = 0 for node 1
+pred is: 1	succ is: 8
+1. Inserted DummyNode 42 between nodes 1 and 8
+in reschedule. success = 1
+II in ASAP Feasible is 3	Last Time is 12	Resources are 16
+Feasible II is 3
+Routing success: 1
+42
+Node 0 is scheduled at 2
+Node 1 is scheduled at 5
+Node 2 is scheduled at 3
+Node 3 is scheduled at 4
+Node 4 is scheduled at 5
+Node 5 is scheduled at 6
+Node 6 is scheduled at 7
+Node 7 is scheduled at 6
+Node 8 is scheduled at 8
+Node 9 is scheduled at 8
+Node 10 is scheduled at 4
+Node 11 is scheduled at 5
+Node 12 is scheduled at 4
+Node 13 is scheduled at 6
+Node 14 is scheduled at 6
+Node 15 is scheduled at 8
+Node 16 is scheduled at 8
+Node 18 is scheduled at 3
+Node 36 is scheduled at 7
+Node 40 is scheduled at 7
+Node 42 is scheduled at 6
+Graph has n = 336 vertices.
+Find a Clique of size at least k = 21
+Attempt total number 1, Clique Size: 17
+Attempt total number 1, Clique Size: 19
+Attempt total number 2, Clique Size: 18
+Attempt total number 2, Clique Size: 20
+Attempt total number 3, Clique Size: 18
+Attempt total number 3, Clique Size: 20
+Attempt total number 4, Clique Size: 19
+Attempt total number 4, Clique Size: 20
+Attempt total number 5, Clique Size: 20
+Attempt total number 5, Clique Size: 20
+Attempt total number 6, Clique Size: 18
+Attempt total number 6, Clique Size: 20
+Attempt total number 7, Clique Size: 18
+Attempt total number 7, Clique Size: 20
+Attempt total number 8, Clique Size: 19
+Attempt total number 8, Clique Size: 20
+
+
+
+
+
+
+
+
+Pred and Succ are compatible
+Inserted Node is compatible with both pred and succ nodes
+Node 0 is scheduled at 2
+Node 1 is scheduled at 5
+Node 2 is scheduled at 3
+Node 3 is scheduled at 4
+Node 4 is scheduled at 5
+Node 5 is scheduled at 6
+Node 6 is scheduled at 7
+Node 7 is scheduled at 6
+Node 8 is scheduled at 8
+Node 9 is scheduled at 8
+Node 10 is scheduled at 4
+Node 11 is scheduled at 5
+Node 12 is scheduled at 4
+Node 13 is scheduled at 6
+Node 14 is scheduled at 6
+Node 15 is scheduled at 8
+Node 16 is scheduled at 8
+Node 18 is scheduled at 3
+Node 36 is scheduled at 7
+Node 40 is scheduled at 7
+Node 42 is scheduled at 6
+Graph has n = 336 vertices.
+Find a Clique of size at least k = 21
+Attempt total number 1, Clique Size: 17
+Attempt total number 1, Clique Size: 19
+Attempt total number 2, Clique Size: 18
+Attempt total number 2, Clique Size: 20
+Attempt total number 3, Clique Size: 18
+Attempt total number 3, Clique Size: 20
+Attempt total number 4, Clique Size: 19
+Attempt total number 4, Clique Size: 20
+Attempt total number 5, Clique Size: 20
+Attempt total number 5, Clique Size: 20
+Attempt total number 6, Clique Size: 18
+Attempt total number 6, Clique Size: 20
+Attempt total number 7, Clique Size: 18
+Attempt total number 7, Clique Size: 20
+Attempt total number 8, Clique Size: 19
+Attempt total number 8, Clique Size: 20
+
+
+
+
+
+
+
+
+Returning
+modes are: 1	1	0	0
+Left node size: 1	2	Utility: 0	17
+Best Option is: 0
+latency cannot be less than 1
+latency cannot be less than 1
+success of mapping y is 1
+NodeID is: 42
+Success! number of left nodes are: 1
+Left nodes are: 12
+hereee1
+hereee2
+update left nodes.
+latency cannot be less than 1
+latency cannot be less than 1
+2
+latency cannot be less than 1
+latency cannot be less than 1
+Left node 12
+Failed due to reg requirement for node 12	attempt: 0
+here3	
+here4
+
+Rescheduling pair: 12 -> 13
+13 is left mapped: 0
+12 and 13 are Compatible.
+Discarding Left node 12
+here3	
+here4
+
+Rescheduling pair: 12 -> 40
+40 is left mapped: 0
+Rescheduling pair: 12 -> 40
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+
+II: 3	In Route Through RF Reschedule
+Node 0 is scheduled at 2
+Node 1 is scheduled at 5
+Node 2 is scheduled at 3
+Node 3 is scheduled at 4
+Node 4 is scheduled at 5
+Node 5 is scheduled at 6
+Node 6 is scheduled at 7
+Node 7 is scheduled at 6
+Node 8 is scheduled at 8
+Node 9 is scheduled at 8
+Node 10 is scheduled at 4
+Node 11 is scheduled at 5
+Node 12 is scheduled at 4
+Node 13 is scheduled at 6
+Node 14 is scheduled at 6
+Node 15 is scheduled at 8
+Node 16 is scheduled at 8
+Node 18 is scheduled at 3
+Node 36 is scheduled at 7
+Node 40 is scheduled at 7
+Node 42 is scheduled at 7
+Graph has n = 336 vertices.
+Find a Clique of size at least k = 21
+Attempt total number 1, Clique Size: 18
+Attempt total number 1, Clique Size: 20
+Attempt total number 2, Clique Size: 17
+Attempt total number 2, Clique Size: 20
+Attempt total number 3, Clique Size: 18
+Attempt total number 3, Clique Size: 20
+Attempt total number 4, Clique Size: 18
+Attempt total number 4, Clique Size: 20
+Attempt total number 5, Clique Size: 17
+Attempt total number 5, Clique Size: 20
+Attempt total number 6, Clique Size: 18
+Attempt total number 6, Clique Size: 20
+Attempt total number 7, Clique Size: 18
+Attempt total number 7, Clique Size: 20
+
+
+
+
+
+
+
+left node is: 12	succ: 40
+Rmin = 4	Rmax = 4
+start_time: 6	end_time: 5
+Printing ARCs
+latency cannot be less than 1
+latency cannot be less than 1
+At time: 6  Inserted Route Read Node 43 between nodes 12 and 40
+in reschedule. success = 1
+II in ASAP Feasible is 3	Last Time is 12	Resources are 16
+Feasible II is 3
+1
+Node 0 is scheduled at 2
+Node 1 is scheduled at 5
+Node 2 is scheduled at 3
+Node 3 is scheduled at 4
+Node 4 is scheduled at 5
+Node 5 is scheduled at 6
+Node 6 is scheduled at 7
+Node 7 is scheduled at 6
+Node 8 is scheduled at 8
+Node 9 is scheduled at 8
+Node 10 is scheduled at 4
+Node 11 is scheduled at 5
+Node 12 is scheduled at 4
+Node 13 is scheduled at 6
+Node 14 is scheduled at 6
+Node 15 is scheduled at 8
+Node 16 is scheduled at 8
+Node 18 is scheduled at 3
+Node 36 is scheduled at 7
+Node 40 is scheduled at 7
+Node 42 is scheduled at 6
+Node 43 is scheduled at 6
+Graph has n = 352 vertices.
+Find a Clique of size at least k = 22
+Attempt total number 1, Clique Size: 18
+Attempt total number 1, Clique Size: 21
+Attempt total number 2, Clique Size: 20
+Attempt total number 2, Clique Size: 21
+Attempt total number 3, Clique Size: 19
+Attempt total number 3, Clique Size: 21
+Attempt total number 4, Clique Size: 20
+Attempt total number 4, Clique Size: 21
+Attempt total number 5, Clique Size: 20
+Attempt total number 5, Clique Size: 21
+Attempt total number 6, Clique Size: 20
+Attempt total number 6, Clique Size: 21
+Attempt total number 7, Clique Size: 20
+Attempt total number 7, Clique Size: 21
+
+
+
+
+
+
+
+Mapped node successfully
+found! mapped node successfully
+Left node is: 13
+latency cannot be less than 1
+latency cannot be less than 1
+new_node is: 43
+
+II: 3	In Route Reschedule
+attempt i = 0 for node 12
+pred is: 12	succ is: 40
+1. Inserted DummyNode 43 between nodes 12 and 40
+in reschedule. success = 1
+II in ASAP Feasible is 3	Last Time is 12	Resources are 16
+Feasible II is 3
+Routing success: 1
+43
+Node 0 is scheduled at 2
+Node 1 is scheduled at 5
+Node 2 is scheduled at 3
+Node 3 is scheduled at 4
+Node 4 is scheduled at 5
+Node 5 is scheduled at 6
+Node 6 is scheduled at 7
+Node 7 is scheduled at 6
+Node 8 is scheduled at 8
+Node 9 is scheduled at 8
+Node 10 is scheduled at 4
+Node 11 is scheduled at 5
+Node 12 is scheduled at 4
+Node 13 is scheduled at 6
+Node 14 is scheduled at 6
+Node 15 is scheduled at 8
+Node 16 is scheduled at 8
+Node 18 is scheduled at 3
+Node 36 is scheduled at 7
+Node 40 is scheduled at 7
+Node 42 is scheduled at 6
+Node 43 is scheduled at 5
+Graph has n = 352 vertices.
+Find a Clique of size at least k = 22
+Attempt total number 1, Clique Size: 19
+Attempt total number 1, Clique Size: 21
+Attempt total number 2, Clique Size: 19
+Attempt total number 2, Clique Size: 21
+Attempt total number 3, Clique Size: 18
+Attempt total number 3, Clique Size: 22
+
+
+
+modes are: 1	1	0	0
+Left node size: 1	1	Utility: 0	17
+Best Option is: 1
+latency cannot be less than 1
+latency cannot be less than 1
+success of mapping y is 1
+NodeID is: 43
+Success! number of left nodes are: 0
+MII = 3	 Current II=3
+RegisterFileFailureCount 0

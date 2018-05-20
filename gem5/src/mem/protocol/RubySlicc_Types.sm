@@ -1,0 +1,198 @@
+/*
+ * Copyright (c) 1999-2005 Mark D. Hill and David A. Wood
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met: redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer;
+ * redistributions in binary form must reproduce the above copyright
+ * notice, this list of conditions and the following disclaimer in the
+ * documentation and/or other materials provided with the distribution;
+ * neither the name of the copyright holders nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+// External Types
+
+//
+// **PLEASE NOTE!**  When adding objects to this file you must also add a line
+// in the src/mem/ruby/SConscript file.  Otherwise the external object's .hh 
+// file will not be copied to the protocol directory and you will encounter a 
+// undefined declaration error.
+//
+
+external_type(MessageBuffer, buffer="yes", inport="yes", outport="yes");
+external_type(OutPort, primitive="yes");
+external_type(Scalar, primitive="yes");
+
+structure(InPort, external = "yes", primitive="yes") {
+  bool isReady();
+  void dequeue();
+  Cycles dequeue_getDelayCycles();
+  void recycle();
+  bool isEmpty();
+}
+
+external_type(NodeID, default="0", primitive="yes");
+external_type(MachineID);
+
+structure (Set, external = "yes", non_obj="yes") {
+  void setSize(int);
+  void add(NodeID);
+  void addSet(Set);
+  void remove(NodeID);
+  void removeSet(Set);
+  void broadcast();
+  void addRandom();
+  void clear();
+  int count();
+  bool isElement(NodeID);
+  bool isEqual(Set);
+  bool isSuperset(Set);
+  bool intersectionIsEmpty(Set);
+  NodeID smallestElement();
+}
+
+structure (NetDest, external = "yes", non_obj="yes") {
+  void setSize(int);
+  void setSize(int, int);
+  void add(NodeID);
+  void add(MachineID);
+  void addSet(Set);
+  void addNetDest(NetDest);
+  void setNetDest(MachineType, Set);
+  void remove(NodeID);
+  void remove(MachineID);
+  void removeSet(Set);
+  void removeNetDest(NetDest);
+  void broadcast();
+  void broadcast(MachineType);
+  void addRandom();
+  void clear();
+  Set toSet();
+  int count();
+  bool isElement(NodeID);
+  bool isElement(MachineID);
+  bool isSuperset(Set);
+  bool isSuperset(NetDest);
+  bool isEmpty();
+  bool intersectionIsEmpty(Set);
+  bool intersectionIsEmpty(NetDest);
+  MachineID smallestElement(MachineType);
+}
+
+structure (Sequencer, external = "yes") {
+  void readCallback(Address, DataBlock);
+  void readCallback(Address, DataBlock, bool);
+  void readCallback(Address, DataBlock, bool, MachineType);
+  void readCallback(Address, DataBlock, bool, MachineType,
+                    Cycles, Cycles, Cycles);
+
+  void writeCallback(Address, DataBlock);
+  void writeCallback(Address, DataBlock, bool);
+  void writeCallback(Address, DataBlock, bool, MachineType);
+  void writeCallback(Address, DataBlock, bool, MachineType,
+                     Cycles, Cycles, Cycles);
+
+  void checkCoherence(Address);
+  void evictionCallback(Address);
+  void recordRequestType(SequencerRequestType);
+  bool checkResourceAvailable(CacheResourceType, Address);
+  void invalidateSC(Address);
+}
+
+structure(RubyRequest, desc="...", interface="Message", external="yes") {
+  Address LineAddress,       desc="Line address for this request";
+  Address PhysicalAddress,   desc="Physical address for this request";
+  RubyRequestType Type,      desc="Type of request (LD, ST, etc)";
+  Address ProgramCounter,    desc="Program counter of the instruction that caused the miss";
+  RubyAccessMode AccessMode, desc="user/supervisor access type";
+  int Size,                  desc="size in bytes of access";
+  PrefetchBit Prefetch,      desc="Is this a prefetch request";
+  int contextId,             desc="this goes away but must be replace with Nilay";
+}
+
+structure(AbstractEntry, primitive="yes", external = "yes") {
+  void changePermission(AccessPermission);
+}
+
+structure (DirectoryMemory, external = "yes") {
+  AbstractEntry allocate(Address, AbstractEntry);
+  AbstractEntry lookup(Address);
+  bool isPresent(Address);
+  void invalidateBlock(Address);
+  void recordRequestType(DirectoryRequestType);
+}
+
+structure(AbstractCacheEntry, primitive="yes", external = "yes") {
+  void changePermission(AccessPermission);
+}
+
+structure (CacheMemory, external = "yes") {
+  bool cacheAvail(Address);
+  Address cacheProbe(Address);
+  AbstractCacheEntry allocate(Address, AbstractCacheEntry);
+  void allocateVoid(Address, AbstractCacheEntry);
+  void deallocate(Address);
+  AbstractCacheEntry lookup(Address);
+  bool isTagPresent(Address);
+  void setMRU(Address);
+  void recordRequestType(CacheRequestType);
+  bool checkResourceAvailable(CacheResourceType, Address);
+
+  Scalar demand_misses;
+  Scalar demand_hits;
+}
+
+structure (WireBuffer, inport="yes", outport="yes", external = "yes") {
+
+}
+
+structure (MemoryControl, inport="yes", outport="yes", external = "yes") {
+  void recordRequestType(CacheRequestType);
+}
+
+structure (DMASequencer, external = "yes") {
+  void ackCallback();
+  void dataCallback(DataBlock);
+  void recordRequestType(CacheRequestType);
+}
+
+structure (TimerTable, inport="yes", external = "yes") {
+  bool isReady();
+  Address readyAddress();
+  void set(Address, Cycles);
+  void unset(Address);
+  bool isSet(Address);
+}
+
+structure (GenericBloomFilter, external = "yes") {
+  void clear(int);
+  void increment(Address, int);
+  void decrement(Address, int);
+  void set(Address, int);
+  void unset(Address, int);
+
+  bool isSet(Address, int);
+  int getCount(Address, int);
+}
+
+structure (Prefetcher, external = "yes") {
+    void observeMiss(Address, RubyRequestType);
+    void observePfHit(Address);
+    void observePfMiss(Address);
+}
