@@ -361,7 +361,7 @@ RAMP::RAMP(Parser myParser)
      }
      else if(leftNodeMapped_y.size() == last_attempt_unmapped_x)
      {
-       //Check whether the new node is being unmapped
+       //Check whether the new node (resutant routing operation) is being unmapped
        std::vector<Node*>::iterator it1, it2;
        bool some_new_node_unmapped = true;
        for(it1 = leftNodeMapped_y.begin(); it1 != leftNodeMapped_y.end(); it1++)
@@ -430,364 +430,360 @@ int &best_option, vector<Node*> &best_leftmapped, Node* &new_node)
  CGRA_mem.Initialize(cgra_info.X_Dim, cgra_info.Y_Dim, cgra_info.R_Size, cgra_info.interconnect);
 
  //Call Functions For Possible Rescheduling Options
- Route_RF_ReSchedule_Map(pred_id, succ_id, II, last_attempt_unmapped, copy_DFG_route_rf, distance, prev, next,
-   valid_route_rf, util_route_rf, leftNodeMapped_route_rf, new_node_route_rf,CGRA_route_rf);
-   Route_Reschedule_Map(left_node_id, pred_id, succ_id, II, last_attempt_unmapped, copy_DFG_route, distance, prev, next, valid_route, util_route, leftNodeMapped_route, new_node_route, CGRA_route);
-   //Mem_Reschedule_Map(  left_node_id, pred_id, succ_id, II, last_attempt_unmapped, copy_DFG_mem,   distance, prev, next, valid_mem,   util_mem,   leftNodeMapped_mem,   new_node_mem,   CGRA_mem, inserted_mem_nodes);
-   //copy_DFG_mem->Rec_Reschedule_Map(    left_node_id, II, last_attempt_unmapped, current_number_resources, copy_DFG_mem, valid_rec,   II_rec,   util_rec,   leftNodeMapped_rec, CGRA_mem);
+ Route_RF_ReSchedule_Map(pred_id, succ_id, II, last_attempt_unmapped, copy_DFG_route_rf, distance, prev, next, valid_route_rf, util_route_rf, leftNodeMapped_route_rf, new_node_route_rf,CGRA_route_rf);
+ Route_Reschedule_Map(left_node_id, pred_id, succ_id, II, last_attempt_unmapped, copy_DFG_route, distance, prev, next, valid_route, util_route, leftNodeMapped_route, new_node_route, CGRA_route);
+ //Mem_Reschedule_Map(  left_node_id, pred_id, succ_id, II, last_attempt_unmapped, copy_DFG_mem,   distance, prev, next, valid_mem,   util_mem,   leftNodeMapped_mem,   new_node_mem,   CGRA_mem, inserted_mem_nodes);
+ //copy_DFG_mem->Rec_Reschedule_Map(    left_node_id, II, last_attempt_unmapped, current_number_resources, copy_DFG_mem, valid_rec,   II_rec,   util_rec,   leftNodeMapped_rec, CGRA_mem);
 
-   debugfile << "modes are: " << valid_route_rf<< "\t" << valid_route << "\t" << valid_mem << "\t" << valid_rec << endl;
+ debugfile << "modes are: " << valid_route_rf<< "\t" << valid_route << "\t" << valid_mem << "\t" << valid_rec << endl;
 
-   if(valid_route_rf || valid_route || valid_mem || valid_rec)
+ if(valid_route_rf || valid_route || valid_mem || valid_rec)
+ {
+   //This implies that II'==II and
+   // not more operations are being unmapped than the prior attempt
+   if(valid_route_rf == true)
    {
-     //This implies that II'==II and
-     // not more operations are being unmapped than the prior attempt
-     if(valid_route_rf == true)
+     debugfile << "Left node size: " << leftNodeMapped_route_rf.size() << "\t" << best_last_attempt_unmapped << "\tUtility: " << util_route_rf << "\t" << best_util << "\n";
+     //If more operations can be mapped at same II, it is best!
+     if(leftNodeMapped_route_rf.size() < best_last_attempt_unmapped)
      {
-       debugfile << "Left node size: " << leftNodeMapped_route_rf.size() << "\t" << best_last_attempt_unmapped << "\tUtility: " << util_route_rf << "\t" << best_util << "\n";
-       //If more operations can be mapped at same II, it is best!
-       if(leftNodeMapped_route_rf.size() < best_last_attempt_unmapped)
-       {
-         best_util = util_route_rf;
-         best_last_attempt_unmapped = leftNodeMapped_route_rf.size();
-         best_option = 0;
-       }
-       else if(util_route_rf< best_util)	//Else, consider PE utilization
-       {
-         best_util = util_route_rf;
-         best_last_attempt_unmapped = leftNodeMapped_route_rf.size();
-         best_option = 0;
-       }
-       // Since mapping attempt is at a particular II, achieved II should be the same.
-       // It will never be less. So, we can compare only on PE utilization or
-       // for the more number of operations mapped.
+       best_util = util_route_rf;
+       best_last_attempt_unmapped = leftNodeMapped_route_rf.size();
+       best_option = 0;
      }
-
-     if(valid_route == true)
+     else if(util_route_rf< best_util)	//Else, consider PE utilization
      {
-       if(leftNodeMapped_route.size() < best_last_attempt_unmapped)
-       {
-         best_util = util_route;
-         best_last_attempt_unmapped = leftNodeMapped_route.size();
-         best_option = 1;
-       }
-       else if((leftNodeMapped_route.size() == best_last_attempt_unmapped) && (util_route < best_util))
-       {
-         best_util = util_route;
-         best_last_attempt_unmapped = leftNodeMapped_route.size();
-         best_option = 1;
-       }
+       best_util = util_route_rf;
+       best_last_attempt_unmapped = leftNodeMapped_route_rf.size();
+       best_option = 0;
      }
+     // Since mapping attempt is at a particular II, achieved II should be the same.
+     // It will never be less. So, we can compare only on PE utilization or
+     // for the more number of operations mapped.
+   }
 
-     if(valid_mem == true)
+   if(valid_route == true)
+   {
+     if(leftNodeMapped_route.size() < best_last_attempt_unmapped)
      {
-       if(leftNodeMapped_mem.size() < best_last_attempt_unmapped)
-       {
-         best_util = util_mem;
-         best_last_attempt_unmapped = leftNodeMapped_mem.size();
-         best_option = 2;
-       }
-       else if((leftNodeMapped_mem.size() == best_last_attempt_unmapped) && (util_mem < best_util))
-       {
-         best_util = util_mem;
-         best_last_attempt_unmapped = leftNodeMapped_mem.size();
-         best_option = 2;
-       }
+       best_util = util_route;
+       best_last_attempt_unmapped = leftNodeMapped_route.size();
+       best_option = 1;
      }
-
-     if(valid_rec == true)
+     else if((leftNodeMapped_route.size() == best_last_attempt_unmapped) && (util_route < best_util))
      {
-       if(leftNodeMapped_rec.size() < best_last_attempt_unmapped)
-       {
-         best_util = util_rec;
-         best_last_attempt_unmapped = leftNodeMapped_rec.size();
-         best_option = 3;
-       }
-       else if((leftNodeMapped_rec.size() == best_last_attempt_unmapped) && (util_rec < best_util))
-       {
-         best_util = util_rec;
-         best_last_attempt_unmapped = leftNodeMapped_rec.size();
-         best_option = 3;
-       }
+       best_util = util_route;
+       best_last_attempt_unmapped = leftNodeMapped_route.size();
+       best_option = 1;
      }
    }
 
-   // Can Make an appropriate cgra copy function instead of returning a CGRA
-   if(best_option != 2)
-   copy_DFG_mem->Delete_Mem_Nodes(inserted_mem_nodes);
-
-   debugfile << "Best Option is: " << best_option << "\n";
-
-   switch(best_option)
+   if(valid_mem == true)
    {
-     case 0:
+     if(leftNodeMapped_mem.size() < best_last_attempt_unmapped)
      {
-       inDFG = copy_DFG_route_rf->Copy_With_Schedule_And_Mapping();
-       best_leftmapped = leftNodeMapped_route_rf;
-       new_node = new_node_route_rf;
-       return CGRA_route_rf;
+       best_util = util_mem;
+       best_last_attempt_unmapped = leftNodeMapped_mem.size();
+       best_option = 2;
      }
-     case 1:
+     else if((leftNodeMapped_mem.size() == best_last_attempt_unmapped) && (util_mem < best_util))
      {
-       inDFG = copy_DFG_route->Copy_With_Schedule_And_Mapping();
-       best_leftmapped = leftNodeMapped_route;
-       new_node = new_node_route;
-       return CGRA_route;
+       best_util = util_mem;
+       best_last_attempt_unmapped = leftNodeMapped_mem.size();
+       best_option = 2;
      }
-     case 2:
+   }
+
+   if(valid_rec == true)
+   {
+     if(leftNodeMapped_rec.size() < best_last_attempt_unmapped)
      {
-       inDFG = copy_DFG_mem->Copy_With_Schedule_And_Mapping();
-       best_leftmapped = leftNodeMapped_mem;
-       new_node = new_node_mem;
-       return CGRA_mem;
+       best_util = util_rec;
+       best_last_attempt_unmapped = leftNodeMapped_rec.size();
+       best_option = 3;
      }
-     case 3:
+     else if((leftNodeMapped_rec.size() == best_last_attempt_unmapped) && (util_rec < best_util))
      {
-       inDFG = copy_DFG_rec->Copy_With_Schedule_And_Mapping();
-       best_leftmapped = leftNodeMapped_rec;
-       return CGRA_rec;
+       best_util = util_rec;
+       best_last_attempt_unmapped = leftNodeMapped_rec.size();
+       best_option = 3;
      }
-     default: return CGRA_route;
    }
  }
 
+ // Can Make an appropriate cgra copy function instead of returning a CGRA
+ if(best_option != 2)
+ copy_DFG_mem->Delete_Mem_Nodes(inserted_mem_nodes);
 
- void RAMP::Route_Reschedule_Map(int left_id, int pred_id, int succ_id, int II, unsigned int last_attempt_unmapped, DFG* &dfg, int distance, vector<Node*> prev, vector<Node*> next, bool &valid_route, float &util_route, vector<Node*> &leftNodeMapped_route, Node* &new_node, CGRA &myCGRA)
+ debugfile << "Best Option is: " << best_option << "\n";
+
+ switch(best_option)
  {
-   debugfile << "\nII: " << II << "\tIn Route Reschedule\n";
-   valid_route = false;
-
-   Node* leftnode = dfg->get_Node(left_id);
-   Node* pred     = dfg->get_Node(pred_id);
-   Node* succ     = dfg->get_Node(succ_id);
-   vector<Node*> inserted_nodes;
-
-   int current_number_resources = cgra_info.X_Dim*cgra_info.Y_Dim;
-   // At max we can insert routing operations
-   // equal to the difference in schedule time of operations (d).
-   // Allowing 2*d attempts.
-   for(int i=0; i< 2*distance; i++)
+   case 0:
    {
-     debugfile << "attempt i = " << i << " for node " << leftnode->get_ID() << endl;
-     debugfile << "pred is: " <<pred->get_ID() << "\tsucc is: " << succ->get_ID() << endl;
-     int inserted_node_id = -1;
+     inDFG = copy_DFG_route_rf->Copy_With_Schedule_And_Mapping();
+     best_leftmapped = leftNodeMapped_route_rf;
+     new_node = new_node_route_rf;
+     return CGRA_route_rf;
+   }
+   case 1:
+   {
+     inDFG = copy_DFG_route->Copy_With_Schedule_And_Mapping();
+     best_leftmapped = leftNodeMapped_route;
+     new_node = new_node_route;
+     return CGRA_route;
+   }
+   case 2:
+   {
+     inDFG = copy_DFG_mem->Copy_With_Schedule_And_Mapping();
+     best_leftmapped = leftNodeMapped_mem;
+     new_node = new_node_mem;
+     return CGRA_mem;
+   }
+   case 3:
+   {
+     inDFG = copy_DFG_rec->Copy_With_Schedule_And_Mapping();
+     best_leftmapped = leftNodeMapped_rec;
+     return CGRA_rec;
+   }
+   default: return CGRA_route;
+ }
+}
 
-     //reschedule the DFG
-     int success = dfg->Route_ReSchedule(II, current_number_resources, leftnode, pred, succ, inserted_node_id);
-     debugfile << "Routing success: " << success << endl;
-     debugfile << inserted_node_id << endl;
-     if(success == 0)	//Success shows that it is possible to reschedule the DFG at same II.
+
+void RAMP::Route_Reschedule_Map(int left_id, int pred_id, int succ_id, int II, unsigned int last_attempt_unmapped, DFG* &dfg, int distance, vector<Node*> prev, vector<Node*> next, bool &valid_route, float &util_route, vector<Node*> &leftNodeMapped_route, Node* &new_node, CGRA &myCGRA)
+{
+ debugfile << "\nII: " << II << "\tIn Route Reschedule\n";
+ valid_route = false;
+
+ Node* leftnode = dfg->get_Node(left_id);
+ Node* pred     = dfg->get_Node(pred_id);
+ Node* succ     = dfg->get_Node(succ_id);
+ vector<Node*> inserted_nodes;
+
+ int current_number_resources = cgra_info.X_Dim*cgra_info.Y_Dim;
+ // At max we can insert routing operations
+ // equal to the difference in schedule time of operations (d).
+ // Allowing 2*d attempts.
+ for(int i=0; i< 2*distance; i++)
+ {
+   debugfile << "attempt i = " << i << " for node " << leftnode->get_ID() << endl;
+   debugfile << "pred is: " <<pred->get_ID() << "\tsucc is: " << succ->get_ID() << endl;
+   int inserted_node_id = -1;
+
+   //reschedule the DFG
+   int success = dfg->Route_ReSchedule(II, current_number_resources, leftnode, pred, succ, inserted_node_id);
+   debugfile << "Routing success: " << success << endl;
+   debugfile << inserted_node_id << endl;
+   if(success == 0)	//Success shows that it is possible to reschedule the DFG at same II.
+   return;
+   new_node = dfg->get_Node(inserted_node_id);
+   inserted_nodes.push_back(dfg->get_Node(inserted_node_id));
+
+   myCGRA.SetII(II);	//set II
+   myCGRA.ResetIteration();
+
+   vector<Node*> leftnotmapped;
+
+   if (myCGRA.MCS2(dfg, leftnotmapped))
+   {
+     valid_route = true;
+     myCGRA.CalcPEUtil(util_route);
+     leftNodeMapped_route.clear();
      return;
-     new_node = dfg->get_Node(inserted_node_id);
-     inserted_nodes.push_back(dfg->get_Node(inserted_node_id));
+   }
+   else
+   {
+     valid_route = true;
 
-     myCGRA.SetII(II);	//set II
-     myCGRA.ResetIteration();
-
-     vector<Node*> leftnotmapped;
-
-     if (myCGRA.MCS2(dfg, leftnotmapped))
+     //It is Possible That The Pair Pred->Succ is Now Compatible And Inserted Node And Pred,Succ Are Compatible
+     if(myCGRA.IsCompatible(pred_id, succ_id))
      {
-       valid_route = true;
-       myCGRA.CalcPEUtil(util_route);
-       leftNodeMapped_route.clear();
-       return;
-     }
-     else
-     {
-       valid_route = true;
-
-       //It is Possible That The Pair Pred->Succ is Now Compatible And Inserted Node And Pred,Succ Are Compatible
-       if(myCGRA.IsCompatible(pred_id, succ_id))
+       debugfile << "Pred and Succ are compatible\n";
+       if((myCGRA.IsCompatible(pred_id, inserted_node_id)) && (myCGRA.IsCompatible(inserted_node_id, succ_id)))
        {
-         debugfile << "Pred and Succ are compatible\n";
-         if((myCGRA.IsCompatible(pred_id, inserted_node_id)) && (myCGRA.IsCompatible(inserted_node_id, succ_id)))
-         {
-           debugfile << "Inserted Node is compatible with both pred and succ nodes\n";
-           valid_route = true;
-           myCGRA.CalcPEUtil(util_route);
-           for(std::vector<Node*>::iterator it = leftnotmapped.begin(); it != leftnotmapped.end(); ++it) {
-             if((*it)->get_ID() == inserted_node_id)
-             {
-               valid_route = false;
-               //return; //TODO: Changed on Jan 14
-               break;
-             }
-             else
-             leftNodeMapped_route.push_back(*it);
+         debugfile << "Inserted Node is compatible with both pred and succ nodes\n";
+         valid_route = true;
+         myCGRA.CalcPEUtil(util_route);
+         for(std::vector<Node*>::iterator it = leftnotmapped.begin(); it != leftnotmapped.end(); ++it) {
+           if((*it)->get_ID() == inserted_node_id)
+           {
+             valid_route = false;
+             break;
            }
-           if(valid_route == true)
-           break;	//Update DFG For Remaining Nodes (Path Sharing)
+           else
+           leftNodeMapped_route.push_back(*it);
          }
-         else
-         {
-           valid_route = false;
-           //continue;
-         }
+         if(valid_route == true)
+         break;	//Update DDG For Remaining Nodes (Path Sharing)
        }
        else
        {
          valid_route = false;
+         //continue;
+       }
+     }
+     else
+     {
+       valid_route = false;
+       return;
+     }
+
+     for(std::vector<Node*>::iterator it = leftnotmapped.begin(); it != leftnotmapped.end(); ++it) {
+       if( ((*it)->get_ID() == left_id) || ((*it)->get_ID() == inserted_node_id) )
+       {
+         debugfile << "left node is: " << (*it)->get_ID() << endl;
+         valid_route = false;
+         pred = dfg->get_Node(inserted_node_id);
+         leftnode = dfg->get_Node(inserted_node_id);
+         break;
+       }
+
+     }
+
+     if(valid_route == true)
+     {
+       if(leftnotmapped.size() < last_attempt_unmapped) {
+         myCGRA.CalcPEUtil(util_route);
+         for(std::vector<Node*>::iterator it = leftnotmapped.begin(); it != leftnotmapped.end(); ++it)
+         leftNodeMapped_route.push_back(*it);
          return;
        }
-
-       for(std::vector<Node*>::iterator it = leftnotmapped.begin(); it != leftnotmapped.end(); ++it) {
-         if( ((*it)->get_ID() == left_id) || ((*it)->get_ID() == inserted_node_id) )
-         {
-           debugfile << "left node is: " << (*it)->get_ID() << endl;
-           valid_route = false;
-           pred = dfg->get_Node(inserted_node_id);
-           leftnode = dfg->get_Node(inserted_node_id);
-           break;
-         }
-
-       }
-
-       if(valid_route == true)
-       {
-         if(leftnotmapped.size() < last_attempt_unmapped) {
-           myCGRA.CalcPEUtil(util_route);
-           for(std::vector<Node*>::iterator it = leftnotmapped.begin(); it != leftnotmapped.end(); ++it)
-           leftNodeMapped_route.push_back(*it);
-           return;
-         }
-         //Return due to unacceptable outcome if attempt of rescheduling successful, but at cost of increasing number of unmapped nodes
-         else {
-           valid_route = false;
-           return;
-         }
-       }
-       leftnode = dfg->get_Node(inserted_node_id); //Shail Added After Checking Inclusion For Inter-Iteration Dependency
-       debugfile << "leftnode is " << leftnode->get_ID() << endl;
-     }
-   }
-
-   //If reaching here after 2*d attempts, it is failure. Exit
-   if(valid_route == false)
-   {
-     cerr << "Should Not Take So Many Attempts And Reach Here.\n";
-     return;
-   }
-
-   //If the given pair pred->succ is compatible and set with routnig path, modify the DFG (remaining pairs) for path sharing.
-   if(left_id == pred_id)
-   {
-     Node* predecessor_of_succ;
-     vector<ARC*>::iterator iEdge;
-     vector<ARC*> ARCSet = dfg->getSetOfArcs();
-     ARC *arc;
-     bool pred_found = false;
-     for (iEdge = ARCSet.begin(); iEdge != ARCSet.end(); iEdge++)
-     {   arc = *iEdge;
-       if((arc->get_From_Node()->get_Instruction() == (Instruction_Operation) route_op) && (arc->get_To_Node()->get_ID() == succ->get_ID()))
-       {
-         //Make Sure Predecessor of Succ is Same Route Node As Inserted One.
-         if(std::find(inserted_nodes.begin(), inserted_nodes.end(), arc->get_From_Node()) != inserted_nodes.end()) {
-           predecessor_of_succ = arc->get_From_Node();
-           pred_found = true;
-           break;
-         }
+       //Return due to unacceptable outcome if attempt of rescheduling successful, but at cost of increasing number of unmapped nodes
+       else {
+         valid_route = false;
+         return;
        }
      }
-
-     if(pred_found == false)
-     FATAL(true,"In Route_Reschedule_Map. Should Not Reach Here\n");
-
-
-     //Iterate through all next nodes if a left node is a predecessor node for far scheduled node(s)
-     for(unsigned int i=0; i < next.size(); i++)
-     {
-       Node* next_node = next[i];
-
-       for (iEdge = ARCSet.begin(); iEdge != ARCSet.end(); iEdge++)
-       {
-         arc = *iEdge;
-         //find the arc between leftnode -> next_node and delete it
-         if((arc->get_From_Node()->get_ID() == left_id) && (arc->get_To_Node()->get_ID() == next_node->get_ID()))
-         {
-           dfg->Remove_Arc(arc->get_From_Node(),arc->get_To_Node());
-           dfg->make_Arc(predecessor_of_succ, next_node, dfg->ARC_Max_Index+1, 0, TrueDep,arc->get_OperandOrder());
-         }
-       }
-       //myCGRA.makeCompatible(pred_id,next_node->get_ID());
-     }
-     new_node = predecessor_of_succ;
+     leftnode = dfg->get_Node(inserted_node_id); //Shail Added After Checking Inclusion For Inter-Iteration Dependency
+     debugfile << "leftnode is " << leftnode->get_ID() << endl;
    }
-   else if(left_id == succ_id)
-   { //Updated: Feb 25, 2018
-     Node* successor_of_pred;
-     vector<ARC*>::iterator iEdge;
-     vector<ARC*> ARCSet = dfg->getSetOfArcs();
-     ARC *arc;
-     bool succ_found = false;
-     for (iEdge = ARCSet.begin(); iEdge != ARCSet.end(); iEdge++)
-     {   arc = *iEdge;
-       if((arc->get_To_Node()->get_Instruction() == (Instruction_Operation) route_op) && (arc->get_From_Node()->get_ID() == pred->get_ID()))
-       {
-         //Make Sure Predecessor of Succ is Same Route Node As Inserted One.
-         if(std::find(inserted_nodes.begin(), inserted_nodes.end(), arc->get_To_Node()) != inserted_nodes.end()) {
-           successor_of_pred = arc->get_To_Node();
-           succ_found = true;
-           break;
-         }
-       }
-     }
-
-     if(succ_found == false)
-     FATAL(true,"In Route_Reschedule_Map. Should Not Reach Here\n");
-
-
-     //Iterate through all next nodes if a left node is a predecessor node for far scheduled node(s)
-     for(unsigned int i=0; i < prev.size(); i++)
-     {
-       Node* prev_node = prev[i];
-
-       for (iEdge = ARCSet.begin(); iEdge != ARCSet.end(); iEdge++)
-       {
-         arc = *iEdge;
-         //find the arc between leftnode -> next_node and delete it
-         if((arc->get_To_Node()->get_ID() == left_id) && (arc->get_From_Node()->get_ID() == prev_node->get_ID()))
-         {
-           dfg->Remove_Arc(arc->get_From_Node(),arc->get_To_Node());
-           dfg->make_Arc(prev_node, successor_of_pred, dfg->ARC_Max_Index+1, 0, TrueDep,arc->get_OperandOrder());
-         }
-       }
-     }
-     new_node = successor_of_pred;
-   }
-
-   if(dfg->get_ResMII(current_number_resources) > II) {
-     valid_route = false;
-     return;
-   }
-
-   //Instead Make a mapping attempt (update compatibility + left nodes)
-   leftNodeMapped_route.clear();
-   myCGRA.SetII(II);
-   myCGRA.ResetIteration();
-   if (myCGRA.MCS2(dfg, leftNodeMapped_route))
-   {
-     myCGRA.CalcPEUtil(util_route);
-   }
-   else
-   {
-     myCGRA.CalcPEUtil(util_route); //No Need To Check Whether Left Nodes Are Increased Or Not.
-   }
-   debugfile << "Returning\n";
  }
 
- //TODO: Make sure to get pair of nodes as input and after mapping, check if both are mapped.
+ //If reaching here after 2*d attempts, it is failure. Exit
+ if(valid_route == false)
+ {
+   cerr << "Should Not Take So Many Attempts And Reach Here.\n";
+   return;
+ }
+
+ //If the given pair pred->succ is compatible and set with routnig path, modify the DFG (remaining pairs) for path sharing.
+ if(left_id == pred_id)
+ {
+   Node* predecessor_of_succ;
+   vector<ARC*>::iterator iEdge;
+   vector<ARC*> ARCSet = dfg->getSetOfArcs();
+   ARC *arc;
+   bool pred_found = false;
+   for (iEdge = ARCSet.begin(); iEdge != ARCSet.end(); iEdge++)
+   {   arc = *iEdge;
+     if((arc->get_From_Node()->get_Instruction() == (Instruction_Operation) route_op) && (arc->get_To_Node()->get_ID() == succ->get_ID()))
+     {
+       //Make Sure Predecessor of Succ is Same Route Node As Inserted One.
+       if(std::find(inserted_nodes.begin(), inserted_nodes.end(), arc->get_From_Node()) != inserted_nodes.end()) {
+         predecessor_of_succ = arc->get_From_Node();
+         pred_found = true;
+         break;
+       }
+     }
+   }
+
+   if(pred_found == false)
+   FATAL(true,"In Route_Reschedule_Map. Should Not Reach Here\n");
+
+
+   //Iterate through all next nodes if a left node is a predecessor node for far scheduled node(s)
+   for(unsigned int i=0; i < next.size(); i++)
+   {
+     Node* next_node = next[i];
+
+     for (iEdge = ARCSet.begin(); iEdge != ARCSet.end(); iEdge++)
+     {
+       arc = *iEdge;
+       //find the arc between leftnode -> next_node and delete it
+       if((arc->get_From_Node()->get_ID() == left_id) && (arc->get_To_Node()->get_ID() == next_node->get_ID()))
+       {
+         dfg->Remove_Arc(arc->get_From_Node(),arc->get_To_Node());
+         dfg->make_Arc(predecessor_of_succ, next_node, dfg->ARC_Max_Index+1, 0, TrueDep,arc->get_OperandOrder());
+       }
+     }
+   }
+   new_node = predecessor_of_succ;
+ }
+ else if(left_id == succ_id)
+ {
+   Node* successor_of_pred;
+   vector<ARC*>::iterator iEdge;
+   vector<ARC*> ARCSet = dfg->getSetOfArcs();
+   ARC *arc;
+   bool succ_found = false;
+   for (iEdge = ARCSet.begin(); iEdge != ARCSet.end(); iEdge++)
+   {   arc = *iEdge;
+     if((arc->get_To_Node()->get_Instruction() == (Instruction_Operation) route_op) && (arc->get_From_Node()->get_ID() == pred->get_ID()))
+     {
+       //Make Sure Predecessor of Succ is Same Route Node As Inserted One.
+       if(std::find(inserted_nodes.begin(), inserted_nodes.end(), arc->get_To_Node()) != inserted_nodes.end()) {
+         successor_of_pred = arc->get_To_Node();
+         succ_found = true;
+         break;
+       }
+     }
+   }
+
+   if(succ_found == false)
+   FATAL(true,"In Route_Reschedule_Map. Should Not Reach Here\n");
+
+
+   //Iterate through all next nodes if a left node is a predecessor node for far scheduled node(s)
+   for(unsigned int i=0; i < prev.size(); i++)
+   {
+     Node* prev_node = prev[i];
+
+     for (iEdge = ARCSet.begin(); iEdge != ARCSet.end(); iEdge++)
+     {
+       arc = *iEdge;
+       //find the arc between leftnode -> next_node and delete it
+       if((arc->get_To_Node()->get_ID() == left_id) && (arc->get_From_Node()->get_ID() == prev_node->get_ID()))
+       {
+         dfg->Remove_Arc(arc->get_From_Node(),arc->get_To_Node());
+         dfg->make_Arc(prev_node, successor_of_pred, dfg->ARC_Max_Index+1, 0, TrueDep,arc->get_OperandOrder());
+       }
+     }
+   }
+   new_node = successor_of_pred;
+ }
+
+ if(dfg->get_ResMII(current_number_resources) > II) {
+   valid_route = false;
+   return;
+ }
+
+ //Instead Make a mapping attempt (update compatibility + left nodes)
+ leftNodeMapped_route.clear();
+ myCGRA.SetII(II);
+ myCGRA.ResetIteration();
+ if (myCGRA.MCS2(dfg, leftNodeMapped_route))
+ {
+   myCGRA.CalcPEUtil(util_route);
+ }
+ else
+ {
+   myCGRA.CalcPEUtil(util_route); //No Need To Check Whether Left Nodes Are Increased Or Not.
+ }
+ debugfile << "Returning\n";
+}
+
+ // to do: Make sure to get pair of nodes as input and after mapping, check if both are mapped.
  //Moreover, first left node n1 should be given to reschedule until mapped.
- //Once, n1 and inserted nodes are mapped, n2 should be rescheduled, if unmapped and mapped.
+ //Once, n1 and inserted nodes are mapped, n2 should be rescheduled, if unmapped
 
-
- /* TODO: For memory reschedule and map, need to do two things -
+ /* to do: For memory reschedule and map, need to do two things -
  * 1. Reschedule function should ensure that corresponding loads are scheduled after a store.
  * 2. For correspondnig load/store nodes, Compatibility checking should ensure that whether this condition is met or not.
- *    If not, it will fail the node entry (both in vertices and arc).
+ *    If not, it should make the node incompatible.
  */
 
-//TODO Whenever success is zero, delete corresponding inserted store and load nodes from all 3 map vectors
+//to do: Whenever success is zero, delete corresponding inserted store and load nodes from all 3 map vectors
 void RAMP::Mem_Reschedule_Map(int node_id, int pred_id, int succ_id, int II, unsigned int last_attempt_unmapped, DFG* &dfg, int distance, vector<Node*> prev, vector<Node*> next,
 				   bool &valid_mem, float &util_mem, vector<Node*> &leftNodeMapped_mem, Node* &new_node, CGRA &myCGRA, vector<Node*> &inserted_mem_nodes)
 {
@@ -796,8 +792,6 @@ void RAMP::Mem_Reschedule_Map(int node_id, int pred_id, int succ_id, int II, uns
 	valid_mem = false;
 	Node* leftnode = dfg->get_Node(node_id);
 	Node* othernode;
-	//Node* pred     = dfg->get_Node(pred_id);
-	//Node* succ     = dfg->get_Node(succ_id);
 
 	if(node_id == pred_id)
  	    othernode = dfg->get_Node(succ_id);
@@ -809,16 +803,18 @@ void RAMP::Mem_Reschedule_Map(int node_id, int pred_id, int succ_id, int II, uns
 	vector<Node*> inserted_nodes;
 
 	//Reschedule With Adding Store Nodes To To The Predecessor Node And Load To Successor Node
-	//TODO 3 Cases 1. If distance = 0 or immediate, return invalid 2. Else, if pred node is load data, just load 3. else store and load
-	//TODO routing should do rescheduling by chaging current to current-1. Also with new node, distance should be updated.
-  //TODO In case of node other than store generate return
-
-  //TODO Store should be done in such a way that if there is any routing node followed, store data should take value from that routing path.
+	/* to do: 3 Cases
+    1. If distance = 0 or immediate, return invalid
+    2. Else, if pred node is load data, just load
+    3. else store and load
+    ensure path sharing
+    */
 
 	int success = dfg->Mem_Reschedule(II, current_number_resources, leftnode, othernode, inserted_nodes);
 	inserted_mem_nodes = inserted_nodes;
 	debugfile << "Reschedule success is: " << success << "\n";
-	if(success == 0) {	//Success shows that it is possible to reschedule the DFG at same II.
+  //Success shows that it is possible to reschedule the DFG at same II.
+	if(success == 0) {
 		dfg->Delete_Mem_Nodes(inserted_nodes);
 	  return;
 	}
@@ -882,46 +878,47 @@ void RAMP::Mem_Reschedule_Map(int node_id, int pred_id, int succ_id, int II, uns
       }
     }
 
-    //Following code needs a pass and some cleanup
+    //Following code needs a pass
 
-    //TODO: If cannot map store nodes, try to map only store node and loading successors as the nodes
+    // to do: If cannot map store nodes, try to map only store node and loading successors as the nodes
     //Can be clubbed with following routines
 
     //Check whether other immediate nodes are mapped or not
     //In case of not being mapped, load the data from the predecessor
     for(std::vector<Node*>::iterator it = nextnodes.begin(); it != nextnodes.end(); ++it) {
-			if( ((*it)->get_Sched_Info()->get_Current() - dfg->get_Node(pred_id)->get_Sched_Info()->get_Current())
-			    <= (dfg->get_Node(pred_id)->get_Latency() + store_data_latency) )
-			{	//Instead check for compatibility
-			      if(std::find(leftnotmapped.begin(), leftnotmapped.end(), (*it)) != leftnotmapped.end())
-			      {
-					          if(!modified_immediate_nodes) //Insert Load Node For First Immediate Node
-					          {
-          						modified_immediate_nodes = true;
-          						dfg->insert_loads_mem(dfg->get_Node(pred_id),(*it),inserted_mem_nodes_immediates);
-          						inserted_mem_nodes.insert(inserted_mem_nodes.end(), inserted_mem_nodes_immediates.begin(), inserted_mem_nodes_immediates.end());
-          						load_data = inserted_mem_nodes_immediates[1];
-          					}
-          					else
-          					{	//Share load data node as predecessor to other input nodes (path sharing)
-          						Node* next_node = (*it);
-          						vector<ARC*> ARCSet = dfg->getSetOfArcs();
-          						ARC *arc;
-          						vector<ARC*>::iterator iEdge;
-          						for (iEdge = ARCSet.begin(); iEdge != ARCSet.end(); iEdge++)
-          						{
-          						    arc = *iEdge;
-          						    //find the arc between pred -> next_node and delete it
-          						    if((arc->get_From_Node()->get_ID() == pred_id) && (arc->get_To_Node()->get_ID() == next_node->get_ID()))
-          						    {
-          						      dfg->Remove_Arc(arc->get_From_Node(),arc->get_To_Node());
-          						      dfg->make_Arc(load_data, next_node, dfg->ARC_Max_Index+1, 0, TrueDep, arc->get_OperandOrder());
-          						    }
-             		    	}
-          					}
-				      }
-			  }
-		}
+      if( ((*it)->get_Sched_Info()->get_Current() - dfg->get_Node(pred_id)->get_Sched_Info()->get_Current())
+      <= (dfg->get_Node(pred_id)->get_Latency() + store_data_latency) )
+      {
+        //Instead check for compatibility
+        if(std::find(leftnotmapped.begin(), leftnotmapped.end(), (*it)) != leftnotmapped.end())
+        {
+          if(!modified_immediate_nodes) //Insert Load Node For First Immediate Node
+          {
+            modified_immediate_nodes = true;
+            dfg->insert_loads_mem(dfg->get_Node(pred_id),(*it),inserted_mem_nodes_immediates);
+            inserted_mem_nodes.insert(inserted_mem_nodes.end(), inserted_mem_nodes_immediates.begin(), inserted_mem_nodes_immediates.end());
+            load_data = inserted_mem_nodes_immediates[1];
+          }
+          else
+          {	//Share load data node as predecessor to other input nodes (path sharing)
+            Node* next_node = (*it);
+            vector<ARC*> ARCSet = dfg->getSetOfArcs();
+            ARC *arc;
+            vector<ARC*>::iterator iEdge;
+            for (iEdge = ARCSet.begin(); iEdge != ARCSet.end(); iEdge++)
+            {
+              arc = *iEdge;
+              //find the arc between pred -> next_node and delete it
+              if((arc->get_From_Node()->get_ID() == pred_id) && (arc->get_To_Node()->get_ID() == next_node->get_ID()))
+              {
+                dfg->Remove_Arc(arc->get_From_Node(),arc->get_To_Node());
+                dfg->make_Arc(load_data, next_node, dfg->ARC_Max_Index+1, 0, TrueDep, arc->get_OperandOrder());
+              }
+            }
+          }
+        }
+      }
+    }
 
 		//Check Res and MemII and exit if II' > II Or Cannot Reschedule
 		if(modified_immediate_nodes)
@@ -949,21 +946,21 @@ void RAMP::Mem_Reschedule_Map(int node_id, int pred_id, int succ_id, int II, uns
 		}
 
 		myCGRA.MCS2(dfg, leftnotmapped);
-		//Iterate Through Inserted Nodes And Check Whether They Need To Be Rescheduled/Routed
-		for(std::vector<Node*>::iterator it = leftnotmapped.begin(); it != leftnotmapped.end(); ++it) {
-  		    std::vector<Node*>::iterator it2;
-		      for(it2 = inserted_nodes.begin(); it2 != inserted_nodes.end(); it2++) {
-			         if((*it2)->get_ID() == (*it)->get_ID()) {
-			              vector<Node*> to_change_set;
-			              to_change_set.push_back(dfg->get_Node((*it2)->get_ID()));
-  			            int success = dfg->Modulo_ReSchedule_Smart_2(0, current_number_resources, II, to_change_set);
-	 		              if(success == 0) {
- 	      		            dfg->Delete_Mem_Nodes(inserted_nodes);
-			                  return;
-			              }
-			        }
-		      }
-		}
+    //Iterate Through Inserted Nodes And Check Whether They Need To Be Rescheduled/Routed
+    for(std::vector<Node*>::iterator it = leftnotmapped.begin(); it != leftnotmapped.end(); ++it) {
+      std::vector<Node*>::iterator it2;
+      for(it2 = inserted_nodes.begin(); it2 != inserted_nodes.end(); it2++) {
+        if((*it2)->get_ID() == (*it)->get_ID()) {
+          vector<Node*> to_change_set;
+          to_change_set.push_back(dfg->get_Node((*it2)->get_ID()));
+          int success = dfg->Modulo_ReSchedule_Smart_2(0, current_number_resources, II, to_change_set);
+          if(success == 0) {
+            dfg->Delete_Mem_Nodes(inserted_nodes);
+            return;
+          }
+        }
+      }
+    }
 
 		inserted_nodes.push_back(leftnode);
 		inserted_nodes.push_back(othernode);
@@ -980,49 +977,48 @@ void RAMP::Mem_Reschedule_Map(int node_id, int pred_id, int succ_id, int II, uns
 		  return;
 		}
 
- 		//Check If All Inserted Nodes And Given Pair Are Compatible/Mapped. If So, Update Other Pairs for Path Sharing.
-		for(std::vector<Node*>::iterator it = inserted_nodes.begin(); it != inserted_nodes.end(); ++it) {
-			  if(std::find(leftnotmapped.begin(), leftnotmapped.end(), (*it)) != leftnotmapped.end())
-		    {
-				    dfg->Delete_Mem_Nodes(inserted_nodes);
-				    return;
-			  }
-		}
+    //Check If All Inserted Nodes And Given Pair Are Compatible/Mapped. If So, Update Other Pairs for Path Sharing.
+    for(std::vector<Node*>::iterator it = inserted_nodes.begin(); it != inserted_nodes.end(); ++it) {
+      if(std::find(leftnotmapped.begin(), leftnotmapped.end(), (*it)) != leftnotmapped.end())
+      {
+        dfg->Delete_Mem_Nodes(inserted_nodes);
+        return;
+      }
+    }
 
-		//If Compatible Then See For Mapped and Left Nodes.
-		//Update Other Pairs. Give Inserted Node As Output.
-		//If the given pair pred->succ is compatible and set with routnig path, modify the DFG (remaining pairs) for path sharing.
-		if(node_id == pred_id)
-		{
-  			Node* predecessor_of_succ = load_data;
-  			vector<ARC*>::iterator iEdge;
-  			vector<ARC*> ARCSet = dfg->getSetOfArcs();
-  			ARC *arc;
-  			//bool pred_found = false;
+    //If Compatible Then See For Mapped and Left Nodes.
+    //Update Other Pairs. Give Inserted Node As Output.
+    //If the given pair pred->succ is compatible and set with routnig path, modify the DFG (remaining pairs) for path sharing.
+    if(node_id == pred_id)
+    {
+      Node* predecessor_of_succ = load_data;
+      vector<ARC*>::iterator iEdge;
+      vector<ARC*> ARCSet = dfg->getSetOfArcs();
+      ARC *arc;
 
-  			//Iterate through all next nodes if a left node is a predecessor node for far scheduled node(s)
-  			for(unsigned int i=0; i < next.size(); i++)
-  			{
-  				  Node* next_node = next[i];
-  				  for (iEdge = ARCSet.begin(); iEdge != ARCSet.end(); iEdge++)
-  				  {
-  				      arc = *iEdge;
-  				      //find the arc between leftnode -> next_node and delete it
-  				      if((arc->get_From_Node()->get_ID() == node_id) && (arc->get_To_Node()->get_ID() == next_node->get_ID()))
-  				      {
-      				      dfg->Remove_Arc(arc->get_From_Node(),arc->get_To_Node());
-      				      dfg->make_Arc(predecessor_of_succ, next_node, dfg->ARC_Max_Index+1, 0, TrueDep,arc->get_OperandOrder());
-  				      }
-     			  }
-  			}
-  			new_node = predecessor_of_succ;
-  	}
+      //Iterate through all next nodes if a left node is a predecessor node for far scheduled node(s)
+      for(unsigned int i=0; i < next.size(); i++)
+      {
+        Node* next_node = next[i];
+        for (iEdge = ARCSet.begin(); iEdge != ARCSet.end(); iEdge++)
+        {
+          arc = *iEdge;
+          //find the arc between leftnode -> next_node and delete it
+          if((arc->get_From_Node()->get_ID() == node_id) && (arc->get_To_Node()->get_ID() == next_node->get_ID()))
+          {
+            dfg->Remove_Arc(arc->get_From_Node(),arc->get_To_Node());
+            dfg->make_Arc(predecessor_of_succ, next_node, dfg->ARC_Max_Index+1, 0, TrueDep,arc->get_OperandOrder());
+          }
+        }
+      }
+      new_node = predecessor_of_succ;
+    }
 
-		//Check II and exit if needed.
-		if((dfg->get_ResMII(current_number_resources) > II) ||(dfg->get_MemMII() > II)) {
-    	  dfg->Delete_Mem_Nodes(inserted_nodes);
-		    return;
-		}
+    //Check II and exit if needed.
+    if((dfg->get_ResMII(current_number_resources) > II) ||(dfg->get_MemMII() > II)) {
+      dfg->Delete_Mem_Nodes(inserted_nodes);
+      return;
+    }
 
 		//Map and return (like in routing)
 		leftNodeMapped_mem.clear();
@@ -1035,129 +1031,201 @@ void RAMP::Mem_Reschedule_Map(int node_id, int pred_id, int succ_id, int II, uns
 
 
 void RAMP::Route_RF_ReSchedule_Map(int pred_id, int succ_id, int II, unsigned int last_attempt_unmapped, DFG* &dfg, int distance, vector<Node*> prev, vector<Node*> next, bool &valid_route_rf, float &util_route_rf, vector<Node*> &leftNodeMapped_route_rf, Node* &new_node, CGRA &myCGRA)
+{
+  debugfile << "\nII: " << II << "\tIn Route Through RF Reschedule\n";
+  valid_route_rf = false;
+  if(cgra_info.R_Size == 0) return;
+
+  Node* leftnode = dfg->get_Node(pred_id);
+  Node* pred     = dfg->get_Node(pred_id);
+  Node* succ     = dfg->get_Node(succ_id);
+  vector<Node*> inserted_nodes;
+  vector<Node*>leftnotmapped;
+
+  int Rmin = 0;
+  int Rmax = 0;
+  int current_number_resources = cgra_info.X_Dim*cgra_info.Y_Dim;
+
+  myCGRA.SetII(II);
+  myCGRA.ResetIteration();
+  myCGRA.MCS2(dfg, leftnotmapped);
+
+  int success = 0, found = 0;
+  int temp_inserted_node = 0, new_left_node_id = 0, sched_time = 0;
+  DFG* temp_DFG = NULL;
+
+  route_rf_nodeid_scheduled_time.clear();
+
+  Node_Dummy* routeReadNode;
+  Node_Dummy* routeWriteNode;
+
+  int rec_dist = dfg->get_Arc(dfg->get_Node(leftnode->get_ID()),dfg->get_Node(succ->get_ID()))->get_Distance();
+
+  //For Self Loop.
+  if(pred_id == succ_id) {
+    rec_dist = pred->get_self_loop()->get_Distance();
+    pred->delete_self_loop();
+    succ->delete_self_loop();
+  }
+
+  for(int i=0; i < distance; i++)
   {
-    debugfile << "\nII: " << II << "\tIn Route Through RF Reschedule\n";
+    //Get Distance Between pred and succ
+    debugfile << "left node is: " << leftnode->get_ID() << "\tsucc: " << succ->get_ID() << endl;
+    int dist = 0;
 
-    valid_route_rf = false;
+    if(rec_dist == 0)
+    dist = dfg->get_Node(leftnode->get_ID())->get_dist(dfg->get_Node(succ->get_ID()),II);
+    leftnotmapped.clear();
 
-    if(cgra_info.R_Size == 0) return;
+    if((dist <= 1) && (rec_dist == 0))
+    FATAL(true,"You should Not Reach Here. Debug!");
 
-    Node* leftnode = dfg->get_Node(pred_id);
-    Node* pred     = dfg->get_Node(pred_id);
-    Node* succ     = dfg->get_Node(succ_id);
-    vector<Node*> inserted_nodes;
-    vector<Node*>leftnotmapped;
+    //For dist > 1
+    myCGRA.makeRFTable();
+    myCGRA.getMinMaxReg(Rmin,Rmax);
 
-    int Rmin = 0;
-    int Rmax = 0;
-    int current_number_resources = cgra_info.X_Dim*cgra_info.Y_Dim;
+    pred = dfg->get_Node(leftnode->get_ID());
 
-    myCGRA.SetII(II);
-    myCGRA.ResetIteration();
-    myCGRA.MCS2(dfg, leftnotmapped);
+    int pred_time = pred->get_Sched_Info()->get_Current();
+    int succ_time = succ->get_Sched_Info()->get_Current();
+    if(rec_dist > 0)
+      succ_time = succ->get_Sched_Info()->get_Current() + rec_dist*II;
 
-    int success = 0, found = 0;
-    //int last_time;
-    int temp_inserted_node = 0, new_left_node_id = 0, sched_time = 0;
+    int start_time = pred_time + Rmax*II - 1;
+    if(start_time > (succ_time - 1))
+      start_time = succ_time - 1;
 
-    DFG* temp_DFG = NULL;
+    int end_time  = pred->get_Sched_Info()->get_Current() + 1;
 
-    route_rf_nodeid_scheduled_time.clear();
-
-    Node_Dummy* routeReadNode;
-    Node_Dummy* routeWriteNode;
-
-    int rec_dist = dfg->get_Arc(dfg->get_Node(leftnode->get_ID()),dfg->get_Node(succ->get_ID()))->get_Distance();
-
-    //For Self Loop. TODO: To Make It Work
-    if(pred_id == succ_id) {
-      rec_dist = pred->get_self_loop()->get_Distance();
-      pred->delete_self_loop();
-      succ->delete_self_loop();
+    if((Rmin == 0) || (II < 2)) {
+      //to do: Verify For R=0 At Some Later Stage.
+      start_time =  pred->get_Sched_Info()->get_Current() + 1;
+      end_time   =  pred->get_Sched_Info()->get_Current() + 1;
     }
 
-    for(int i=0; i < distance; i++)
+    debugfile << "Rmin = " << Rmin << "\tRmax = " << Rmax << endl;
+    debugfile << "start_time: " << start_time << "\tend_time: " << end_time << endl;
+
+    debugfile << "Printing ARCs\n";
+    vector<ARC*> ARCSet = dfg->getSetOfArcs();
+    vector<ARC*>::iterator iEdge;
+
+    for(sched_time = start_time; sched_time >= end_time; sched_time--)
     {
-      //Get Distance Between pred and succ
-      debugfile << "left node is: " << leftnode->get_ID() << "\tsucc: " << succ->get_ID() << endl;
-      int dist = 0;
+      temp_DFG = dfg->Copy_With_Schedule_And_Mapping();
+      found = 0;
+      success = 0;
 
-      if(rec_dist == 0)
-        dist = dfg->get_Node(leftnode->get_ID())->get_dist(dfg->get_Node(succ->get_ID()),II);
-      leftnotmapped.clear();
+      //Add A Node To Read From RF
+      routeReadNode = new Node_Dummy(1, temp_DFG->Get_Unique_Index(), leftnode);
+      if ((int) routeReadNode->get_Number_of_Pred()>0)
+      temp_DFG->Add_Arc(routeReadNode->get_Pred_Arc(0));
 
-      if((dist <= 1) && (rec_dist == 0))
-        FATAL(true,"You should Not Reach Here. Debug!");
+      temp_DFG->insert_Node(routeReadNode);
+      temp_DFG->insert_Node_in_between_output(temp_DFG->get_Node(leftnode->get_ID()), temp_DFG->get_Node(succ->get_ID()), routeReadNode);
+      temp_inserted_node = routeReadNode->get_ID();
 
-      //For dist > 1
-      myCGRA.makeRFTable();
-      //myCGRA.ShowCompatibility();
-      myCGRA.getMinMaxReg(Rmin,Rmax);
+      debugfile << "At time: " << sched_time << "  Inserted Route Read Node " << temp_inserted_node << " between nodes " << leftnode->get_ID() << " and " << succ->get_ID() << "\n";
 
-      pred = dfg->get_Node(leftnode->get_ID());
+      std::map<int,int>::iterator it = route_rf_nodeid_scheduled_time.begin();
+      route_rf_nodeid_scheduled_time.insert (it, std::pair<int,int>(temp_inserted_node,sched_time));
 
-      int pred_time = pred->get_Sched_Info()->get_Current();
-      int succ_time = succ->get_Sched_Info()->get_Current();
-      if(rec_dist > 0)
-        succ_time = succ->get_Sched_Info()->get_Current() + rec_dist*II;
+      //Check Can We Schedule
+      success = temp_DFG->Reschedule(II, current_number_resources,1,1,{},{});
 
-      int start_time = pred_time + Rmax*II - 1;
-      if(start_time > (succ_time - 1))
-        start_time = succ_time - 1;
+      //Delete entry temporarily from map of node and their timing
+      route_rf_nodeid_scheduled_time.erase (temp_inserted_node);
 
-      int end_time  = pred->get_Sched_Info()->get_Current() + 1;
-
-      //Changed II < 2 // Feb 25 2018
-      if((Rmin == 0) || (II < 2)) {	    //TODO Verify For R=0 At Some Later Stage.
-        start_time =  pred->get_Sched_Info()->get_Current() + 1;
-        end_time   =  pred->get_Sched_Info()->get_Current() + 1;
+      if(success == 0)
+      {
+        debugfile << "Did not reschedule the node successfully\n";
+        continue;
       }
 
-      debugfile << "Rmin = " << Rmin << "\tRmax = " << Rmax << endl;
-      debugfile << "start_time: " << start_time << "\tend_time: " << end_time << endl;
+      //If Inter-Iteration Dependency, Update The Distance.
+      node_new_inter_it_dist.clear();
+      if(rec_dist > 0) {
+        int new_inter_iteration_dist = (succ_time - sched_time)/II;
+        new_inter_iteration_dist++;
+        node_new_inter_it_dist.insert(std::pair<int,int>(temp_inserted_node,new_inter_iteration_dist));
+      }
 
-      debugfile << "Printing ARCs\n";
-      vector<ARC*> ARCSet = dfg->getSetOfArcs();
-      vector<ARC*>::iterator iEdge;
+      //Check Can We Map
+      myCGRA.ResetIteration();
+      myCGRA.SetII(II);
+      myCGRA.GenerateCompGraph(temp_DFG);
 
-      for(sched_time = start_time; sched_time >= end_time; sched_time--)
-      {
-        temp_DFG = dfg->Copy_With_Schedule_And_Mapping();
-        found = 0;
+      if((myCGRA.IsCompatible(leftnode->get_ID(),temp_inserted_node) == false) && (myCGRA.IsCompatible(temp_inserted_node,succ->get_ID()) == false)) {
+        debugfile << "1. mapping success = 0.\t" << temp_inserted_node << " is not compatible with " << succ->get_ID() << "\n";
         success = 0;
+        continue;
+      }
 
-        //Add A Node To Read From RF
-        routeReadNode = new Node_Dummy(1, temp_DFG->Get_Unique_Index(), leftnode);
-        if ((int) routeReadNode->get_Number_of_Pred()>0)
-          temp_DFG->Add_Arc(routeReadNode->get_Pred_Arc(0));
+      if(myCGRA.IsCompatible(leftnode->get_ID(),temp_inserted_node) == false) {
+        debugfile << "2. mapping success = 0" << leftnode->get_ID() << " is not compatible with " << temp_inserted_node << "\n";
+        success = 0;
+        continue;
+      }
 
-        temp_DFG->insert_Node(routeReadNode);
-        temp_DFG->insert_Node_in_between_output(temp_DFG->get_Node(leftnode->get_ID()), temp_DFG->get_Node(succ->get_ID()), routeReadNode);
-        temp_inserted_node = routeReadNode->get_ID();
+      new_left_node_id = temp_inserted_node;
+      int dist_new = temp_DFG->get_Node(temp_inserted_node)->get_dist(temp_DFG->get_Node(succ->get_ID()),II);
+      debugfile << dist_new << endl;
+      int dist_next = 0;
+      int routeReadTo = succ_id;
 
-        debugfile << "At time: " << sched_time << "  Inserted Route Read Node " << temp_inserted_node << " between nodes " << leftnode->get_ID() << " and " << succ->get_ID() << "\n";
+      if((myCGRA.IsCompatible(temp_inserted_node,succ->get_ID()) == true) && (dist_new <= II)) // && (dist_new > 1))	//If within II see whether we can map as it is
+      {
+        if(next.size() > 0)
+        {
+          dist_next = next[0]->get_Sched_Info()->get_Current() - temp_DFG->get_Node(temp_inserted_node)->get_Sched_Info()->get_Current();
+          routeReadTo = next[0]->get_ID();
+          debugfile << "routeReadTo = " << routeReadTo << endl;
+        }
+      }
+
+      if((dist_new >= II) || ((dist_next > 1) && (dist_next <= II)) || (myCGRA.IsCompatible(temp_inserted_node,succ->get_ID()) == false))
+      {
+        //Insert A Routing Node Which Will Carry Forward The Value Read by tempDummyNode
+        routeWriteNode = new Node_Dummy(1, temp_DFG->Get_Unique_Index(), routeReadNode);
+        if ((int) routeWriteNode->get_Number_of_Pred()>0)
+        temp_DFG->Add_Arc(routeWriteNode->get_Pred_Arc(0));
+
+        temp_DFG->insert_Node(routeWriteNode);
+
+        if((dist_next > 1) && (dist_next <= II)) {
+          ARC* temp_edge = temp_DFG->get_Arc(temp_DFG->get_Node(leftnode->get_ID()),temp_DFG->get_Node(routeReadTo));
+          temp_DFG->Remove_Arc(temp_DFG->get_Node(leftnode->get_ID()),temp_DFG->get_Node(routeReadTo));
+          temp_DFG->make_Arc(routeWriteNode, temp_DFG->get_Node(routeReadTo), temp_DFG->ARC_Max_Index+1, temp_edge->get_Distance(), temp_edge->get_Dependency(), temp_edge->get_OperandOrder());
+          debugfile << "At time: " << sched_time+1 << "  Inserted Route Write Node " << routeWriteNode->get_ID() << " between nodes " << routeReadNode->get_ID() << " and " << routeReadTo << "\n";
+        }
+        else {
+          temp_DFG->insert_Node_in_between_output(temp_DFG->get_Node(routeReadNode->get_ID()), temp_DFG->get_Node(routeReadTo), routeWriteNode);
+          debugfile << "At time: " << sched_time+1 << "  Inserted Route Write Node " << routeWriteNode->get_ID() << " between nodes " << routeReadNode->get_ID() << " and " << routeReadTo << "\n";
+        }
 
         std::map<int,int>::iterator it = route_rf_nodeid_scheduled_time.begin();
         route_rf_nodeid_scheduled_time.insert (it, std::pair<int,int>(temp_inserted_node,sched_time));
+        route_rf_nodeid_scheduled_time.insert (it, std::pair<int,int>(routeWriteNode->get_ID(),sched_time+1));
 
+        //Check Reschedule And Compatibility
         //Check Can We Schedule
         success = temp_DFG->Reschedule(II, current_number_resources,1,1,{},{});
 
         //Delete entry temporarily from map of node and their timing
         route_rf_nodeid_scheduled_time.erase (temp_inserted_node);
+        route_rf_nodeid_scheduled_time.erase (routeWriteNode->get_ID());
 
+        debugfile << "Now, rescheduling success = " << success << "\n";
         if(success == 0)
-        {
-          debugfile << "Did not reschedule the node successfully\n";
-          continue;
-        }
+        continue;
 
-        //If Inter-Iteration Dependency, Update The Distance.
-        node_new_inter_it_dist.clear();
-        if(rec_dist > 0) {
-          int new_inter_iteration_dist = (succ_time - sched_time)/II;
-          new_inter_iteration_dist++;
-          node_new_inter_it_dist.insert(std::pair<int,int>(temp_inserted_node,new_inter_iteration_dist));
+        //Check, if predecessor's and successor's timing is changed => we need to change time of newly inserted node by skipping current iteration of schedule time
+        if((pred->get_Sched_Info()->get_Current() != temp_DFG->get_Node(pred->get_ID())->get_Sched_Info()->get_Current()) ||
+        (succ->get_Sched_Info()->get_Current() != temp_DFG->get_Node(succ->get_ID())->get_Sched_Info()->get_Current())) {
+          debugfile << "3. mapping success = 0\n";
+          success = 0;
+          continue;
         }
 
         //Check Can We Map
@@ -1165,254 +1233,174 @@ void RAMP::Route_RF_ReSchedule_Map(int pred_id, int succ_id, int II, unsigned in
         myCGRA.SetII(II);
         myCGRA.GenerateCompGraph(temp_DFG);
 
-        if((myCGRA.IsCompatible(leftnode->get_ID(),temp_inserted_node) == false) && (myCGRA.IsCompatible(temp_inserted_node,succ->get_ID()) == false)) {
-          debugfile << "1. mapping success = 0.\t" << temp_inserted_node << " is not compatible with " << succ->get_ID() << "\n";
+        if((myCGRA.IsCompatible(routeReadNode->get_ID(),routeWriteNode->get_ID()) == false) && (myCGRA.IsCompatible(routeWriteNode->get_ID(),routeReadTo) == false)) {
+          debugfile << "4. mapping success = 0\n";
           success = 0;
           continue;
         }
 
-        if(myCGRA.IsCompatible(leftnode->get_ID(),temp_inserted_node) == false) {
-          debugfile << "2. mapping success = 0" << leftnode->get_ID() << " is not compatible with " << temp_inserted_node << "\n";
-          success = 0;
-          continue;
-        }
-
-        new_left_node_id = temp_inserted_node;
-        int dist_new = temp_DFG->get_Node(temp_inserted_node)->get_dist(temp_DFG->get_Node(succ->get_ID()),II);
-        debugfile << dist_new << endl;
-        int dist_next = 0;
-        int routeReadTo = succ_id;
-
-        if((myCGRA.IsCompatible(temp_inserted_node,succ->get_ID()) == true) && (dist_new <= II)) // && (dist_new > 1))	//If within II see whether we can map as it is
+        new_left_node_id = routeWriteNode->get_ID();
+      }
+      else
+      {
+        // If route read node not added or erased perviously, just add it back!
+        if(route_rf_nodeid_scheduled_time.find(temp_inserted_node) == route_rf_nodeid_scheduled_time.end())
         {
-          if(next.size() > 0)
-          {
-            dist_next = next[0]->get_Sched_Info()->get_Current() - temp_DFG->get_Node(temp_inserted_node)->get_Sched_Info()->get_Current();
-            routeReadTo = next[0]->get_ID();
-            debugfile << "routeReadTo = " << routeReadTo << endl;
-          }
-        }
-
-        if((dist_new >= II) || ((dist_next > 1) && (dist_next <= II)) || (myCGRA.IsCompatible(temp_inserted_node,succ->get_ID()) == false))
-        {
-          //Insert A Routing Node Which Will Carry Forward The Value Read by tempDummyNode
-          routeWriteNode = new Node_Dummy(1, temp_DFG->Get_Unique_Index(), routeReadNode);
-          if ((int) routeWriteNode->get_Number_of_Pred()>0)
-          temp_DFG->Add_Arc(routeWriteNode->get_Pred_Arc(0));
-
-          temp_DFG->insert_Node(routeWriteNode);
-
-          if((dist_next > 1) && (dist_next <= II)) {
-            //temp_DFG->insert_Node_in_between_output(temp_DFG->get_Node(routeReadNode->get_ID()), temp_DFG->get_Node(routeReadTo), routeWriteNode);
-            ARC* temp_edge = temp_DFG->get_Arc(temp_DFG->get_Node(leftnode->get_ID()),temp_DFG->get_Node(routeReadTo));
-            temp_DFG->Remove_Arc(temp_DFG->get_Node(leftnode->get_ID()),temp_DFG->get_Node(routeReadTo));
-            temp_DFG->make_Arc(routeWriteNode, temp_DFG->get_Node(routeReadTo), temp_DFG->ARC_Max_Index+1, temp_edge->get_Distance(), temp_edge->get_Dependency(), temp_edge->get_OperandOrder());
-            debugfile << "At time: " << sched_time+1 << "  Inserted Route Write Node " << routeWriteNode->get_ID() << " between nodes " << routeReadNode->get_ID() << " and " << routeReadTo << "\n";
-          }
-          else {
-            temp_DFG->insert_Node_in_between_output(temp_DFG->get_Node(routeReadNode->get_ID()), temp_DFG->get_Node(routeReadTo), routeWriteNode);
-            debugfile << "At time: " << sched_time+1 << "  Inserted Route Write Node " << routeWriteNode->get_ID() << " between nodes " << routeReadNode->get_ID() << " and " << routeReadTo << "\n";
-          }
-
-          std::map<int,int>::iterator it = route_rf_nodeid_scheduled_time.begin();
-          route_rf_nodeid_scheduled_time.insert (it, std::pair<int,int>(temp_inserted_node,sched_time));
-          route_rf_nodeid_scheduled_time.insert (it, std::pair<int,int>(routeWriteNode->get_ID(),sched_time+1));
-
-          //Check Reschedule And Compatibility
-          //Check Can We Schedule
-          success = temp_DFG->Reschedule(II, current_number_resources,1,1,{},{});
-
-          //Delete entry temporarily from map of node and their timing
-          route_rf_nodeid_scheduled_time.erase (temp_inserted_node);
-          route_rf_nodeid_scheduled_time.erase (routeWriteNode->get_ID());
-
-          debugfile << "Now, rescheduling success = " << success << "\n";
-          if(success == 0)
-            continue;
-
-          //Check, if predecessor's and successor's timing is changed => we need to change time of newly inserted node by skipping current iteration of schedule time
-          if((pred->get_Sched_Info()->get_Current() != temp_DFG->get_Node(pred->get_ID())->get_Sched_Info()->get_Current()) ||
-          (succ->get_Sched_Info()->get_Current() != temp_DFG->get_Node(succ->get_ID())->get_Sched_Info()->get_Current())) {
-            debugfile << "3. mapping success = 0\n";
-            success = 0;
-            continue;
-          }
-
-          //Check Can We Map
-          myCGRA.ResetIteration();
-          myCGRA.SetII(II);
-          myCGRA.GenerateCompGraph(temp_DFG);
-
-          if((myCGRA.IsCompatible(routeReadNode->get_ID(),routeWriteNode->get_ID()) == false) && (myCGRA.IsCompatible(routeWriteNode->get_ID(),routeReadTo) == false)) {
-            debugfile << "4. mapping success = 0\n";
-            success = 0;
-            continue;
-          }
-
-          new_left_node_id = routeWriteNode->get_ID();
-        }
-        else
-        {
-            // If route read node not added or erased perviously, just add it back!
-            if(route_rf_nodeid_scheduled_time.find(temp_inserted_node) == route_rf_nodeid_scheduled_time.end())
-            {
-              std::map<int,int>::iterator itt = route_rf_nodeid_scheduled_time.begin();
-              route_rf_nodeid_scheduled_time.insert (itt, std::pair<int,int>(temp_inserted_node,sched_time));
-            }
-        }
-
-        if(success)
-        {
-          myCGRA.ResetIteration();
-          myCGRA.SetII(II);
-          if (myCGRA.MCS2(temp_DFG, leftnotmapped))
-          {
-            debugfile << "Done  successfully with spill through RF\n";
-            new_node = temp_DFG->get_Node(new_left_node_id);
-            debugfile << "New node is: " << new_node->get_ID() << "\n";
-            valid_route_rf = true;
-            myCGRA.CalcPEUtil(util_route_rf);
-            leftNodeMapped_route_rf.clear();
-            dfg = temp_DFG->Copy_With_Schedule_And_Mapping();
-            //myCGRA.tempPrint();
-            return;
-          }
-          else
-          {
-            for(std::vector<Node*>::iterator it = leftnotmapped.begin(); it != leftnotmapped.end(); ++it) {
-              if((*it)->get_ID() == temp_inserted_node)
-              {
-                debugfile << "left node is: " << (*it)->get_ID() << endl;
-                success = 0;
-              }
-            }
-
-            //If Compatible For new_left_node_id, exit.
-            if((myCGRA.IsCompatible(new_left_node_id, succ->get_ID()) == true) && (success == 1)) {
-              //TODO Check inclusion of success
-              debugfile << "Mapped node successfully\n";
-              found = 1;
-              break;
-            }
-
-            debugfile << "5. mapping success = " << success << "\n";
-            if(success == 0)
-              continue;
-            else
-            {
-              leftnode = temp_DFG->get_Node(new_left_node_id);
-              dfg = temp_DFG->Copy_With_Schedule_And_Mapping();
-              std::map<int,int>::iterator it = route_rf_nodeid_scheduled_time.begin();
-              route_rf_nodeid_scheduled_time.insert (it, std::pair<int,int>(temp_inserted_node,sched_time));
-              if(new_left_node_id != temp_inserted_node) route_rf_nodeid_scheduled_time.insert (it, std::pair<int,int>(new_left_node_id,sched_time+1));
-                break;
-            }
-          }
+          std::map<int,int>::iterator itt = route_rf_nodeid_scheduled_time.begin();
+          route_rf_nodeid_scheduled_time.insert (itt, std::pair<int,int>(temp_inserted_node,sched_time));
         }
       }
 
-      if(success == 0) {
-        valid_route_rf = false;
-        return;
-      }
-
-      if(found) {
-        debugfile << "found! mapped node successfully\n";
-        if(leftnotmapped.size() <= last_attempt_unmapped) { //Made comparison <= on Feb 27
-          for(std::vector<Node*>::iterator it = leftnotmapped.begin(); it != leftnotmapped.end(); ++it)
-          {
-            leftNodeMapped_route_rf.push_back(*it);
-            debugfile << "Left node is: " << (*it)->get_ID() << "\n";
-          }
-          myCGRA.CalcPEUtil(util_route_rf);
-          dfg = temp_DFG->Copy_With_Schedule_And_Mapping();
+      if(success)
+      {
+        myCGRA.ResetIteration();
+        myCGRA.SetII(II);
+        if (myCGRA.MCS2(temp_DFG, leftnotmapped))
+        {
+          debugfile << "Done  successfully with spill through RF\n";
+          new_node = temp_DFG->get_Node(new_left_node_id);
+          debugfile << "New node is: " << new_node->get_ID() << "\n";
           valid_route_rf = true;
-          break;
-        }
-        else
-        {
-          valid_route_rf = false;
+          myCGRA.CalcPEUtil(util_route_rf);
+          leftNodeMapped_route_rf.clear();
+          dfg = temp_DFG->Copy_With_Schedule_And_Mapping();
           return;
         }
-      }
-    }
-
-    new_node = dfg->get_Node(new_left_node_id);
-    debugfile << "new_node is: " << new_node->get_ID() << "\n";
-
-    //Once Done With The Given Pair, Connect Last Inserted Node To Other Successors  (Path Sharing)
-    if(next.size() > 0)
-    {
-      Node* predecessor_of_succ;
-      vector<ARC*>::iterator iEdge;
-      vector<ARC*> ARCSet = temp_DFG->getSetOfArcs();
-      ARC *arc;
-      bool pred_found = false;
-
-      for (iEdge = ARCSet.begin(); iEdge != ARCSet.end(); iEdge++)
-      {
-        arc = *iEdge;
-
-        if((arc->get_From_Node()->get_Instruction() == (Instruction_Operation) route_op) && (arc->get_To_Node()->get_ID() == succ->get_ID()))
+        else
         {
-          //Make Sure Predecessor of Succ is Same Route Node As Inserted One.
-          std::map<int,int>::iterator ittt = route_rf_nodeid_scheduled_time.begin();
-          while(ittt != route_rf_nodeid_scheduled_time.end())
-          {
-            debugfile << ittt->first << "\t" << ittt->second << "\n";
-            ittt++;
+          for(std::vector<Node*>::iterator it = leftnotmapped.begin(); it != leftnotmapped.end(); ++it) {
+            if((*it)->get_ID() == temp_inserted_node)
+            {
+              debugfile << "left node is: " << (*it)->get_ID() << endl;
+              success = 0;
+            }
           }
-          if(route_rf_nodeid_scheduled_time.find(arc->get_From_Node()->get_ID()) != route_rf_nodeid_scheduled_time.end()) {
-            predecessor_of_succ = arc->get_From_Node();
-            pred_found = true;
+
+          //If Compatible For new_left_node_id, exit.
+          if((myCGRA.IsCompatible(new_left_node_id, succ->get_ID()) == true) && (success == 1)) {
+            debugfile << "Mapped node successfully\n";
+            found = 1;
+            break;
+          }
+
+          debugfile << "5. mapping success = " << success << "\n";
+          if(success == 0)
+            continue;
+          else
+          {
+            leftnode = temp_DFG->get_Node(new_left_node_id);
+            dfg = temp_DFG->Copy_With_Schedule_And_Mapping();
+            std::map<int,int>::iterator it = route_rf_nodeid_scheduled_time.begin();
+            route_rf_nodeid_scheduled_time.insert (it, std::pair<int,int>(temp_inserted_node,sched_time));
+            if(new_left_node_id != temp_inserted_node) route_rf_nodeid_scheduled_time.insert (it, std::pair<int,int>(new_left_node_id,sched_time+1));
             break;
           }
         }
       }
+    }
 
-      if(pred_found == false)
-        FATAL(true,"In Route_RF_ReSchedule_Map. Should Not Reach Here\n");
+    if(success == 0) {
+      valid_route_rf = false;
+      return;
+    }
 
-      //Iterate through all next nodes if a left node is a predecessor node for far scheduled node(s)
-      for(unsigned int i=0; i < next.size(); i++)
-      {
-        Node* next_node = next[i];
-        for (iEdge = ARCSet.begin(); iEdge != ARCSet.end(); iEdge++)
+    if(found) {
+      debugfile << "found! mapped node successfully\n";
+      if(leftnotmapped.size() <= last_attempt_unmapped) {
+        for(std::vector<Node*>::iterator it = leftnotmapped.begin(); it != leftnotmapped.end(); ++it)
         {
-          arc = *iEdge;
-          //find the arc between leftnode -> next_node and delete it
-          if((arc->get_From_Node()->get_ID() == leftnode->get_ID()) && (arc->get_To_Node()->get_ID() == next_node->get_ID()))
-          {
-            temp_DFG->Remove_Arc(arc->get_From_Node(),arc->get_To_Node());
-            temp_DFG->make_Arc(predecessor_of_succ, next_node, temp_DFG->ARC_Max_Index+1, 0, TrueDep,arc->get_OperandOrder());
-          }
+          leftNodeMapped_route_rf.push_back(*it);
+          debugfile << "Left node is: " << (*it)->get_ID() << "\n";
         }
+        myCGRA.CalcPEUtil(util_route_rf);
+        dfg = temp_DFG->Copy_With_Schedule_And_Mapping();
+        valid_route_rf = true;
+        break;
       }
-      new_node = dfg->get_Node(predecessor_of_succ->get_ID());
-
-      if(temp_DFG->get_ResMII(current_number_resources) > II) {
+      else
+      {
         valid_route_rf = false;
         return;
       }
-
-      //Make a mapping attempt (update compatibility + left nodes)
-      leftNodeMapped_route_rf.clear();
-      myCGRA.ResetIteration();
-      myCGRA.SetII(II);
-      myCGRA.MCS2(temp_DFG, leftNodeMapped_route_rf);
-      myCGRA.CalcPEUtil(util_route_rf);
-      dfg = temp_DFG->Copy_With_Schedule_And_Mapping();
-      debugfile << "Returning\n";
     }
   }
+
+  new_node = dfg->get_Node(new_left_node_id);
+  debugfile << "new_node is: " << new_node->get_ID() << "\n";
+
+  //Once Done With The Given Pair, Connect Last Inserted Node To Other Successors  (Path Sharing)
+  if(next.size() > 0)
+  {
+    Node* predecessor_of_succ;
+    vector<ARC*>::iterator iEdge;
+    vector<ARC*> ARCSet = temp_DFG->getSetOfArcs();
+    ARC *arc;
+    bool pred_found = false;
+
+    for (iEdge = ARCSet.begin(); iEdge != ARCSet.end(); iEdge++)
+    {
+      arc = *iEdge;
+
+      if((arc->get_From_Node()->get_Instruction() == (Instruction_Operation) route_op) && (arc->get_To_Node()->get_ID() == succ->get_ID()))
+      {
+        //Make Sure Predecessor of Succ is Same Route Node As Inserted One.
+        std::map<int,int>::iterator ittt = route_rf_nodeid_scheduled_time.begin();
+        while(ittt != route_rf_nodeid_scheduled_time.end())
+        {
+          debugfile << ittt->first << "\t" << ittt->second << "\n";
+          ittt++;
+        }
+        if(route_rf_nodeid_scheduled_time.find(arc->get_From_Node()->get_ID()) != route_rf_nodeid_scheduled_time.end()) {
+          predecessor_of_succ = arc->get_From_Node();
+          pred_found = true;
+          break;
+        }
+      }
+    }
+
+    if(pred_found == false)
+    FATAL(true,"In Route_RF_ReSchedule_Map. Should Not Reach Here\n");
+
+    //Iterate through all next nodes if a left node is a predecessor node for far scheduled node(s)
+    for(unsigned int i=0; i < next.size(); i++)
+    {
+      Node* next_node = next[i];
+      for (iEdge = ARCSet.begin(); iEdge != ARCSet.end(); iEdge++)
+      {
+        arc = *iEdge;
+        //find the arc between leftnode -> next_node and delete it
+        if((arc->get_From_Node()->get_ID() == leftnode->get_ID()) && (arc->get_To_Node()->get_ID() == next_node->get_ID()))
+        {
+          temp_DFG->Remove_Arc(arc->get_From_Node(),arc->get_To_Node());
+          temp_DFG->make_Arc(predecessor_of_succ, next_node, temp_DFG->ARC_Max_Index+1, 0, TrueDep,arc->get_OperandOrder());
+        }
+      }
+    }
+    new_node = dfg->get_Node(predecessor_of_succ->get_ID());
+
+    if(temp_DFG->get_ResMII(current_number_resources) > II) {
+      valid_route_rf = false;
+      return;
+    }
+
+    //Make a mapping attempt (update compatibility + left nodes)
+    leftNodeMapped_route_rf.clear();
+    myCGRA.ResetIteration();
+    myCGRA.SetII(II);
+    myCGRA.MCS2(temp_DFG, leftNodeMapped_route_rf);
+    myCGRA.CalcPEUtil(util_route_rf);
+    dfg = temp_DFG->Copy_With_Schedule_And_Mapping();
+    debugfile << "Returning\n";
+  }
+}
 
 //iterate through left nodes and see if node is present or not
 bool RAMP::is_node_left(vector<Node*> leftnodes, Node* node)
 {
   for(std::vector<Node*>::iterator it = leftnodes.begin(); it != leftnodes.end(); ++it)
   {
-      if((*it)->get_ID() == node->get_ID())
-	       return true;
+    if((*it)->get_ID() == node->get_ID())
+    return true;
   }
   return false;
 }
