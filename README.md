@@ -4,7 +4,7 @@ CCF (CGRA Compilation Framework) is an end-to-end prototype demonstrating the co
 Through CCF infrastructure, the users can simulate acceleration of loops of general-purpose applications on a heterogeneous processor core+CGRAs architecture. 
 
 With LLVM 5.0 as a foundation, the implementation of CCF-compiler includes numerous compiler analysis and transformation passes, along with a customized code generation CGRA back-end. 
-The user only needs to mark the performance-critical loops that they want to be accelerated on CGRA using the annotation: #pragma CGRA, 
+The user only needs to mark the performance-critical loops that they want to execute on CGRA, by using the annotation: #pragma CGRA, 
 and the CCF-compiler automatically extracts the marked loops and maps them to the CGRA, 
 generates code to communicate live data between the processor core and CGRA, pre-load the live values into CGRA registers, 
 and generates the machine instructions to configure the PEs to execute the loop, 
@@ -12,7 +12,7 @@ and finally generates a binary that will execute on the CCF-simulator.
 The CCF-simulator is built by modifying cycle-accurate processor simulator Gem5, 
 and it models CGRA as a separate core coupled to ARM Cortex-like processor core with ARMv7a profile.
 
-This open-source platform developed at Arizona State University targets promoting the CGRA research through developing a community-wide CGRA compilation infrastructure.
+This open-source platform has been developed at Arizona State University and through CCF, we target accelerating the CGRA research by developing and making accessible a community-wide CGRA compilation infrastructure.
 While current release of CCF supports code generation for several performance-critical loops of embedded MiBench benchmark suite, 
 we hope to integrate the enhanced functionality in the future releases.
 
@@ -26,10 +26,11 @@ and have identified a performance-critical loop, (s)he can annotate it with `#pr
 Then, the CCF compiler generates the code for the application's execution on the heterogeneous platform.
 
 2. **Make**: The user has to just to replace gcc with cgracc (CCF's CGRA Compiler Collection). 
-Often, it decently supports complex makefiles. Then, typing 'make' will generate the required executable.
+(Often, it decently supports complex makefiles.) Then, typing 'make' will generate the required executable.
 The CCF compiler will inform that whether it would be executing the loop on the CGRA or not. 
-For example, for the current release of the compilation infrastructure, if the loop contains the system calls, it is not executed on CGRA. 
-Or, if the compiler was able to vectorize the code (which implies that it can be efficiently accelerated by SIMDs or chip multi-processors), 
+For example, for the current release of the compilation infrastructure, if the annotated loop contains the system calls, it is not executed on CGRA. 
+Or, if the compiler was able to vectorize the code 
+(which implies that it can be efficiently accelerated by SIMDs or on chip multi-processors), 
 the compiler will not generate the code for CGRA. 
 Thus, CCF compiler will inform that why it currently did not generate the code for the CGRA. 
 On the other hand, if the CCF compiler generated the code for CGRA, then we can find it in the directory CGRAExec. 
@@ -46,7 +47,7 @@ Since the CCF is a prototype of emerging general-purpose CGRA accelerator,
 the current release of the CCF supports code generation for few performance critical loops of MiBench, an embedded benchmark suite. 
 It also supports execution of all the loops from few MiBench applications.
 You can locate these benchmarks under the directory $path/ccf/benchmarks/MiBench.
-We plan to support (and release) the code generation for more benchmarks.
+We plan to support the code generation for more benchmarks.
 
 ### Setting-Up the Infrastructure:
 
@@ -79,9 +80,7 @@ The diagram below shows the steps involved in CCF's code generation process.
     In compiling the application, CCF targets the highest optimization, i.e. optimization level 3, 
     including auto-vectorization enabled. 
     The part of the IR corresponding to the annotated loop contains the metadata so that 
-    CCF compiler can apply analysis and transformation passes on it.
-    CCF compiler analyzes whether it will generate the code for this loop for its execution on CGRA, or not.  
-    If it can, it acts on the part of the IR corresponding to the loop, generating the data dependency graph (DDG).
+    CCF compiler can apply analysis and transformation passes on it. CCF compiler analyzes whether it will generate the code for this loop for its execution on CGRA, or not. If it can, it acts on the part of the IR corresponding to the loop, generating the data dependency graph (DDG).
  
  2.	**Generation of DDG and Communication of the Live Data**: An LLVM pass generates the DDG of the loop, 
     which can be visualized using the dot tool. In DDG, the circles show the operations to be performed
