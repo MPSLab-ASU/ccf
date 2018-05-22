@@ -23,15 +23,15 @@ The steps for executing a C/C++ application with CCF are as follows:
 
 1.	**Loop Annotation**: Once the programmer has profiled the compute-intensive application, 
 and have identified a performance-critical loop, (s)he can annotate it with `#pragma CGRA`. 
-Then, the CCF compiler generates the code for the application's execution on the heterogeneous platform.
+Then, the CCF compiler can generate the code for the application's execution on the heterogeneous platform.
 
 2. **Make**: The user has to just to replace gcc with cgracc (CCF's CGRA Compiler Collection). 
 (Often, it decently supports complex makefiles.) Then, typing 'make' will generate the required executable.
 The CCF compiler will inform that whether it would be executing the loop on the CGRA or not. 
 For example, for the current release of the compilation infrastructure, if the annotated loop contains the system calls, it is not executed on CGRA. 
 Or, if the compiler was able to vectorize the code 
-(which implies that it can be efficiently accelerated by SIMDs or on chip multi-processors), 
-the compiler will not generate the code for CGRA. 
+(which may imply that the loop can be efficiently accelerated by SIMDization or on chip multi-processors), 
+it will not generate the code for CGRA. 
 Thus, CCF compiler will inform that why it currently did not generate the code for the CGRA. 
 On the other hand, if the CCF compiler generated the code for CGRA, then we can find it in the directory CGRAExec. 
 This directory contains information about all the loops compiled for their execution on CGRA.
