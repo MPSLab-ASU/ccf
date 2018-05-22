@@ -80,7 +80,7 @@ The diagram below shows the steps involved in CCF's code generation process.
     In compiling the application, CCF targets the highest optimization, i.e. optimization level 3, 
     including auto-vectorization enabled. 
     The part of the IR corresponding to the annotated loop contains the metadata so that 
-    CCF compiler can apply analysis and transformation passes on it. CCF compiler analyzes whether it will generate the code for this loop for its execution on CGRA, or not. If it can, it acts on the part of the IR corresponding to the loop, generating the data dependency graph (DDG).
+    CCF compiler can perform analysis and transformations on it. CCF compiler analyzes whether it will generate the code for this loop for its execution on CGRA, or not. If it can, it acts on the part of the IR corresponding to the loop, generating the data dependency graph (DDG).
  
  2.	**Generation of DDG and Communication of the Live Data**: An LLVM pass generates the DDG of the loop, 
     which can be visualized using the dot tool. In DDG, the circles show the operations to be performed
