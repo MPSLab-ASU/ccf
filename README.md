@@ -121,6 +121,7 @@ The diagram below shows the steps involved in CCF's code generation process.
 
 - [Intro to CGRAs](https://youtu.be/4h2Po78be-Q)
 - [A short demo of CCF](https://www.youtube.com/watch?v=iGV1lHsjy4w&t=1s)
+- [A short manual on CCF Implementation](https://github.com/cmlasu/ccf/blob/master/CCF%20Manual.pdf)
 
 ### Contact Us
 
