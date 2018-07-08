@@ -29,7 +29,7 @@ if [[ "$OSTYPE" == "linux-gnu" ]]; then
 		fi
    
     cmake_version="$(cmake -version | grep -Eo '[+-]?[0-9]+([.][0-9]+)?' | head -1)"
-    if [ $(echo "$cmake_$version > 3.4" | bc) -eq 0 ];
+    if [ $(echo "$cmake_version > 3.4" | bc) -eq 0 ];
     then
       echo "need to install";
       mkdir $path/software
