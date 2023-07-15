@@ -1,6 +1,6 @@
 // -*- mode:c++ -*-
 
-// Copyright (c) 2010 ARM Limited
+// Copyright (c) 2010-2011,2017,2019-2020 ARM Limited
 // All rights reserved
 //
 // The license below extends only to copyright in the software and shall
@@ -34,10 +34,9 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Authors: Gabe Black
 
 let {{
+    import math
 
     header_output = ""
     decoder_output = ""
@@ -47,8 +46,7 @@ let {{
         execBase = 'Store'
 
         def __init__(self, mnem, post, add, writeback, size=4,
-                     sign=False, user=False, flavor="normal",
-                     instFlags = []):
+                     sign=False, user=False, flavor="normal"):
             super(StoreInst, self).__init__()
 
             self.name = mnem
@@ -59,13 +57,13 @@ let {{
             self.sign = sign
             self.user = user
             self.flavor = flavor
-            self.instFlags = instFlags
+            self.instFlags = []
             if self.add:
                 self.op = " +"
             else:
                 self.op = " -"
 
-            self.memFlags = ["ArmISA::TLB::MustBeOne"]
+            self.memFlags = []
             self.codeBlobs = { "postacc_code" : "" }
 
         def emitHelper(self, base = 'Memory', wbDecl = None):
@@ -77,7 +75,9 @@ let {{
             (newHeader,
              newDecoder,
              newExec) = self.fillTemplates(self.name, self.Name, codeBlobs,
-                                           self.memFlags, self.instFlags, base, wbDecl)
+                                           self.memFlags, self.instFlags,
+                                           base, wbDecl, None, False,
+                                           self.size, self.sign)
 
             header_output += newHeader
             decoder_output += newDecoder
@@ -109,6 +109,12 @@ let {{
             if self.add:
                 wbDiff = 8
             accCode = '''
+
+            auto tc = xc->tcBase();
+            if (badMode32(tc, static_cast<OperatingMode>(regMode))) {
+                return undefinedFault32(tc, currEL(tc));
+            }
+
             CPSR cpsr = Cpsr;
             Mem_ud = (uint64_t)cSwap(LR_uw, cpsr.e) |
                      ((uint64_t)cSwap(Spsr_uw, cpsr.e) << 32);
@@ -131,8 +137,7 @@ let {{
             (newHeader,
              newDecoder,
              newExec) = self.fillTemplates(self.name, self.Name, codeBlobs,
-                 ["ArmISA::TLB::AlignWord", "ArmISA::TLB::MustBeOne"], [],
-                 'SrsOp', wbDecl)
+                 ["ArmISA::TLB::AlignWord"], [], 'SrsOp', wbDecl)
 
             header_output += newHeader
             decoder_output += newDecoder
@@ -171,14 +176,21 @@ let {{
                                       self.size, self.sign, self.user)
 
             # Add memory request flags where necessary
-            self.memFlags.append("%d" % (self.size - 1))
+            self.memFlags.append("%d" % int(math.log(self.size, 2)))
             if self.user:
                 self.memFlags.append("ArmISA::TLB::UserMode")
 
-            if self.flavor == "exclusive":
+            if self.flavor in ("exclusive", "relex"):
+                self.instFlags.append("IsStoreConditional")
                 self.memFlags.append("Request::LLSC")
             elif self.flavor != "fp":
                 self.memFlags.append("ArmISA::TLB::AllowUnaligned")
+
+            if self.flavor in ("release", "relex"):
+                self.instFlags.extend(["IsMemBarrier",
+                                       "IsWriteBarrier",
+                                       "IsReadBarrier"])
+                self.memFlags.append("Request::RELEASE")
 
             # Disambiguate the class name for different flavors of stores
             if self.flavor != "normal":
@@ -225,7 +237,8 @@ let {{
 
         def __init__(self, *args, **kargs):
             super(StoreImmEx, self).__init__(*args, **kargs)
-            self.codeBlobs["postacc_code"] = "Result = !writeResult;"
+            self.codeBlobs["postacc_code"] = \
+                  "Result = !writeResult; SevMailbox = 1; LLSCLock = 0;"
 
     class StoreImm(StoreImmInst, StoreSingle):
         decConstBase = 'LoadStoreImm'
@@ -248,11 +261,18 @@ let {{
             self.Name = self.nameFunc(self.post, self.add, self.writeback)
 
             # Add memory request flags where necessary
-            if self.flavor == "exclusive":
+            if self.flavor in ("exclusive", "relex"):
+                self.instFlags.append("IsStoreConditional")
                 self.memFlags.append("Request::LLSC")
                 self.memFlags.append("ArmISA::TLB::AlignDoubleWord")
             else:
                 self.memFlags.append("ArmISA::TLB::AlignWord")
+
+            if self.flavor in ("release", "relex"):
+                self.instFlags.extend(["IsMemBarrier",
+                                       "IsWriteBarrier",
+                                       "IsReadBarrier"])
+                self.memFlags.append("Request::RELEASE")
 
             # Disambiguate the class name for different flavors of stores
             if self.flavor != "normal":
@@ -304,7 +324,8 @@ let {{
 
         def __init__(self, *args, **kargs):
             super(StoreDoubleImmEx, self).__init__(*args, **kargs)
-            self.codeBlobs["postacc_code"] = "Result = !writeResult;"
+            self.codeBlobs["postacc_code"] = \
+                  "Result = !writeResult; SevMailbox = 1; LLSCLock = 0;"
 
     class StoreDoubleImm(StoreImmInst, StoreDouble):
         decConstBase = 'LoadStoreDImm'
@@ -368,14 +389,22 @@ let {{
 
     buildDoubleStores("strd")
 
-    StoreImmEx("strex", False, True, False, size=4, flavor="exclusive",
-               instFlags = ['IsStoreConditional']).emit()
-    StoreImmEx("strexh", False, True, False, size=2, flavor="exclusive",
-               instFlags = ['IsStoreConditional']).emit()
-    StoreImmEx("strexb", False, True, False, size=1, flavor="exclusive",
-               instFlags = ['IsStoreConditional']).emit()
-    StoreDoubleImmEx("strexd", False, True, False, flavor="exclusive",
-               instFlags = ['IsStoreConditional']).emit()
+    StoreImmEx("strex", False, True, False, size=4,
+               flavor="exclusive").emit()
+    StoreImmEx("strexh", False, True, False, size=2,
+               flavor="exclusive").emit()
+    StoreImmEx("strexb", False, True, False, size=1,
+               flavor="exclusive").emit()
+    StoreDoubleImmEx("strexd", False, True, False,
+                     flavor="exclusive").emit()
+
+    StoreImm("stl", False, True, False, size=4, flavor="release").emit()
+    StoreImm("stlh", False, True, False, size=2, flavor="release").emit()
+    StoreImm("stlb", False, True, False, size=1, flavor="release").emit()
+    StoreImmEx("stlex", False, True, False, size=4, flavor="relex").emit()
+    StoreImmEx("stlexh", False, True, False, size=2, flavor="relex").emit()
+    StoreImmEx("stlexb", False, True, False, size=1, flavor="relex").emit()
+    StoreDoubleImmEx("stlexd", False, True, False, flavor="relex").emit()
 
     StoreImm("vstr", False, True, False, size=4, flavor="fp").emit()
     StoreImm("vstr", False, False, False, size=4, flavor="fp").emit()

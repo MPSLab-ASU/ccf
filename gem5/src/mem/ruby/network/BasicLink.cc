@@ -34,6 +34,7 @@ BasicLink::BasicLink(const Params *p)
     m_latency = p->latency;
     m_bandwidth_factor = p->bandwidth_factor;
     m_weight = p->weight;
+    mVnets = p->supported_vnets;
 }
 
 void
@@ -56,8 +57,6 @@ BasicLinkParams::create()
 BasicExtLink::BasicExtLink(const Params *p)
     : BasicLink(p)
 {
-    m_int_node = p->int_node;
-    m_ext_node = p->ext_node;
 }
 
 BasicExtLink *
@@ -69,8 +68,6 @@ BasicExtLinkParams::create()
 BasicIntLink::BasicIntLink(const Params *p)
     : BasicLink(p)
 {
-    m_node_a = p->node_a;
-    m_node_b = p->node_b;
 }
 
 BasicIntLink *

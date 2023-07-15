@@ -35,8 +35,6 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Authors: Gabe Black
 
 //Include the basic format
 //Templates from this format are used later
@@ -44,6 +42,9 @@
 
 //Include a format to generate a CPUID instruction.
 ##include "cpuid.isa"
+
+//Include a format to generate a monitor/mwait instructions.
+##include "monitor_mwait.isa"
 
 //Include the "unknown" format
 ##include "unknown.isa"
@@ -69,3 +70,7 @@
 //Include a format which makes instructions who's sole purpose is to generate
 //a syscall.
 ##include "syscall.isa"
+
+//Include a format which is like Inst, except it conditionally decodes to the
+//specified instruction, or if the condition fails decodes to UD2.
+##include "cond.isa"

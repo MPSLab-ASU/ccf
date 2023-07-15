@@ -33,13 +33,12 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Gabe Black
  */
+
+#include "arch/x86/insts/microregop.hh"
 
 #include <string>
 
-#include "arch/x86/insts/microregop.hh"
 #include "arch/x86/regs/misc.hh"
 #include "base/condcodes.hh"
 #include "debug/X86.hh"
@@ -52,33 +51,34 @@ namespace X86ISA
     {
         DPRINTF(X86, "flagMask = %#x\n", flagMask);
         uint64_t flags = oldFlags & ~flagMask;
-        if(flagMask & (ECFBit | CFBit))
+        if (flagMask & (ECFBit | CFBit))
         {
-            if(findCarry(dataSize*8, _dest, _src1, _src2))
+            if (findCarry(dataSize*8, _dest, _src1, _src2))
                 flags |= (flagMask & (ECFBit | CFBit));
-            if(subtract)
+            if (subtract)
                 flags ^= (flagMask & (ECFBit | CFBit));
         }
-        if(flagMask & PFBit && !findParity(8, _dest))
+        if (flagMask & PFBit && !findParity(8, _dest))
             flags |= PFBit;
-        if(flagMask & AFBit)
+        if (flagMask & AFBit)
         {
-            if(findCarry(4, _dest, _src1, _src2))
+            if (findCarry(4, _dest, _src1, _src2))
                 flags |= AFBit;
-            if(subtract)
+            if (subtract)
                 flags ^= AFBit;
         }
-        if(flagMask & (EZFBit | ZFBit) && findZero(dataSize*8, _dest))
+        if (flagMask & (EZFBit | ZFBit) && findZero(dataSize*8, _dest))
             flags |= (flagMask & (EZFBit | ZFBit));
-        if(flagMask & SFBit && findNegative(dataSize*8, _dest))
+        if (flagMask & SFBit && findNegative(dataSize*8, _dest))
             flags |= SFBit;
-        if(flagMask & OFBit && findOverflow(dataSize*8, _dest, _src1, _src2))
+        if (flagMask & OFBit && findOverflow(dataSize*8, _dest, _src1, _src2))
             flags |= OFBit;
         return flags;
     }
 
-    std::string RegOp::generateDisassembly(Addr pc,
-            const SymbolTable *symtab) const
+    std::string
+    RegOp::generateDisassembly(
+            Addr pc, const Loader::SymbolTable *symtab) const
     {
         std::stringstream response;
 
@@ -91,8 +91,9 @@ namespace X86ISA
         return response.str();
     }
 
-    std::string RegOpImm::generateDisassembly(Addr pc,
-            const SymbolTable *symtab) const
+    std::string
+    RegOpImm::generateDisassembly(
+            Addr pc, const Loader::SymbolTable *symtab) const
     {
         std::stringstream response;
 

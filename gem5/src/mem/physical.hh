@@ -33,20 +33,63 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Andreas Hansson
  */
 
-#ifndef __PHYSICAL_MEMORY_HH__
-#define __PHYSICAL_MEMORY_HH__
+#ifndef __MEM_PHYSICAL_HH__
+#define __MEM_PHYSICAL_HH__
 
 #include "base/addr_range_map.hh"
-#include "mem/port.hh"
+#include "mem/packet.hh"
 
 /**
  * Forward declaration to avoid header dependencies.
  */
 class AbstractMemory;
+
+/**
+ * A single entry for the backing store.
+ */
+class BackingStoreEntry
+{
+  public:
+
+    /**
+     * Create a backing store entry. Don't worry about managing the memory
+     * pointers, because PhysicalMemory is responsible for that.
+     */
+    BackingStoreEntry(AddrRange range, uint8_t* pmem,
+                      bool conf_table_reported, bool in_addr_map, bool kvm_map)
+        : range(range), pmem(pmem), confTableReported(conf_table_reported),
+          inAddrMap(in_addr_map), kvmMap(kvm_map)
+        {}
+
+    /**
+     * The address range covered in the guest.
+     */
+     AddrRange range;
+
+    /**
+     * Pointer to the host memory this range maps to. This memory is the same
+     * size as the range field.
+     */
+     uint8_t* pmem;
+
+     /**
+      * Whether this memory should be reported to the configuration table
+      */
+     bool confTableReported;
+
+     /**
+      * Whether this memory should appear in the global address map
+      */
+     bool inAddrMap;
+
+     /**
+      * Whether KVM should map this memory into the guest address space during
+      * acceleration.
+      */
+     bool kvmMap;
+};
 
 /**
  * The physical memory encapsulates all memories in the system and
@@ -57,7 +100,7 @@ class AbstractMemory;
  * system backingstore used by the memories in the simulated guest
  * system. When the system is created, the physical memory allocates
  * the backing store based on the address ranges that are populated in
- * the system, and does so indepentent of how those map to actual
+ * the system, and does so independent of how those map to actual
  * memory controllers. Thus, the physical memory completely abstracts
  * the mapping of the backing store of the host system and the address
  * mapping in the guest system. This enables us to arbitrarily change
@@ -73,10 +116,7 @@ class PhysicalMemory : public Serializable
     std::string _name;
 
     // Global address map
-    AddrRangeMap<AbstractMemory*> addrMap;
-
-    // a mutable cache for the last range that matched an address
-    mutable AddrRange rangeCache;
+    AddrRangeMap<AbstractMemory*, 1> addrMap;
 
     // All address-mapped memories
     std::vector<AbstractMemory*> memories;
@@ -84,9 +124,14 @@ class PhysicalMemory : public Serializable
     // The total memory size
     uint64_t size;
 
+    // Let the user choose if we reserve swap space when calling mmap
+    const bool mmapUsingNoReserve;
+
+    const std::string sharedBackstore;
+
     // The physical memory used to provide the memory in the simulated
     // system
-    std::vector<std::pair<AddrRange, uint8_t*> > backingStore;
+    std::vector<BackingStoreEntry> backingStore;
 
     // Prevent copying
     PhysicalMemory(const PhysicalMemory&);
@@ -101,9 +146,12 @@ class PhysicalMemory : public Serializable
      *
      * @param range The address range covered
      * @param memories The memories this range maps to
+     * @param kvm_map Should KVM map this memory for the guest
      */
     void createBackingStore(AddrRange range,
-                            const std::vector<AbstractMemory*>& _memories);
+                            const std::vector<AbstractMemory*>& _memories,
+                            bool conf_table_reported,
+                            bool in_addr_map, bool kvm_map);
 
   public:
 
@@ -111,7 +159,9 @@ class PhysicalMemory : public Serializable
      * Create a physical memory object, wrapping a number of memories.
      */
     PhysicalMemory(const std::string& _name,
-                   const std::vector<AbstractMemory*>& _memories);
+                   const std::vector<AbstractMemory*>& _memories,
+                   bool mmap_using_noreserve,
+                   const std::string& shared_backstore);
 
     /**
      * Unmap all the backing store we have used.
@@ -162,7 +212,7 @@ class PhysicalMemory : public Serializable
      *
      * @return Pointers to the memory backing store
      */
-    std::vector<std::pair<AddrRange, uint8_t*> > getBackingStore() const
+    std::vector<BackingStoreEntry> getBackingStore() const
     { return backingStore; }
 
     /**
@@ -192,7 +242,7 @@ class PhysicalMemory : public Serializable
      *
      * @param os stream to serialize to
      */
-    void serialize(std::ostream& os);
+    void serialize(CheckpointOut &cp) const override;
 
     /**
      * Serialize a specific store.
@@ -201,21 +251,21 @@ class PhysicalMemory : public Serializable
      * @param range The address range of this backing store
      * @param pmem The host pointer to this backing store
      */
-    void serializeStore(std::ostream& os, unsigned int store_id,
-                        AddrRange range, uint8_t* pmem);
+    void serializeStore(CheckpointOut &cp, unsigned int store_id,
+                        AddrRange range, uint8_t* pmem) const;
 
     /**
      * Unserialize the memories in the system. As with the
      * serialization, this action is independent of how the address
      * ranges are mapped to logical memories in the guest system.
      */
-    void unserialize(Checkpoint* cp, const std::string& section);
+    void unserialize(CheckpointIn &cp) override;
 
     /**
      * Unserialize a specific backing store, identified by a section.
      */
-    void unserializeStore(Checkpoint* cp, const std::string& section);
+    void unserializeStore(CheckpointIn &cp);
 
 };
 
-#endif //__PHYSICAL_MEMORY_HH__
+#endif //__MEM_PHYSICAL_HH__

@@ -32,8 +32,6 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Authors: Gabe Black
 
 //////////////////////////////////////////////////////////////////////////
 //
@@ -42,7 +40,7 @@
 //////////////////////////////////////////////////////////////////////////
 
 def template MicroRegOpExecute {{
-        Fault %(class_name)s::execute(%(CPU_exec_context)s *xc,
+        Fault %(class_name)s::execute(ExecContext *xc,
                 Trace::InstRecord *traceData) const
         {
             Fault fault = NoFault;
@@ -51,7 +49,7 @@ def template MicroRegOpExecute {{
             %(op_decl)s;
             %(op_rd)s;
 
-            IntReg result M5_VAR_USED;
+            RegVal result M5_VAR_USED;
 
             if(%(cond_check)s)
             {
@@ -73,7 +71,7 @@ def template MicroRegOpExecute {{
 }};
 
 def template MicroRegOpImmExecute {{
-        Fault %(class_name)s::execute(%(CPU_exec_context)s *xc,
+        Fault %(class_name)s::execute(ExecContext *xc,
                 Trace::InstRecord *traceData) const
         {
             Fault fault = NoFault;
@@ -81,7 +79,7 @@ def template MicroRegOpImmExecute {{
             %(op_decl)s;
             %(op_rd)s;
 
-            IntReg result M5_VAR_USED;
+            RegVal result M5_VAR_USED;
 
             if(%(cond_check)s)
             {
@@ -111,7 +109,13 @@ def template MicroRegOpDeclare {{
                 InstRegIndex _src1, InstRegIndex _src2, InstRegIndex _dest,
                 uint8_t _dataSize, uint16_t _ext);
 
-        %(BasicExecDeclare)s
+        Fault execute(ExecContext *, Trace::InstRecord *) const override;
+
+        X86ISA::PCState branchTarget(const X86ISA::PCState &branchPC) const
+        override;
+
+        /// Explicitly import the otherwise hidden branchTarget
+        using StaticInst::branchTarget;
     };
 }};
 
@@ -125,12 +129,18 @@ def template MicroRegOpImmDeclare {{
                 InstRegIndex _src1, uint8_t _imm8, InstRegIndex _dest,
                 uint8_t _dataSize, uint16_t _ext);
 
-        %(BasicExecDeclare)s
+        Fault execute(ExecContext *, Trace::InstRecord *) const override;
+
+        X86ISA::PCState branchTarget(const X86ISA::PCState &branchPC) const
+        override;
+
+        /// Explicitly import the otherwise hidden branchTarget
+        using StaticInst::branchTarget;
     };
 }};
 
 def template MicroRegOpConstructor {{
-    inline %(class_name)s::%(class_name)s(
+    %(class_name)s::%(class_name)s(
             ExtMachInst machInst, const char * instMnem, uint64_t setFlags,
             InstRegIndex _src1, InstRegIndex _src2, InstRegIndex _dest,
             uint8_t _dataSize, uint16_t _ext) :
@@ -141,10 +151,21 @@ def template MicroRegOpConstructor {{
         %(constructor)s;
         %(cond_control_flag_init)s;
     }
+
+    X86ISA::PCState
+    %(class_name)s::branchTarget(const X86ISA::PCState &branchPC) const
+    {
+        X86ISA::PCState pcs = branchPC;
+        DPRINTF(X86, "branchTarget PC info: %s, Immediate: %lx\n",
+                pcs, (int64_t) this->machInst.immediate);
+        pcs.npc(pcs.npc() + (int64_t) this->machInst.immediate);
+        pcs.uEnd();
+        return pcs;
+    }
 }};
 
 def template MicroRegOpImmConstructor {{
-    inline %(class_name)s::%(class_name)s(
+    %(class_name)s::%(class_name)s(
             ExtMachInst machInst, const char * instMnem, uint64_t setFlags,
             InstRegIndex _src1, uint8_t _imm8, InstRegIndex _dest,
             uint8_t _dataSize, uint16_t _ext) :
@@ -154,6 +175,17 @@ def template MicroRegOpImmConstructor {{
     {
         %(constructor)s;
         %(cond_control_flag_init)s;
+    }
+
+    X86ISA::PCState
+    %(class_name)s::branchTarget(const X86ISA::PCState &branchPC) const
+    {
+        X86ISA::PCState pcs = branchPC;
+        DPRINTF(X86, "branchTarget PC info: %s, Immediate (imm8): %lx\n",
+                pcs, (int8_t)imm8);
+        pcs.npc(pcs.npc() + (int8_t)imm8);
+        pcs.uEnd();
+        return pcs;
     }
 }};
 
@@ -238,7 +270,7 @@ let {{
             global exec_output
 
             # Stick all the code together so it can be searched at once
-            allCode = "|".join((code, flag_code, cond_check, else_code, 
+            allCode = "|".join((code, flag_code, cond_check, else_code,
                                 cond_control_flag_init))
             allBigCode = "|".join((big_code, flag_code, cond_check, else_code,
                                    cond_control_flag_init))
@@ -275,7 +307,8 @@ let {{
             # a version without it and fix up this version to use it.
             if flag_code != "" or cond_check != "true":
                 self.buildCppClasses(name, Name, suffix,
-                        code, big_code, "", "true", else_code, "", op_class)
+                        code, big_code, "", "true", else_code,
+                        "flags[IsUncondControl] = flags[IsControl];", op_class)
                 suffix = "Flags" + suffix
 
             # If psrc1 or psrc2 is used, we need to actually insert code to
@@ -375,8 +408,8 @@ let {{
             return cls
 
 
+    @six.add_metaclass(RegOpMeta)
     class RegOp(X86Microop):
-        __metaclass__ = RegOpMeta
         # This class itself doesn't act as a microop
         abstract = True
 
@@ -398,7 +431,7 @@ let {{
                 self.ext = 0
             else:
                 if not isinstance(flags, (list, tuple)):
-                    raise Exception, "flags must be a list or tuple of flags"
+                    raise Exception("flags must be a list or tuple of flags")
                 self.ext = " | ".join(flags)
                 self.className += "Flags"
 
@@ -546,23 +579,42 @@ let {{
     class Mul1s(WrRegOp):
         op_class = 'IntMultOp'
 
+        # Multiply two values Aa and Bb where Aa = A << p + a, then correct for
+        # negative operands.
+        #   Aa * Bb
+        # = (A << p + a) * (B << p + b)
+        # = (A * B) << 2p + (A * b + a * B) << p + a * b
         code = '''
             ProdLow = psrc1 * op2;
-            int halfSize = (dataSize * 8) / 2;
-            uint64_t shifter = (ULL(1) << halfSize);
-            uint64_t hiResult;
-            uint64_t psrc1_h = psrc1 / shifter;
-            uint64_t psrc1_l = psrc1 & mask(halfSize);
-            uint64_t psrc2_h = (op2 / shifter) & mask(halfSize);
-            uint64_t psrc2_l = op2 & mask(halfSize);
-            hiResult = ((psrc1_l * psrc2_h + psrc1_h * psrc2_l +
-                        ((psrc1_l * psrc2_l) / shifter)) /shifter) +
-                       psrc1_h * psrc2_h;
+
+            int p = (dataSize * 8) / 2;
+            uint64_t A = bits(psrc1, 2 * p - 1, p);
+            uint64_t a = bits(psrc1, p - 1, 0);
+            uint64_t B = bits<uint64_t>(op2, 2 * p - 1, p);
+            uint64_t b = bits<uint64_t>(op2, p - 1, 0);
+
+            uint64_t c1, c2; // Carry between place values.
+            uint64_t ab = a * b, Ab = A * b, aB = a * B, AB = A * B;
+
+            c1 = ab >> p;
+
+            // Be careful to avoid overflow if p is large.
+            if (p == 32) {
+                c2 = (c1 >> 1) + (Ab >> 1) + (aB >> 1);
+                c2 += ((c1 & 0x1) + (Ab & 0x1) + (aB & 0x1)) >> 1;
+                c2 >>= (p - 1);
+            } else {
+                c2 = (c1 + Ab + aB) >> p;
+            }
+
+            uint64_t hi = AB + c2;
+
             if (bits(psrc1, dataSize * 8 - 1))
-                hiResult -= op2;
+                hi -= op2;
             if (bits(op2, dataSize * 8 - 1))
-                hiResult -= psrc1;
-            ProdHi = hiResult;
+                hi -= psrc1;
+
+            ProdHi = hi;
             '''
         flag_code = '''
             if ((-ProdHi & mask(dataSize * 8)) !=
@@ -578,17 +630,34 @@ let {{
     class Mul1u(WrRegOp):
         op_class = 'IntMultOp'
 
+        # Multiply two values Aa and Bb where Aa = A << p + a.
+        #   Aa * Bb
+        # = (A << p + a) * (B << p + b)
+        # = (A * B) << 2p + (A * b + a * B) << p + a * b
         code = '''
             ProdLow = psrc1 * op2;
-            int halfSize = (dataSize * 8) / 2;
-            uint64_t shifter = (ULL(1) << halfSize);
-            uint64_t psrc1_h = psrc1 / shifter;
-            uint64_t psrc1_l = psrc1 & mask(halfSize);
-            uint64_t psrc2_h = (op2 / shifter) & mask(halfSize);
-            uint64_t psrc2_l = op2 & mask(halfSize);
-            ProdHi = ((psrc1_l * psrc2_h + psrc1_h * psrc2_l +
-                      ((psrc1_l * psrc2_l) / shifter)) / shifter) +
-                     psrc1_h * psrc2_h;
+
+            int p = (dataSize * 8) / 2;
+            uint64_t A = bits(psrc1, 2 * p - 1, p);
+            uint64_t a = bits(psrc1, p - 1, 0);
+            uint64_t B = bits<uint64_t>(op2, 2 * p - 1, p);
+            uint64_t b = bits<uint64_t>(op2, p - 1, 0);
+
+            uint64_t c1, c2; // Carry between place values.
+            uint64_t ab = a * b, Ab = A * b, aB = a * B, AB = A * B;
+
+            c1 = ab >> p;
+
+            // Be careful to avoid overflow if p is large.
+            if (p == 32) {
+                c2 = (c1 >> 1) + (Ab >> 1) + (aB >> 1);
+                c2 += ((c1 & 0x1) + (Ab & 0x1) + (aB & 0x1)) >> 1;
+                c2 >>= (p - 1);
+            } else {
+                c2 = (c1 + Ab + aB) >> p;
+            }
+
+            ProdHi = AB + c2;
             '''
         flag_code = '''
             if (ProdHi) {
@@ -629,7 +698,7 @@ let {{
             uint64_t dividend = remainder;
             //Do the division.
             if (divisor == 0) {
-                fault = new DivideByZero;
+                fault = std::make_shared<DivideError>();
             } else {
                 divide(dividend, divisor, quotient, remainder);
                 //Record the final results.
@@ -652,7 +721,7 @@ let {{
             //If we overshot, do nothing. This lets us unrool division loops a
             //little.
             if (divisor == 0) {
-                fault = new DivideByZero;
+                fault = std::make_shared<DivideError>();
             } else if (remaining) {
                 if (divisor & (ULL(1) << 63)) {
                     while (remaining && !(dividend & (ULL(1) << 63))) {
@@ -786,7 +855,7 @@ let {{
                 PredecfBit = PredecfBit & ~(ext & ECFBit);
 
                 //If some combination of the CF bits need to be set, set them.
-                if ((ext & (CFBit | ECFBit)) && 
+                if ((ext & (CFBit | ECFBit)) &&
                         shiftAmt <= dataSize * 8 &&
                         bits(SrcReg1, shiftAmt - 1)) {
                     PredcfofBits = PredcfofBits | (ext & CFBit);
@@ -1018,7 +1087,7 @@ let {{
                 int msb = bits(DestReg, dataSize * 8 - 1);
                 int CFBits = bits(SrcReg1, dataSize * 8 - realShiftAmt);
                 //If some combination of the CF bits need to be set, set them.
-                if ((ext & (CFBit | ECFBit)) && 
+                if ((ext & (CFBit | ECFBit)) &&
                         (realShiftAmt == 0) ? origCFBit : CFBits) {
                     PredcfofBits = PredcfofBits | (ext & CFBit);
                     PredecfBit = PredecfBit | (ext & ECFBit);
@@ -1184,8 +1253,8 @@ let {{
 
     class Wrflags(WrRegOp):
         code = '''
-            MiscReg newFlags = psrc1 ^ op2;
-            MiscReg userFlagMask = 0xDD5;
+            RegVal newFlags = psrc1 ^ op2;
+            RegVal userFlagMask = 0xDD5;
 
             // Get only the user flags
             ccFlagBits = newFlags & ccFlagMask;
@@ -1232,8 +1301,8 @@ let {{
 
     class Rflag(RegOp):
         code = '''
-            MiscReg flagMask = 0x3F7FDD5;
-            MiscReg flags = (nccFlagBits | ccFlagBits | cfofBits | dfBit |
+            RegVal flagMask = 0x3F7FDD5;
+            RegVal flags = (nccFlagBits | ccFlagBits | cfofBits | dfBit |
                              ecfBit | ezfBit) & flagMask;
 
             int flag = bits(flags, imm8);
@@ -1242,8 +1311,8 @@ let {{
             '''
 
         big_code = '''
-            MiscReg flagMask = 0x3F7FDD5;
-            MiscReg flags = (nccFlagBits | ccFlagBits | cfofBits | dfBit |
+            RegVal flagMask = 0x3F7FDD5;
+            RegVal flags = (nccFlagBits | ccFlagBits | cfofBits | dfBit |
                              ecfBit | ezfBit) & flagMask;
 
             int flag = bits(flags, imm8);
@@ -1258,7 +1327,7 @@ let {{
 
     class Sext(RegOp):
         code = '''
-            IntReg val = psrc1;
+            RegVal val = psrc1;
             // Mask the bit position so that it wraps.
             int bitPos = op2 & (dataSize * 8 - 1);
             int sign_bit = bits(val, bitPos, bitPos);
@@ -1268,7 +1337,7 @@ let {{
             '''
 
         big_code = '''
-            IntReg val = psrc1;
+            RegVal val = psrc1;
             // Mask the bit position so that it wraps.
             int bitPos = op2 & (dataSize * 8 - 1);
             int sign_bit = bits(val, bitPos, bitPos);
@@ -1303,9 +1372,9 @@ let {{
             CR4 cr4 = CR4Op;
             DR7 dr7 = DR7Op;
             if ((cr4.de == 1 && (src1 == 4 || src1 == 5)) || src1 >= 8) {
-                fault = new InvalidOpcode();
+                fault = std::make_shared<InvalidOpcode>();
             } else if (dr7.gd) {
-                fault = new DebugException();
+                fault = std::make_shared<DebugException>();
             } else {
                 %s
             }
@@ -1321,12 +1390,12 @@ let {{
             CR4 cr4 = CR4Op;
             DR7 dr7 = DR7Op;
             if ((cr4.de == 1 && (dest == 4 || dest == 5)) || dest >= 8) {
-                fault = new InvalidOpcode();
+                fault = std::make_shared<InvalidOpcode>();
             } else if ((dest == 6 || dest == 7) && bits(psrc1, 63, 32) &&
                     machInst.mode.mode == LongMode) {
-                fault = new GeneralProtection(0);
+                fault = std::make_shared<GeneralProtection>(0);
             } else if (dr7.gd) {
-                fault = new DebugException();
+                fault = std::make_shared<DebugException>();
             } else {
                 DebugDest = psrc1;
             }
@@ -1338,7 +1407,7 @@ let {{
                     src1, "InstRegIndex(NUM_INTREGS)", flags, dataSize)
         rdcrCode = '''
             if (src1 == 1 || (src1 > 4 && src1 < 8) || (src1 > 8)) {
-                fault = new InvalidOpcode();
+                fault = std::make_shared<InvalidOpcode>();
             } else {
                 %s
             }
@@ -1352,12 +1421,9 @@ let {{
                     src1, "InstRegIndex(NUM_INTREGS)", flags, dataSize)
         code = '''
             if (dest == 1 || (dest > 4 && dest < 8) || (dest > 8)) {
-                fault = new InvalidOpcode();
+                fault = std::make_shared<InvalidOpcode>();
             } else {
-                // There are *s in the line below so it doesn't confuse the
-                // parser. They may be unnecessary.
-                //Mis*cReg old*Val = pick(Cont*rolDest, 0, dat*aSize);
-                MiscReg newVal = psrc1;
+                RegVal newVal = psrc1;
 
                 // Check for any modifications that would cause a fault.
                 switch(dest) {
@@ -1370,7 +1436,7 @@ let {{
                                 (!cr0.pe && cr0.pg) ||
                                 (!cr0.cd && cr0.nw) ||
                                 (cr0.pg && efer.lme && !oldCr4.pae))
-                            fault = new GeneralProtection(0);
+                            fault = std::make_shared<GeneralProtection>(0);
                     }
                     break;
                   case 2:
@@ -1383,16 +1449,17 @@ let {{
                         // PAE can't be disabled in long mode.
                         if (bits(newVal, 63, 11) ||
                                 (machInst.mode.mode == LongMode && !cr4.pae))
-                            fault = new GeneralProtection(0);
+                            fault = std::make_shared<GeneralProtection>(0);
                     }
                     break;
                   case 8:
                     {
                         if (bits(newVal, 63, 4))
-                            fault = new GeneralProtection(0);
+                            fault = std::make_shared<GeneralProtection>(0);
                     }
+                    break;
                   default:
-                    fault = new GenericISA::M5PanicFault(
+                    fault = std::make_shared<GenericISA::M5PanicFault>(
                             "Unrecognized control register %d.\\n", dest);
                 }
                 ControlDest = newVal;
@@ -1476,42 +1543,43 @@ let {{
               case SegCSCheck:
                 // Make sure it's the right type
                 if (desc.s == 0 || desc.type.codeOrData != 1) {
-                    fault = new GeneralProtection(0);
+                    fault = std::make_shared<GeneralProtection>(0);
                 } else if (m5reg.cpl != desc.dpl) {
-                    fault = new GeneralProtection(0);
+                    fault = std::make_shared<GeneralProtection>(0);
                 }
                 break;
               case SegCallGateCheck:
-                fault = new GenericISA::M5PanicFault("CS checks for far "
+                fault = std::make_shared<GenericISA::M5PanicFault>(
+                        "CS checks for far "
                         "calls/jumps through call gates not implemented.\\n");
                 break;
               case SegSoftIntGateCheck:
                 // Check permissions.
                 if (desc.dpl < m5reg.cpl) {
-                    fault = new GeneralProtection(selector);
+                    fault = std::make_shared<GeneralProtection>(selector);
                     break;
                 }
-                // Fall through on purpose
+                M5_FALLTHROUGH;
               case SegIntGateCheck:
                 // Make sure the gate's the right type.
                 if ((m5reg.mode == LongMode && (desc.type & 0xe) != 0xe) ||
                         ((desc.type & 0x6) != 0x6)) {
-                    fault = new GeneralProtection(0);
+                    fault = std::make_shared<GeneralProtection>(0);
                 }
                 break;
               case SegSSCheck:
                 if (selector.si || selector.ti) {
                     if (!desc.p) {
-                        fault = new StackFault(selector);
+                        fault = std::make_shared<StackFault>(selector);
                     } else if (!(desc.s == 1 && desc.type.codeOrData == 0 &&
                                 desc.type.w) ||
                             (desc.dpl != m5reg.cpl) ||
                             (selector.rpl != m5reg.cpl)) {
-                        fault = new GeneralProtection(selector);
+                        fault = std::make_shared<GeneralProtection>(selector);
                     }
                 } else if (m5reg.submode != SixtyFourBitMode ||
                         m5reg.cpl == 3) {
-                    fault = new GeneralProtection(selector);
+                    fault = std::make_shared<GeneralProtection>(selector);
                 }
                 break;
               case SegIretCheck:
@@ -1521,50 +1589,51 @@ let {{
                             !(desc.s == 1 && desc.type.codeOrData == 1) ||
                             (!desc.type.c && desc.dpl != selector.rpl) ||
                             (desc.type.c && desc.dpl > selector.rpl)) {
-                        fault = new GeneralProtection(selector);
+                        fault = std::make_shared<GeneralProtection>(selector);
                     } else if (!desc.p) {
-                        fault = new SegmentNotPresent(selector);
+                        fault = std::make_shared<SegmentNotPresent>(selector);
                     }
                     break;
                 }
               case SegIntCSCheck:
                 if (m5reg.mode == LongMode) {
                     if (desc.l != 1 || desc.d != 0) {
-                        fault = new GeneralProtection(selector);
+                        fault = std::make_shared<GeneralProtection>(selector);
                     }
                 } else {
-                    fault = new GenericISA::M5PanicFault("Interrupt CS "
+                    fault = std::make_shared<GenericISA::M5PanicFault>(
+                            "Interrupt CS "
                             "checks not implemented in legacy mode.\\n");
                 }
                 break;
               case SegTRCheck:
                 if (!selector.si || selector.ti) {
-                    fault = new GeneralProtection(selector);
+                    fault = std::make_shared<GeneralProtection>(selector);
                 }
                 break;
               case SegTSSCheck:
                 if (!desc.p) {
-                    fault = new SegmentNotPresent(selector);
+                    fault = std::make_shared<SegmentNotPresent>(selector);
                 } else if (!(desc.type == 0x9 ||
                         (desc.type == 1 &&
                          m5reg.mode != LongMode))) {
-                    fault = new GeneralProtection(selector);
+                    fault = std::make_shared<GeneralProtection>(selector);
                 }
                 break;
               case SegInGDTCheck:
                 if (selector.ti) {
-                    fault = new GeneralProtection(selector);
+                    fault = std::make_shared<GeneralProtection>(selector);
                 }
                 break;
               case SegLDTCheck:
                 if (!desc.p) {
-                    fault = new SegmentNotPresent(selector);
+                    fault = std::make_shared<SegmentNotPresent>(selector);
                 } else if (desc.type != 0x2) {
-                    fault = new GeneralProtection(selector);
+                    fault = std::make_shared<GeneralProtection>(selector);
                 }
                 break;
               default:
-                fault = new GenericISA::M5PanicFault(
+                fault = std::make_shared<GenericISA::M5PanicFault>(
                         "Undefined segment check type.\\n");
             }
         '''
@@ -1588,8 +1657,7 @@ let {{
               case LDT64:
               case AvailableTSS64:
               case BusyTSS64:
-                replaceBits(target, 23, 0, desc.baseLow);
-                replaceBits(target, 31, 24, desc.baseHigh);
+                replaceBits(target, 31, 0, desc.base);
                 break;
               case CallGate64:
               case IntGate64:
@@ -1598,7 +1666,7 @@ let {{
                 replaceBits(target, 31, 16, bits(desc, 63, 48));
                 break;
               default:
-                fault = new GenericISA::M5PanicFault(
+                fault = std::make_shared<GenericISA::M5PanicFault>(
                         "Wrdh used with wrong descriptor type!\\n");
             }
             DestReg = target;
@@ -1629,7 +1697,7 @@ let {{
             while (true) {
                 if (selector.si || selector.ti) {
                     if (!desc.p) {
-                        fault = new GenericISA::M5PanicFault(
+                        fault = std::make_shared<GenericISA::M5PanicFault>(
                                 "Segment not present.\\n");
                         break;
                     }
@@ -1646,7 +1714,7 @@ let {{
                     if (!desc.s) {
                         // The expand down bit happens to be set for gates.
                         if (desc.type.e) {
-                            fault = new GenericISA::M5PanicFault(
+                            fault = std::make_shared<GenericISA::M5PanicFault>(
                                     "Gate descriptor encountered.\\n");
                             break;
                         }
@@ -1664,12 +1732,8 @@ let {{
                             attr.writable = desc.type.w;
                         }
                     }
-                    Addr base = desc.baseLow | (desc.baseHigh << 24);
-                    Addr limit = desc.limitLow | (desc.limitHigh << 16);
-                    if (desc.g)
-                        limit = (limit << 12) | mask(12);
-                    SegBaseDest = base;
-                    SegLimitDest = limit;
+                    SegBaseDest = desc.base;
+                    SegLimitDest = desc.limit;
                     SegAttrDest = attr;
                 } else {
                     SegBaseDest = SegBaseDest;

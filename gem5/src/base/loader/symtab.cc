@@ -24,47 +24,73 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Nathan Binkert
  */
+
+#include "base/loader/symtab.hh"
 
 #include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
 
-#include "base/loader/symtab.hh"
-#include "base/misc.hh"
+#include "base/logging.hh"
 #include "base/str.hh"
+#include "base/trace.hh"
 #include "base/types.hh"
 #include "sim/serialize.hh"
 
 using namespace std;
 
-SymbolTable *debugSymbolTable = NULL;
+namespace Loader
+{
+
+SymbolTable debugSymbolTable;
 
 void
 SymbolTable::clear()
 {
-    addrTable.clear();
-    symbolTable.clear();
+    addrMap.clear();
+    nameMap.clear();
+    symbols.clear();
 }
 
 bool
-SymbolTable::insert(Addr address, string symbol)
+SymbolTable::insert(const Symbol &symbol)
 {
-    if (symbol.empty())
+    if (symbol.name.empty())
         return false;
 
-    if (!addrTable.insert(make_pair(address, symbol)).second)
+    int idx = symbols.size();
+
+    if (!nameMap.insert({ symbol.name, idx }).second)
         return false;
 
-    if (!symbolTable.insert(make_pair(symbol, address)).second)
-        return false;
+    // There can be multiple symbols for the same address, so always
+    // update the addrTable multimap when we see a new symbol name.
+    addrMap.insert({ symbol.address, idx });
+
+    symbols.emplace_back(symbol);
 
     return true;
 }
 
+bool
+SymbolTable::insert(const SymbolTable &other)
+{
+    // Check if any symbol in other already exists in our table.
+    NameMap intersection;
+    std::set_intersection(other.nameMap.begin(), other.nameMap.end(),
+                          nameMap.begin(), nameMap.end(),
+                          std::inserter(intersection, intersection.begin()),
+                          nameMap.value_comp());
+    if (!intersection.empty())
+        return false;
+
+    for (const Symbol &symbol: other)
+        insert(symbol);
+
+    return true;
+}
 
 bool
 SymbolTable::load(const string &filename)
@@ -89,51 +115,55 @@ SymbolTable::load(const string &filename)
         if (address.empty())
             return false;
 
-        string symbol = buffer.substr(idx + 1);
-        eat_white(symbol);
-        if (symbol.empty())
+        string name = buffer.substr(idx + 1);
+        eat_white(name);
+        if (name.empty())
             return false;
 
         Addr addr;
         if (!to_number(address, addr))
             return false;
 
-        if (!insert(addr, symbol))
+        if (!insert({ Symbol::Binding::Global, name, addr }))
             return false;
     }
 
     file.close();
-
     return true;
 }
 
 void
-SymbolTable::serialize(const string &base, ostream &os)
+SymbolTable::serialize(const string &base, CheckpointOut &cp) const
 {
-    paramOut(os, base + ".size", addrTable.size());
+    paramOut(cp, base + ".size", symbols.size());
 
     int i = 0;
-    ATable::const_iterator p, end = addrTable.end();
-    for (p = addrTable.begin(); p != end; ++p) {
-        paramOut(os, csprintf("%s.addr_%d", base, i), p->first);
-        paramOut(os, csprintf("%s.symbol_%d", base, i), p->second);
-        ++i;
+    for (auto &symbol: symbols) {
+        paramOut(cp, csprintf("%s.addr_%d", base, i), symbol.address);
+        paramOut(cp, csprintf("%s.symbol_%d", base, i), symbol.name);
+        paramOut(cp, csprintf("%s.binding_%d", base, i), (int)symbol.binding);
+        i++;
     }
 }
 
 void
-SymbolTable::unserialize(const string &base, Checkpoint *cp,
-                         const string &section)
+SymbolTable::unserialize(const string &base, CheckpointIn &cp,
+                         Symbol::Binding default_binding)
 {
     clear();
     int size;
-    paramIn(cp, section, base + ".size", size);
+    paramIn(cp, base + ".size", size);
     for (int i = 0; i < size; ++i) {
-        Addr addr;
-        std::string symbol;
+        Addr address;
+        std::string name;
+        Symbol::Binding binding = default_binding;
 
-        paramIn(cp, section, csprintf("%s.addr_%d", base, i), addr);
-        paramIn(cp, section, csprintf("%s.symbol_%d", base, i), symbol);
-        insert(addr, symbol);
+        paramIn(cp, csprintf("%s.addr_%d", base, i), address);
+        paramIn(cp, csprintf("%s.symbol_%d", base, i), name);
+        if (!optParamIn(cp, csprintf("%s.binding_%d", base, i), binding))
+            binding = default_binding;
+        insert({binding, name, address});
     }
 }
+
+} // namespace Loader

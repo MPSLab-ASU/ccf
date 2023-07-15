@@ -23,56 +23,15 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Authors: Gabe Black
-//          Steve Reinhardt
 
 ////////////////////////////////////////////////////////////////////
 //
 // Trap instructions
 //
 
-output header {{
-        /**
-         * Base class for trap instructions,
-         * or instructions that always fault.
-         */
-        class Trap : public SparcStaticInst
-        {
-          protected:
-
-            // Constructor
-            Trap(const char *mnem, ExtMachInst _machInst, OpClass __opClass) :
-                SparcStaticInst(mnem, _machInst, __opClass), trapNum(SW_TRAP)
-            {
-            }
-
-            std::string generateDisassembly(Addr pc,
-                    const SymbolTable *symtab) const;
-
-            int trapNum;
-        };
-}};
-
-output decoder {{
-        std::string
-        Trap::generateDisassembly(Addr pc, const SymbolTable *symtab) const
-        {
-            std::stringstream response;
-
-            printMnemonic(response, mnemonic);
-            ccprintf(response, " ");
-            printReg(response, _srcRegIdx[0]);
-            ccprintf(response, ", 0x%x", trapNum);
-            ccprintf(response, ", or ");
-            printReg(response, _srcRegIdx[1]);
-            return response.str();
-        }
-}};
-
 def template TrapExecute {{
         Fault
-        %(class_name)s::execute(%(CPU_exec_context)s *xc,
+        %(class_name)s::execute(ExecContext *xc,
                 Trace::InstRecord *traceData) const
         {
             Fault fault = NoFault;
@@ -85,7 +44,7 @@ def template TrapExecute {{
 
 def template FpUnimplExecute {{
         Fault
-        %(class_name)s::execute(%(CPU_exec_context)s *xc,
+        %(class_name)s::execute(ExecContext *xc,
                 Trace::InstRecord *traceData) const
         {
             Fault fault = NoFault;
@@ -105,28 +64,10 @@ def format Trap(code, *opt_flags) {{
         exec_output = TrapExecute.subst(iop)
 }};
 
-output header {{
-        class FpUnimpl : public SparcStaticInst
-        {
-          protected:
-            FpUnimpl(const char *mnem,
-                    ExtMachInst _machInst, OpClass __opClass)
-                : SparcStaticInst(mnem, _machInst, __opClass)
-            {
-            }
-
-            std::string
-            generateDisassembly(Addr pc,  const SymbolTable *symtab) const
-            {
-                return mnemonic;
-            }
-        };
-}};
-
 def format FpUnimpl(*flags) {{
         fpunimpl_code = '''
             Fsr = insertBits(Fsr, 16, 14, 3);
-            fault = new FpExceptionOther;
+            fault = std::make_shared<FpExceptionOther>();
             '''
         iop = InstObjParams(name, Name, 'FpUnimpl', fpunimpl_code, flags)
         header_output = BasicDeclare.subst(iop)

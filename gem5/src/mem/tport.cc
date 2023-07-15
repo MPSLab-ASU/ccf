@@ -36,24 +36,21 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Ali Saidi
- *          Andreas Hansson
  */
 
-#include "mem/mem_object.hh"
 #include "mem/tport.hh"
+#include "sim/sim_object.hh"
 
 SimpleTimingPort::SimpleTimingPort(const std::string& _name,
-                                   MemObject* _owner) :
-    QueuedSlavePort(_name, _owner, queueImpl), queueImpl(*_owner, *this)
+                                   SimObject* _owner) :
+    QueuedResponsePort(_name, _owner, queueImpl), queueImpl(*_owner, *this)
 {
 }
 
 void
 SimpleTimingPort::recvFunctional(PacketPtr pkt)
 {
-    if (!queue.checkFunctional(pkt)) {
+    if (!respQueue.trySatisfyFunctional(pkt)) {
         // do an atomic access and throw away the returned latency
         recvAtomic(pkt);
     }
@@ -62,30 +59,24 @@ SimpleTimingPort::recvFunctional(PacketPtr pkt)
 bool
 SimpleTimingPort::recvTimingReq(PacketPtr pkt)
 {
-    /// @todo temporary hack to deal with memory corruption issue until
-    /// 4-phase transactions are complete. Remove me later
-    for (int x = 0; x < pendingDelete.size(); x++)
-        delete pendingDelete[x];
-    pendingDelete.clear();
-
     // the SimpleTimingPort should not be used anywhere where there is
-    // a need to deal with inhibited packets
-    if (pkt->memInhibitAsserted())
-        panic("SimpleTimingPort should never see an inhibited request\n");
+    // a need to deal with snoop responses and their flow control
+    // requirements
+    if (pkt->cacheResponding())
+        panic("SimpleTimingPort should never see packets with the "
+              "cacheResponding flag set\n");
 
     bool needsResponse = pkt->needsResponse();
     Tick latency = recvAtomic(pkt);
-    // turn packet around to go back to requester if response expected
+    // turn packet around to go back to requestor if response expected
     if (needsResponse) {
         // recvAtomic() should already have turned packet into
         // atomic response
         assert(pkt->isResponse());
         schedTimingResp(pkt, curTick() + latency);
     } else {
-        /// @todo nominally we should just delete the packet here.
-        /// Until 4-phase stuff we can't because the sending
-        /// cache is still relying on it
-        pendingDelete.push_back(pkt);
+        // queue the packet for deletion
+        pendingDelete.reset(pkt);
     }
 
     return true;

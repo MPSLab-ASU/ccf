@@ -24,8 +24,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Kevin Lim
  */
 
 #ifndef __CPU_THREAD_STATE_HH__
@@ -34,19 +32,8 @@
 #include "arch/types.hh"
 #include "config/the_isa.hh"
 #include "cpu/base.hh"
-#include "cpu/profile.hh"
 #include "cpu/thread_context.hh"
-#include "mem/mem_object.hh"
 #include "sim/process.hh"
-
-class EndQuiesceEvent;
-class FunctionProfile;
-class ProfileNode;
-namespace TheISA {
-    namespace Kernel {
-        class Statistics;
-    }
-}
 
 class Checkpoint;
 
@@ -56,30 +43,32 @@ class Checkpoint;
  *  memory, quiesce events, and certain stats.  This can be expanded
  *  to hold more thread-specific stats within it.
  */
-struct ThreadState {
+struct ThreadState : public Serializable {
     typedef ThreadContext::Status Status;
 
     ThreadState(BaseCPU *cpu, ThreadID _tid, Process *_process);
 
     virtual ~ThreadState();
 
-    void serialize(std::ostream &os);
+    void serialize(CheckpointOut &cp) const override;
 
-    void unserialize(Checkpoint *cp, const std::string &section);
+    void unserialize(CheckpointIn &cp) override;
 
-    int cpuId() { return baseCpu->cpuId(); }
+    int cpuId() const { return baseCpu->cpuId(); }
 
-    int contextId() { return _contextId; }
+    uint32_t socketId() const { return baseCpu->socketId(); }
 
-    void setContextId(int id) { _contextId = id; }
+    ContextID contextId() const { return _contextId; }
+
+    void setContextId(ContextID id) { _contextId = id; }
 
     void setThreadId(ThreadID id) { _threadId = id; }
 
-    ThreadID threadId() { return _threadId; }
+    ThreadID threadId() const { return _threadId; }
 
-    Tick readLastActivate() { return lastActivate; }
+    Tick readLastActivate() const { return lastActivate; }
 
-    Tick readLastSuspend() { return lastSuspend; }
+    Tick readLastSuspend() const { return lastSuspend; }
 
     /**
      * Initialise the physical and virtual port proxies and tie them to
@@ -89,28 +78,18 @@ struct ThreadState {
      */
     void initMemProxies(ThreadContext *tc);
 
-    void dumpFuncProfile();
-
-    EndQuiesceEvent *getQuiesceEvent() { return quiesceEvent; }
-
-    void profileClear();
-
-    void profileSample();
-
-    TheISA::Kernel::Statistics *getKernelStats() { return kernelStats; }
-
     PortProxy &getPhysProxy();
 
-    FSTranslatingPortProxy &getVirtProxy();
+    PortProxy &getVirtProxy();
 
     Process *getProcessPtr() { return process; }
 
-    SETranslatingPortProxy &getMemProxy();
+    void setProcessPtr(Process *p) { process = p; }
 
     /** Reads the number of instructions functionally executed and
      * committed.
      */
-    Counter readFuncExeInst() { return funcExeInst; }
+    Counter readFuncExeInst() const { return funcExeInst; }
 
     /** Sets the total number of instructions functionally executed
      * and committed.
@@ -127,14 +106,19 @@ struct ThreadState {
 
     /** Number of instructions committed. */
     Counter numInst;
-    /** Stat for number instructions committed. */
-    Stats::Scalar numInsts;
-    /** Number of ops (including micro ops) committed. */
+     /** Number of ops (including micro ops) committed. */
     Counter numOp;
-    /** Stat for number ops (including micro ops) committed. */
-    Stats::Scalar numOps;
-    /** Stat for number of memory references. */
-    Stats::Scalar numMemRefs;
+    // Defining the stat group
+    struct ThreadStateStats : public Stats::Group
+    {
+        ThreadStateStats(BaseCPU *cpu, const ThreadID& thread);
+        /** Stat for number instructions committed. */
+        Stats::Scalar numInsts;
+        /** Stat for number ops (including micro ops) committed. */
+        Stats::Scalar numOps;
+        /** Stat for number of memory references. */
+        Stats::Scalar numMemRefs;
+    } threadStats;
 
     /** Number of simulated loads, used for tracking events based on
      * the number of loads committed.
@@ -151,7 +135,7 @@ struct ThreadState {
     BaseCPU *baseCpu;
 
     // system wide HW context id
-    int _contextId;
+    ContextID _contextId;
 
     // Index of hardware thread context on the CPU that this represents.
     ThreadID _threadId;
@@ -163,14 +147,6 @@ struct ThreadState {
     /** Last time suspend was called on this thread. */
     Tick lastSuspend;
 
-  public:
-    FunctionProfile *profile;
-    ProfileNode *profileNode;
-    Addr profilePC;
-    EndQuiesceEvent *quiesceEvent;
-
-    TheISA::Kernel::Statistics *kernelStats;
-
   protected:
     Process *process;
 
@@ -180,8 +156,7 @@ struct ThreadState {
 
     /** A translating port proxy, outgoing only, for functional
      * accesse to virtual addresses. */
-    FSTranslatingPortProxy *virtProxy;
-    SETranslatingPortProxy *proxy;
+    PortProxy *virtProxy;
 
   public:
     /*

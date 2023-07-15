@@ -1,0 +1,48 @@
+digraph original { 
+{
+0 [color=red ];
+
+1 [color=red ];
+
+2 [color=red ];
+
+3 [color=red ];
+
+4 [color=red ];
+
+5 [color=red ];
+
+6 [color=red ];
+
+7 [color=red ];
+
+8 [color=red ];
+
+9 [color=red ];
+
+10 [color=red ];
+
+17 [color=blue ];
+
+18 [color=blue ];
+9 -> 0 [style=bold, color=red, label=1] 
+8 -> 1 [style=bold, color=red, label=1] 
+3 -> 2 [style=bold, color=red, label=1] 
+2 -> 3
+0 -> 4
+3 -> 4
+4 -> 5
+3 -> 5
+0 -> 6
+5 -> 7
+6 -> 8 [style=bold, color=blue ]
+7 -> 8
+1 -> 8
+0 -> 9
+9 -> 10
+17 -> 18 [style=dotted, color=blue, label= mem] 
+18 -> 10
+
+}
+
+}

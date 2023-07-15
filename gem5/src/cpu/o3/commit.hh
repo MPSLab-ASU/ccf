@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2012 ARM Limited
+ * Copyright (c) 2010-2012, 2014, 2019 ARM Limited
  * All rights reserved.
  *
  * The license below extends only to copyright in the software and shall
@@ -36,9 +36,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Kevin Lim
- *          Korey Sewell
  */
 
 #ifndef __CPU_O3_COMMIT_HH__
@@ -50,6 +47,8 @@
 #include "cpu/exetrace.hh"
 #include "cpu/inst_seq.hh"
 #include "cpu/timebuf.hh"
+#include "enums/CommitPolicy.hh"
+#include "sim/probe/probe.hh"
 
 struct DerivO3CPUParams;
 
@@ -100,21 +99,6 @@ class DefaultCommit
 
     typedef O3ThreadState<Impl> Thread;
 
-    /** Event class used to schedule a squash due to a trap (fault or
-     * interrupt) to happen on a specific cycle.
-     */
-    class TrapEvent : public Event {
-      private:
-        DefaultCommit<Impl> *commit;
-        ThreadID tid;
-
-      public:
-        TrapEvent(DefaultCommit<Impl> *_commit, ThreadID _tid);
-
-        void process();
-        const char *description() const;
-    };
-
     /** Overall commit status. Used to determine if the CPU can deschedule
      * itself due to a lack of activity.
      */
@@ -133,13 +117,6 @@ class DefaultCommit
         SquashAfterPending, //< Committing instructions before a squash.
     };
 
-    /** Commit policy for SMT mode. */
-    enum CommitPolicy {
-        Aggressive,
-        RoundRobin,
-        OldestReady
-    };
-
   private:
     /** Overall commit status. */
     CommitStatus _status;
@@ -150,6 +127,15 @@ class DefaultCommit
     /** Commit policy used in SMT mode. */
     CommitPolicy commitPolicy;
 
+    /** Probe Points. */
+    ProbePointArg<DynInstPtr> *ppCommit;
+    ProbePointArg<DynInstPtr> *ppCommitStall;
+    /** To probe when an instruction is squashed */
+    ProbePointArg<DynInstPtr> *ppSquash;
+
+    /** Mark the thread as processing a trap. */
+    void processTrapEvent(ThreadID tid);
+
   public:
     /** Construct a DefaultCommit with the given parameters. */
     DefaultCommit(O3CPU *_cpu, DerivO3CPUParams *params);
@@ -157,8 +143,8 @@ class DefaultCommit
     /** Returns the name of the DefaultCommit. */
     std::string name() const;
 
-    /** Registers statistics. */
-    void regStats();
+    /** Registers probes. */
+    void regProbePoints();
 
     /** Sets the list of threads. */
     void setThreads(std::vector<Thread *> &threads);
@@ -176,9 +162,6 @@ class DefaultCommit
 
     /** Sets the pointer to the IEW stage. */
     void setIEWStage(IEW *iew_stage);
-
-    /** Skid buffer between rename and commit. */
-    std::queue<DynInstPtr> skidBuffer;
 
     /** The pointer to the IEW stage. Used solely to ensure that
      * various events (traps, interrupts, syscalls) do not occur until
@@ -198,6 +181,9 @@ class DefaultCommit
     /** Initializes stage by sending back the number of free entries. */
     void startupStage();
 
+    /** Clear all thread-specific states */
+    void clearStates(ThreadID tid);
+
     /** Initializes the draining of commit. */
     void drain();
 
@@ -213,6 +199,15 @@ class DefaultCommit
     /** Takes over from another CPU's thread. */
     void takeOverFrom();
 
+    /** Deschedules a thread from scheduling */
+    void deactivateThread(ThreadID tid);
+
+    /** Is the CPU currently processing a HTM transaction? */
+    bool executingHtmTransaction(ThreadID) const;
+
+    /* Reset HTM tracking, e.g. after an abort */
+    void resetHtmStartsStops(ThreadID);
+
     /** Ticks the commit stage, which tries to commit instructions. */
     void tick();
 
@@ -225,7 +220,7 @@ class DefaultCommit
     size_t numROBFreeEntries(ThreadID tid);
 
     /** Generates an event to schedule a squash due to a trap. */
-    void generateTrapEvent(ThreadID tid);
+    void generateTrapEvent(ThreadID tid, Fault inst_fault);
 
     /** Records that commit needs to initiate a squash due to an
      * external state update through the TC.
@@ -237,16 +232,6 @@ class DefaultCommit
      * tell the CPU if commit is active/inactive.
      */
     void updateStatus();
-
-    /** Sets the next status based on threads' statuses, which becomes the
-     * current status at the end of the cycle.
-     */
-    void setNextStatus();
-
-    /** Checks if the ROB is completed with squashing. This is for the case
-     * where the ROB can take multiple cycles to complete squashing.
-     */
-    bool robDoneSquashing();
 
     /** Returns if any of the threads have the number of ROB entries changed
      * on this cycle. Used to determine if the number of free ROB entries needs
@@ -294,7 +279,7 @@ class DefaultCommit
      * @param tid ID of the thread to squash.
      * @param head_inst Instruction that requested the squash.
      */
-    void squashAfter(ThreadID tid, DynInstPtr &head_inst);
+    void squashAfter(ThreadID tid, const DynInstPtr &head_inst);
 
     /** Handles processing an interrupt. */
     void handleInterrupt();
@@ -308,13 +293,10 @@ class DefaultCommit
     /** Tries to commit the head ROB instruction passed in.
      * @param head_inst The instruction to be committed.
      */
-    bool commitHead(DynInstPtr &head_inst, unsigned inst_num);
+    bool commitHead(const DynInstPtr &head_inst, unsigned inst_num);
 
     /** Gets instructions from rename and inserts them into the ROB. */
     void getInsts();
-
-    /** Insert all instructions from rename into skidBuffer */
-    void skidInsert();
 
     /** Marks completed instructions using information sent from IEW. */
     void markCompletedInsts();
@@ -392,9 +374,6 @@ class DefaultCommit
      */
     bool changedROBNumEntries[Impl::MaxThreads];
 
-    /** A counter of how many threads are currently squashing. */
-    ThreadID squashCounter;
-
     /** Records if a thread has to squash this cycle due to a trap. */
     bool trapSquash[Impl::MaxThreads];
 
@@ -414,37 +393,46 @@ class DefaultCommit
     std::list<ThreadID> priority_list;
 
     /** IEW to Commit delay. */
-    Cycles iewToCommitDelay;
+    const Cycles iewToCommitDelay;
 
     /** Commit to IEW delay. */
-    Cycles commitToIEWDelay;
+    const Cycles commitToIEWDelay;
 
     /** Rename to ROB delay. */
-    Cycles renameToROBDelay;
+    const Cycles renameToROBDelay;
 
-    Cycles fetchToCommitDelay;
+    const Cycles fetchToCommitDelay;
 
     /** Rename width, in instructions.  Used so ROB knows how many
      *  instructions to get from the rename instruction queue.
      */
-    unsigned renameWidth;
+    const unsigned renameWidth;
 
     /** Commit width, in instructions. */
-    unsigned commitWidth;
+    const unsigned commitWidth;
 
     /** Number of Reorder Buffers */
     unsigned numRobs;
 
     /** Number of Active Threads */
-    ThreadID numThreads;
+    const ThreadID numThreads;
 
-    /** Is a drain pending. */
+    /** Is a drain pending? Commit is looking for an instruction boundary while
+     * there are no pending interrupts
+     */
     bool drainPending;
+
+    /** Is a drain imminent? Commit has found an instruction boundary while no
+     * interrupts were present or in flight.  This was the last architecturally
+     * committed instruction.  Interrupts disabled and pipeline flushed.
+     * Waiting for structures to finish draining.
+     */
+    bool drainImminent;
 
     /** The latency to handle a trap.  Used when scheduling trap
      * squash event.
      */
-    Cycles trapLatency;
+    const Cycles trapLatency;
 
     /** The interrupt fault. */
     Fault interrupt;
@@ -486,49 +474,57 @@ class DefaultCommit
     bool avoidQuiesceLiveLock;
 
     /** Updates commit stats based on this instruction. */
-    void updateComInstStats(DynInstPtr &inst);
+    void updateComInstStats(const DynInstPtr &inst);
 
-    /** Stat for the total number of squashed instructions discarded by commit.
-     */
-    Stats::Scalar commitSquashedInsts;
-    /** Stat for the total number of times commit is told to squash.
-     * @todo: Actually increment this stat.
-     */
-    Stats::Scalar commitSquashEvents;
-    /** Stat for the total number of times commit has had to stall due to a non-
-     * speculative instruction reaching the head of the ROB.
-     */
-    Stats::Scalar commitNonSpecStalls;
-    /** Stat for the total number of branch mispredicts that caused a squash. */
-    Stats::Scalar branchMispredicts;
-    /** Distribution of the number of committed instructions each cycle. */
-    Stats::Distribution numCommittedDist;
+    // HTM
+    int htmStarts[Impl::MaxThreads];
+    int htmStops[Impl::MaxThreads];
 
-    /** Total number of instructions committed. */
-    Stats::Vector instsCommitted;
-    /** Total number of ops (including micro ops) committed. */
-    Stats::Vector opsCommitted;
-    /** Total number of software prefetches committed. */
-    Stats::Vector statComSwp;
-    /** Stat for the total number of committed memory references. */
-    Stats::Vector statComRefs;
-    /** Stat for the total number of committed loads. */
-    Stats::Vector statComLoads;
-    /** Total number of committed memory barriers. */
-    Stats::Vector statComMembars;
-    /** Total number of committed branches. */
-    Stats::Vector statComBranches;
-    /** Total number of floating point instructions */
-    Stats::Vector statComFloating;
-    /** Total number of integer instructions */
-    Stats::Vector statComInteger;
-    /** Total number of function calls */
-    Stats::Vector statComFunctionCalls;
+    struct CommitStats : public Stats::Group {
+        CommitStats(O3CPU *cpu, DefaultCommit *commit);
+        /** Stat for the total number of squashed instructions discarded by
+         * commit.
+         */
+        Stats::Scalar commitSquashedInsts;
+        /** Stat for the total number of times commit has had to stall due
+         * to a non-speculative instruction reaching the head of the ROB.
+         */
+        Stats::Scalar commitNonSpecStalls;
+        /** Stat for the total number of branch mispredicts that caused a
+         * squash.
+         */
+        Stats::Scalar branchMispredicts;
+        /** Distribution of the number of committed instructions each cycle. */
+        Stats::Distribution numCommittedDist;
 
-    /** Number of cycles where the commit bandwidth limit is reached. */
-    Stats::Scalar commitEligibleSamples;
-    /** Number of instructions not committed due to bandwidth limits. */
-    Stats::Vector commitEligible;
+        /** Total number of instructions committed. */
+        Stats::Vector instsCommitted;
+        /** Total number of ops (including micro ops) committed. */
+        Stats::Vector opsCommitted;
+        /** Stat for the total number of committed memory references. */
+        Stats::Vector memRefs;
+        /** Stat for the total number of committed loads. */
+        Stats::Vector loads;
+        /** Stat for the total number of committed atomics. */
+        Stats::Vector amos;
+        /** Total number of committed memory barriers. */
+        Stats::Vector membars;
+        /** Total number of committed branches. */
+        Stats::Vector branches;
+        /** Total number of vector instructions */
+        Stats::Vector vector;
+        /** Total number of floating point instructions */
+        Stats::Vector floating;
+        /** Total number of integer instructions */
+        Stats::Vector integer;
+        /** Total number of function calls */
+        Stats::Vector functionCalls;
+        /** Committed instructions by instruction type (OpClass) */
+        Stats::Vector2d committedInstType;
+
+        /** Number of cycles where the commit bandwidth limit is reached. */
+        Stats::Scalar commitEligibleSamples;
+    } stats;
 };
 
 #endif // __CPU_O3_COMMIT_HH__

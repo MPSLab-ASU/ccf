@@ -26,12 +26,13 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "base/stl_helpers.hh"
 #include "mem/ruby/common/SubBlock.hh"
+
+#include "base/stl_helpers.hh"
 
 using m5::stl_helpers::operator<<;
 
-SubBlock::SubBlock(const Address& addr, int size)
+SubBlock::SubBlock(Addr addr, int size)
 {
     m_address = addr;
     resize(size);
@@ -45,7 +46,7 @@ SubBlock::internalMergeFrom(const DataBlock& data)
 {
     int size = getSize();
     assert(size > 0);
-    int offset = m_address.getOffset();
+    int offset = getOffset(m_address);
     for (int i = 0; i < size; i++) {
         this->setByte(i, data.getByte(offset + i));
     }
@@ -56,7 +57,7 @@ SubBlock::internalMergeTo(DataBlock& data) const
 {
     int size = getSize();
     assert(size > 0);
-    int offset = m_address.getOffset();
+    int offset = getOffset(m_address);
     for (int i = 0; i < size; i++) {
         // This will detect crossing a cache line boundary
         data.setByte(offset + i, this->getByte(i));

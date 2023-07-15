@@ -24,10 +24,6 @@
  * ARISING OUT OF OR IN CONNECTION WITH THE USE OF THE SOFTWARE, EVEN
  * IF IT HAS BEEN OR IS HEREAFTER ADVISED OF THE POSSIBILITY OF SUCH
  * DAMAGES.
- *
- * Authors: Ali G. Saidi
- *          Andrew L. Schultz
- *          Miguel J. Serrano
  */
 
 #ifndef __DEV_8254_HH__
@@ -40,7 +36,7 @@
 #include "base/types.hh"
 #include "base/trace.hh"
 #include "debug/Intel8254Timer.hh"
-#include "sim/eventq_impl.hh"
+#include "sim/eventq.hh"
 #include "sim/serialize.hh"
 
 /** Programmable Interval Timer (Intel 8254) */
@@ -102,6 +98,8 @@ class Intel8254Timer : public EventManager
             void setTo(int clocks);
 
             int clocksLeft();
+
+            Tick getInterval();
         };
 
       private:
@@ -112,6 +110,9 @@ class Intel8254Timer : public EventManager
 
         CounterEvent event;
 
+        /** True after startup is called. */
+        bool running;
+
         /** Initial count value */
         uint16_t initial_count;
 
@@ -120,6 +121,9 @@ class Intel8254Timer : public EventManager
 
         /** Interrupt period */
         uint16_t period;
+
+        /** When to start ticking */
+        Tick offset;
 
         /** Current mode of operation */
         uint8_t mode;
@@ -171,7 +175,7 @@ class Intel8254Timer : public EventManager
          * @param base The base name of the counter object.
          * @param os   The stream to serialize to.
          */
-        void serialize(const std::string &base, std::ostream &os);
+        void serialize(const std::string &base, CheckpointOut &cp) const;
 
         /**
          * Reconstruct the state of this object from a checkpoint.
@@ -179,8 +183,10 @@ class Intel8254Timer : public EventManager
          * @param cp The checkpoint use.
          * @param section The section name of this object
          */
-        void unserialize(const std::string &base, Checkpoint *cp,
-                         const std::string &section);
+        void unserialize(const std::string &base, CheckpointIn &cp);
+
+        /** Start ticking */
+        void startup();
     };
 
   protected:
@@ -236,7 +242,7 @@ class Intel8254Timer : public EventManager
      * @param base The base name of the counter object.
      * @param os The stream to serialize to.
      */
-    void serialize(const std::string &base, std::ostream &os);
+    void serialize(const std::string &base, CheckpointOut &cp) const;
 
     /**
      * Reconstruct the state of this object from a checkpoint.
@@ -244,8 +250,10 @@ class Intel8254Timer : public EventManager
      * @param cp The checkpoint use.
      * @param section The section name of this object
      */
-    void unserialize(const std::string &base, Checkpoint *cp,
-                     const std::string &section);
+    void unserialize(const std::string &base, CheckpointIn &cp);
+
+    /** Start ticking */
+    void startup();
 };
 
 #endif // __DEV_8254_HH__

@@ -1,4 +1,16 @@
 /*
+ * Copyright (c) 2012-2014,2018 ARM Limited
+ * All rights reserved
+ *
+ * The license below extends only to copyright in the software and shall
+ * not be construed as granting a license to any other intellectual
+ * property including but not limited to intellectual property relating
+ * to a hardware implementation of the functionality of the software
+ * licensed hereunder.  You may use the software subject to the license
+ * terms below provided that you ensure that this notice is replicated
+ * unmodified and in its entirety in all distributions of the software,
+ * modified or unmodified, in source code or in binary form.
+ *
  * Copyright (c) 2012 Google
  * All rights reserved.
  *
@@ -24,20 +36,42 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Gabe Black
  */
 
 #include "arch/arm/decoder.hh"
+
+#include "arch/arm/isa.hh"
 #include "arch/arm/isa_traits.hh"
 #include "arch/arm/utility.hh"
 #include "base/trace.hh"
 #include "debug/Decoder.hh"
+#include "sim/full_system.hh"
 
 namespace ArmISA
 {
 
 GenericISA::BasicDecodeCache Decoder::defaultCache;
+
+Decoder::Decoder(ISA* isa)
+    : data(0), fpscrLen(0), fpscrStride(0),
+      decoderFlavor(isa->decoderFlavor())
+{
+    reset();
+
+    // Initialize SVE vector length
+    sveLen = (isa->getCurSveVecLenInBitsAtReset() >> 7) - 1;
+}
+
+void
+Decoder::reset()
+{
+    bigThumb = false;
+    offset = 0;
+    emi = 0;
+    instDone = false;
+    outOfBytes = true;
+    foundIt = false;
+}
 
 void
 Decoder::process()
@@ -47,9 +81,11 @@ Decoder::process()
 
     if (!emi.thumb) {
         emi.instBits = data;
-        emi.sevenAndFour = bits(data, 7) && bits(data, 4);
-        emi.isMisc = (bits(data, 24, 23) == 0x2 &&
-                      bits(data, 20) == 0);
+        if (!emi.aarch64) {
+            emi.sevenAndFour = bits(data, 7) && bits(data, 4);
+            emi.isMisc = (bits(data, 24, 23) == 0x2 &&
+                          bits(data, 20) == 0);
+        }
         consumeBytes(4);
         DPRINTF(Decoder, "Arm inst: %#x.\n", (uint64_t)emi);
     } else {
@@ -104,19 +140,56 @@ Decoder::process()
     }
 }
 
-//Use this to give data to the decoder. This should be used
-//when there is control flow.
+void
+Decoder::consumeBytes(int numBytes)
+{
+    offset += numBytes;
+    assert(offset <= sizeof(MachInst) || emi.decoderFault);
+    if (offset == sizeof(MachInst))
+        outOfBytes = true;
+}
+
 void
 Decoder::moreBytes(const PCState &pc, Addr fetchPC, MachInst inst)
 {
-    data = inst;
+    data = letoh(inst);
     offset = (fetchPC >= pc.instAddr()) ? 0 : pc.instAddr() - fetchPC;
     emi.thumb = pc.thumb();
+    emi.aarch64 = pc.aarch64();
     emi.fpscrLen = fpscrLen;
     emi.fpscrStride = fpscrStride;
+    emi.sveLen = sveLen;
+
+    const Addr alignment(pc.thumb() ? 0x1 : 0x3);
+    emi.decoderFault = static_cast<uint8_t>(
+        pc.instAddr() & alignment ? DecoderFault::UNALIGNED : DecoderFault::OK);
 
     outOfBytes = false;
     process();
+}
+
+StaticInstPtr
+Decoder::decode(ArmISA::PCState &pc)
+{
+    if (!instDone)
+        return NULL;
+
+    const int inst_size((!emi.thumb || emi.bigThumb) ? 4 : 2);
+    ExtMachInst this_emi(emi);
+
+    pc.npc(pc.pc() + inst_size);
+    if (foundIt)
+        pc.nextItstate(itBits);
+    this_emi.itstate = pc.itstate();
+    this_emi.illegalExecution = pc.illegalExec() ? 1 : 0;
+    this_emi.debugStep = pc.debugStep() ? 1 : 0;
+    pc.size(inst_size);
+
+    emi = 0;
+    instDone = false;
+    foundIt = false;
+
+    return decode(this_emi, pc.instAddr());
 }
 
 }

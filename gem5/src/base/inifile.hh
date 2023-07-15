@@ -24,9 +24,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Nathan Binkert
- *          Steve Reinhardt
  */
 
 #ifndef __INIFILE_HH__
@@ -35,9 +32,8 @@
 #include <fstream>
 #include <list>
 #include <string>
+#include <unordered_map>
 #include <vector>
-
-#include "base/hashmap.hh"
 
 /**
  * @file
@@ -94,7 +90,7 @@ class IniFile
     class Section
     {
         /// EntryTable type.  Map of strings to Entry object pointers.
-        typedef m5::hash_map<std::string, Entry *> EntryTable;
+        typedef std::unordered_map<std::string, Entry *> EntryTable;
 
         EntryTable      table;          ///< Table of entries.
         mutable bool    referenced;     ///< Has this section been used?
@@ -139,7 +135,7 @@ class IniFile
     };
 
     /// SectionTable type.  Map of strings to Section object pointers.
-    typedef m5::hash_map<std::string, Section *> SectionTable;
+    typedef std::unordered_map<std::string, Section *> SectionTable;
 
   protected:
     /// Hash of section names to Section object pointers.
@@ -185,12 +181,21 @@ class IniFile
     bool find(const std::string &section, const std::string &entry,
               std::string &value) const;
 
+    /// Determine whether the entry exists within named section exists
+    /// in the .ini file.
+    /// @return True if the section exists.
+    bool entryExists(const std::string &section,
+                     const std::string &entry) const;
+
     /// Determine whether the named section exists in the .ini file.
     /// Note that the 'Section' class is (intentionally) not public,
     /// so all clients can do is get a bool that says whether there
     /// are any values in that section or not.
     /// @return True if the section exists.
     bool sectionExists(const std::string &section) const;
+
+    /// Push all section names into the given vector
+    void getSectionNames(std::vector<std::string> &list) const;
 
     /// Print unreferenced entries in object.  Iteratively calls
     /// printUnreferend() on all the constituent sections.

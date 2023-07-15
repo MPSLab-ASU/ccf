@@ -33,8 +33,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Gabe Black
  */
 
 #ifndef __ARCH_X86_MISCREGS_HH__
@@ -43,6 +41,7 @@
 #include "arch/x86/regs/segment.hh"
 #include "arch/x86/x86_traits.hh"
 #include "base/bitunion.hh"
+#include "base/logging.hh"
 
 //These get defined in some system headers (at least termbits.h). That confuses
 //things here significantly.
@@ -101,7 +100,7 @@ namespace X86ISA
     enum MiscRegIndex
     {
         // Control registers
-        // Most of these are invalid.
+        // Most of these are invalid.  See isValidMiscReg() below.
         MISCREG_CR_BASE,
         MISCREG_CR0 = MISCREG_CR_BASE,
         MISCREG_CR1,
@@ -399,6 +398,15 @@ namespace X86ISA
         NUM_MISCREGS
     };
 
+    static inline bool
+    isValidMiscReg(int index)
+    {
+        return (index >= MISCREG_CR0 && index < NUM_MISCREGS &&
+                index != MISCREG_CR1 &&
+                !(index > MISCREG_CR4 && index < MISCREG_CR8) &&
+                !(index > MISCREG_CR8 && index <= MISCREG_CR15));
+    }
+
     static inline MiscRegIndex
     MISCREG_CR(int index)
     {
@@ -613,6 +621,9 @@ namespace X86ISA
     EndBitUnion(CR3)
 
     BitUnion64(CR4)
+        Bitfield<18> osxsave; // Enable XSAVE and Proc Extended States
+        Bitfield<16> fsgsbase; // Enable RDFSBASE, RDGSBASE, WRFSBASE,
+                               // WRGSBASE instructions
         Bitfield<10> osxmmexcpt; // Operating System Unmasked
                                  // Exception Support
         Bitfield<9> osfxsr; // Operating System FXSave/FSRSTOR Support
@@ -855,9 +866,54 @@ namespace X86ISA
      * Segment Descriptors
      */
 
+    class SegDescriptorBase
+    {
+      public:
+        uint32_t
+        getter(const uint64_t &storage) const
+        {
+            return (bits(storage, 63, 56) << 24) | bits(storage, 39, 16);
+        }
+
+        void
+        setter(uint64_t &storage, uint32_t base)
+        {
+            replaceBits(storage, 63, 56, bits(base, 31, 24));
+            replaceBits(storage, 39, 16, bits(base, 23, 0));
+        }
+    };
+
+    class SegDescriptorLimit
+    {
+      public:
+        uint32_t
+        getter(const uint64_t &storage) const
+        {
+            uint32_t limit = (bits(storage, 51, 48) << 16) |
+                             bits(storage, 15, 0);
+            if (bits(storage, 55))
+                limit = (limit << 12) | mask(12);
+            return limit;
+        }
+
+        void
+        setter(uint64_t &storage, uint32_t limit)
+        {
+            bool g = (bits(limit, 31, 24) != 0);
+            panic_if(g && bits(limit, 11, 0) != mask(12),
+                     "Inlimitid segment limit %#x", limit);
+            if (g)
+                limit = limit >> 12;
+            replaceBits(storage, 51, 48, bits(limit, 23, 16));
+            replaceBits(storage, 15, 0, bits(limit, 15, 0));
+            replaceBits(storage, 55, g ? 1 : 0);
+        }
+    };
+
     BitUnion64(SegDescriptor)
         Bitfield<63, 56> baseHigh;
         Bitfield<39, 16> baseLow;
+        BitfieldType<SegDescriptorBase> base;
         Bitfield<55> g; // Granularity
         Bitfield<54> d; // Default Operand Size
         Bitfield<54> b; // Default Operand Size
@@ -865,6 +921,7 @@ namespace X86ISA
         Bitfield<52> avl; // Available To Software
         Bitfield<51, 48> limitHigh;
         Bitfield<15, 0> limitLow;
+        BitfieldType<SegDescriptorLimit> limit;
         Bitfield<47> p; // Present
         Bitfield<46, 45> dpl; // Descriptor Privilege-Level
         Bitfield<44> s; // System
@@ -884,6 +941,46 @@ namespace X86ISA
             Bitfield<40> a; // Accessed
         EndSubBitUnion(type)
     EndBitUnion(SegDescriptor)
+
+    /**
+     * TSS Descriptor (long mode - 128 bits)
+     * the lower 64 bits
+     */
+    BitUnion64(TSSlow)
+        Bitfield<63, 56> baseHigh;
+        Bitfield<39, 16> baseLow;
+        BitfieldType<SegDescriptorBase> base;
+        Bitfield<55> g; // Granularity
+        Bitfield<52> avl; // Available To Software
+        Bitfield<51, 48> limitHigh;
+        Bitfield<15, 0> limitLow;
+        BitfieldType<SegDescriptorLimit> limit;
+        Bitfield<47> p; // Present
+        Bitfield<46, 45> dpl; // Descriptor Privilege-Level
+        SubBitUnion(type, 43, 40)
+            // Specifies whether this descriptor is for code or data.
+            Bitfield<43> codeOrData;
+
+            // These bit fields are for code segments
+            Bitfield<42> c; // Conforming
+            Bitfield<41> r; // Readable
+
+            // These bit fields are for data segments
+            Bitfield<42> e; // Expand-Down
+            Bitfield<41> w; // Writable
+
+            // This is used for both code and data segments.
+            Bitfield<40> a; // Accessed
+        EndSubBitUnion(type)
+    EndBitUnion(TSSlow)
+
+    /**
+     * TSS Descriptor (long mode - 128 bits)
+     * the upper 64 bits
+     */
+    BitUnion64(TSShigh)
+        Bitfield<31, 0> base;
+    EndBitUnion(TSShigh)
 
     BitUnion64(SegAttr)
         Bitfield<1, 0> dpl;
@@ -909,6 +1006,23 @@ namespace X86ISA
         Bitfield<43, 40> type;
         Bitfield<36, 32> count; // Parameter Count
     EndBitUnion(GateDescriptor)
+
+    /**
+     * Long Mode Gate Descriptor
+     */
+    BitUnion64(GateDescriptorLow)
+        Bitfield<63, 48> offsetHigh; // Target Code-Segment Offset
+        Bitfield<47> p; // Present
+        Bitfield<46, 45> dpl; // Descriptor Privilege-Level
+        Bitfield<43, 40> type;
+        Bitfield<35, 32> IST; // IST pointer to TSS -- new stack for exception handling
+        Bitfield<31, 16> selector; // Target Code-Segment Selector
+        Bitfield<15, 0> offsetLow; // Target Code-Segment Offset
+    EndBitUnion(GateDescriptorLow)
+
+    BitUnion64(GateDescriptorHigh)
+        Bitfield<31, 0> offset; // Target Code-Segment Offset
+    EndBitUnion(GateDescriptorHigh)
 
     /**
      * Descriptor-Table Registers

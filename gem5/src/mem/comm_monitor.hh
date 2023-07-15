@@ -1,6 +1,8 @@
 /*
- * Copyright (c) 2012-2013 ARM Limited
- * All rights reserved
+ * Copyright (c) 2012-2013, 2015, 2018-2019 ARM Limited
+ * Copyright (c) 2016 Google Inc.
+ * Copyright (c) 2017, Centre National de la Recherche Scientifique
+ * All rights reserved.
  *
  * The license below extends only to copyright in the software and shall
  * not be construed as granting a license to any other intellectual
@@ -33,22 +35,19 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Thomas Grass
- *          Andreas Hansson
  */
 
 #ifndef __MEM_COMM_MONITOR_HH__
 #define __MEM_COMM_MONITOR_HH__
 
 #include "base/statistics.hh"
-#include "base/time.hh"
-#include "mem/mem_object.hh"
+#include "mem/port.hh"
 #include "params/CommMonitor.hh"
-#include "proto/protoio.hh"
+#include "sim/probe/mem.hh"
+#include "sim/sim_object.hh"
 
 /**
- * The communication monitor is a MemObject which can monitor statistics of
+ * The communication monitor is a SimObject which can monitor statistics of
  * the communication happening between two ports in the memory system.
  *
  * Currently the following stats are implemented: Histograms of read/write
@@ -58,10 +57,10 @@
  * to capture the number of accesses to an address over time ("heat map").
  * All stats can be disabled from Python.
  */
-class CommMonitor : public MemObject
+class CommMonitor : public SimObject
 {
 
-  public:
+  public: // Construction & SimObject interfaces
 
     /** Parameters of communication monitor */
     typedef CommMonitorParams Params;
@@ -75,25 +74,13 @@ class CommMonitor : public MemObject
      */
     CommMonitor(Params* params);
 
-    /** Destructor */
-    ~CommMonitor() {}
+    void init() override;
+    void startup() override;
+    void regProbePoints() override;
 
-    /**
-     * Callback to flush and close all open output streams on exit. If
-     * we were calling the destructor it could be done there.
-     */
-    void closeStreams();
-
-    virtual BaseMasterPort& getMasterPort(const std::string& if_name,
-                                          PortID idx = InvalidPortID);
-
-    virtual BaseSlavePort& getSlavePort(const std::string& if_name,
-                                        PortID idx = InvalidPortID);
-
-    virtual void init();
-
-    /** Register statistics */
-    void regStats();
+  public: // SimObject interfaces
+    Port &getPort(const std::string &if_name,
+                  PortID idx=InvalidPortID) override;
 
   private:
 
@@ -125,18 +112,18 @@ class CommMonitor : public MemObject
     };
 
     /**
-     * This is the master port of the communication monitor. All recv
+     * This is the request port of the communication monitor. All recv
      * functions call a function in CommMonitor, where the
-     * send function of the slave port is called. Besides this, these
+     * send function of the CPU-side port is called. Besides this, these
      * functions can also perform actions for capturing statistics.
      */
-    class MonitorMasterPort : public MasterPort
+    class MonitorRequestPort : public RequestPort
     {
 
       public:
 
-        MonitorMasterPort(const std::string& _name, CommMonitor& _mon)
-            : MasterPort(_name, &_mon), mon(_mon)
+        MonitorRequestPort(const std::string& _name, CommMonitor& _mon)
+            : RequestPort(_name, &_mon), mon(_mon)
         { }
 
       protected:
@@ -171,9 +158,14 @@ class CommMonitor : public MemObject
             return mon.isSnooping();
         }
 
-        void recvRetry()
+        void recvReqRetry()
         {
-            mon.recvRetryMaster();
+            mon.recvReqRetry();
+        }
+
+        void recvRetrySnoopResp()
+        {
+            mon.recvRetrySnoopResp();
         }
 
       private:
@@ -182,22 +174,22 @@ class CommMonitor : public MemObject
 
     };
 
-    /** Instance of master port, facing the memory side */
-    MonitorMasterPort masterPort;
+    /** Instance of request port, facing the memory side */
+    MonitorRequestPort memSidePort;
 
     /**
-     * This is the slave port of the communication monitor. All recv
+     * This is the CPU-side port of the communication monitor. All recv
      * functions call a function in CommMonitor, where the
-     * send function of the master port is called. Besides this, these
+     * send function of the request port is called. Besides this, these
      * functions can also perform actions for capturing statistics.
      */
-    class MonitorSlavePort : public SlavePort
+    class MonitorResponsePort : public ResponsePort
     {
 
       public:
 
-        MonitorSlavePort(const std::string& _name, CommMonitor& _mon)
-            : SlavePort(_name, &_mon), mon(_mon)
+        MonitorResponsePort(const std::string& _name, CommMonitor& _mon)
+            : ResponsePort(_name, &_mon), mon(_mon)
         { }
 
       protected:
@@ -227,9 +219,14 @@ class CommMonitor : public MemObject
             return mon.getAddrRanges();
         }
 
-        void recvRetry()
+        void recvRespRetry()
         {
-            mon.recvRetrySlave();
+            mon.recvRespRetry();
+        }
+
+        bool tryTiming(PacketPtr pkt)
+        {
+            return mon.tryTiming(pkt);
         }
 
       private:
@@ -238,8 +235,8 @@ class CommMonitor : public MemObject
 
     };
 
-    /** Instance of slave port, i.e. on the CPU side */
-    MonitorSlavePort slavePort;
+    /** Instance of response port, i.e. on the CPU side */
+    MonitorResponsePort cpuSidePort;
 
     void recvFunctional(PacketPtr pkt);
 
@@ -257,23 +254,24 @@ class CommMonitor : public MemObject
 
     bool recvTimingSnoopResp(PacketPtr pkt);
 
+    void recvRetrySnoopResp();
+
     AddrRangeList getAddrRanges() const;
 
     bool isSnooping() const;
 
-    void recvRetryMaster();
+    void recvReqRetry();
 
-    void recvRetrySlave();
+    void recvRespRetry();
 
     void recvRangeChange();
 
-    void periodicTraceDump();
+    bool tryTiming(PacketPtr pkt);
 
     /** Stats declarations, all in a struct for convenience. */
-    struct MonitorStats
+    struct MonitorStats : public Stats::Group
     {
-
-        /** Disable flag for burst length historgrams **/
+        /** Disable flag for burst length histograms **/
         bool disableBurstLengthHists;
 
         /** Histogram of read burst lengths */
@@ -291,8 +289,8 @@ class CommMonitor : public MemObject
          */
         unsigned int readBytes;
         Stats::Histogram readBandwidthHist;
-        Stats::Formula averageReadBW;
         Stats::Scalar totalReadBytes;
+        Stats::Formula averageReadBandwidth;
 
         /**
          * Histogram for write bandwidth per sample window. The
@@ -300,8 +298,8 @@ class CommMonitor : public MemObject
          */
         unsigned int writtenBytes;
         Stats::Histogram writeBandwidthHist;
-        Stats::Formula averageWriteBW;
         Stats::Scalar totalWrittenBytes;
+        Stats::Formula averageWriteBandwidth;
 
         /** Disable flag for latency histograms. */
         bool disableLatencyHists;
@@ -361,6 +359,12 @@ class CommMonitor : public MemObject
         /** Disable flag for address distributions. */
         bool disableAddrDists;
 
+        /** Address mask for sources of read accesses to be captured */
+        const Addr readAddrMask;
+
+        /** Address mask for sources of write accesses to be captured */
+        const Addr writeAddrMask;
+
         /**
          * Histogram of number of read accesses to addresses over
          * time.
@@ -378,46 +382,48 @@ class CommMonitor : public MemObject
          * that are not statistics themselves, but used to control the
          * stats or track values during a sample period.
          */
-        MonitorStats(const CommMonitorParams* params) :
-            disableBurstLengthHists(params->disable_burst_length_hists),
-            disableBandwidthHists(params->disable_bandwidth_hists),
-            readBytes(0), writtenBytes(0),
-            disableLatencyHists(params->disable_latency_hists),
-            disableITTDists(params->disable_itt_dists),
-            timeOfLastRead(0), timeOfLastWrite(0), timeOfLastReq(0),
-            disableOutstandingHists(params->disable_outstanding_hists),
-            outstandingReadReqs(0), outstandingWriteReqs(0),
-            disableTransactionHists(params->disable_transaction_hists),
-            readTrans(0), writeTrans(0),
-            disableAddrDists(params->disable_addr_dists)
-        { }
+        MonitorStats(Stats::Group *parent, const CommMonitorParams* params);
 
+        void updateReqStats(const ProbePoints::PacketInfo& pkt, bool is_atomic,
+                            bool expects_response);
+        void updateRespStats(const ProbePoints::PacketInfo& pkt, Tick latency,
+                             bool is_atomic);
     };
 
     /** This function is called periodically at the end of each time bin */
     void samplePeriodic();
 
-    /** Schedule the first periodic event */
-    void startup();
-
     /** Periodic event called at the end of each simulation time bin */
-    EventWrapper<CommMonitor, &CommMonitor::samplePeriodic> samplePeriodicEvent;
+    EventFunctionWrapper samplePeriodicEvent;
+
+    /**
+     *@{
+     * @name Configuration
+     */
 
     /** Length of simulation time bin*/
-    Tick samplePeriodTicks;
-    Time samplePeriod;
+    const Tick samplePeriodTicks;
+    /** Sample period in seconds */
+    const double samplePeriod;
 
-    /** Address mask for sources of read accesses to be captured */
-    Addr readAddrMask;
-
-    /** Address mask for sources of write accesses to be captured */
-    Addr writeAddrMask;
+    /** @} */
 
     /** Instantiate stats */
     MonitorStats stats;
 
-    /** Output stream for a potential trace. */
-    ProtoOutputStream* traceStream;
+  protected: // Probe points
+    /**
+     * @{
+     * @name Memory system probe points
+     */
+
+    /** Successfully forwarded request packet */
+    ProbePoints::PacketUPtr ppPktReq;
+
+    /** Successfully forwarded response packet */
+    ProbePoints::PacketUPtr ppPktResp;
+
+    /** @} */
 };
 
 #endif //__MEM_COMM_MONITOR_HH__

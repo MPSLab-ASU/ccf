@@ -24,18 +24,17 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Ali Saidi
  */
 
 #include "arch/sparc/pagetable.hh"
+
 #include "sim/serialize.hh"
 
 namespace SparcISA
 {
 
 void
-TlbEntry::serialize(std::ostream &os)
+TlbEntry::serialize(CheckpointOut &cp) const
 {
     SERIALIZE_SCALAR(range.va);
     SERIALIZE_SCALAR(range.size);
@@ -52,7 +51,7 @@ TlbEntry::serialize(std::ostream &os)
 
 
 void
-TlbEntry::unserialize(Checkpoint *cp, const std::string &section)
+TlbEntry::unserialize(CheckpointIn &cp)
 {
     UNSERIALIZE_SCALAR(range.va);
     UNSERIALIZE_SCALAR(range.size);

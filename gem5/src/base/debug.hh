@@ -1,4 +1,16 @@
 /*
+ * Copyright (c) 2020 ARM Limited
+ * All rights reserved
+ *
+ * The license below extends only to copyright in the software and shall
+ * not be construed as granting a license to any other intellectual
+ * property including but not limited to intellectual property relating
+ * to a hardware implementation of the functionality of the software
+ * licensed hereunder.  You may use the software subject to the license
+ * terms below provided that you ensure that this notice is replicated
+ * unmodified and in its entirety in all distributions of the software,
+ * modified or unmodified, in source code or in binary form.
+ *
  * Copyright (c) 2003-2005 The Regents of The University of Michigan
  * Copyright (c) 2010 The Hewlett-Packard Development Company
  * All rights reserved.
@@ -25,13 +37,12 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Nathan Binkert
  */
 
 #ifndef __BASE_DEBUG_HH__
 #define __BASE_DEBUG_HH__
 
+#include <initializer_list>
 #include <map>
 #include <string>
 #include <vector>
@@ -43,9 +54,12 @@ void breakpoint();
 class Flag
 {
   protected:
+    static bool _globalEnable; // whether debug tracings are enabled
+
     const char *_name;
     const char *_desc;
-    std::vector<Flag *> _kids;
+
+    virtual void sync() { }
 
   public:
     Flag(const char *name, const char *desc);
@@ -53,62 +67,56 @@ class Flag
 
     std::string name() const { return _name; }
     std::string desc() const { return _desc; }
-    std::vector<Flag *> kids() { return _kids; }
 
     virtual void enable() = 0;
     virtual void disable() = 0;
+    virtual bool status() const = 0;
+
+    operator bool() const { return status(); }
+    bool operator!() const { return !status(); }
+
+    static void globalEnable();
+    static void globalDisable();
 };
 
 class SimpleFlag : public Flag
 {
   protected:
-    bool _status;
+    bool _tracing; // tracing is enabled and flag is on
+    bool _status;  // flag status
+
+    void sync() override { _tracing = _globalEnable && _status; }
 
   public:
     SimpleFlag(const char *name, const char *desc)
-        : Flag(name, desc)
+        : Flag(name, desc), _status(false)
     { }
 
-    bool status() const { return _status; }
-    operator bool() const { return _status; }
-    bool operator!() const { return !_status; }
+    bool status() const override { return _tracing; }
 
-    void enable() { _status = true; }
-    void disable() { _status = false; }
+    void enable() override  { _status = true;  sync(); }
+    void disable() override { _status = false; sync(); }
 };
 
-class CompoundFlag : public SimpleFlag
+class CompoundFlag : public Flag
 {
   protected:
-    void
-    addFlag(Flag &f)
-    {
-        if (&f != NULL)
-            _kids.push_back(&f);
-    }
+    std::vector<Flag *> _kids;
 
   public:
+    template<typename... Args>
     CompoundFlag(const char *name, const char *desc,
-        Flag &f00 = *(Flag *)0, Flag &f01 = *(Flag *)0,
-        Flag &f02 = *(Flag *)0, Flag &f03 = *(Flag *)0,
-        Flag &f04 = *(Flag *)0, Flag &f05 = *(Flag *)0,
-        Flag &f06 = *(Flag *)0, Flag &f07 = *(Flag *)0,
-        Flag &f08 = *(Flag *)0, Flag &f09 = *(Flag *)0,
-        Flag &f10 = *(Flag *)0, Flag &f11 = *(Flag *)0,
-        Flag &f12 = *(Flag *)0, Flag &f13 = *(Flag *)0,
-        Flag &f14 = *(Flag *)0, Flag &f15 = *(Flag *)0,
-        Flag &f16 = *(Flag *)0, Flag &f17 = *(Flag *)0,
-        Flag &f18 = *(Flag *)0, Flag &f19 = *(Flag *)0)
-        : SimpleFlag(name, desc)
+                 std::initializer_list<Flag *> flags)
+        : Flag(name, desc),
+          _kids(flags)
     {
-        addFlag(f00); addFlag(f01); addFlag(f02); addFlag(f03); addFlag(f04);
-        addFlag(f05); addFlag(f06); addFlag(f07); addFlag(f08); addFlag(f09);
-        addFlag(f10); addFlag(f11); addFlag(f12); addFlag(f13); addFlag(f14);
-        addFlag(f15); addFlag(f16); addFlag(f17); addFlag(f18); addFlag(f19);
     }
 
-    void enable();
-    void disable();
+    const std::vector<Flag *> &kids() const { return _kids; }
+
+    void enable() override;
+    void disable() override;
+    bool status() const override;
 };
 
 typedef std::map<std::string, Flag *> FlagsMap;
@@ -125,5 +133,18 @@ void setDebugFlag(const char *string);
 void clearDebugFlag(const char *string);
 
 void dumpDebugFlags();
+
+/**
+ * \def DTRACE(x)
+ *
+ * @ingroup api_trace
+ * @{
+ */
+#if TRACING_ON
+#   define DTRACE(x) (Debug::x)
+#else // !TRACING_ON
+#   define DTRACE(x) (false)
+#endif  // TRACING_ON
+/** @} */ // end of api_trace
 
 #endif // __BASE_DEBUG_HH__

@@ -24,8 +24,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Steve Reinhardt
  */
 
 #ifndef __BASE__CHUNK_GENERATOR_HH__
@@ -77,13 +75,14 @@ class ChunkGenerator
      * @param totalSize The total size of the region.
      * @param _chunkSize The size/alignment of chunks into which
      *    the region should be decomposed.
+     *
+     * @ingroup api_chunk_generator
      */
     ChunkGenerator(Addr _startAddr, unsigned totalSize, unsigned _chunkSize)
         : startAddr(_startAddr), chunkSize(_chunkSize)
     {
         // chunkSize must be a power of two
         assert(chunkSize == 0 || isPowerOf2(chunkSize));
-        assert(totalSize >= 0);
 
         // set up initial chunk.
         curAddr = startAddr;
@@ -108,25 +107,49 @@ class ChunkGenerator
         sizeLeft = totalSize - curSize;
     }
 
-    /** Return starting address of current chunk. */
+    /**
+     * Return starting address of current chunk.
+     *
+     * @ingroup api_chunk_generator
+     */
     Addr addr() const { return curAddr; }
-    /** Return size in bytes of current chunk. */
+    /**
+     * Return size in bytes of current chunk.
+     *
+     * @ingroup api_chunk_generator
+     */
     unsigned size() const { return curSize; }
 
-    /** Number of bytes we have already chunked up. */
+    /**
+     * Number of bytes we have already chunked up.
+     *
+     * @ingroup api_chunk_generator
+     */
     unsigned complete() const { return curAddr - startAddr; }
 
     /**
      * Are we done?  That is, did the last call to next() advance
      * past the end of the region?
      * @return True if yes, false if more to go.
+     *
+     * @ingroup api_chunk_generator
      */
     bool done() const { return (curSize == 0); }
+
+    /**
+     * Is this the last chunk?
+     * @return True if yes, false if more to go.
+     *
+     * @ingroup api_chunk_generator
+     */
+    bool last() const { return (sizeLeft == 0); }
 
     /**
      * Advance generator to next chunk.
      * @return True if successful, false if unsuccessful
      * (because we were at the last chunk).
+     *
+     * @ingroup api_chunk_generator
      */
     bool
     next()

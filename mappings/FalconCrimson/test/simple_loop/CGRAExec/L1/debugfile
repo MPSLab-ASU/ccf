@@ -1,0 +1,25 @@
+Mapping has started
+Operating mode:3
+inserting loads for largeConstants:	26	12	1
+latency cannot be less than 1
+Starting II: 2	rec_MII: 2
+latency cannot be less than 1
+latency cannot be less than 1
+16
+16
+Feasible II is 2	Schedule Len is 12
+
+II after scheduling is: 2
+latency cannot be less than 1
+Left Nodes Are: 0	
+Left Nodes Are: 8	
+K : 3
+ adding nodes between: 8-->9
+Left Nodes Are: 9	
+Left Nodes Are: 11	
+K : 0
+ adding nodes between: 11-->0
+Start Placement for II = 2
+Past CGRA reset and init
+MII = 2	 Current II=2
+Mapping is completed

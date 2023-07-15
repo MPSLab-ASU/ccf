@@ -26,9 +26,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Nathan Binkert
- *          Steve Reinhardt
  */
 
 #ifndef __SIM_CORE_HH__
@@ -38,6 +35,7 @@
  * information, output directory and exit events
  */
 
+#include <functional>
 #include <string>
 
 #include "base/types.hh"
@@ -45,8 +43,6 @@
 
 /// The universal simulation clock.
 inline Tick curTick() { return _curEventQueue->getCurTick(); }
-
-const Tick retryTime = 1000;
 
 /// These are variables that are set based on the simulator frequency
 ///@{
@@ -72,7 +68,7 @@ extern double ps; ///< picosecond
 extern double Hz;  ///< Hz
 extern double kHz; ///< kHz
 extern double MHz; ///< MHz
-extern double GHZ; ///< GHz
+extern double GHz; ///< GHz
 /** @}*/
 } // namespace Float
 
@@ -91,12 +87,16 @@ extern Tick ps; ///< picosecond
 } // namespace Int
 } // namespace SimClock
 /** @} */
+
+void fixClockFrequency();
+bool clockFrequencyFixed();
+
 void setClockFrequency(Tick ticksPerSecond);
+Tick getClockFrequency(); // Ticks per second.
 
 void setOutputDir(const std::string &dir);
 
-class Callback;
-void registerExitCallback(Callback *callback);
+void registerExitCallback(const std::function<void()> &callback);
 void doExitCleanup();
 
 #endif /* __SIM_CORE_HH__ */

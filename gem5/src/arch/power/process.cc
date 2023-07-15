@@ -25,56 +25,65 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Stephen Hines
- *          Timothy M. Jones
  */
 
-#include "arch/power/isa_traits.hh"
 #include "arch/power/process.hh"
+
+#include "arch/power/isa_traits.hh"
 #include "arch/power/types.hh"
 #include "base/loader/elf_object.hh"
 #include "base/loader/object_file.hh"
-#include "base/misc.hh"
+#include "base/logging.hh"
 #include "cpu/thread_context.hh"
 #include "debug/Stack.hh"
 #include "mem/page_table.hh"
+#include "params/Process.hh"
+#include "sim/aux_vector.hh"
 #include "sim/process_impl.hh"
+#include "sim/syscall_return.hh"
 #include "sim/system.hh"
 
 using namespace std;
 using namespace PowerISA;
 
-PowerLiveProcess::PowerLiveProcess(LiveProcessParams *params,
-        ObjectFile *objFile)
-    : LiveProcess(params, objFile)
+PowerProcess::PowerProcess(
+        ProcessParams *params, ::Loader::ObjectFile *objFile)
+    : Process(params,
+              new EmulationPageTable(params->name, params->pid, PageBytes),
+              objFile)
 {
-    stack_base = 0xbf000000L;
+    fatal_if(params->useArchPT, "Arch page tables not implemented.");
+    // Set up break point (Top of Heap)
+    Addr brk_point = image.maxAddr();
+    brk_point = roundUp(brk_point, PageBytes);
+
+    Addr stack_base = 0xbf000000L;
+
+    Addr max_stack_size = 8 * 1024 * 1024;
 
     // Set pointer for next thread stack.  Reserve 8M for main stack.
-    next_thread_stack_base = stack_base - (8 * 1024 * 1024);
-
-    // Set up break point (Top of Heap)
-    brk_point = objFile->dataBase() + objFile->dataSize() + objFile->bssSize();
-    brk_point = roundUp(brk_point, VMPageSize);
+    Addr next_thread_stack_base = stack_base - max_stack_size;
 
     // Set up region for mmaps. For now, start at bottom of kuseg space.
-    mmap_start = mmap_end = 0x70000000L;
+    Addr mmap_end = 0x70000000L;
+
+    memState = make_shared<MemState>(this, brk_point, stack_base,
+                                     max_stack_size, next_thread_stack_base,
+                                     mmap_end);
 }
 
 void
-PowerLiveProcess::initState()
+PowerProcess::initState()
 {
     Process::initState();
 
-    argsInit(MachineBytes, VMPageSize);
+    argsInit(sizeof(uint32_t), PageBytes);
 }
 
 void
-PowerLiveProcess::argsInit(int intSize, int pageSize)
+PowerProcess::argsInit(int intSize, int pageSize)
 {
-    typedef AuxVector<uint32_t> auxv_t;
-    std::vector<auxv_t> auxv;
+    std::vector<AuxVector<uint32_t>> auxv;
 
     string filename;
     if (argv.size() < 1)
@@ -86,48 +95,50 @@ PowerLiveProcess::argsInit(int intSize, int pageSize)
     uint64_t align = 16;
 
     // load object file into target memory
-    objFile->loadSections(initVirtMem);
+    image.write(*initVirtMem);
+    interpImage.write(*initVirtMem);
 
     //Setup the auxilliary vectors. These will already have endian conversion.
     //Auxilliary vectors are loaded only for elf formatted executables.
-    ElfObject * elfObject = dynamic_cast<ElfObject *>(objFile);
+    auto *elfObject = dynamic_cast<::Loader::ElfObject *>(objFile);
     if (elfObject) {
         uint32_t features = 0;
 
         //Bits which describe the system hardware capabilities
         //XXX Figure out what these should be
-        auxv.push_back(auxv_t(M5_AT_HWCAP, features));
+        auxv.emplace_back(M5_AT_HWCAP, features);
         //The system page size
-        auxv.push_back(auxv_t(M5_AT_PAGESZ, PowerISA::VMPageSize));
+        auxv.emplace_back(M5_AT_PAGESZ, PowerISA::PageBytes);
         //Frequency at which times() increments
-        auxv.push_back(auxv_t(M5_AT_CLKTCK, 0x64));
-        // For statically linked executables, this is the virtual address of the
-        // program header tables if they appear in the executable image
-        auxv.push_back(auxv_t(M5_AT_PHDR, elfObject->programHeaderTable()));
+        auxv.emplace_back(M5_AT_CLKTCK, 0x64);
+        // For statically linked executables, this is the virtual address of
+        // the program header tables if they appear in the executable image
+        auxv.emplace_back(M5_AT_PHDR, elfObject->programHeaderTable());
         // This is the size of a program header entry from the elf file.
-        auxv.push_back(auxv_t(M5_AT_PHENT, elfObject->programHeaderSize()));
+        auxv.emplace_back(M5_AT_PHENT, elfObject->programHeaderSize());
         // This is the number of program headers from the original elf file.
-        auxv.push_back(auxv_t(M5_AT_PHNUM, elfObject->programHeaderCount()));
-        //This is the address of the elf "interpreter", It should be set
-        //to 0 for regular executables. It should be something else
-        //(not sure what) for dynamic libraries.
-        auxv.push_back(auxv_t(M5_AT_BASE, 0));
-
+        auxv.emplace_back(M5_AT_PHNUM, elfObject->programHeaderCount());
+        // This is the base address of the ELF interpreter; it should be
+        // zero for static executables or contain the base address for
+        // dynamic executables.
+        auxv.emplace_back(M5_AT_BASE, getBias());
         //XXX Figure out what this should be.
-        auxv.push_back(auxv_t(M5_AT_FLAGS, 0));
+        auxv.emplace_back(M5_AT_FLAGS, 0);
         //The entry point to the program
-        auxv.push_back(auxv_t(M5_AT_ENTRY, objFile->entryPoint()));
+        auxv.emplace_back(M5_AT_ENTRY, objFile->entryPoint());
         //Different user and group IDs
-        auxv.push_back(auxv_t(M5_AT_UID, uid()));
-        auxv.push_back(auxv_t(M5_AT_EUID, euid()));
-        auxv.push_back(auxv_t(M5_AT_GID, gid()));
-        auxv.push_back(auxv_t(M5_AT_EGID, egid()));
+        auxv.emplace_back(M5_AT_UID, uid());
+        auxv.emplace_back(M5_AT_EUID, euid());
+        auxv.emplace_back(M5_AT_GID, gid());
+        auxv.emplace_back(M5_AT_EGID, egid());
         //Whether to enable "secure mode" in the executable
-        auxv.push_back(auxv_t(M5_AT_SECURE, 0));
+        auxv.emplace_back(M5_AT_SECURE, 0);
+        //The address of 16 "random" bytes
+        auxv.emplace_back(M5_AT_RANDOM, 0);
         //The filename of the program
-        auxv.push_back(auxv_t(M5_AT_EXECFN, 0));
+        auxv.emplace_back(M5_AT_EXECFN, 0);
         //The string "v51" with unknown meaning
-        auxv.push_back(auxv_t(M5_AT_PLATFORM, 0));
+        auxv.emplace_back(M5_AT_PLATFORM, 0);
     }
 
     //Figure out how big the initial stack nedes to be
@@ -143,6 +154,9 @@ PowerLiveProcess::argsInit(int intSize, int pageSize)
     // are the ones that were computed ahead of time and include the platform
     // string.
     int aux_data_size = filename.size() + 1;
+
+    const int numRandomBytes = 16;
+    aux_data_size += numRandomBytes;
 
     int env_data_size = 0;
     for (int i = 0; i < envp.size(); ++i) {
@@ -181,15 +195,17 @@ PowerLiveProcess::argsInit(int intSize, int pageSize)
 
     int space_needed = frame_size + aux_padding;
 
-    stack_min = stack_base - space_needed;
+    Addr stack_min = memState->getStackBase() - space_needed;
     stack_min = roundDown(stack_min, align);
-    stack_size = stack_base - stack_min;
+
+    memState->setStackSize(memState->getStackBase() - stack_min);
 
     // map memory
-    allocateMem(roundDown(stack_min, pageSize), roundUp(stack_size, pageSize));
+    memState->mapRegion(roundDown(stack_min, pageSize),
+                        roundUp(memState->getStackSize(), pageSize), "stack");
 
     // map out initial stack contents
-    uint32_t sentry_base = stack_base - sentry_size;
+    uint32_t sentry_base = memState->getStackBase() - sentry_size;
     uint32_t aux_data_base = sentry_base - aux_data_size;
     uint32_t env_data_base = aux_data_base - env_data_size;
     uint32_t arg_data_base = env_data_base - arg_data_size;
@@ -214,78 +230,54 @@ PowerLiveProcess::argsInit(int intSize, int pageSize)
 
     // figure out argc
     uint32_t argc = argv.size();
-    uint32_t guestArgc = PowerISA::htog(argc);
+    uint32_t guestArgc = htobe(argc);
 
     //Write out the sentry void *
     uint32_t sentry_NULL = 0;
-    initVirtMem.writeBlob(sentry_base,
-            (uint8_t*)&sentry_NULL, sentry_size);
+    initVirtMem->writeBlob(sentry_base, &sentry_NULL, sentry_size);
 
     //Fix up the aux vectors which point to other data
     for (int i = auxv.size() - 1; i >= 0; i--) {
-        if (auxv[i].a_type == M5_AT_PLATFORM) {
-            auxv[i].a_val = platform_base;
-            initVirtMem.writeString(platform_base, platform.c_str());
-        } else if (auxv[i].a_type == M5_AT_EXECFN) {
-            auxv[i].a_val = aux_data_base;
-            initVirtMem.writeString(aux_data_base, filename.c_str());
+        if (auxv[i].type == M5_AT_PLATFORM) {
+            auxv[i].val = platform_base;
+            initVirtMem->writeString(platform_base, platform.c_str());
+        } else if (auxv[i].type == M5_AT_EXECFN) {
+            auxv[i].val = aux_data_base + numRandomBytes;
+            initVirtMem->writeString(aux_data_base, filename.c_str());
+        } else if (auxv[i].type == M5_AT_RANDOM) {
+            auxv[i].val = aux_data_base;
         }
     }
 
     //Copy the aux stuff
-    for (int x = 0; x < auxv.size(); x++)
-    {
-        initVirtMem.writeBlob(auxv_array_base + x * 2 * intSize,
-                (uint8_t*)&(auxv[x].a_type), intSize);
-        initVirtMem.writeBlob(auxv_array_base + (x * 2 + 1) * intSize,
-                (uint8_t*)&(auxv[x].a_val), intSize);
+    Addr auxv_array_end = auxv_array_base;
+    for (const auto &aux: auxv) {
+        initVirtMem->write(auxv_array_end, aux, GuestByteOrder);
+        auxv_array_end += sizeof(aux);
     }
     //Write out the terminating zeroed auxilliary vector
-    const uint64_t zero = 0;
-    initVirtMem.writeBlob(auxv_array_base + 2 * intSize * auxv.size(),
-            (uint8_t*)&zero, 2 * intSize);
+    const AuxVector<uint64_t> zero(0, 0);
+    initVirtMem->write(auxv_array_end, zero);
+    auxv_array_end += sizeof(zero);
 
-    copyStringArray(envp, envp_array_base, env_data_base, initVirtMem);
-    copyStringArray(argv, argv_array_base, arg_data_base, initVirtMem);
+    copyStringArray(envp, envp_array_base, env_data_base,
+                    ByteOrder::big, *initVirtMem);
+    copyStringArray(argv, argv_array_base, arg_data_base,
+                    ByteOrder::big, *initVirtMem);
 
-    initVirtMem.writeBlob(argc_base, (uint8_t*)&guestArgc, intSize);
+    initVirtMem->writeBlob(argc_base, &guestArgc, intSize);
 
-    ThreadContext *tc = system->getThreadContext(contextIds[0]);
+    ThreadContext *tc = system->threads[contextIds[0]];
 
     //Set the stack pointer register
     tc->setIntReg(StackPointerReg, stack_min);
 
-    tc->pcState(objFile->entryPoint());
+    tc->pcState(getStartPC());
 
     //Align the "stack_min" to a page boundary.
-    stack_min = roundDown(stack_min, pageSize);
+    memState->setStackMin(roundDown(stack_min, pageSize));
 }
 
-PowerISA::IntReg
-PowerLiveProcess::getSyscallArg(ThreadContext *tc, int &i)
-{
-    assert(i < 5);
-    return tc->readIntReg(ArgumentReg0 + i++);
-}
-
-void
-PowerLiveProcess::setSyscallArg(ThreadContext *tc,
-        int i, PowerISA::IntReg val)
-{
-    assert(i < 5);
-    tc->setIntReg(ArgumentReg0 + i, val);
-}
-
-void
-PowerLiveProcess::setSyscallReturn(ThreadContext *tc,
-        SyscallReturn return_value)
-{
-    Cr cr = tc->readIntReg(INTREG_CR);
-    if (return_value.successful()) {
-        cr.cr0.so = 0;
-    } else {
-        cr.cr0.so = 1;
-    }
-    tc->setIntReg(INTREG_CR, cr);
-    tc->setIntReg(ReturnValueReg, return_value.value());
-}
+const std::vector<int> PowerProcess::SyscallABI::ArgumentRegs = {
+    3, 4, 5, 6, 7, 8
+};

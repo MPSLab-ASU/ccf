@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 ARM Limited
+ * Copyright (c) 2010-2011, 2014, 2016-2017 ARM Limited
  * All rights reserved
  *
  * The license below extends only to copyright in the software and shall
@@ -36,17 +36,18 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Gabe Black
  */
+
+#include "arch/arm/nativetrace.hh"
 
 #include "arch/arm/isa_traits.hh"
 #include "arch/arm/miscregs.hh"
-#include "arch/arm/nativetrace.hh"
 #include "cpu/thread_context.hh"
 #include "debug/ExecRegDelta.hh"
 #include "params/ArmNativeTrace.hh"
 #include "sim/byteswap.hh"
+
+using namespace ArmISA;
 
 namespace Trace {
 
@@ -73,7 +74,7 @@ Trace::ArmNativeTrace::ThreadState::update(NativeTrace *parent)
 
     uint64_t diffVector;
     parent->read(&diffVector, sizeof(diffVector));
-    diffVector = ArmISA::gtoh(diffVector);
+    diffVector = letoh(diffVector);
 
     int changes = 0;
     for (int i = 0; i < STATE_NUMVALS; i++) {
@@ -91,7 +92,7 @@ Trace::ArmNativeTrace::ThreadState::update(NativeTrace *parent)
     int pos = 0;
     for (int i = 0; i < STATE_NUMVALS; i++) {
         if (changed[i]) {
-            newState[i] = ArmISA::gtoh(values[pos++]);
+            newState[i] = letoh(values[pos++]);
             changed[i] = (newState[i] != oldState[i]);
         }
     }
@@ -116,21 +117,22 @@ Trace::ArmNativeTrace::ThreadState::update(ThreadContext *tc)
 
     //CPSR
     CPSR cpsr = tc->readMiscReg(MISCREG_CPSR);
-    cpsr.nz = tc->readIntReg(INTREG_CONDCODES_NZ);
-    cpsr.c = tc->readIntReg(INTREG_CONDCODES_C);
-    cpsr.v = tc->readIntReg(INTREG_CONDCODES_V);
-    cpsr.ge = tc->readIntReg(INTREG_CONDCODES_GE);
+    cpsr.nz = tc->readCCReg(CCREG_NZ);
+    cpsr.c = tc->readCCReg(CCREG_C);
+    cpsr.v = tc->readCCReg(CCREG_V);
+    cpsr.ge = tc->readCCReg(CCREG_GE);
 
     newState[STATE_CPSR] = cpsr;
     changed[STATE_CPSR] = (newState[STATE_CPSR] != oldState[STATE_CPSR]);
 
-    for (int i = 0; i < NumFloatArchRegs; i += 2) {
-        newState[STATE_F0 + (i >> 1)] =
-            static_cast<uint64_t>(tc->readFloatRegBits(i + 1)) << 32 |
-            tc->readFloatRegBits(i);
+    for (int i = 0; i < NumVecV7ArchRegs; i++) {
+        auto vec(tc->readVecReg(RegId(VecRegClass,i))
+            .as<uint64_t, MaxSveVecLenInDWords>());
+        newState[STATE_F0 + 2*i] = vec[0];
+        newState[STATE_F0 + 2*i + 1] = vec[1];
     }
     newState[STATE_FPSCR] = tc->readMiscRegNoEffect(MISCREG_FPSCR) |
-                            tc->readIntReg(INTREG_FPCONDCODES);
+                            tc->readCCReg(CCREG_FP);
 }
 
 void

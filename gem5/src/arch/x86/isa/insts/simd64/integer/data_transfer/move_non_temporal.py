@@ -32,11 +32,18 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Gabe Black
 
 microcode = '''
-# MOVNTQ
+def macroop MOVNTQ_M_MMX {
+    warn_once "MOVNTQ: Ignoring non-temporal hint, modeling as cacheable!"
+    stfp mmx, seg, sib, "DISPLACEMENT", dataSize=8
+};
+
+def macroop MOVNTQ_P_MMX {
+    warn_once "MOVNTQ_P: Ignoring non-temporal hint, modeling as cacheable!"
+    rdip t7
+    stfp mmx, seg, riprel, "DISPLACEMENT", dataSize=8
+};
 
 def macroop MASKMOVQ_MMX_MMX {
     ldfp ufp1, ds, [1, t0, rdi], dataSize=8

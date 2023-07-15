@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2012-2013 ARM Limited
+# Copyright (c) 2012-2013,2015-2016, 2020 ARM Limited
 # All rights reserved
 #
 # The license below extends only to copyright in the software and shall
@@ -34,9 +34,6 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Ali Saidi
-#
 
 # This python code is used to migrate checkpoints that were created in one
 # version of the simulator to newer version. As features are added or bugs are
@@ -45,200 +42,37 @@
 # both time consuming and error-prone.
 
 # This script provides a way to migrate checkpoints to the newer repository in
-# a programatic way. It can be imported into another script or used on the
+# a programmatic way. It can be imported into another script or used on the
 # command line. From the command line the script will either migrate every
 # checkpoint it finds recursively (-r option) or a single checkpoint. When a
-# change is made to the gem5 repository that breaks previous checkpoints a
-# from_N() method should be implemented here and the gem5CheckpointVersion
-# variable in src/sim/serialize.hh should be incremented. For each version
-# between the checkpoints current version and the new version the from_N()
-# method will be run, passing in a ConfigParser object which contains the open
-# file. As these operations can be isa specific the method can verify the isa
-# and use regexes to find the correct sections that need to be updated.
+# change is made to the gem5 repository that breaks previous checkpoints an
+# upgrade() method should be implemented in its own .py file and placed in
+# src/util/cpt_upgraders/.  For each upgrader whose tag is not present in
+# the checkpoint tag list, the upgrade() method will be run, passing in a
+# ConfigParser object which contains the open file. As these operations can
+# be isa specific the method can verify the isa and use regexes to find the
+# correct sections that need to be updated.
 
+# It is also possible to use this mechanism to revert prior tags.  In this
+# case, implement a downgrade() method instead.  Dependencies should still
+# work naturally - a tag depending on a tag with a downgrader means that it
+# insists on the other tag being removed and its downgrader executed before
+# its upgrader (or downgrader) can run.  It is still the case that a tag
+# can only be used once.
 
-import ConfigParser
-import sys, os
+# Dependencies between tags are expressed by two variables at the top-level
+# of the upgrader script: "depends" can be either a string naming another
+# tag that it depends upon or a list of such strings; and "fwd_depends"
+# accepts the same datatypes but it reverses the sense of the dependency
+# arrow(s) -- it expresses that that tag depends upon the tag of the current
+# upgrader. This can be especially valuable when maintaining private
+# upgraders in private branches.
+
+from __future__ import print_function
+
+from six.moves import configparser
+import glob, types, sys, os
 import os.path as osp
-
-# An example of a translator
-def from_0(cpt):
-    if cpt.get('root','isa') == 'arm':
-        for sec in cpt.sections():
-            import re
-            # Search for all the execution contexts
-            if re.search('.*sys.*\.cpu.*\.x.\..*', sec):
-                # Update each one
-                mr = cpt.get(sec, 'miscRegs').split()
-                #mr.insert(21,0)
-                #mr.insert(26,0)
-                cpt.set(sec, 'miscRegs', ' '.join(str(x) for x in mr))
-
-# The backing store supporting the memories in the system has changed
-# in that it is now stored globally per address range. As a result the
-# actual storage is separate from the memory controllers themselves.
-def from_1(cpt):
-    for sec in cpt.sections():
-        import re
-        # Search for a physical memory
-        if re.search('.*sys.*\.physmem$', sec):
-            # Add the number of stores attribute to the global physmem
-            cpt.set(sec, 'nbr_of_stores', '1')
-
-            # Get the filename and size as this is moving to the
-            # specific backing store
-            mem_filename = cpt.get(sec, 'filename')
-            mem_size = cpt.get(sec, '_size')
-            cpt.remove_option(sec, 'filename')
-            cpt.remove_option(sec, '_size')
-
-            # Get the name so that we can create the new section
-            system_name = str(sec).split('.')[0]
-            section_name = system_name + '.physmem.store0'
-            cpt.add_section(section_name)
-            cpt.set(section_name, 'store_id', '0')
-            cpt.set(section_name, 'range_size', mem_size)
-            cpt.set(section_name, 'filename', mem_filename)
-        elif re.search('.*sys.*\.\w*mem$', sec):
-            # Due to the lack of information about a start address,
-            # this migration only works if there is a single memory in
-            # the system, thus starting at 0
-            raise ValueError("more than one memory detected (" + sec + ")")
-
-def from_2(cpt):
-    for sec in cpt.sections():
-        import re
-        # Search for a CPUs
-        if re.search('.*sys.*cpu', sec):
-            try:
-                junk = cpt.get(sec, 'instCnt')
-                cpt.set(sec, '_pid', '0')
-            except ConfigParser.NoOptionError:
-                pass
-
-# The ISA is now a separate SimObject, which means that we serialize
-# it in a separate section instead of as a part of the ThreadContext.
-def from_3(cpt):
-    isa = cpt.get('root','isa')
-    isa_fields = {
-        "alpha" : ( "fpcr", "uniq", "lock_flag", "lock_addr", "ipr" ),
-        "arm" : ( "miscRegs" ),
-        "sparc" : ( "asi", "tick", "fprs", "gsr", "softint", "tick_cmpr",
-                    "stick", "stick_cmpr", "tpc", "tnpc", "tstate", "tt",
-                    "tba", "pstate", "tl", "pil", "cwp", "gl", "hpstate",
-                    "htstate", "hintp", "htba", "hstick_cmpr",
-                    "strandStatusReg", "fsr", "priContext", "secContext",
-                    "partId", "lsuCtrlReg", "scratchPad",
-                    "cpu_mondo_head", "cpu_mondo_tail",
-                    "dev_mondo_head", "dev_mondo_tail",
-                    "res_error_head", "res_error_tail",
-                    "nres_error_head", "nres_error_tail",
-                    "tick_intr_sched",
-                    "cpu", "tc_num", "tick_cmp", "stick_cmp", "hstick_cmp"),
-        "x86" : ( "regVal" ),
-        }
-
-    isa_fields = isa_fields.get(isa, [])
-    isa_sections = []
-    for sec in cpt.sections():
-        import re
-
-        re_cpu_match = re.match('^(.*sys.*\.cpu[^.]*)\.xc\.(.+)$', sec)
-        # Search for all the execution contexts
-        if not re_cpu_match:
-            continue
-
-        if re_cpu_match.group(2) != "0":
-            # This shouldn't happen as we didn't support checkpointing
-            # of in-order and O3 CPUs.
-            raise ValueError("Don't know how to migrate multi-threaded CPUs "
-                             "from version 1")
-
-        isa_section = []
-        for fspec in isa_fields:
-            for (key, value) in cpt.items(sec, raw=True):
-                if key in isa_fields:
-                    isa_section.append((key, value))
-
-        name = "%s.isa" % re_cpu_match.group(1)
-        isa_sections.append((name, isa_section))
-
-        for (key, value) in isa_section:
-            cpt.remove_option(sec, key)
-
-    for (sec, options) in isa_sections:
-        # Some intermediate versions of gem5 have empty ISA sections
-        # (after we made the ISA a SimObject, but before we started to
-        # serialize into a separate ISA section).
-        if not cpt.has_section(sec):
-            cpt.add_section(sec)
-        else:
-            if cpt.items(sec):
-                raise ValueError("Unexpected populated ISA section in old "
-                                 "checkpoint")
-
-        for (key, value) in options:
-            cpt.set(sec, key, value)
-
-# Version 5 of the checkpoint format removes the MISCREG_CPSR_MODE
-# register from the ARM register file.
-def from_4(cpt):
-    if cpt.get('root','isa') == 'arm':
-        for sec in cpt.sections():
-            import re
-            # Search for all ISA sections
-            if re.search('.*sys.*\.cpu.*\.isa', sec):
-                mr = cpt.get(sec, 'miscRegs').split()
-                # Remove MISCREG_CPSR_MODE
-                del mr[137]
-                cpt.set(sec, 'miscRegs', ' '.join(str(x) for x in mr))
-
-# Version 6 of the checkpoint format adds tlb to x86 checkpoints
-def from_5(cpt):
-    if cpt.get('root','isa') == 'x86':
-        for sec in cpt.sections():
-            import re
-            # Search for all ISA sections
-            if re.search('.*sys.*\.cpu.*\.dtb$', sec):
-                cpt.set(sec, '_size', '0')
-                cpt.set(sec, 'lruSeq', '0')
-
-            if re.search('.*sys.*\.cpu.*\.itb$', sec):
-                cpt.set(sec, '_size', '0')
-                cpt.set(sec, 'lruSeq', '0')
-    else:
-        print "ISA is not x86"
-
-# Version 7 of the checkpoint adds support for the IDE dmaAbort flag
-def from_6(cpt):
-    # Update IDE disk devices with dmaAborted
-    for sec in cpt.sections():
-        # curSector only exists in IDE devices, so key on that attribute
-        if cpt.has_option(sec, "curSector"):
-            cpt.set(sec, "dmaAborted", "false")
-
-# Version 8 of the checkpoint adds an ARM MISCREG
-def from_7(cpt):
-    if cpt.get('root','isa') == 'arm':
-        for sec in cpt.sections():
-            import re
-            # Search for all ISA sections
-            if re.search('.*sys.*\.cpu.*\.isa', sec):
-                mr = cpt.get(sec, 'miscRegs').split()
-                # Add dummy value for MISCREG_TEEHBR
-                mr.insert(51,0);
-                cpt.set(sec, 'miscRegs', ' '.join(str(x) for x in mr))
-
-
-migrations = []
-migrations.append(from_0)
-migrations.append(from_1)
-migrations.append(from_2)
-migrations.append(from_3)
-migrations.append(from_4)
-migrations.append(from_5)
-migrations.append(from_6)
-migrations.append(from_7)
 
 verbose_print = False
 
@@ -246,8 +80,108 @@ def verboseprint(*args):
     if not verbose_print:
         return
     for arg in args:
-        print arg,
-    print
+        print(arg, end=' ')
+    print("\n")
+
+class Upgrader:
+    tag_set = set()
+    untag_set = set() # tags to remove by downgrading
+    by_tag = {}
+    legacy = {}
+    def __init__(self, filename):
+        self.filename = filename
+        exec(open(filename).read(), {}, self.__dict__)
+
+        if not hasattr(self, 'tag'):
+            self.tag = osp.basename(filename)[:-3]
+        if not hasattr(self, 'depends'):
+            self.depends = []
+        elif isinstance(self.depends, str):
+            self.depends = [self.depends]
+
+        if not isinstance(self.depends, list):
+            print("Error: 'depends' for {} is the wrong type".format(self.tag))
+            sys.exit(1)
+
+        if hasattr(self, 'fwd_depends'):
+            if isinstance(self.fwd_depends, str):
+                self.fwd_depends = [self.fwd_depends]
+        else:
+            self.fwd_depends = []
+
+        if not isinstance(self.fwd_depends, list):
+            print("Error: 'fwd_depends' for {} is the wrong type".format(
+                self.tag))
+            sys.exit(1)
+
+        if hasattr(self, 'upgrader'):
+            if not isinstance(self.upgrader, types.FunctionType):
+                print("Error: 'upgrader' for {} is {}, not function".format(
+                    self.tag, type(self)))
+                sys.exit(1)
+            Upgrader.tag_set.add(self.tag)
+        elif hasattr(self, 'downgrader'):
+            if not isinstance(self.downgrader, types.FunctionType):
+                print("Error: 'downgrader' for {} is {}, not function".format(
+                    self.tag, type(self)))
+                sys.exit(1)
+            Upgrader.untag_set.add(self.tag)
+        else:
+            print("Error: no upgrader or downgrader method for".format(
+                self.tag))
+            sys.exit(1)
+
+        if hasattr(self, 'legacy_version'):
+            Upgrader.legacy[self.legacy_version] = self
+
+        Upgrader.by_tag[self.tag] = self
+
+    def ready(self, tags):
+        for dep in self.depends:
+            if dep not in tags:
+                return False
+        return True
+
+    def update(self, cpt, tags):
+        if hasattr(self, 'upgrader'):
+            self.upgrader(cpt)
+            tags.add(self.tag)
+            verboseprint("applied upgrade for", self.tag)
+        else:
+            self.downgrader(cpt)
+            tags.remove(self.tag)
+            verboseprint("applied downgrade for", self.tag)
+
+    @staticmethod
+    def get(tag):
+        return Upgrader.by_tag[tag]
+
+    @staticmethod
+    def load_all():
+        util_dir = osp.dirname(osp.abspath(__file__))
+
+        for py in glob.glob(util_dir + '/cpt_upgraders/*.py'):
+            Upgrader(py)
+
+        # make linear dependences for legacy versions
+        i = 3
+        while i in Upgrader.legacy:
+            Upgrader.legacy[i].depends = [Upgrader.legacy[i-1].tag]
+            i = i + 1
+
+        # resolve forward dependencies and audit normal dependencies
+        for tag, upg in Upgrader.by_tag.items():
+            for fd in upg.fwd_depends:
+                if fd not in Upgrader.by_tag:
+                    print("Error: '{}' cannot (forward) depend on "
+                          "nonexistent tag '{}'".format(fd, tag))
+                    sys.exit(1)
+                Upgrader.by_tag[fd].depends.append(tag)
+            for dep in upg.depends:
+                if dep not in Upgrader.by_tag:
+                    print("Error: '{}' cannot depend on "
+                          "nonexistent tag '{}'".format(tag, dep))
+                    sys.exit(1)
 
 def process_file(path, **kwargs):
     if not osp.isfile(path):
@@ -260,7 +194,7 @@ def process_file(path, **kwargs):
         import shutil
         shutil.copyfile(path, path + '.bak')
 
-    cpt = ConfigParser.SafeConfigParser()
+    cpt = configparser.SafeConfigParser()
 
     # gem5 is case sensitive with paramaters
     cpt.optionxform = str
@@ -270,35 +204,64 @@ def process_file(path, **kwargs):
     cpt.readfp(cpt_file)
     cpt_file.close()
 
+    change = False
+
     # Make sure we know what we're starting from
-    if not cpt.has_option('root','cpt_ver'):
-        raise LookupError("cannot determine version of checkpoint")
+    if cpt.has_option('root','cpt_ver'):
+        cpt_ver = cpt.getint('root','cpt_ver')
 
-    cpt_ver = cpt.getint('root','cpt_ver')
+        # Legacy linear checkpoint version
+        # convert to list of tags before proceeding
+        tags = set([])
+        for i in xrange(2, cpt_ver+1):
+            tags.add(Upgrader.legacy[i].tag)
+        verboseprint("performed legacy version -> tags conversion")
+        change = True
 
-    # If the current checkpoint is longer than the migrations list, we have a problem
-    # and someone didn't update this file
-    if cpt_ver > len(migrations):
-        raise ValueError("upgrade script is too old and needs updating")
+        cpt.remove_option('root', 'cpt_ver')
+    elif cpt.has_option('Globals','version_tags'):
+        tags = set((''.join(cpt.get('Globals','version_tags'))).split())
+    else:
+        print("fatal: no version information in checkpoint")
+        exit(1)
 
-    verboseprint("\t...file is at version %#x" % cpt_ver)
+    verboseprint("has tags", ' '.join(tags))
+    # If the current checkpoint has a tag we don't know about, we have
+    # a divergence that (in general) must be addressed by (e.g.) merging
+    # simulator support for its changes.
+    unknown_tags = tags - (Upgrader.tag_set | Upgrader.untag_set)
+    if unknown_tags:
+        print("warning: upgrade script does not recognize the following "
+              "tags in this checkpoint:", ' '.join(unknown_tags))
 
-    if cpt_ver == len(migrations):
-        verboseprint("\t...nothing to do")
+    # Apply migrations for tags not in checkpoint and tags present for which
+    # downgraders are present, respecting dependences
+    to_apply = (Upgrader.tag_set - tags) | (Upgrader.untag_set & tags)
+    while to_apply:
+        ready = set([ t for t in to_apply if Upgrader.get(t).ready(tags) ])
+        if not ready:
+            print("could not apply these upgrades:", ' '.join(to_apply))
+            print("update dependences impossible to resolve; aborting")
+            exit(1)
+
+        for tag in ready:
+            Upgrader.get(tag).update(cpt, tags)
+            change = True
+
+        to_apply -= ready
+
+    if not change:
+        verboseprint("...nothing to do")
         return
 
-    # Walk through every function from now until the end fixing the checkpoint
-    for v in xrange(cpt_ver,len(migrations)):
-        verboseprint("\t...migrating to version %#x" %  (v + 1))
-        migrations[v](cpt)
-        cpt.set('root','cpt_ver', str(v + 1))
+    cpt.set('Globals', 'version_tags', ' '.join(tags))
 
     # Write the old data back
-    verboseprint("\t...completed")
+    verboseprint("...completed")
     cpt.write(file(path, 'w'))
 
 if __name__ == '__main__':
-    from optparse import OptionParser
+    from optparse import OptionParser, SUPPRESS_HELP
     parser = OptionParser("usage: %prog [options] <filename or directory>")
     parser.add_option("-r", "--recurse", action="store_true",
                       help="Recurse through all subdirectories modifying "\
@@ -308,13 +271,28 @@ if __name__ == '__main__':
                       help="Do no backup each checkpoint before modifying it")
     parser.add_option("-v", "--verbose", action="store_true",
                       help="Print out debugging information as")
+    parser.add_option("--get-cc-file", action="store_true",
+                      # used during build; generate src/sim/tags.cc and exit
+                      help=SUPPRESS_HELP)
 
     (options, args) = parser.parse_args()
-    if len(args) != 1:
+    verbose_print = options.verbose
+
+    Upgrader.load_all()
+
+    if options.get_cc_file:
+        print("// this file is auto-generated by util/cpt_upgrader.py")
+        print("#include <string>")
+        print("#include <set>")
+        print
+        print("std::set<std::string> version_tags = {")
+        for tag in Upgrader.tag_set:
+            print("  \"{}\",".format(tag))
+        print("};")
+        exit(0)
+    elif len(args) != 1:
         parser.error("You must specify a checkpoint file to modify or a "\
                      "directory of checkpoints to recursively update")
-
-    verbose_print = options.verbose
 
     # Deal with shell variables and ~
     path = osp.expandvars(osp.expanduser(args[0]))
@@ -337,8 +315,8 @@ if __name__ == '__main__':
         elif osp.isfile(cpt_file):
             process_file(cpt_file, **vars(options))
         else:
-            print "Error: checkpoint file not found at in %s " % path,
-            print "and recurse not specified"
+            print("Error: checkpoint file not found in {} ".format(path))
+            print("and recurse not specified")
             sys.exit(1)
     sys.exit(0)
 

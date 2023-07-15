@@ -24,21 +24,20 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Ron Dreslinski
-#          Brad Beckmann
+
+from __future__ import print_function
+from __future__ import absolute_import
 
 import m5
 from m5.objects import *
 from m5.defines import buildEnv
 from m5.util import addToPath
 import os, optparse, sys
-addToPath('../common')
-addToPath('../ruby')
-addToPath('../topologies')
 
-import Options
-import Ruby
+addToPath('../')
+
+from common import Options
+from ruby import Ruby
 
 # Get paths we might need.  It's expected this file is in m5/configs/example.
 config_path = os.path.dirname(os.path.abspath(__file__))
@@ -46,10 +45,10 @@ config_root = os.path.dirname(config_path)
 m5_root = os.path.dirname(config_root)
 
 parser = optparse.OptionParser()
-Options.addCommonOptions(parser)
+Options.addNoISAOptions(parser)
 
-parser.add_option("-l", "--checks", metavar="N", default=100,
-                  help="Stop after N checks (loads)")
+parser.add_option("--maxloads", metavar="N", default=100,
+                  help="Stop after N loads")
 parser.add_option("-f", "--wakeup_freq", metavar="N", default=10,
                   help="Wakeup every N cycles")
 
@@ -58,7 +57,9 @@ parser.add_option("-f", "--wakeup_freq", metavar="N", default=10,
 #
 Ruby.define_options(parser)
 
-execfile(os.path.join(config_root, "common", "Options.py"))
+exec(compile( \
+    open(os.path.join(config_root, "common", "Options.py")).read(), \
+    os.path.join(config_root, "common", "Options.py"), 'exec'))
 
 (options, args) = parser.parse_args()
 
@@ -76,7 +77,7 @@ options.l2_assoc=2
 options.l3_assoc=2
 
 if args:
-     print "Error: script doesn't take any positional arguments"
+     print("Error: script doesn't take any positional arguments")
      sys.exit(1)
 
 #
@@ -89,7 +90,7 @@ if buildEnv['PROTOCOL'] == 'MOESI_hammer':
     check_flush = True
 
 tester = RubyTester(check_flush = check_flush,
-                    checks_to_complete = options.checks,
+                    checks_to_complete = options.maxloads,
                     wakeup_frequency = options.wakeup_freq)
 
 #
@@ -97,8 +98,7 @@ tester = RubyTester(check_flush = check_flush,
 # actually used by the rubytester, but is included to support the
 # M5 memory size == Ruby memory size checks
 #
-system = System(tester = tester, physmem = SimpleMemory(),
-                mem_ranges = [AddrRange(options.mem_size)])
+system = System(cpu = tester, mem_ranges = [AddrRange(options.mem_size)])
 
 # Create a top-level voltage domain and clock domain
 system.voltage_domain = VoltageDomain(voltage = options.sys_voltage)
@@ -106,15 +106,15 @@ system.voltage_domain = VoltageDomain(voltage = options.sys_voltage)
 system.clk_domain = SrcClockDomain(clock = options.sys_clock,
                                    voltage_domain = system.voltage_domain)
 
-Ruby.create_system(options, system)
+Ruby.create_system(options, False, system)
 
 # Create a seperate clock domain for Ruby
 system.ruby.clk_domain = SrcClockDomain(clock = options.ruby_clock,
                                         voltage_domain = system.voltage_domain)
 
-assert(options.num_cpus == len(system.ruby._cpu_ruby_ports))
+assert(options.num_cpus == len(system.ruby._cpu_ports))
 
-tester.num_cpus = len(system.ruby._cpu_ruby_ports)
+tester.num_cpus = len(system.ruby._cpu_ports)
 
 #
 # The tester is most effective when randomization is turned on and
@@ -122,26 +122,25 @@ tester.num_cpus = len(system.ruby._cpu_ruby_ports)
 #
 system.ruby.randomization = True
 
-for ruby_port in system.ruby._cpu_ruby_ports:
+for ruby_port in system.ruby._cpu_ports:
     #
     # Tie the ruby tester ports to the ruby cpu read and write ports
     #
-    if ruby_port.support_data_reqs:
-         tester.cpuDataPort = ruby_port.slave
-    if ruby_port.support_inst_reqs:
-         tester.cpuInstPort = ruby_port.slave
+    if ruby_port.support_data_reqs and ruby_port.support_inst_reqs:
+        tester.cpuInstDataPort = ruby_port.slave
+    elif ruby_port.support_data_reqs:
+        tester.cpuDataPort = ruby_port.slave
+    elif ruby_port.support_inst_reqs:
+        tester.cpuInstPort = ruby_port.slave
+
+    # Do not automatically retry stalled Ruby requests
+    ruby_port.no_retry_on_stall = True
 
     #
     # Tell each sequencer this is the ruby tester so that it
     # copies the subblock back to the checker
     #
     ruby_port.using_ruby_tester = True
-
-    #
-    # Ruby doesn't need the backing image of memory when running with
-    # the tester.
-    #
-    ruby_port.access_phys_mem = False
 
 # -----------------------
 # run simulation
@@ -159,4 +158,4 @@ m5.instantiate()
 # simulate until program terminates
 exit_event = m5.simulate(options.abs_max_tick)
 
-print 'Exiting @ tick', m5.curTick(), 'because', exit_event.getCause()
+print('Exiting @ tick', m5.curTick(), 'because', exit_event.getCause())

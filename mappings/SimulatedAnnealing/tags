@@ -1,0 +1,581 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+ALAP	src/REGISchedulingInfo.h	/^		int ALAP;$/;"	m	class:REGI_Scheduling_Info
+ALAP_initiated	src/REGISchedulingInfo.h	/^		bool ALAP_initiated;$/;"	m	class:REGI_Scheduling_Info
+ARC_Max_Index	src/REGIDFG.h	/^		int ARC_Max_Index;$/;"	m	class:REGI_DFG
+ASAP	src/REGISchedulingInfo.h	/^		int ASAP;$/;"	m	class:REGI_Scheduling_Info
+ASAP_initiated	src/REGISchedulingInfo.h	/^		bool ASAP_initiated;$/;"	m	class:REGI_Scheduling_Info
+ASM_SRCS	Debug/sources.mk	/^ASM_SRCS := $/;"	m
+ASM_SRCS	Release/sources.mk	/^ASM_SRCS := $/;"	m
+Acceptable_Placement	src/Simulated_annealing.h	/^bool Acceptable_Placement(CGRA* myCGRA, REGI_DFG* dfg, REGI_Node *current, REGI_PE* newPE, int schedule)$/;"	f
+Add_Arc	src/REGIDFG.cpp	/^void REGI_DFG::Add_Arc(REGI_ARC* arc)$/;"	f	class:REGI_DFG
+Add_Arcs	src/REGIDFG.cpp	/^void REGI_DFG::Add_Arcs(vector<REGI_ARC*> &arcs)$/;"	f	class:REGI_DFG
+Allocate	src/REGIREGISTERFILE.cpp	/^void REGI_REGISTER_FILE::Allocate(int n)$/;"	f	class:REGI_REGISTER_FILE
+AllocateRegister	src/REGINode.cpp	/^void REGI_PE::AllocateRegister(int n)$/;"	f	class:REGI_PE
+Allocate_Registers	src/Simulated_annealing.h	/^void Allocate_Registers(CGRA* myCGRA, int point_1, int point_2, int point_3, int number_1, int number_2, REGI_PE* PE)$/;"	f
+Allocate_Registers	src/Simulated_annealing.h	/^void Allocate_Registers(REGI_DFG* dfg, CGRA* myCGRA, REGI_Node *prev_node, REGI_PE* prev_PE, REGI_Node *next_node, REGI_PE* next_PE)$/;"	f
+Apply_Indegree_Constraint	src/REGIDFG.cpp	/^void REGI_DFG::Apply_Indegree_Constraint()$/;"	f	class:REGI_DFG
+Apply_Outdegree_Constraint	src/REGIDFG.cpp	/^void REGI_DFG::Apply_Outdegree_Constraint()$/;"	f	class:REGI_DFG
+Apply_Outdegree_Inter_Iteration_Constraint	src/REGIDFG.cpp	/^void REGI_DFG::Apply_Outdegree_Inter_Iteration_Constraint()$/;"	f	class:REGI_DFG
+Assign	src/REGIREGISTERFILE.cpp	/^bool REGI_REGISTER_FILE::Assign()$/;"	f	class:REGI_REGISTER_FILE
+Assign2PE	src/REGINode.cpp	/^void REGI_Node::Assign2PE(REGI_PE* pe)$/;"	f	class:REGI_Node
+AssignNode	src/REGINode.cpp	/^void REGI_PE::AssignNode(REGI_Node *node)$/;"	f	class:REGI_PE
+AssignedPE	src/REGINode.h	/^		REGI_PE* AssignedPE;$/;"	m	class:REGI_Node
+CC_DEPS	Debug/sources.mk	/^CC_DEPS := $/;"	m
+CC_DEPS	Release/sources.mk	/^CC_DEPS := $/;"	m
+CC_SRCS	Debug/sources.mk	/^CC_SRCS := $/;"	m
+CC_SRCS	Release/sources.mk	/^CC_SRCS := $/;"	m
+CGRA	src/CGRA.cpp	/^CGRA::CGRA()$/;"	f	class:CGRA
+CGRA	src/CGRA.h	/^class CGRA$/;"	c
+CGRA_H_	src/CGRA.h	11;"	d
+CGRA_INSN	src/definitions.h	130;"	d
+CGRA_INSN_LIST	src/definitions.h	132;"	d
+CGRA_JUMP	src/definitions.h	131;"	d
+CGRA_REG_SIZE	src/Simulated_annealing.h	/^int CGRA_REG_SIZE;$/;"	v
+CGRA_RTX_AND	src/definitions.h	73;"	d
+CGRA_RTX_ASHIFT	src/definitions.h	82;"	d
+CGRA_RTX_ASHIFTRT	src/definitions.h	86;"	d
+CGRA_RTX_DIV	src/definitions.h	61;"	d
+CGRA_RTX_IOR	src/definitions.h	75;"	d
+CGRA_RTX_LSHIFTRT	src/definitions.h	88;"	d
+CGRA_RTX_MINUS	src/definitions.h	46;"	d
+CGRA_RTX_MOD	src/definitions.h	70;"	d
+CGRA_RTX_MULT	src/definitions.h	52;"	d
+CGRA_RTX_NEG	src/definitions.h	49;"	d
+CGRA_RTX_NOT	src/definitions.h	79;"	d
+CGRA_RTX_PLUS	src/definitions.h	43;"	d
+CGRA_RTX_ROTATE	src/definitions.h	84;"	d
+CGRA_RTX_ROTATERT	src/definitions.h	91;"	d
+CGRA_RTX_SMAX	src/definitions.h	100;"	d
+CGRA_RTX_SMIN	src/definitions.h	99;"	d
+CGRA_RTX_SS_ABS	src/definitions.h	119;"	d
+CGRA_RTX_SS_ASHIFT	src/definitions.h	122;"	d
+CGRA_RTX_SS_DIV	src/definitions.h	64;"	d
+CGRA_RTX_SS_MINUS	src/definitions.h	110;"	d
+CGRA_RTX_SS_MULT	src/definitions.h	55;"	d
+CGRA_RTX_SS_NEG	src/definitions.h	113;"	d
+CGRA_RTX_SS_PLUS	src/definitions.h	105;"	d
+CGRA_RTX_UMAX	src/definitions.h	102;"	d
+CGRA_RTX_UMIN	src/definitions.h	101;"	d
+CGRA_RTX_US_ASHIFT	src/definitions.h	125;"	d
+CGRA_RTX_US_DIV	src/definitions.h	67;"	d
+CGRA_RTX_US_MINUS	src/definitions.h	128;"	d
+CGRA_RTX_US_MULT	src/definitions.h	58;"	d
+CGRA_RTX_US_NEG	src/definitions.h	116;"	d
+CGRA_RTX_US_PLUS	src/definitions.h	107;"	d
+CGRA_RTX_XOR	src/definitions.h	77;"	d
+CGRA_X_Dim	src/REGIDFG.h	/^		int CGRA_X_Dim;$/;"	m	class:REGI_DFG
+CGRA_X_Dim	src/Simulated_annealing.h	/^int CGRA_X_Dim;$/;"	v
+CGRA_Y_Dim	src/REGIDFG.h	/^		int CGRA_Y_Dim;$/;"	m	class:REGI_DFG
+CGRA_Y_Dim	src/Simulated_annealing.h	/^int CGRA_Y_Dim;$/;"	v
+CLIQUEATTEMPT	src/definitions.h	213;"	d
+CPP_DEPS	Debug/sources.mk	/^CPP_DEPS := $/;"	m
+CPP_DEPS	Release/sources.mk	/^CPP_DEPS := $/;"	m
+CPP_SRCS	Debug/sources.mk	/^CPP_SRCS := $/;"	m
+CPP_SRCS	Release/sources.mk	/^CPP_SRCS := $/;"	m
+CURRENT	src/REGISchedulingInfo.h	/^		int CURRENT;$/;"	m	class:REGI_Scheduling_Info
+CURRENT_initiated	src/REGISchedulingInfo.h	/^		bool CURRENT_initiated;$/;"	m	class:REGI_Scheduling_Info
+CXX_DEPS	Debug/sources.mk	/^CXX_DEPS := $/;"	m
+CXX_DEPS	Release/sources.mk	/^CXX_DEPS := $/;"	m
+CXX_SRCS	Debug/sources.mk	/^CXX_SRCS := $/;"	m
+CXX_SRCS	Release/sources.mk	/^CXX_SRCS := $/;"	m
+C_DEPS	Debug/sources.mk	/^C_DEPS := $/;"	m
+C_DEPS	Release/sources.mk	/^C_DEPS := $/;"	m
+C_SRCS	Debug/sources.mk	/^C_SRCS := $/;"	m
+C_SRCS	Release/sources.mk	/^C_SRCS := $/;"	m
+C_UPPER_DEPS	Debug/sources.mk	/^C_UPPER_DEPS := $/;"	m
+C_UPPER_DEPS	Release/sources.mk	/^C_UPPER_DEPS := $/;"	m
+C_UPPER_SRCS	Debug/sources.mk	/^C_UPPER_SRCS := $/;"	m
+C_UPPER_SRCS	Release/sources.mk	/^C_UPPER_SRCS := $/;"	m
+Compatible	src/CGRA.cpp	/^int CGRA::Compatible(MappingPair* mp1, MappingPair* mp2)$/;"	f	class:CGRA
+ConType	src/CGRA.h	/^		REGI_ConnectionType ConType;$/;"	m	class:CGRA
+ConType	src/REGINode.h	/^		REGI_ConnectionType ConType;$/;"	m	class:TimeCGRA
+Copy	src/REGIARC.cpp	/^REGI_ARC* REGI_ARC::Copy()$/;"	f	class:REGI_ARC
+Copy	src/REGIDFG.cpp	/^REGI_DFG::Copy()$/;"	f	class:REGI_DFG
+Count_Load_Operations	src/REGIDFG.cpp	/^int REGI_DFG::Count_Load_Operations()$/;"	f	class:REGI_DFG
+Count_Store_Operations	src/REGIDFG.cpp	/^int REGI_DFG::Count_Store_Operations()$/;"	f	class:REGI_DFG
+Cover_Pair	src/Mapper.h	/^class Cover_Pair$/;"	c
+DEBUG_1	src/definitions.h	139;"	d
+DEBUG_2	src/definitions.h	140;"	d
+DEBUG_3	src/definitions.h	141;"	d
+DEBUG_4	src/definitions.h	142;"	d
+DEFINITIONS_H_	src/definitions.h	25;"	d
+DataDepType	src/definitions.h	/^enum DataDepType$/;"	g
+Diagonal_Connection	src/definitions.h	/^	Simple_Connection = 0, Diagonal_Connection, Hop_Connection$/;"	e	enum:__anon1
+DotPrintMapping	src/CGRA.cpp	/^void CGRA::DotPrintMapping(string filename)$/;"	f	class:CGRA
+Dot_Print_Comp_Graph	src/CGRA.cpp	/^void CGRA::Dot_Print_Comp_Graph(string filename, char *table, int size, vector<MappingPair*> &mapPairs)$/;"	f	class:CGRA
+Dot_Print_DFG	src/REGIDFG.cpp	/^void REGI_DFG::Dot_Print_DFG(string filename)$/;"	f	class:REGI_DFG
+Dot_Print_DFG_With_Modulo_Schedule	src/REGIDFG.cpp	/^void REGI_DFG::Dot_Print_DFG_With_Modulo_Schedule(string filename, int II)$/;"	f	class:REGI_DFG
+Dot_Print_DFG_With_Schedule	src/REGIDFG.cpp	/^void REGI_DFG::Dot_Print_DFG_With_Schedule(string filename)$/;"	f	class:REGI_DFG
+EPIlog	src/CGRA.cpp	/^void CGRA::EPIlog(REGI_DFG* myDFG)$/;"	f	class:CGRA
+ESSENTIAL_DEBUG	src/definitions.h	137;"	d
+EXECUTABLES	Debug/sources.mk	/^EXECUTABLES := $/;"	m
+EXECUTABLES	Release/sources.mk	/^EXECUTABLES := $/;"	m
+Evaluate_Cost	src/Simulated_annealing.h	/^bool Evaluate_Cost(int new_cost, int old_cost, double temp)$/;"	f
+Feasible_ALAP	src/REGISchedulingInfo.h	/^		int Feasible_ALAP;$/;"	m	class:REGI_Scheduling_Info
+Feasible_ALAP_initiated	src/REGISchedulingInfo.h	/^		bool Feasible_ALAP_initiated;$/;"	m	class:REGI_Scheduling_Info
+Feasible_ASAP	src/REGISchedulingInfo.h	/^		int Feasible_ASAP;$/;"	m	class:REGI_Scheduling_Info
+Feasible_ASAP_initiated	src/REGISchedulingInfo.h	/^		bool Feasible_ASAP_initiated;$/;"	m	class:REGI_Scheduling_Info
+Get_Left_Inputs_Sorted_by_Arc	src/REGINode.cpp	/^vector<REGI_Node*> REGI_Reduced_Node::Get_Left_Inputs_Sorted_by_Arc()$/;"	f	class:REGI_Reduced_Node
+Get_Next_Nodes	src/REGINode.cpp	/^vector<REGI_Node*> REGI_Node::Get_Next_Nodes()$/;"	f	class:REGI_Node
+Get_Next_Nodes_Next_Iteration	src/REGINode.cpp	/^vector<REGI_Node*> REGI_Node::Get_Next_Nodes_Next_Iteration()$/;"	f	class:REGI_Node
+Get_Next_Nodes_Same_Iteration	src/REGINode.cpp	/^vector<REGI_Node*> REGI_Node::Get_Next_Nodes_Same_Iteration()$/;"	f	class:REGI_Node
+Get_Path	src/REGIARC.cpp	/^vector<REGI_Node*> REGI_ARC::Get_Path()$/;"	f	class:REGI_ARC
+Get_Prev_Nodes	src/REGINode.cpp	/^vector<REGI_Node*> REGI_Node::Get_Prev_Nodes()$/;"	f	class:REGI_Node
+Get_Prev_Nodes_Prev_Iteration	src/REGINode.cpp	/^vector<REGI_Node*> REGI_Node::Get_Prev_Nodes_Prev_Iteration()$/;"	f	class:REGI_Node
+Get_Prev_Nodes_Same_Iteration	src/REGINode.cpp	/^vector<REGI_Node*> REGI_Node::Get_Prev_Nodes_Same_Iteration()$/;"	f	class:REGI_Node
+Get_Right_Inputs_Sorted_by_Arc	src/REGINode.cpp	/^vector<REGI_Node*> REGI_Reduced_Node::Get_Right_Inputs_Sorted_by_Arc()$/;"	f	class:REGI_Reduced_Node
+Get_Schedule_Length	src/REGIDFG.cpp	/^int REGI_DFG::Get_Schedule_Length()$/;"	f	class:REGI_DFG
+Get_Unique_Index	src/REGIDFG.cpp	/^int REGI_DFG::Get_Unique_Index()$/;"	f	class:REGI_DFG
+Height	src/REGISchedulingInfo.h	/^		int Height;$/;"	m	class:REGI_Scheduling_Info
+Height_initiated	src/REGISchedulingInfo.h	/^		bool Height_initiated;$/;"	m	class:REGI_Scheduling_Info
+Hop_Connection	src/definitions.h	/^	Simple_Connection = 0, Diagonal_Connection, Hop_Connection$/;"	e	enum:__anon1
+II	src/CGRA.h	/^		int II;$/;"	m	class:CGRA
+IncreaseII	src/CGRA.cpp	/^void CGRA::IncreaseII()$/;"	f	class:CGRA
+Increase_ID_Index	src/REGIDFG.cpp	/^int REGI_DFG::Increase_ID_Index()$/;"	f	class:REGI_DFG
+Init_Schedule	src/REGIDFG.cpp	/^int REGI_DFG::Init_Schedule(int id, int number_of_resources)$/;"	f	class:REGI_DFG
+Initialize	src/CGRA.cpp	/^void CGRA::Initialize(int SizeX, int SizeY, int SizeReg, REGI_ConnectionType ConType)$/;"	f	class:CGRA
+Input_Data_Bus	src/REGINode.h	/^		bool Input_Data_Bus;$/;"	m	class:REGI_Node
+Instruction_Operation	src/definitions.h	/^enum Instruction_Operation$/;"	g
+Intersect	src/REGIDFG.cpp	/^vector<REGI_Node*> REGI_DFG::Intersect(vector<REGI_Node*> &nodeset1, vector<REGI_Node*> &nodeset2)$/;"	f	class:REGI_DFG
+Is_Index_Defined_Cycle	src/REGINode.cpp	/^bool REGI_Node::Is_Index_Defined_Cycle()$/;"	f	class:REGI_Node
+LIBS	Debug/objects.mk	/^LIBS :=$/;"	m
+LIBS	Release/objects.mk	/^LIBS :=$/;"	m
+LoadAddress	src/definitions.h	/^	Simple = 0, LoadAddress, LoadData, StoreAddress, StoreData$/;"	e	enum:__anon2
+LoadData	src/definitions.h	/^	Simple = 0, LoadAddress, LoadData, StoreAddress, StoreData$/;"	e	enum:__anon2
+Load_Output_Address_bus	src/REGINode.h	/^		bool Load_Output_Address_bus;$/;"	m	class:REGI_Node
+Longest_Path	src/REGIDFG.cpp	/^int REGI_DFG::Longest_Path(vector<REGI_Node*> &nodes, int &II)$/;"	f	class:REGI_DFG
+MAPPER_H_	src/Mapper.h	10;"	d
+MAXINT	src/definitions.h	37;"	d
+MAX_LATENCY	src/definitions.h	39;"	d
+MAX_NODE_INDEGREE	src/definitions.h	134;"	d
+MAX_NODE_OUTDEGREE	src/definitions.h	135;"	d
+MAX_SCHEDULE_LEN	src/REGIDFG.h	/^		int MAX_SCHEDULE_LEN;$/;"	m	class:REGI_DFG
+MAX_TEMPERATURE	src/definitions.h	31;"	d
+MCS2	src/CGRA.cpp	/^bool CGRA::MCS2(REGI_DFG* myDFG, vector<REGI_Node*> &leftNotMapped)$/;"	f	class:CGRA
+MapWithRegisterFile	src/Mapper.cpp	/^vector<vector<Cover_Pair*> > Mapper::MapWithRegisterFile(char *table, int tableSize, int cliqueSize)$/;"	f	class:Mapper
+MapWithoutRegisterFile	src/Mapper.cpp	/^vector<vector<Cover_Pair*> > Mapper::MapWithoutRegisterFile(char *table, int tableSize, int cliqueSize)$/;"	f	class:Mapper
+Mapper	src/Mapper.cpp	/^Mapper::Mapper(int NoReg)$/;"	f	class:Mapper
+Mapper	src/Mapper.h	/^class Mapper$/;"	c
+MappingPair	src/REGINode.cpp	/^MappingPair::MappingPair(REGI_Node* inNode, REGI_PE* inPE)$/;"	f	class:MappingPair
+MappingPair	src/REGINode.h	/^class MappingPair$/;"	c
+Match	src/REGINode.cpp	/^bool MappingPair::Match(MappingPair* mPair)$/;"	f	class:MappingPair
+Max	src/REGIDFG.cpp	/^int REGI_DFG::Max(int a, int b)$/;"	f	class:REGI_DFG
+MemoryDep	src/definitions.h	/^	MemoryDep, \/\/not implemented yet$/;"	e	enum:DataDepType
+Min	src/REGIDFG.cpp	/^int REGI_DFG::Min(int a, int b)$/;"	f	class:REGI_DFG
+Modulo_Current	src/REGISchedulingInfo.h	/^		int Modulo_Current;$/;"	m	class:REGI_Scheduling_Info
+Modulo_ReSchedule_Smart_2	src/REGIDFG.cpp	/^int REGI_DFG::Modulo_ReSchedule_Smart_2(int id, int number_of_resources, int II, vector<REGI_Node*> &to_change_set)$/;"	f	class:REGI_DFG
+Modulo_Schedule_Smart_2	src/REGIDFG.cpp	/^bool REGI_DFG::Modulo_Schedule_Smart_2(int II, int Last_Time, bool &multiple_constraint, int number_of_resources)$/;"	f	class:REGI_DFG
+NUMBER_OF_AVAILABLE_MEMORY_RESOURCES	src/definitions.h	215;"	d
+NoMappedOps	src/REGINode.h	/^		int NoMappedOps;$/;"	m	class:REGI_PE
+NoRegisters	src/Mapper.h	/^		int NoRegisters;$/;"	m	class:Mapper
+NodeID	src/Mapper.h	/^		int NodeID;$/;"	m	class:Cover_Pair
+Node_Max_Index	src/REGIDFG.h	/^		int Node_Max_Index;$/;"	m	class:REGI_DFG
+Not_Empty_Intersect	src/REGIDFG.cpp	/^bool REGI_DFG::Not_Empty_Intersect(vector<REGI_Node*> &nodeset1, vector<REGI_Node*> &nodeset2)$/;"	f	class:REGI_DFG
+NumberOfAvailableRegisters	src/REGINode.cpp	/^int REGI_PE::NumberOfAvailableRegisters()$/;"	f	class:REGI_PE
+NumberOfUsedRegisters	src/REGINode.cpp	/^int REGI_PE::NumberOfUsedRegisters()$/;"	f	class:REGI_PE
+OBJS	Debug/sources.mk	/^OBJS := $/;"	m
+OBJS	Release/sources.mk	/^OBJS := $/;"	m
+OBJ_SRCS	Debug/sources.mk	/^OBJ_SRCS := $/;"	m
+OBJ_SRCS	Release/sources.mk	/^OBJ_SRCS := $/;"	m
+O_SRCS	Debug/sources.mk	/^O_SRCS := $/;"	m
+O_SRCS	Release/sources.mk	/^O_SRCS := $/;"	m
+OccupyRegister	src/REGINode.cpp	/^void REGI_PE::OccupyRegister()$/;"	f	class:REGI_PE
+Output_Data_Bus	src/REGINode.h	/^		bool Output_Data_Bus;$/;"	m	class:REGI_Node
+PARSER_H_	src/Parser.h	12;"	d
+PEs	src/REGINode.h	/^		REGI_PE **PEs;$/;"	m	class:TimeCGRA
+ParseDFG	src/Parser.cpp	/^REGI_DFG* Parser::ParseDFG()$/;"	f	class:Parser
+Parser	src/Parser.cpp	/^Parser::Parser(string nodeFile, string edgeFile)$/;"	f	class:Parser
+Parser	src/Parser.h	/^class Parser$/;"	c
+Physical_Distance	src/CGRA.cpp	/^int CGRA::Physical_Distance(REGI_PE* pe1, REGI_PE* pe2)$/;"	f	class:CGRA
+Place_Route_new	src/Simulated_annealing.h	/^void Place_Route_new(CGRA* myCGRA, REGI_DFG* dfg, REGI_Node *current, REGI_PE* newPE, int schedule)$/;"	f
+PlacementCost	src/Simulated_annealing.h	/^int PlacementCost(REGI_Node *current, int temperature, CGRA* myCGRA)$/;"	f
+Placement_Completed	src/Simulated_annealing.h	/^bool Placement_Completed(CGRA* myCGRA)$/;"	f
+PreProcess	src/REGIDFG.cpp	/^void REGI_DFG::PreProcess()$/;"	f	class:REGI_DFG
+PredDep	src/definitions.h	/^	PredDep$/;"	e	enum:DataDepType
+PrintSet	src/REGIDFG.cpp	/^void REGI_DFG::PrintSet(vector<REGI_Node*> &set)$/;"	f	class:REGI_DFG
+PrintSets	src/REGIDFG.cpp	/^void REGI_DFG::PrintSets(vector<vector<REGI_Node*> > &sets)$/;"	f	class:REGI_DFG
+Prolog	src/CGRA.cpp	/^void CGRA::Prolog(REGI_DFG* myDFG)$/;"	f	class:CGRA
+REG	src/Mapper.h	/^		int REG;$/;"	m	class:Cover_Pair
+REGIARC_H_	src/REGIARC.h	13;"	d
+REGIDFG_H_	src/REGIDFG.h	12;"	d
+REGIMap	src/REGIMap_2.2.cpp	/^void REGIMap(Parser myParser)$/;"	f
+REGIREGISTERFILE_H_	src/REGIREGISTERFILE.h	8;"	d
+REGISCHEDULINGINFO_H_	src/REGISchedulingInfo.h	9;"	d
+REGISTERAWARE	src/definitions.h	211;"	d
+REGI_ARC	src/REGIARC.cpp	/^REGI_ARC::REGI_ARC(int number, int distance, DataDepType dep)$/;"	f	class:REGI_ARC
+REGI_ARC	src/REGIARC.h	/^class REGI_ARC$/;"	c
+REGI_ConnectionType	src/definitions.h	/^} REGI_ConnectionType;$/;"	t	typeref:enum:__anon1
+REGI_DFG	src/REGIDFG.cpp	/^REGI_DFG::REGI_DFG(int x_dim, int y_dim)$/;"	f	class:REGI_DFG
+REGI_DFG	src/REGIDFG.h	/^class REGI_DFG$/;"	c
+REGI_Node	src/REGINode.cpp	/^REGI_Node::REGI_Node(Instruction_Operation ins, int laten, int id)$/;"	f	class:REGI_Node
+REGI_Node	src/REGINode.cpp	/^REGI_Node::REGI_Node(Instruction_Operation ins, int laten, int id, bool load, bool store)$/;"	f	class:REGI_Node
+REGI_Node	src/REGINode.h	/^class REGI_Node$/;"	c
+REGI_Node_Dummy	src/REGINode.cpp	/^REGI_Node_Dummy::REGI_Node_Dummy(int laten, int id) :$/;"	f	class:REGI_Node_Dummy
+REGI_Node_Dummy	src/REGINode.h	/^class REGI_Node_Dummy: public REGI_Node$/;"	c
+REGI_Operations	src/definitions.h	/^} REGI_Operations;$/;"	t	typeref:enum:__anon2
+REGI_PE	src/REGINode.cpp	/^REGI_PE::REGI_PE()$/;"	f	class:REGI_PE
+REGI_PE	src/REGINode.h	/^class REGI_PE$/;"	c
+REGI_REGISTER_FILE	src/REGIREGISTERFILE.cpp	/^REGI_REGISTER_FILE::REGI_REGISTER_FILE(int size)$/;"	f	class:REGI_REGISTER_FILE
+REGI_REGISTER_FILE	src/REGIREGISTERFILE.h	/^class REGI_REGISTER_FILE$/;"	c
+REGI_Reduced_Node	src/REGINode.cpp	/^REGI_Reduced_Node::REGI_Reduced_Node(int id, REGI_Node* left, REGI_Node* right, REGI_Node* next, vector<REGI_ARC*>&to_remove, vector<REGI_ARC*>&to_add,$/;"	f	class:REGI_Reduced_Node
+REGI_Reduced_Node	src/REGINode.cpp	/^REGI_Reduced_Node::REGI_Reduced_Node(int id, REGI_Node* left, REGI_Node* right, REGI_Node* phi, vector<REGI_ARC*>&to_remove, vector<REGI_ARC*>&to_add) :$/;"	f	class:REGI_Reduced_Node
+REGI_Reduced_Node	src/REGINode.h	/^class REGI_Reduced_Node: public REGI_Node$/;"	c
+REGI_Scheduling_Info	src/REGISchedulingInfo.cpp	/^REGI_Scheduling_Info::REGI_Scheduling_Info()$/;"	f	class:REGI_Scheduling_Info
+REGI_Scheduling_Info	src/REGISchedulingInfo.h	/^class REGI_Scheduling_Info$/;"	c
+REST_DEBUG	src/definitions.h	138;"	d
+RM	Debug/makefile	/^RM := rm -rf$/;"	m
+RM	Release/makefile	/^RM := rm -rf$/;"	m
+Random_Initial_Place_Route	src/Simulated_annealing.h	/^void Random_Initial_Place_Route(CGRA* myCGRA, REGI_DFG* dfg)$/;"	f
+RecMII_Scc	src/REGIDFG.cpp	/^int REGI_DFG::RecMII_Scc(vector<vector<REGI_Node*> > &sets, int &max_index)$/;"	f	class:REGI_DFG
+Reduce_DFG	src/REGIDFG.cpp	/^void REGI_DFG::Reduce_DFG()$/;"	f	class:REGI_DFG
+Reduced_Node_Type	src/definitions.h	/^enum Reduced_Node_Type$/;"	g
+RegFile	src/REGINode.h	/^		REGI_REGISTER_FILE* RegFile;$/;"	m	class:REGI_PE
+Release	src/REGIREGISTERFILE.cpp	/^void REGI_REGISTER_FILE::Release(int i)$/;"	f	class:REGI_REGISTER_FILE
+ReleasePE	src/REGINode.cpp	/^void REGI_PE::ReleasePE()$/;"	f	class:REGI_PE
+ReleaseRegister	src/REGINode.cpp	/^bool REGI_PE::ReleaseRegister()$/;"	f	class:REGI_PE
+ReleaseRegister	src/REGINode.cpp	/^void REGI_PE::ReleaseRegister(int i)$/;"	f	class:REGI_PE
+Release_Registers	src/Simulated_annealing.h	/^void Release_Registers(CGRA* myCGRA, int point_1, int point_2, int point_3, int number_1, int number_2, REGI_PE* PE)$/;"	f
+Release_Registers	src/Simulated_annealing.h	/^void Release_Registers(REGI_DFG* dfg, CGRA* myCGRA, REGI_Node *prev_node, REGI_PE* prev_PE, REGI_Node *next_node, REGI_PE* next_PE)$/;"	f
+Remove	src/REGIDFG.cpp	/^void REGI_DFG::Remove(vector<REGI_Node*> &nodeset, REGI_Node* node)$/;"	f	class:REGI_DFG
+Remove	src/REGIDFG.cpp	/^void REGI_DFG::Remove(vector<REGI_Node*> &nodeset, vector<REGI_Node*> &toRemoveNodes)$/;"	f	class:REGI_DFG
+Remove_Arc	src/REGIDFG.cpp	/^void REGI_DFG::Remove_Arc(REGI_ARC* arc)$/;"	f	class:REGI_DFG
+Remove_Arc	src/REGIDFG.cpp	/^void REGI_DFG::Remove_Arc(REGI_Node *pNode, REGI_Node *nNode)$/;"	f	class:REGI_DFG
+Remove_Arcs	src/REGIDFG.cpp	/^void REGI_DFG::Remove_Arcs(vector<REGI_ARC*> &arcs)$/;"	f	class:REGI_DFG
+Reset	src/REGINode.cpp	/^void REGI_Node::Reset()$/;"	f	class:REGI_Node
+Reset	src/REGINode.cpp	/^void REGI_PE::Reset()$/;"	f	class:REGI_PE
+Reset	src/REGINode.cpp	/^void TimeCGRA::Reset()$/;"	f	class:TimeCGRA
+Reset	src/REGIREGISTERFILE.cpp	/^bool REGI_REGISTER_FILE::Reset()$/;"	f	class:REGI_REGISTER_FILE
+ResetIteration	src/CGRA.cpp	/^void CGRA::ResetIteration()$/;"	f	class:CGRA
+Reset_ALAP_Feasible_Schedule	src/REGIDFG.cpp	/^void REGI_DFG::Reset_ALAP_Feasible_Schedule()$/;"	f	class:REGI_DFG
+Reset_ALAP_Schedule	src/REGIDFG.cpp	/^void REGI_DFG::Reset_ALAP_Schedule()$/;"	f	class:REGI_DFG
+Reset_ASAP_Feasible_Schedule	src/REGIDFG.cpp	/^void REGI_DFG::Reset_ASAP_Feasible_Schedule()$/;"	f	class:REGI_DFG
+Reset_ASAP_Schedule	src/REGIDFG.cpp	/^void REGI_DFG::Reset_ASAP_Schedule()$/;"	f	class:REGI_DFG
+Reset_Current_Schedule	src/REGIDFG.cpp	/^void REGI_DFG::Reset_Current_Schedule()$/;"	f	class:REGI_DFG
+Reset_Cycle_Index	src/REGINode.cpp	/^void REGI_Node::Reset_Cycle_Index()$/;"	f	class:REGI_Node
+Reset_Minimizable	src/REGINode.cpp	/^void REGI_Node::Reset_Minimizable()$/;"	f	class:REGI_Node
+Reset_Minimized_Nodes	src/REGIDFG.cpp	/^void REGI_DFG::Reset_Minimized_Nodes()$/;"	f	class:REGI_DFG
+Run_Out_of_Time	src/Simulated_annealing.h	/^bool Run_Out_of_Time(clock_t &Time)$/;"	f
+SCC_Delay	src/REGISchedulingInfo.h	/^		int SCC_Delay;$/;"	m	class:REGI_Scheduling_Info
+SCHEDULE_FEASIBLE_ASAP_DEBUG	src/definitions.h	144;"	d
+SCHEDULE_SMART_DEBUG	src/definitions.h	145;"	d
+SIMULATED_ANNEALING_H_	src/Simulated_annealing.h	9;"	d
+SUBDIRS	Debug/sources.mk	/^SUBDIRS := \\$/;"	m
+SUBDIRS	Release/sources.mk	/^SUBDIRS := \\$/;"	m
+S_UPPER_SRCS	Debug/sources.mk	/^S_UPPER_SRCS := $/;"	m
+S_UPPER_SRCS	Release/sources.mk	/^S_UPPER_SRCS := $/;"	m
+SameCoordinatePEs	src/CGRA.cpp	/^bool CGRA::SameCoordinatePEs(REGI_PE* pe1, REGI_PE* pe2)$/;"	f	class:CGRA
+SameCoordination	src/REGINode.cpp	/^bool REGI_PE::SameCoordination(REGI_PE* nPE)$/;"	f	class:REGI_PE
+SameCoordinationPE	src/REGINode.cpp	/^bool MappingPair::SameCoordinationPE(MappingPair* mPair)$/;"	f	class:MappingPair
+Schedule	src/REGIDFG.cpp	/^int REGI_DFG::Schedule(int id, int number_of_resources, int II)$/;"	f	class:REGI_DFG
+Schedule_ALAP	src/REGIDFG.cpp	/^void REGI_DFG::Schedule_ALAP(int latest_time)$/;"	f	class:REGI_DFG
+Schedule_ALAP_Feasible	src/REGIDFG.cpp	/^bool REGI_DFG::Schedule_ALAP_Feasible(int latest_time, int number_of_resources)$/;"	f	class:REGI_DFG
+Schedule_ASAP	src/REGIDFG.cpp	/^int REGI_DFG::Schedule_ASAP()$/;"	f	class:REGI_DFG
+Schedule_ASAP_Feasible	src/REGIDFG.cpp	/^int REGI_DFG::Schedule_ASAP_Feasible(int number_of_resources)$/;"	f	class:REGI_DFG
+Schedule_Load_Address	src/REGIDFG.cpp	/^bool REGI_DFG::Schedule_Load_Address(REGI_Node* selected_node, int schedule_time, int II, bool &multiple_constraint, int* mem_resource, int* PE_resources,$/;"	f	class:REGI_DFG
+Schedule_Load_Data	src/REGIDFG.cpp	/^bool REGI_DFG::Schedule_Load_Data(REGI_Node* selected_node, int schedule_time, int II, bool &multiple_constraint, int* mem_resource, int* PE_resources,$/;"	f	class:REGI_DFG
+Schedule_Store_Address_Data	src/REGIDFG.cpp	/^bool REGI_DFG::Schedule_Store_Address_Data(REGI_Node* selected_node, int schedule_time, int II, bool &multiple_constraint, int* mem_resource, int* PE_resources,$/;"	f	class:REGI_DFG
+SetII	src/CGRA.cpp	/^void CGRA::SetII(int II)$/;"	f	class:CGRA
+SetIndex	src/REGINode.cpp	/^void REGI_PE::SetIndex(int iIndex, int jIndex, int tIndex, int RegLen)$/;"	f	class:REGI_PE
+SetThreshold	src/CGRA.cpp	/^void CGRA::SetThreshold(int thres)$/;"	f	class:CGRA
+Set_Distance	src/REGIARC.cpp	/^void REGI_ARC::Set_Distance(int distance)$/;"	f	class:REGI_ARC
+Set_From_Node	src/REGIARC.cpp	/^void REGI_ARC::Set_From_Node(REGI_Node* from)$/;"	f	class:REGI_ARC
+Set_Height	src/REGIDFG.cpp	/^void REGI_DFG::Set_Height()$/;"	f	class:REGI_DFG
+Set_Index_Cycle	src/REGINode.cpp	/^void REGI_Node::Set_Index_Cycle(int index)$/;"	f	class:REGI_Node
+Set_Low_Index_Cycle	src/REGINode.cpp	/^void REGI_Node::Set_Low_Index_Cycle(int index)$/;"	f	class:REGI_Node
+Set_Schedule_Length	src/REGIDFG.cpp	/^void REGI_DFG::Set_Schedule_Length(int len)$/;"	f	class:REGI_DFG
+Set_To_Node	src/REGIARC.cpp	/^void REGI_ARC::Set_To_Node(REGI_Node* to)$/;"	f	class:REGI_ARC
+ShowMapping	src/CGRA.cpp	/^void CGRA::ShowMapping()$/;"	f	class:CGRA
+Simple	src/definitions.h	/^	Simple = 0, LoadAddress, LoadData, StoreAddress, StoreData$/;"	e	enum:__anon2
+Simple_Connection	src/definitions.h	/^	Simple_Connection = 0, Diagonal_Connection, Hop_Connection$/;"	e	enum:__anon1
+Simulated_Annealing	src/Simulated_annealing.h	/^void Simulated_Annealing(Parser myParser)$/;"	f
+Simulated_Annealing_SortOps	src/REGIDFG.cpp	/^vector<REGI_Node*> REGI_DFG::Simulated_Annealing_SortOps(int &MII, int number_of_resources)$/;"	f	class:REGI_DFG
+SizeReg	src/CGRA.h	/^		int SizeReg;$/;"	m	class:CGRA
+SizeX	src/CGRA.h	/^		int SizeX;$/;"	m	class:CGRA
+SizeX	src/REGINode.h	/^		int SizeX;$/;"	m	class:TimeCGRA
+SizeY	src/CGRA.h	/^		int SizeY;$/;"	m	class:CGRA
+SizeY	src/REGINode.h	/^		int SizeY;$/;"	m	class:TimeCGRA
+Sort_Ops_by_Depth	src/REGIDFG.cpp	/^void REGI_DFG::Sort_Ops_by_Depth(vector<REGI_Node*> &set)$/;"	f	class:REGI_DFG
+Sort_Sccs	src/REGIDFG.cpp	/^void REGI_DFG::Sort_Sccs(vector<vector<REGI_Node*> > &sets)$/;"	f	class:REGI_DFG
+StoreAddress	src/definitions.h	/^	Simple = 0, LoadAddress, LoadData, StoreAddress, StoreData$/;"	e	enum:__anon2
+StoreData	src/definitions.h	/^	Simple = 0, LoadAddress, LoadData, StoreAddress, StoreData$/;"	e	enum:__anon2
+Store_Output_Address_bus	src/REGINode.h	/^		bool Store_Output_Address_bus;$/;"	m	class:REGI_Node
+Strongly_Connected	src/REGIDFG.cpp	/^void REGI_DFG::Strongly_Connected(REGI_Node* currentNode, stack<REGI_Node*> &S, vector<REGI_Node*> &SCopy, int &index, vector<vector<REGI_Node*> > &results)$/;"	f	class:REGI_DFG
+Strongly_Connected	src/REGIDFG.cpp	/^void REGI_DFG::Strongly_Connected(vector<vector<REGI_Node*> > &results)$/;"	f	class:REGI_DFG
+Subtract	src/REGIDFG.cpp	/^vector<REGI_Node*> REGI_DFG::Subtract(vector<REGI_Node*> &set1, vector<REGI_Node*> &set2)$/;"	f	class:REGI_DFG
+TIME_THRESHOLD	src/definitions.h	33;"	d
+Threshold	src/CGRA.h	/^		int Threshold;$/;"	m	class:CGRA
+TimeCGRA	src/REGINode.cpp	/^TimeCGRA::TimeCGRA(int SizeX, int SizeY, int RegSize, int time, REGI_ConnectionType ConType)$/;"	f	class:TimeCGRA
+TimeCGRA	src/REGINode.h	/^class TimeCGRA$/;"	c
+Topological_Sort	src/REGIDFG.cpp	/^queue<REGI_Node*> REGI_DFG::Topological_Sort()$/;"	f	class:REGI_DFG
+TrueDep	src/definitions.h	/^	TrueDep,$/;"	e	enum:DataDepType
+USER_OBJS	Debug/objects.mk	/^USER_OBJS :=$/;"	m
+USER_OBJS	Release/objects.mk	/^USER_OBJS :=$/;"	m
+Uncovered_size	src/Mapper.cpp	/^int Mapper::Uncovered_size(vector<int> cover)$/;"	f	class:Mapper
+Undo_Previous_Placement	src/Simulated_annealing.h	/^void Undo_Previous_Placement(CGRA* myCGRA, REGI_DFG* dfg, REGI_Node *current)$/;"	f
+Union	src/REGIDFG.cpp	/^vector<REGI_Node*> REGI_DFG::Union(vector<REGI_Node*> &nodeset1, vector<REGI_Node*> &nodeset2)$/;"	f	class:REGI_DFG
+Update_Minimizable_Nodes	src/REGIDFG.cpp	/^void REGI_DFG::Update_Minimizable_Nodes()$/;"	f	class:REGI_DFG
+_ARC_Set	src/REGIDFG.h	/^		vector<REGI_ARC*> _ARC_Set;$/;"	m	class:REGI_DFG
+_Back_ARC_Set	src/REGIDFG.h	/^		vector<REGI_ARC*> _Back_ARC_Set;$/;"	m	class:REGI_DFG
+_node_Set	src/REGIDFG.h	/^		vector<REGI_Node*> _node_Set;$/;"	m	class:REGI_DFG
+_node_Set_Ordered	src/REGIDFG.h	/^		vector<REGI_Node*> _node_Set_Ordered;$/;"	m	class:REGI_DFG
+add_Pred_Arc	src/REGINode.cpp	/^void REGI_Node::add_Pred_Arc(REGI_ARC* pred_Arc)$/;"	f	class:REGI_Node
+add_Succ_Arc	src/REGINode.cpp	/^void REGI_Node::add_Succ_Arc(REGI_ARC* succ_Arc)$/;"	f	class:REGI_Node
+add_op	src/definitions.h	/^	add_op,$/;"	e	enum:Instruction_Operation
+andop_op	src/definitions.h	/^	andop_op,$/;"	e	enum:Instruction_Operation
+assigned	src/REGINode.h	/^		bool assigned;$/;"	m	class:REGI_Node
+busy	src/REGINode.h	/^		bool busy;$/;"	m	class:REGI_PE
+cause_Node_Conflict_Current	src/REGIDFG.cpp	/^bool REGI_DFG::cause_Node_Conflict_Current(REGI_Node* current_node, int time, int II)$/;"	f	class:REGI_DFG
+clear_path	src/REGIARC.cpp	/^void REGI_ARC::clear_path()$/;"	f	class:REGI_ARC
+cmpEQ_op	src/definitions.h	/^	cmpEQ_op,$/;"	e	enum:Instruction_Operation
+cmpNEQ_op	src/definitions.h	/^	cmpNEQ_op,$/;"	e	enum:Instruction_Operation
+cmpSGEQ_op	src/definitions.h	/^	cmpSGEQ_op,$/;"	e	enum:Instruction_Operation
+cmpSGT_op	src/definitions.h	/^	cmpSGT_op,$/;"	e	enum:Instruction_Operation
+cmpSLEQ_op	src/definitions.h	/^	cmpSLEQ_op,$/;"	e	enum:Instruction_Operation
+cmpSLT_op	src/definitions.h	/^	cmpSLT_op,$/;"	e	enum:Instruction_Operation
+cmpUGEQ_op	src/definitions.h	/^	cmpUGEQ_op,$/;"	e	enum:Instruction_Operation
+cmpUGT_op	src/definitions.h	/^	cmpUGT_op,$/;"	e	enum:Instruction_Operation
+cmpULEQ_op	src/definitions.h	/^	cmpULEQ_op,$/;"	e	enum:Instruction_Operation
+cmpULT_op	src/definitions.h	/^	cmpULT_op,$/;"	e	enum:Instruction_Operation
+connectedPEs	src/CGRA.cpp	/^bool CGRA::connectedPEs(REGI_PE* pe1, REGI_PE* pe2)$/;"	f	class:CGRA
+connected_Nodes	src/CGRA.cpp	/^bool CGRA::connected_Nodes(REGI_Node* node1, REGI_Node* node2)$/;"	f	class:CGRA
+constant_op	src/definitions.h	/^	constant_op,$/;"	e	enum:Instruction_Operation
+constrains_multiple_modulo_backward_at_time	src/REGINode.cpp	/^bool REGI_Node::constrains_multiple_modulo_backward_at_time(int time, vector<REGI_Node*> &constrainers)$/;"	f	class:REGI_Node
+contains	src/CGRA.cpp	/^bool CGRA::contains(vector<MappingPair*> &pairs, MappingPair* mp)$/;"	f	class:CGRA
+contains	src/CGRA.cpp	/^bool CGRA::contains(vector<REGI_Node*> &nodeset, REGI_Node* node)$/;"	f	class:CGRA
+contains	src/CGRA.cpp	/^bool CGRA::contains(vector<REGI_Node*> &nodeset1, vector<REGI_Node*> &nodeset2)$/;"	f	class:CGRA
+contains	src/REGIDFG.cpp	/^bool REGI_DFG::contains(vector<REGI_Node*> &nodeset, REGI_Node* node)$/;"	f	class:REGI_DFG
+cuid	src/REGINode.h	/^		int cuid;$/;"	m	class:REGI_Node
+delete_Node	src/REGIDFG.cpp	/^int REGI_DFG::delete_Node(REGI_Node *pNode)$/;"	f	class:REGI_DFG
+dependency	src/REGIARC.h	/^		DataDepType dependency;$/;"	m	class:REGI_ARC
+distance	src/REGIARC.h	/^		int distance;$/;"	m	class:REGI_ARC
+div_op	src/definitions.h	/^	div_op,$/;"	e	enum:Instruction_Operation
+edgeFile	src/Parser.h	/^		string edgeFile;$/;"	m	class:Parser
+fix_Node_Conflict_Current	src/REGIDFG.cpp	/^bool REGI_DFG::fix_Node_Conflict_Current(REGI_Node* current_node, int time, int II)$/;"	f	class:REGI_DFG
+from	src/REGIARC.h	/^		REGI_Node* from;$/;"	m	class:REGI_ARC
+getAvailableNumber	src/REGIREGISTERFILE.cpp	/^int REGI_REGISTER_FILE::getAvailableNumber()$/;"	f	class:REGI_REGISTER_FILE
+getII	src/CGRA.cpp	/^int CGRA::getII()$/;"	f	class:CGRA
+getIndexI	src/REGINode.cpp	/^int REGI_PE::getIndexI()$/;"	f	class:REGI_PE
+getIndexJ	src/REGINode.cpp	/^int REGI_PE::getIndexJ()$/;"	f	class:REGI_PE
+getIndexT	src/REGINode.cpp	/^int REGI_PE::getIndexT()$/;"	f	class:REGI_PE
+getNode	src/CGRA.cpp	/^REGI_Node* CGRA::getNode(int tableIndex, vector<REGI_Node*> &nodes)$/;"	f	class:CGRA
+getNode	src/REGINode.cpp	/^REGI_Node* MappingPair::getNode()$/;"	f	class:MappingPair
+getNode	src/REGINode.cpp	/^REGI_Node* REGI_PE::getNode()$/;"	f	class:REGI_PE
+getOverUsedNumber	src/REGINode.cpp	/^int REGI_PE::getOverUsedNumber()$/;"	f	class:REGI_PE
+getPE	src/CGRA.cpp	/^REGI_PE* CGRA::getPE(int index)$/;"	f	class:CGRA
+getPE	src/REGINode.cpp	/^REGI_PE* MappingPair::getPE()$/;"	f	class:MappingPair
+getPE	src/REGINode.cpp	/^REGI_PE* REGI_Node::getPE()$/;"	f	class:REGI_Node
+getPE	src/REGINode.cpp	/^REGI_PE* TimeCGRA::getPE(int i, int j)$/;"	f	class:TimeCGRA
+getSetOfArcs	src/REGIDFG.cpp	/^vector<REGI_ARC*> REGI_DFG::getSetOfArcs()$/;"	f	class:REGI_DFG
+getSetOfOperations	src/REGIDFG.cpp	/^vector<REGI_Node*> REGI_DFG::getSetOfOperations()$/;"	f	class:REGI_DFG
+getSetOfVertices	src/REGIDFG.cpp	/^vector<REGI_Node*> REGI_DFG::getSetOfVertices()$/;"	f	class:REGI_DFG
+get_ALAP	src/REGISchedulingInfo.cpp	/^int REGI_Scheduling_Info::get_ALAP()$/;"	f	class:REGI_Scheduling_Info
+get_ASAP	src/REGISchedulingInfo.cpp	/^int REGI_Scheduling_Info::get_ASAP()$/;"	f	class:REGI_Scheduling_Info
+get_All_Nodes_Constrained_by_Current	src/REGIDFG.cpp	/^vector<REGI_Node*> REGI_DFG::get_All_Nodes_Constrained_by_Current(REGI_Node* current_node, int time)$/;"	f	class:REGI_DFG
+get_Arc	src/REGIDFG.cpp	/^REGI_DFG::get_Arc(REGI_Node *pNode, REGI_Node *nNode)$/;"	f	class:REGI_DFG
+get_Current	src/REGISchedulingInfo.cpp	/^int REGI_Scheduling_Info::get_Current()$/;"	f	class:REGI_Scheduling_Info
+get_Current_Scheduled_Nodes	src/REGIDFG.cpp	/^vector<REGI_Node*> REGI_DFG::get_Current_Scheduled_Nodes(vector<REGI_Node*> inSet)$/;"	f	class:REGI_DFG
+get_Dependency	src/REGIARC.cpp	/^DataDepType REGI_ARC::get_Dependency()$/;"	f	class:REGI_ARC
+get_Distance	src/REGIARC.cpp	/^int REGI_ARC::get_Distance()$/;"	f	class:REGI_ARC
+get_Feasible_ALAP	src/REGISchedulingInfo.cpp	/^int REGI_Scheduling_Info::get_Feasible_ALAP()$/;"	f	class:REGI_Scheduling_Info
+get_Feasible_ASAP	src/REGISchedulingInfo.cpp	/^int REGI_Scheduling_Info::get_Feasible_ASAP()$/;"	f	class:REGI_Scheduling_Info
+get_From_Node	src/REGIARC.cpp	/^REGI_Node* REGI_ARC::get_From_Node()$/;"	f	class:REGI_ARC
+get_Height	src/REGISchedulingInfo.cpp	/^int REGI_Scheduling_Info::get_Height()$/;"	f	class:REGI_Scheduling_Info
+get_ID	src/REGINode.cpp	/^int REGI_Node::get_ID()$/;"	f	class:REGI_Node
+get_Index_Cycle	src/REGINode.cpp	/^int REGI_Node::get_Index_Cycle()$/;"	f	class:REGI_Node
+get_Instruction	src/REGINode.cpp	/^Instruction_Operation REGI_Node::get_Instruction()$/;"	f	class:REGI_Node
+get_Inter_Iteration_Related_Nodes	src/REGIDFG.cpp	/^vector<REGI_Node*> REGI_DFG::get_Inter_Iteration_Related_Nodes(REGI_Node* current_node)$/;"	f	class:REGI_DFG
+get_Intra_Iteration_Related_Nodes_Current	src/REGIDFG.cpp	/^vector<REGI_Node*> REGI_DFG::get_Intra_Iteration_Related_Nodes_Current(REGI_Node* current_node, int time)$/;"	f	class:REGI_DFG
+get_Latency	src/REGINode.cpp	/^int REGI_Node::get_Latency()$/;"	f	class:REGI_Node
+get_Low_Index_Cycle	src/REGINode.cpp	/^int REGI_Node::get_Low_Index_Cycle()$/;"	f	class:REGI_Node
+get_Modulo_Current	src/REGISchedulingInfo.cpp	/^int REGI_Scheduling_Info::get_Modulo_Current()$/;"	f	class:REGI_Scheduling_Info
+get_Modulo_Next_Cycle	src/REGIDFG.cpp	/^int REGI_DFG::get_Modulo_Next_Cycle(int time, int II)$/;"	f	class:REGI_DFG
+get_Modulo_Prev_Cycle	src/REGIDFG.cpp	/^int REGI_DFG::get_Modulo_Prev_Cycle(int time, int II)$/;"	f	class:REGI_DFG
+get_No_Used_Register	src/REGIREGISTERFILE.cpp	/^int REGI_REGISTER_FILE::get_No_Used_Register()$/;"	f	class:REGI_REGISTER_FILE
+get_Node	src/REGIDFG.cpp	/^REGI_DFG::get_Node(int number)$/;"	f	class:REGI_DFG
+get_Node_Conflict_Current	src/REGIDFG.cpp	/^REGI_Node* REGI_DFG::get_Node_Conflict_Current(REGI_Node* current_node, int time, int II)$/;"	f	class:REGI_DFG
+get_Number	src/REGIARC.cpp	/^int REGI_ARC::get_Number()$/;"	f	class:REGI_ARC
+get_Number_of_Operands	src/REGINode.cpp	/^int REGI_Node::get_Number_of_Operands()$/;"	f	class:REGI_Node
+get_Number_of_Pred	src/REGINode.cpp	/^int REGI_Node::get_Number_of_Pred()$/;"	f	class:REGI_Node
+get_Number_of_Succ	src/REGINode.cpp	/^int REGI_Node::get_Number_of_Succ()$/;"	f	class:REGI_Node
+get_Pred_Arc	src/REGINode.cpp	/^REGI_ARC* REGI_Node::get_Pred_Arc(int i)$/;"	f	class:REGI_Node
+get_Related_Node	src/REGINode.cpp	/^REGI_Node* REGI_Node::get_Related_Node()$/;"	f	class:REGI_Node
+get_Required_Register	src/REGIDFG.cpp	/^int REGI_DFG::get_Required_Register(REGI_Node* node1, REGI_Node* node2, int II)$/;"	f	class:REGI_DFG
+get_SCC_Delay	src/REGISchedulingInfo.cpp	/^int REGI_Scheduling_Info::get_SCC_Delay()$/;"	f	class:REGI_Scheduling_Info
+get_Sched_Info	src/REGINode.cpp	/^REGI_Scheduling_Info* REGI_Node::get_Sched_Info()$/;"	f	class:REGI_Node
+get_Succ_Arc	src/REGINode.cpp	/^REGI_ARC* REGI_Node::get_Succ_Arc(int i)$/;"	f	class:REGI_Node
+get_To_Node	src/REGIARC.cpp	/^REGI_Node* REGI_ARC::get_To_Node()$/;"	f	class:REGI_ARC
+get_all_predecessors	src/REGIDFG.cpp	/^vector<REGI_Node*> REGI_DFG::get_all_predecessors(REGI_Node* &current)$/;"	f	class:REGI_DFG
+get_all_successors	src/REGIDFG.cpp	/^vector<REGI_Node*> REGI_DFG::get_all_successors(REGI_Node* &current)$/;"	f	class:REGI_DFG
+get_next_nodes_same_iteration	src/REGIDFG.cpp	/^vector<REGI_Node*> REGI_DFG::get_next_nodes_same_iteration(vector<REGI_Node*> &nodes)$/;"	f	class:REGI_DFG
+get_next_nodes_same_iteration_update_latency	src/REGIDFG.cpp	/^vector<REGI_Node*> REGI_DFG::get_next_nodes_same_iteration_update_latency(vector<REGI_Node*> &nodes, bool &change)$/;"	f	class:REGI_DFG
+get_next_operations_constrain_by_this_modulo	src/REGINode.cpp	/^vector<REGI_Node*> REGI_Node::get_next_operations_constrain_by_this_modulo()$/;"	f	class:REGI_Node
+get_number_of_nodes	src/REGIDFG.cpp	/^int REGI_DFG::get_number_of_nodes()$/;"	f	class:REGI_DFG
+get_path_between	src/REGIDFG.cpp	/^vector<REGI_Node*> REGI_DFG::get_path_between(vector<vector<REGI_Node*> > &visited, vector<REGI_Node*> &to_visit)$/;"	f	class:REGI_DFG
+get_prev_operations_constrain_this_modulo	src/REGINode.cpp	/^vector<REGI_Node*> REGI_Node::get_prev_operations_constrain_this_modulo()$/;"	f	class:REGI_Node
+get_self_loop	src/REGINode.cpp	/^REGI_ARC* REGI_Node::get_self_loop()$/;"	f	class:REGI_Node
+get_set_of_end_nodes	src/REGIDFG.cpp	/^vector<REGI_Node*> REGI_DFG::get_set_of_end_nodes()$/;"	f	class:REGI_DFG
+get_set_of_end_nodes_constraint_scheduling	src/REGIDFG.cpp	/^vector<REGI_Node*> REGI_DFG::get_set_of_end_nodes_constraint_scheduling()$/;"	f	class:REGI_DFG
+get_set_of_start_nodes	src/REGIDFG.cpp	/^vector<REGI_Node*> REGI_DFG::get_set_of_start_nodes()$/;"	f	class:REGI_DFG
+get_set_of_start_nodes_constraint_scheduling	src/REGIDFG.cpp	/^vector<REGI_Node*> REGI_DFG::get_set_of_start_nodes_constraint_scheduling()$/;"	f	class:REGI_DFG
+get_slack	src/REGISchedulingInfo.cpp	/^int REGI_Scheduling_Info::get_slack()$/;"	f	class:REGI_Scheduling_Info
+get_sorted_ready_list_modulo_backward	src/REGIDFG.cpp	/^vector<REGI_Node*> REGI_DFG::get_sorted_ready_list_modulo_backward(vector<REGI_Node*> list)$/;"	f	class:REGI_DFG
+get_sorted_ready_list_modulo_forward	src/REGIDFG.cpp	/^vector<REGI_Node*> REGI_DFG::get_sorted_ready_list_modulo_forward(vector<REGI_Node*> list)$/;"	f	class:REGI_DFG
+has_Enough_Resources_for_Load_Instruction_at_Cycle	src/REGIDFG.cpp	/^bool REGI_DFG::has_Enough_Resources_for_Load_Instruction_at_Cycle(int time1, int time2, int* mem_resource, int* PE_resources, int max_resources)$/;"	f	class:REGI_DFG
+has_Enough_Resources_for_Regular_Instruction_at_Cycle	src/REGIDFG.cpp	/^bool REGI_DFG::has_Enough_Resources_for_Regular_Instruction_at_Cycle(int time, int* resources, int max_resources)$/;"	f	class:REGI_DFG
+has_Enough_Resources_for_Store_Instruction_at_Cycle	src/REGIDFG.cpp	/^bool REGI_DFG::has_Enough_Resources_for_Store_Instruction_at_Cycle(int time, int* mem_resource, int* PE_resources, int max_resources)$/;"	f	class:REGI_DFG
+has_Node_Conflict_Current_new	src/REGIDFG.cpp	/^bool REGI_DFG::has_Node_Conflict_Current_new(REGI_Node* current_node, int time, int II)$/;"	f	class:REGI_DFG
+has_Node_Conflict_Current_old	src/REGIDFG.cpp	/^bool REGI_DFG::has_Node_Conflict_Current_old(REGI_Node* current_node, int time, int II)$/;"	f	class:REGI_DFG
+has_Node_Conflict_Feasible_ALAP	src/REGIDFG.cpp	/^bool REGI_DFG::has_Node_Conflict_Feasible_ALAP(REGI_Node* current_node, int time)$/;"	f	class:REGI_DFG
+has_Node_Conflict_Feasible_ASAP	src/REGIDFG.cpp	/^bool REGI_DFG::has_Node_Conflict_Feasible_ASAP(REGI_Node* current_node, int time)$/;"	f	class:REGI_DFG
+has_multiple_constrains_modulo_at_time	src/REGINode.cpp	/^bool REGI_Node::has_multiple_constrains_modulo_at_time(int time, vector<REGI_Node*> &constrainers)$/;"	f	class:REGI_Node
+has_multiple_constrains_modulo_backward_at_time	src/REGINode.cpp	/^bool REGI_Node::has_multiple_constrains_modulo_backward_at_time(int time, vector<REGI_Node*> &constrainers)$/;"	f	class:REGI_Node
+has_self_loop	src/REGINode.cpp	/^bool REGI_Node::has_self_loop()$/;"	f	class:REGI_Node
+iIndex	src/REGINode.h	/^		int iIndex, jIndex, tIndex;$/;"	m	class:REGI_PE
+inCommingArcs	src/REGINode.h	/^		vector<REGI_ARC*> inCommingArcs;$/;"	m	class:REGI_Node
+index	src/REGIREGISTERFILE.h	/^		int index;$/;"	m	class:REGI_REGISTER_FILE
+index_cycle	src/REGINode.h	/^		int index_cycle;$/;"	m	class:REGI_Node
+index_defined_cycle	src/REGINode.h	/^		bool index_defined_cycle;$/;"	m	class:REGI_Node
+insert_Node	src/REGIDFG.cpp	/^void REGI_DFG::insert_Node(REGI_Node *pNode)$/;"	f	class:REGI_DFG
+insert_Node_in_between_input	src/REGIDFG.cpp	/^bool REGI_DFG::insert_Node_in_between_input(REGI_Node* pNode, REGI_Node* nNode, REGI_Node* newNode)$/;"	f	class:REGI_DFG
+insert_Node_in_between_output	src/REGIDFG.cpp	/^int REGI_DFG::insert_Node_in_between_output(REGI_Node* pNode, REGI_Node* nNode, REGI_Node* newNode)$/;"	f	class:REGI_DFG
+insn	src/REGINode.h	/^		Instruction_Operation insn;$/;"	m	class:REGI_Node
+isAbleExecute	src/REGINode.cpp	/^bool REGI_PE::isAbleExecute(REGI_Node* node, int II)$/;"	f	class:REGI_PE
+isAvailable	src/REGIREGISTERFILE.cpp	/^bool REGI_REGISTER_FILE::isAvailable()$/;"	f	class:REGI_REGISTER_FILE
+isBusy	src/REGINode.cpp	/^bool REGI_PE::isBusy()$/;"	f	class:REGI_PE
+isFree	src/REGINode.cpp	/^bool REGI_Node::isFree()$/;"	f	class:REGI_Node
+isMapped	src/REGINode.cpp	/^bool REGI_Node::isMapped()$/;"	f	class:REGI_Node
+isOverUsed	src/REGINode.cpp	/^bool REGI_PE::isOverUsed()$/;"	f	class:REGI_PE
+isRegisterAvailable	src/REGINode.cpp	/^bool REGI_PE::isRegisterAvailable()$/;"	f	class:REGI_PE
+is_ALAP_Initiated	src/REGISchedulingInfo.cpp	/^bool REGI_Scheduling_Info::is_ALAP_Initiated()$/;"	f	class:REGI_Scheduling_Info
+is_ASAP_Initiated	src/REGISchedulingInfo.cpp	/^bool REGI_Scheduling_Info::is_ASAP_Initiated()$/;"	f	class:REGI_Scheduling_Info
+is_CURRENT_Initiated	src/REGISchedulingInfo.cpp	/^bool REGI_Scheduling_Info::is_CURRENT_Initiated()$/;"	f	class:REGI_Scheduling_Info
+is_Connected_To	src/REGINode.cpp	/^bool REGI_Node::is_Connected_To(REGI_Node* nextNode)$/;"	f	class:REGI_Node
+is_Dummy_Node	src/REGIDFG.cpp	/^bool REGI_DFG::is_Dummy_Node(REGI_Node *current)$/;"	f	class:REGI_DFG
+is_Feasible_ALAP_Initiated	src/REGISchedulingInfo.cpp	/^bool REGI_Scheduling_Info::is_Feasible_ALAP_Initiated()$/;"	f	class:REGI_Scheduling_Info
+is_Feasible_ASAP_Initiated	src/REGISchedulingInfo.cpp	/^bool REGI_Scheduling_Info::is_Feasible_ASAP_Initiated()$/;"	f	class:REGI_Scheduling_Info
+is_Height_Initiated	src/REGISchedulingInfo.cpp	/^bool REGI_Scheduling_Info::is_Height_Initiated()$/;"	f	class:REGI_Scheduling_Info
+is_Load_Address_Generator	src/REGINode.cpp	/^bool REGI_Node::is_Load_Address_Generator()$/;"	f	class:REGI_Node
+is_Load_Data_Bus_Read	src/REGINode.cpp	/^bool REGI_Node::is_Load_Data_Bus_Read()$/;"	f	class:REGI_Node
+is_Mem_Operation	src/REGINode.cpp	/^bool REGI_Node::is_Mem_Operation()$/;"	f	class:REGI_Node
+is_Minimizable	src/REGINode.cpp	/^bool REGI_Node::is_Minimizable()$/;"	f	class:REGI_Node
+is_PHI_Operations	src/REGINode.cpp	/^bool REGI_Node::is_PHI_Operations()$/;"	f	class:REGI_Node
+is_Reduced_Node	src/REGIDFG.cpp	/^bool REGI_DFG::is_Reduced_Node(REGI_Node *current)$/;"	f	class:REGI_DFG
+is_Store_Address_Generator	src/REGINode.cpp	/^bool REGI_Node::is_Store_Address_Generator()$/;"	f	class:REGI_Node
+is_Store_Data_Bus_Write	src/REGINode.cpp	/^bool REGI_Node::is_Store_Data_Bus_Write()$/;"	f	class:REGI_Node
+is_ready_to_schedule_ALAP	src/REGINode.cpp	/^bool REGI_Node::is_ready_to_schedule_ALAP(int &time)$/;"	f	class:REGI_Node
+is_ready_to_schedule_ASAP	src/REGINode.cpp	/^bool REGI_Node::is_ready_to_schedule_ASAP(int &time)$/;"	f	class:REGI_Node
+is_ready_to_schedule_Feasible_ALAP	src/REGINode.cpp	/^bool REGI_Node::is_ready_to_schedule_Feasible_ALAP(int &time, int MAX_Schedule)$/;"	f	class:REGI_Node
+is_ready_to_schedule_Feasible_ASAP	src/REGINode.cpp	/^bool REGI_Node::is_ready_to_schedule_Feasible_ASAP(int &time)$/;"	f	class:REGI_Node
+is_ready_to_schedule_modulo	src/REGINode.cpp	/^bool REGI_Node::is_ready_to_schedule_modulo(int &time)$/;"	f	class:REGI_Node
+is_ready_to_schedule_modulo_backward	src/REGINode.cpp	/^bool REGI_Node::is_ready_to_schedule_modulo_backward(int &time)$/;"	f	class:REGI_Node
+is_tentative_load	src/REGINode.cpp	/^bool REGI_Node::is_tentative_load()$/;"	f	class:REGI_Node
+is_tentative_store	src/REGINode.cpp	/^bool REGI_Node::is_tentative_store()$/;"	f	class:REGI_Node
+iteration	src/CGRA.h	/^		int iteration;$/;"	m	class:CGRA
+jIndex	src/REGINode.h	/^		int iIndex, jIndex, tIndex;$/;"	m	class:REGI_PE
+latency	src/REGINode.h	/^		int latency;$/;"	m	class:REGI_Node
+ld_add_cond_op	src/definitions.h	/^	ld_add_cond_op,$/;"	e	enum:Instruction_Operation
+ld_add_op	src/definitions.h	/^	ld_add_op,$/;"	e	enum:Instruction_Operation
+ld_data_cond_op	src/definitions.h	/^	ld_data_cond_op,$/;"	e	enum:Instruction_Operation
+ld_data_op	src/definitions.h	/^	ld_data_op,$/;"	e	enum:Instruction_Operation
+left	src/REGINode.h	/^		REGI_Node* left;$/;"	m	class:REGI_Reduced_Node
+llvm_route_op	src/definitions.h	/^	llvm_route_op,$/;"	e	enum:Instruction_Operation
+loop	src/REGINode.h	/^		REGI_ARC* loop;$/;"	m	class:REGI_Node
+loopctrl_op	src/definitions.h	/^	loopctrl_op,$/;"	e	enum:Instruction_Operation
+low_index_cycle	src/REGINode.h	/^		int low_index_cycle;$/;"	m	class:REGI_Node
+main	src/REGIMap_2.2.cpp	/^int main(int argc, char *argv[])$/;"	f
+make_Arc	src/REGIDFG.cpp	/^void REGI_DFG::make_Arc(REGI_Node* pNin, REGI_Node* pNout, int ID, int Distance, DataDepType dep)$/;"	f	class:REGI_DFG
+max_removableWithRegisterFile	src/Mapper.cpp	/^int Mapper::max_removableWithRegisterFile(vector<vector<int> > &neighbors, vector<int> cover, char *table, int tableSize)$/;"	f	class:Mapper
+max_removableWithoutRegisterFile	src/Mapper.cpp	/^int Mapper::max_removableWithoutRegisterFile(vector<vector<int> > &neighbors, vector<int> &cover, char *table, int tableSize)$/;"	f	class:Mapper
+minimizable	src/REGINode.h	/^		bool minimizable;$/;"	m	class:REGI_Node
+mult_op	src/definitions.h	/^	mult_op,$/;"	e	enum:Instruction_Operation
+node	src/REGINode.h	/^		REGI_Node* node;$/;"	m	class:MappingPair
+node	src/REGINode.h	/^		REGI_Node* node;$/;"	m	class:REGI_PE
+nodeFile	src/Parser.h	/^		string nodeFile;$/;"	m	class:Parser
+number	src/REGIARC.h	/^		int number;$/;"	m	class:REGI_ARC
+ops	src/REGINode.h	/^		REGI_Operations ops;$/;"	m	class:REGI_PE
+order_nodes_SCC	src/REGIDFG.cpp	/^vector<REGI_Node*> REGI_DFG::order_nodes_SCC(vector<REGI_Node*> &scc)$/;"	f	class:REGI_DFG
+orop_op	src/definitions.h	/^	orop_op,$/;"	e	enum:Instruction_Operation
+outGoingArcs	src/REGINode.h	/^		vector<REGI_ARC*> outGoingArcs;$/;"	m	class:REGI_Node
+path	src/REGIARC.h	/^		vector<REGI_Node*> path;$/;"	m	class:REGI_ARC
+pe	src/REGINode.h	/^		REGI_PE* pe;$/;"	m	class:MappingPair
+phi	src/REGINode.h	/^		REGI_Node* phi;$/;"	m	class:REGI_Reduced_Node
+procedure_1WithRegisterFile	src/Mapper.cpp	/^vector<int> Mapper::procedure_1WithRegisterFile(vector<vector<int> > &neighbors, vector<int> cover, char *table, int tableSize)$/;"	f	class:Mapper
+procedure_1WithoutRegisterFile	src/Mapper.cpp	/^vector<int> Mapper::procedure_1WithoutRegisterFile(vector<vector<int> > &neighbors, vector<int> &cover, char *table, int tableSize)$/;"	f	class:Mapper
+procedure_2WithRegisterFile	src/Mapper.cpp	/^vector<int> Mapper::procedure_2WithRegisterFile(vector<vector<int> > &neighbors, vector<int> cover, int k, char *table, int tableSize)$/;"	f	class:Mapper
+procedure_2WithoutRegisterFile	src/Mapper.cpp	/^vector<int> Mapper::procedure_2WithoutRegisterFile(vector<vector<int> > &neighbors, vector<int> &cover, int k, char *table, int tableSize)$/;"	f	class:Mapper
+reduced_op	src/definitions.h	/^	reduced_op$/;"	e	enum:Instruction_Operation
+related	src/REGINode.h	/^		REGI_Node* related;$/;"	m	class:REGI_Node
+removableWithRegisterFile	src/Mapper.cpp	/^bool Mapper::removableWithRegisterFile(vector<int> &neighbor, vector<int> cover, char *table, int tableSize, int nodeIndex)$/;"	f	class:Mapper
+removableWithoutRegisterFile	src/Mapper.cpp	/^bool Mapper::removableWithoutRegisterFile(vector<int> &neighbor, vector<int> &cover, char *table, int tableSize, int nodeIndex)$/;"	f	class:Mapper
+remove_Pred_Arc	src/REGINode.cpp	/^int REGI_Node::remove_Pred_Arc(REGI_ARC* predArc)$/;"	f	class:REGI_Node
+remove_Succ_Arc	src/REGINode.cpp	/^int REGI_Node::remove_Succ_Arc(REGI_ARC* succArc)$/;"	f	class:REGI_Node
+reset_ALAP	src/REGISchedulingInfo.cpp	/^void REGI_Scheduling_Info::reset_ALAP()$/;"	f	class:REGI_Scheduling_Info
+reset_ASAP	src/REGISchedulingInfo.cpp	/^void REGI_Scheduling_Info::reset_ASAP()$/;"	f	class:REGI_Scheduling_Info
+reset_Current	src/REGISchedulingInfo.cpp	/^void REGI_Scheduling_Info::reset_Current()$/;"	f	class:REGI_Scheduling_Info
+reset_Feasible_ALAP	src/REGISchedulingInfo.cpp	/^void REGI_Scheduling_Info::reset_Feasible_ALAP()$/;"	f	class:REGI_Scheduling_Info
+reset_Feasible_ASAP	src/REGISchedulingInfo.cpp	/^void REGI_Scheduling_Info::reset_Feasible_ASAP()$/;"	f	class:REGI_Scheduling_Info
+reset_latency_to_nodes	src/REGIDFG.cpp	/^void REGI_DFG::reset_latency_to_nodes(vector<REGI_Node*> &nodes)$/;"	f	class:REGI_DFG
+rest_op	src/definitions.h	/^	rest_op,$/;"	e	enum:Instruction_Operation
+right	src/REGINode.h	/^		REGI_Node* right;$/;"	m	class:REGI_Reduced_Node
+route_op	src/definitions.h	/^	route_op,$/;"	e	enum:Instruction_Operation
+sched_info	src/REGINode.h	/^		REGI_Scheduling_Info* sched_info;$/;"	m	class:REGI_Node
+schedule_len	src/REGIDFG.h	/^		int schedule_len;$/;"	m	class:REGI_DFG
+select_op	src/definitions.h	/^	select_op,$/;"	e	enum:Instruction_Operation
+self_loop	src/REGINode.h	/^		bool self_loop;$/;"	m	class:REGI_Node
+set_ALAP	src/REGISchedulingInfo.cpp	/^void REGI_Scheduling_Info::set_ALAP(int time)$/;"	f	class:REGI_Scheduling_Info
+set_ASAP	src/REGISchedulingInfo.cpp	/^void REGI_Scheduling_Info::set_ASAP(int time)$/;"	f	class:REGI_Scheduling_Info
+set_Current	src/REGISchedulingInfo.cpp	/^void REGI_Scheduling_Info::set_Current(int time, int II)$/;"	f	class:REGI_Scheduling_Info
+set_Feasible_ALAP	src/REGISchedulingInfo.cpp	/^void REGI_Scheduling_Info::set_Feasible_ALAP(int time)$/;"	f	class:REGI_Scheduling_Info
+set_Feasible_ASAP	src/REGISchedulingInfo.cpp	/^void REGI_Scheduling_Info::set_Feasible_ASAP(int time)$/;"	f	class:REGI_Scheduling_Info
+set_Height	src/REGISchedulingInfo.cpp	/^void REGI_Scheduling_Info::set_Height(int time)$/;"	f	class:REGI_Scheduling_Info
+set_Instruction	src/REGINode.cpp	/^void REGI_Node::set_Instruction(Instruction_Operation ins, int laten, int id)$/;"	f	class:REGI_Node
+set_Latency	src/REGINode.cpp	/^void REGI_Node::set_Latency(int laten)$/;"	f	class:REGI_Node
+set_Load_Address_Generator	src/REGINode.cpp	/^void REGI_Node::set_Load_Address_Generator(REGI_Node* next)$/;"	f	class:REGI_Node
+set_Load_Data_Bus_Read	src/REGINode.cpp	/^void REGI_Node::set_Load_Data_Bus_Read(REGI_Node* next)$/;"	f	class:REGI_Node
+set_Minimizable	src/REGINode.cpp	/^void REGI_Node::set_Minimizable()$/;"	f	class:REGI_Node
+set_SCC_Delay	src/REGISchedulingInfo.cpp	/^void REGI_Scheduling_Info::set_SCC_Delay(int delay)$/;"	f	class:REGI_Scheduling_Info
+set_Store_Address_Generator	src/REGINode.cpp	/^void REGI_Node::set_Store_Address_Generator(REGI_Node* next)$/;"	f	class:REGI_Node
+set_Store_Data_Bus_Write	src/REGINode.cpp	/^void REGI_Node::set_Store_Data_Bus_Write(REGI_Node* next)$/;"	f	class:REGI_Node
+set_path	src/REGIARC.cpp	/^void REGI_ARC::set_path(vector<REGI_Node*> newPath)$/;"	f	class:REGI_ARC
+set_self_loop	src/REGINode.cpp	/^void REGI_Node::set_self_loop(REGI_ARC* s_loop)$/;"	f	class:REGI_Node
+set_slack	src/REGISchedulingInfo.cpp	/^void REGI_Scheduling_Info::set_slack()$/;"	f	class:REGI_Scheduling_Info
+set_slack	src/REGISchedulingInfo.cpp	/^void REGI_Scheduling_Info::set_slack(int time)$/;"	f	class:REGI_Scheduling_Info
+shiftl_op	src/definitions.h	/^	shiftl_op,$/;"	e	enum:Instruction_Operation
+shiftr_op	src/definitions.h	/^	shiftr_op,$/;"	e	enum:Instruction_Operation
+showMapping	src/Simulated_annealing.h	/^void showMapping(REGI_DFG* dfg, CGRA* myCGRA)$/;"	f
+showSet	src/Simulated_annealing.h	/^void showSet(vector<REGI_Node*> set)$/;"	f
+size	src/REGIREGISTERFILE.h	/^		int size;$/;"	m	class:REGI_REGISTER_FILE
+slack	src/REGISchedulingInfo.h	/^		int slack;$/;"	m	class:REGI_Scheduling_Info
+st_add_cond_op	src/definitions.h	/^	st_add_cond_op,$/;"	e	enum:Instruction_Operation
+st_add_op	src/definitions.h	/^	st_add_op,$/;"	e	enum:Instruction_Operation
+st_data_cond_op	src/definitions.h	/^	st_data_cond_op,$/;"	e	enum:Instruction_Operation
+st_data_op	src/definitions.h	/^	st_data_op,$/;"	e	enum:Instruction_Operation
+sub_op	src/definitions.h	/^	sub_op,$/;"	e	enum:Instruction_Operation
+tIndex	src/REGINode.h	/^		int iIndex, jIndex, tIndex;$/;"	m	class:REGI_PE
+tent_load	src/REGINode.h	/^		bool tent_load, tent_store;$/;"	m	class:REGI_Node
+tent_store	src/REGINode.h	/^		bool tent_load, tent_store;$/;"	m	class:REGI_Node
+three_2_one	src/definitions.h	/^	three_2_one$/;"	e	enum:Reduced_Node_Type
+time	src/REGINode.h	/^		int time;$/;"	m	class:TimeCGRA
+timeCGRAList	src/CGRA.h	/^		vector<TimeCGRA*> timeCGRAList;$/;"	m	class:CGRA
+to	src/REGIARC.h	/^		REGI_Node* to;$/;"	m	class:REGI_ARC
+two_2_one	src/definitions.h	/^	two_2_one,$/;"	e	enum:Reduced_Node_Type
+type	src/REGINode.h	/^		Reduced_Node_Type type;$/;"	m	class:REGI_Reduced_Node
+update_slack	src/REGISchedulingInfo.cpp	/^void REGI_Scheduling_Info::update_slack(int time)$/;"	f	class:REGI_Scheduling_Info
+xorop_op	src/definitions.h	/^	xorop_op,$/;"	e	enum:Instruction_Operation
+~CGRA	src/CGRA.cpp	/^CGRA::~CGRA()$/;"	f	class:CGRA
+~Mapper	src/Mapper.cpp	/^Mapper::~Mapper()$/;"	f	class:Mapper
+~Parser	src/Parser.cpp	/^Parser::~Parser()$/;"	f	class:Parser
+~REGI_ARC	src/REGIARC.cpp	/^REGI_ARC::~REGI_ARC()$/;"	f	class:REGI_ARC
+~REGI_DFG	src/REGIDFG.cpp	/^REGI_DFG::~REGI_DFG()$/;"	f	class:REGI_DFG
+~REGI_Node	src/REGINode.cpp	/^REGI_Node::~REGI_Node()$/;"	f	class:REGI_Node
+~REGI_Node_Dummy	src/REGINode.cpp	/^REGI_Node_Dummy::~REGI_Node_Dummy()$/;"	f	class:REGI_Node_Dummy
+~REGI_PE	src/REGINode.cpp	/^REGI_PE::~REGI_PE()$/;"	f	class:REGI_PE
+~REGI_REGISTER_FILE	src/REGIREGISTERFILE.cpp	/^REGI_REGISTER_FILE::~REGI_REGISTER_FILE()$/;"	f	class:REGI_REGISTER_FILE
+~REGI_Reduced_Node	src/REGINode.cpp	/^REGI_Reduced_Node::~REGI_Reduced_Node()$/;"	f	class:REGI_Reduced_Node
+~REGI_Scheduling_Info	src/REGISchedulingInfo.cpp	/^REGI_Scheduling_Info::~REGI_Scheduling_Info()$/;"	f	class:REGI_Scheduling_Info
+~TimeCGRA	src/REGINode.cpp	/^TimeCGRA::~TimeCGRA()$/;"	f	class:TimeCGRA

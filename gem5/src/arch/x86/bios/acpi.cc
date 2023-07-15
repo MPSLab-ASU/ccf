@@ -33,11 +33,10 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Gabe Black
  */
 
 #include "arch/x86/bios/acpi.hh"
+
 #include "mem/port.hh"
 #include "params/X86ACPIRSDP.hh"
 #include "params/X86ACPIRSDT.hh"

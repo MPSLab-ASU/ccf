@@ -38,8 +38,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Nathan Binkert
  */
 
 #ifndef __SIM_SIM_EVENTS_HH__
@@ -60,13 +58,12 @@ class GlobalSimLoopExitEvent : public GlobalEvent
     Tick repeat;
 
   public:
-    // non-scheduling version for createForUnserialize()
-    GlobalSimLoopExitEvent();
     GlobalSimLoopExitEvent(Tick when, const std::string &_cause, int c,
-                           Tick repeat = 0, bool serialize = false);
+                           Tick repeat = 0);
+    GlobalSimLoopExitEvent(const std::string &_cause, int c, Tick repeat = 0);
 
     const std::string getCause() const { return cause; }
-    const int getCode() const { return code; }
+    int getCode() const { return code; }
 
     void process();     // process event
 
@@ -83,38 +80,17 @@ class LocalSimLoopExitEvent : public Event
 
   public:
     LocalSimLoopExitEvent();
-    LocalSimLoopExitEvent(const std::string &_cause, int c, Tick repeat = 0,
-                          bool serialize = false);
+    LocalSimLoopExitEvent(const std::string &_cause, int c, Tick repeat = 0);
 
     const std::string getCause() const { return cause; }
-    const int getCode() const { return code; }
+    int getCode() const { return code; }
 
-    void process();     // process event
+    void process() override;     // process event
 
-    virtual const char *description() const;
+    const char *description() const override;
 
-    virtual void serialize(std::ostream &os);
-    virtual void unserialize(Checkpoint *cp, const std::string &section);
-    virtual void unserialize(Checkpoint *cp, const std::string &section,
-                             EventQueue *eventq);
-    static Serializable *createForUnserialize(Checkpoint *cp,
-                                              const std::string &section);
-};
-
-class CountedDrainEvent : public Event
-{
-  private:
-    // Count of how many objects have not yet drained
-    int count;
-
-  public:
-    CountedDrainEvent();
-
-    void process();
-
-    void setCount(int _count) { count = _count; }
-
-    const int getCount() const { return count; }
+    void serialize(CheckpointOut &cp) const override;
+    void unserialize(CheckpointIn &cp) override;
 };
 
 //
@@ -131,9 +107,9 @@ class CountedExitEvent : public Event
   public:
     CountedExitEvent(const std::string &_cause, int &_downCounter);
 
-    void process();     // process event
+    void process() override;     // process event
 
-    virtual const char *description() const;
+    const char *description() const override;
 };
 
 

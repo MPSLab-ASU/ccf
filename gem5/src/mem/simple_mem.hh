@@ -36,9 +36,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Ron Dreslinski
- *          Andreas Hansson
  */
 
 /**
@@ -46,10 +43,10 @@
  * SimpleMemory declaration
  */
 
-#ifndef __SIMPLE_MEMORY_HH__
-#define __SIMPLE_MEMORY_HH__
+#ifndef __MEM_SIMPLE_MEMORY_HH__
+#define __MEM_SIMPLE_MEMORY_HH__
 
-#include <deque>
+#include <list>
 
 #include "mem/abstract_mem.hh"
 #include "mem/port.hh"
@@ -82,29 +79,22 @@ class SimpleMemory : public AbstractMemory
         { }
     };
 
-    class MemoryPort : public SlavePort
+    class MemoryPort : public ResponsePort
     {
-
       private:
-
         SimpleMemory& memory;
 
       public:
-
         MemoryPort(const std::string& _name, SimpleMemory& _memory);
 
       protected:
-
-        Tick recvAtomic(PacketPtr pkt);
-
-        void recvFunctional(PacketPtr pkt);
-
-        bool recvTimingReq(PacketPtr pkt);
-
-        void recvRetry();
-
-        AddrRangeList getAddrRanges() const;
-
+        Tick recvAtomic(PacketPtr pkt) override;
+        Tick recvAtomicBackdoor(
+                PacketPtr pkt, MemBackdoorPtr &_backdoor) override;
+        void recvFunctional(PacketPtr pkt) override;
+        bool recvTimingReq(PacketPtr pkt) override;
+        void recvRespRetry() override;
+        AddrRangeList getAddrRanges() const override;
     };
 
     MemoryPort port;
@@ -125,7 +115,7 @@ class SimpleMemory : public AbstractMemory
      * actual memory access. Note that this is where the packet spends
      * the memory latency.
      */
-    std::deque<DeferredPacket> packetQueue;
+    std::list<DeferredPacket> packetQueue;
 
     /**
      * Bandwidth in ticks per byte. The regulation affects the
@@ -158,7 +148,7 @@ class SimpleMemory : public AbstractMemory
      */
     void release();
 
-    EventWrapper<SimpleMemory, &SimpleMemory::release> releaseEvent;
+    EventFunctionWrapper releaseEvent;
 
     /**
      * Dequeue a packet from our internal packet queue and move it to
@@ -166,7 +156,7 @@ class SimpleMemory : public AbstractMemory
      */
     void dequeue();
 
-    EventWrapper<SimpleMemory, &SimpleMemory::dequeue> dequeueEvent;
+    EventFunctionWrapper dequeueEvent;
 
     /**
      * Detemine the latency.
@@ -175,38 +165,28 @@ class SimpleMemory : public AbstractMemory
      */
     Tick getLatency() const;
 
-    /** @todo this is a temporary workaround until the 4-phase code is
-     * committed. upstream caches needs this packet until true is returned, so
-     * hold onto it for deletion until a subsequent call
-     */
-    std::vector<PacketPtr> pendingDelete;
-
     /**
-     * If we need to drain, keep the drain manager around until we're
-     * done here.
+     * Upstream caches need this packet until true is returned, so
+     * hold it for deletion until a subsequent call
      */
-    DrainManager *drainManager;
+    std::unique_ptr<Packet> pendingDelete;
 
   public:
 
     SimpleMemory(const SimpleMemoryParams *p);
 
-    unsigned int drain(DrainManager *dm);
+    DrainState drain() override;
 
-    BaseSlavePort& getSlavePort(const std::string& if_name,
-                                PortID idx = InvalidPortID);
-    void init();
+    Port &getPort(const std::string &if_name,
+                  PortID idx=InvalidPortID) override;
+    void init() override;
 
   protected:
-
     Tick recvAtomic(PacketPtr pkt);
-
+    Tick recvAtomicBackdoor(PacketPtr pkt, MemBackdoorPtr &_backdoor);
     void recvFunctional(PacketPtr pkt);
-
     bool recvTimingReq(PacketPtr pkt);
-
-    void recvRetry();
-
+    void recvRespRetry();
 };
 
-#endif //__SIMPLE_MEMORY_HH__
+#endif //__MEM_SIMPLE_MEMORY_HH__

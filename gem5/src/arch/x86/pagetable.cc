@@ -33,25 +33,34 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Gabe Black
  */
 
-#include <cmath>
-#include "arch/x86/isa_traits.hh"
 #include "arch/x86/pagetable.hh"
+
+#include <cmath>
+
+#include "arch/x86/isa_traits.hh"
 #include "sim/serialize.hh"
 
 namespace X86ISA
 {
 
-TlbEntry::TlbEntry(Addr asn, Addr _vaddr, Addr _paddr) :
-    paddr(_paddr), vaddr(_vaddr), logBytes(PageShift), writable(true),
-    user(true), uncacheable(false), global(false), patBit(0), noExec(false)
+TlbEntry::TlbEntry()
+    : paddr(0), vaddr(0), logBytes(0), writable(0),
+      user(true), uncacheable(0), global(false), patBit(0),
+      noExec(false), lruSeq(0)
+{
+}
+
+TlbEntry::TlbEntry(Addr asn, Addr _vaddr, Addr _paddr,
+                   bool uncacheable, bool read_only) :
+    paddr(_paddr), vaddr(_vaddr), logBytes(PageShift), writable(!read_only),
+    user(true), uncacheable(uncacheable), global(false), patBit(0),
+    noExec(false), lruSeq(0)
 {}
 
 void
-TlbEntry::serialize(std::ostream &os)
+TlbEntry::serialize(CheckpointOut &cp) const
 {
     SERIALIZE_SCALAR(paddr);
     SERIALIZE_SCALAR(vaddr);
@@ -66,7 +75,7 @@ TlbEntry::serialize(std::ostream &os)
 }
 
 void
-TlbEntry::unserialize(Checkpoint *cp, const std::string &section)
+TlbEntry::unserialize(CheckpointIn &cp)
 {
     UNSERIALIZE_SCALAR(paddr);
     UNSERIALIZE_SCALAR(vaddr);

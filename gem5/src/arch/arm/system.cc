@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 ARM Limited
+ * Copyright (c) 2010, 2012-2013, 2015,2017-2021 ARM Limited
  * All rights reserved
  *
  * The license below extends only to copyright in the software and shall
@@ -36,83 +36,205 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Ali Saidi
  */
+
+#include "arch/arm/system.hh"
 
 #include <iostream>
 
-#include "arch/arm/system.hh"
+#include "arch/arm/fs_workload.hh"
+#include "arch/arm/semihosting.hh"
 #include "base/loader/object_file.hh"
 #include "base/loader/symtab.hh"
 #include "cpu/thread_context.hh"
+#include "dev/arm/fvp_base_pwr_ctrl.hh"
+#include "dev/arm/gic_v2.hh"
 #include "mem/physical.hh"
-#include "mem/fs_translating_port_proxy.hh"
 
 using namespace std;
 using namespace Linux;
+using namespace ArmISA;
 
 ArmSystem::ArmSystem(Params *p)
-    : System(p), bootldr(NULL), multiProc(p->multi_proc)
+    : System(p),
+      _haveSecurity(p->have_security),
+      _haveLPAE(p->have_lpae),
+      _haveVirtualization(p->have_virtualization),
+      _haveCrypto(p->have_crypto),
+      _genericTimer(nullptr),
+      _gic(nullptr),
+      _pwrCtrl(nullptr),
+      _highestELIs64(p->highest_el_is_64),
+      _physAddrRange64(p->phys_addr_range_64),
+      _haveLargeAsid64(p->have_large_asid_64),
+      _haveTME(p->have_tme),
+      _haveSVE(p->have_sve),
+      _sveVL(p->sve_vl),
+      _haveLSE(p->have_lse),
+      _haveVHE(p->have_vhe),
+      _havePAN(p->have_pan),
+      _haveSecEL2(p->have_secel2),
+      semihosting(p->semihosting),
+      multiProc(p->multi_proc)
 {
-    if (p->boot_loader != "") {
-        bootldr = createObjectFile(p->boot_loader);
-
-        if (!bootldr)
-            fatal("Could not read bootloader: %s\n", p->boot_loader);
-
-        bootldr->loadGlobalSymbols(debugSymbolTable);
-
+      if (p->auto_reset_addr) {
+        _resetAddr = workload->getEntry();
+    } else {
+        _resetAddr = p->reset_addr;
+        warn_if(workload->getEntry() != _resetAddr,
+                "Workload entry point %#x and reset address %#x are different",
+                workload->getEntry(), _resetAddr);
     }
-    debugPrintkEvent = addKernelFuncEvent<DebugPrintkEvent>("dprintk");
+
+    bool wl_is_64 = (workload->getArch() == Loader::Arm64);
+    if (wl_is_64 != _highestELIs64) {
+        warn("Highest ARM exception-level set to AArch%d but the workload "
+              "is for AArch%d. Assuming you wanted these to match.",
+              _highestELIs64 ? 64 : 32, wl_is_64 ? 64 : 32);
+        _highestELIs64 = wl_is_64;
+    }
+
+    if (_highestELIs64 && (
+            _physAddrRange64 < 32 ||
+            _physAddrRange64 > 48 ||
+            (_physAddrRange64 % 4 != 0 && _physAddrRange64 != 42))) {
+        fatal("Invalid physical address range (%d)\n", _physAddrRange64);
+    }
+}
+
+bool
+ArmSystem::haveSecurity(ThreadContext *tc)
+{
+    return FullSystem? getArmSystem(tc)->haveSecurity() : false;
+}
+
+bool
+ArmSystem::haveLPAE(ThreadContext *tc)
+{
+    return FullSystem? getArmSystem(tc)->haveLPAE() : false;
+}
+
+bool
+ArmSystem::haveVirtualization(ThreadContext *tc)
+{
+    return FullSystem? getArmSystem(tc)->haveVirtualization() : false;
+}
+
+bool
+ArmSystem::highestELIs64(ThreadContext *tc)
+{
+    return FullSystem? getArmSystem(tc)->highestELIs64() : true;
+}
+
+ExceptionLevel
+ArmSystem::highestEL(ThreadContext *tc)
+{
+    return FullSystem? getArmSystem(tc)->highestEL() : EL1;
+}
+
+bool
+ArmSystem::haveEL(ThreadContext *tc, ExceptionLevel el)
+{
+    switch (el) {
+      case EL0:
+      case EL1:
+        return true;
+      case EL2:
+        return haveVirtualization(tc);
+      case EL3:
+        return haveSecurity(tc);
+      default:
+        warn("Unimplemented Exception Level\n");
+        return false;
+    }
+}
+
+bool
+ArmSystem::haveTME(ThreadContext *tc)
+{
+    return getArmSystem(tc)->haveTME();
+}
+
+Addr
+ArmSystem::resetAddr(ThreadContext *tc)
+{
+    return getArmSystem(tc)->resetAddr();
+}
+
+uint8_t
+ArmSystem::physAddrRange(ThreadContext *tc)
+{
+    return getArmSystem(tc)->physAddrRange();
+}
+
+Addr
+ArmSystem::physAddrMask(ThreadContext *tc)
+{
+    return getArmSystem(tc)->physAddrMask();
+}
+
+bool
+ArmSystem::haveLargeAsid64(ThreadContext *tc)
+{
+    return getArmSystem(tc)->haveLargeAsid64();
+}
+
+bool
+ArmSystem::haveSemihosting(ThreadContext *tc)
+{
+    return FullSystem && getArmSystem(tc)->haveSemihosting();
+}
+
+bool
+ArmSystem::callSemihosting64(ThreadContext *tc, bool gem5_ops)
+{
+    return getArmSystem(tc)->semihosting->call64(tc, gem5_ops);
+}
+
+bool
+ArmSystem::callSemihosting32(ThreadContext *tc, bool gem5_ops)
+{
+    return getArmSystem(tc)->semihosting->call32(tc, gem5_ops);
+}
+
+bool
+ArmSystem::callSemihosting(ThreadContext *tc, bool gem5_ops)
+{
+    if (ArmISA::inAArch64(tc))
+        return callSemihosting64(tc, gem5_ops);
+    else
+        return callSemihosting32(tc, gem5_ops);
 }
 
 void
-ArmSystem::initState()
+ArmSystem::callSetStandByWfi(ThreadContext *tc)
 {
-    // Moved from the constructor to here since it relies on the
-    // address map being resolved in the interconnect
-
-    // Call the initialisation of the super class
-    System::initState();
-
-    const Params* p = params();
-
-    if (bootldr) {
-        bootldr->loadSections(physProxy);
-
-        uint8_t jump_to_bl[] =
-        {
-            0x07, 0xf0, 0xa0, 0xe1  // branch to r7
-        };
-        physProxy.writeBlob(0x0, jump_to_bl, sizeof(jump_to_bl));
-
-        inform("Using bootloader at address %#x\n", bootldr->entryPoint());
-
-        // Put the address of the boot loader into r7 so we know
-        // where to branch to after the reset fault
-        // All other values needed by the boot loader to know what to do
-        if (!p->gic_cpu_addr || !p->flags_addr)
-            fatal("gic_cpu_addr && flags_addr must be set with bootloader\n");
-
-        for (int i = 0; i < threadContexts.size(); i++) {
-            threadContexts[i]->setIntReg(3, kernelEntry & loadAddrMask);
-            threadContexts[i]->setIntReg(4, params()->gic_cpu_addr);
-            threadContexts[i]->setIntReg(5, params()->flags_addr);
-            threadContexts[i]->setIntReg(7, bootldr->entryPoint());
-        }
-    } else {
-        // Set the initial PC to be at start of the kernel code
-        threadContexts[0]->pcState(kernelEntry & loadAddrMask);
-    }
+    if (FVPBasePwrCtrl *pwr_ctrl = getArmSystem(tc)->getPowerController())
+        pwr_ctrl->setStandByWfi(tc);
 }
 
-ArmSystem::~ArmSystem()
+void
+ArmSystem::callClearStandByWfi(ThreadContext *tc)
 {
-    if (debugPrintkEvent)
-        delete debugPrintkEvent;
+    if (FVPBasePwrCtrl *pwr_ctrl = getArmSystem(tc)->getPowerController())
+        pwr_ctrl->clearStandByWfi(tc);
 }
 
+bool
+ArmSystem::callSetWakeRequest(ThreadContext *tc)
+{
+    if (FVPBasePwrCtrl *pwr_ctrl = getArmSystem(tc)->getPowerController())
+        return pwr_ctrl->setWakeRequest(tc);
+    else
+        return true;
+}
+
+void
+ArmSystem::callClearWakeRequest(ThreadContext *tc)
+{
+    if (FVPBasePwrCtrl *pwr_ctrl = getArmSystem(tc)->getPowerController())
+        pwr_ctrl->clearWakeRequest(tc);
+}
 
 ArmSystem *
 ArmSystemParams::create()

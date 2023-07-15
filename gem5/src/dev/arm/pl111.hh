@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2012 ARM Limited
+ * Copyright (c) 2010-2012, 2015 ARM Limited
  * All rights reserved
  *
  * The license below extends only to copyright in the software and shall
@@ -33,9 +33,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: William Wang
- *          Ali Saidi
  */
 
 
@@ -47,13 +44,16 @@
 #define __DEV_ARM_PL111_HH__
 
 #include <fstream>
+#include <memory>
 
+#include "base/bmpwriter.hh"
+#include "base/framebuffer.hh"
+#include "base/output.hh"
 #include "dev/arm/amba_device.hh"
 #include "params/Pl111.hh"
 #include "sim/serialize.hh"
 
 class VncInput;
-class Bitmap;
 
 class Pl111: public AmbaDmaDevice
 {
@@ -200,10 +200,10 @@ class Pl111: public AmbaDmaDevice
     TimingReg3 lcdTiming3;
 
     /** Upper panel frame base address register */
-    int lcdUpbase;
+    uint32_t lcdUpbase;
 
     /** Lower panel frame base address register */
-    int lcdLpbase;
+    uint32_t lcdLpbase;
 
     /** Control register */
     ControlReg lcdControl;
@@ -219,27 +219,27 @@ class Pl111: public AmbaDmaDevice
 
     /** 256x16-bit color palette registers
      * 256 palette entries organized as 128 locations of two entries per word */
-    int lcdPalette[LcdPaletteSize];
+    uint32_t lcdPalette[LcdPaletteSize];
 
     /** Cursor image RAM register
      * 256-word wide values defining images overlaid by the hw cursor mechanism */
-    int cursorImage[CrsrImageSize];
+    uint32_t cursorImage[CrsrImageSize];
 
     /** Cursor control register */
-    int clcdCrsrCtrl;
+    uint32_t clcdCrsrCtrl;
 
     /** Cursor configuration register */
-    int clcdCrsrConfig;
+    uint32_t clcdCrsrConfig;
 
     /** Cursor palette registers */
-    int clcdCrsrPalette0;
-    int clcdCrsrPalette1;
+    uint32_t clcdCrsrPalette0;
+    uint32_t clcdCrsrPalette1;
 
     /** Cursor XY position register */
-    int clcdCrsrXY;
+    uint32_t clcdCrsrXY;
 
     /** Cursor clip position register */
-    int clcdCrsrClip;
+    uint32_t clcdCrsrClip;
 
     /** Cursor interrupt mask set/clear register */
     InterruptReg clcdCrsrImsc;
@@ -256,14 +256,17 @@ class Pl111: public AmbaDmaDevice
     /** Pixel clock */
     Tick pixelClock;
 
+    PixelConverter converter;
+    FrameBuffer fb;
+
     /** VNC server */
     VncInput *vnc;
 
     /** Helper to write out bitmaps */
-    Bitmap *bmp;
+    BmpWriter bmp;
 
     /** Picture of what the current frame buffer looks like */
-    std::ostream *pic;
+    OutputStream *pic;
 
     /** Frame buffer width - pixels per line */
     uint16_t width;
@@ -290,10 +293,12 @@ class Pl111: public AmbaDmaDevice
     Addr curAddr;
 
     /** DMA FIFO watermark */
-    int waterMark;
+    uint32_t waterMark;
 
     /** Number of pending dma reads */
-    int dmaPendingNum;
+    uint32_t dmaPendingNum;
+
+    PixelConverter pixelConverter() const;
 
     /** Send updated parameters to the vnc server */
     void updateVideoParams();
@@ -317,10 +322,10 @@ class Pl111: public AmbaDmaDevice
     void dmaDone();
 
     /** DMA framebuffer read event */
-    EventWrapper<Pl111, &Pl111::readFramebuffer> readEvent;
+    EventFunctionWrapper readEvent;
 
     /** Fill fifo */
-    EventWrapper<Pl111, &Pl111::fillFifo> fillFifoEvent;
+    EventFunctionWrapper fillFifoEvent;
 
     /**@{*/
     /**
@@ -346,7 +351,7 @@ class Pl111: public AmbaDmaDevice
     /**@}*/
 
     /** Wrapper to create an event out of the interrupt */
-    EventWrapper<Pl111, &Pl111::generateInterrupt> intEvent;
+    EventFunctionWrapper intEvent;
 
     bool enableCapture;
 
@@ -361,18 +366,18 @@ class Pl111: public AmbaDmaDevice
     Pl111(const Params *p);
     ~Pl111();
 
-    virtual Tick read(PacketPtr pkt);
-    virtual Tick write(PacketPtr pkt);
+    Tick read(PacketPtr pkt) override;
+    Tick write(PacketPtr pkt) override;
 
-    virtual void serialize(std::ostream &os);
-    virtual void unserialize(Checkpoint *cp, const std::string &section);
+    void serialize(CheckpointOut &cp) const override;
+    void unserialize(CheckpointIn &cp) override;
 
     /**
      * Determine the address ranges that this device responds to.
      *
      * @return a list of non-overlapping address ranges
      */
-    AddrRangeList getAddrRanges() const;
+    AddrRangeList getAddrRanges() const override;
 };
 
 #endif

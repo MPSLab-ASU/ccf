@@ -24,9 +24,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Steve Reinhardt
- *          Nathan Binkert
  */
 
 #ifndef __CPU_EXETRACE_HH__
@@ -37,7 +34,6 @@
 #include "cpu/static_inst.hh"
 #include "cpu/thread_context.hh"
 #include "debug/ExecEnable.hh"
-#include "debug/ExecSpeculative.hh"
 #include "params/ExeTracer.hh"
 #include "sim/insttracer.hh"
 
@@ -50,16 +46,14 @@ class ExeTracerRecord : public InstRecord
   public:
     ExeTracerRecord(Tick _when, ThreadContext *_thread,
                const StaticInstPtr _staticInst, TheISA::PCState _pc,
-               bool spec, const StaticInstPtr _macroStaticInst = NULL)
-        : InstRecord(_when, _thread, _staticInst, _pc, spec,
-                _macroStaticInst)
+               const StaticInstPtr _macroStaticInst = NULL)
+        : InstRecord(_when, _thread, _staticInst, _pc, _macroStaticInst)
     {
     }
 
-    void traceInst(StaticInstPtr inst, bool ran);
+    void traceInst(const StaticInstPtr &inst, bool ran);
 
     void dump();
-    virtual void dumpTicks(std::ostream &outs);
 };
 
 class ExeTracer : public InstTracer
@@ -77,14 +71,8 @@ class ExeTracer : public InstTracer
         if (!Debug::ExecEnable)
             return NULL;
 
-        if (!Trace::enabled)
-            return NULL;
-
-        if (!Debug::ExecSpeculative && tc->misspeculating())
-            return NULL;
-
         return new ExeTracerRecord(when, tc,
-                staticInst, pc, tc->misspeculating(), macroStaticInst);
+                staticInst, pc, macroStaticInst);
     }
 };
 

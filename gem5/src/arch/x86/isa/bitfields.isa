@@ -32,8 +32,6 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Authors: Gabe Black
 
 ////////////////////////////////////////////////////////////////////
 //
@@ -59,9 +57,7 @@ def bitfield LEGACY_ADDR legacy.addr;
 def bitfield LEGACY_SEG legacy.seg;
 
 // Pieces of the opcode
-def bitfield OPCODE_NUM opcode.num;
-def bitfield OPCODE_PREFIXA opcode.prefixA;
-def bitfield OPCODE_PREFIXB opcode.prefixB;
+def bitfield OPCODE_TYPE opcode.type;
 def bitfield OPCODE_OP opcode.op;
 //The top 5 bits of the opcode tend to split the instructions into groups
 def bitfield OPCODE_OP_TOP5 opcode.op.top5;
@@ -89,3 +85,6 @@ def bitfield STACKSIZE stackSize;
 def bitfield MODE mode;
 def bitfield MODE_MODE mode.mode;
 def bitfield MODE_SUBMODE mode.submode;
+
+def bitfield VEX_V vex.v;
+def bitfield VEX_L vex.l;

@@ -1,4 +1,16 @@
 /*
+ * Copyright (c) 2019-2020 ARM Limited
+ * All rights reserved
+ *
+ * The license below extends only to copyright in the software and shall
+ * not be construed as granting a license to any other intellectual
+ * property including but not limited to intellectual property relating
+ * to a hardware implementation of the functionality of the software
+ * licensed hereunder.  You may use the software subject to the license
+ * terms below provided that you ensure that this notice is replicated
+ * unmodified and in its entirety in all distributions of the software,
+ * modified or unmodified, in source code or in binary form.
+ *
  * Copyright (c) 1999-2008 Mark D. Hill and David A. Wood
  * All rights reserved.
  *
@@ -30,28 +42,37 @@
 #define __MEM_RUBY_SYSTEM_SEQUENCER_HH__
 
 #include <iostream>
+#include <list>
+#include <unordered_map>
 
-#include "base/hashmap.hh"
-#include "mem/protocol/MachineType.hh"
-#include "mem/protocol/RubyRequestType.hh"
-#include "mem/protocol/SequencerRequestType.hh"
 #include "mem/ruby/common/Address.hh"
-#include "mem/ruby/system/CacheMemory.hh"
+#include "mem/ruby/protocol/MachineType.hh"
+#include "mem/ruby/protocol/RubyRequestType.hh"
+#include "mem/ruby/protocol/SequencerRequestType.hh"
+#include "mem/ruby/structures/CacheMemory.hh"
 #include "mem/ruby/system/RubyPort.hh"
 #include "params/RubySequencer.hh"
-
-class DataBlock;
 
 struct SequencerRequest
 {
     PacketPtr pkt;
     RubyRequestType m_type;
+    RubyRequestType m_second_type;
     Cycles issue_time;
-
     SequencerRequest(PacketPtr _pkt, RubyRequestType _m_type,
-                     Cycles _issue_time)
-        : pkt(_pkt), m_type(_m_type), issue_time(_issue_time)
+                     RubyRequestType _m_second_type, Cycles _issue_time)
+                : pkt(_pkt), m_type(_m_type), m_second_type(_m_second_type),
+                  issue_time(_issue_time)
     {}
+
+    bool functionalWrite(Packet *func_pkt) const
+    {
+        // Follow-up on RubyRequest::functionalWrite
+        // This makes sure the hitCallback won't overrite the value we
+        // expect to find
+        assert(func_pkt->isWrite());
+        return func_pkt->trySatisfyFunctional(pkt);
+    }
 };
 
 std::ostream& operator<<(std::ostream& out, const SequencerRequest& obj);
@@ -63,12 +84,20 @@ class Sequencer : public RubyPort
     Sequencer(const Params *);
     ~Sequencer();
 
-    // Public Methods
-    void wakeup(); // Used only for deadlock detection
-    void printProgress(std::ostream& out) const;
-    void clearStats();
+    /**
+     * Proxy function to writeCallback that first
+     * invalidates the line address in the local monitor.
+     */
+    void writeCallbackScFail(Addr address,
+                        DataBlock& data);
 
-    void writeCallback(const Address& address,
+    // Public Methods
+    virtual void wakeup(); // Used only for deadlock detection
+    void resetStats() override;
+    void collateStats();
+    void regStats() override;
+
+    void writeCallback(Addr address,
                        DataBlock& data,
                        const bool externalHit = false,
                        const MachineType mach = MachineType_NUM,
@@ -76,7 +105,7 @@ class Sequencer : public RubyPort
                        const Cycles forwardRequestTime = Cycles(0),
                        const Cycles firstResponseTime = Cycles(0));
 
-    void readCallback(const Address& address,
+    void readCallback(Addr address,
                       DataBlock& data,
                       const bool externalHit = false,
                       const MachineType mach = MachineType_NUM,
@@ -84,159 +113,197 @@ class Sequencer : public RubyPort
                       const Cycles forwardRequestTime = Cycles(0),
                       const Cycles firstResponseTime = Cycles(0));
 
-    RequestStatus makeRequest(PacketPtr pkt);
-    bool empty() const;
-    int outstandingCount() const { return m_outstanding_count; }
+    RequestStatus makeRequest(PacketPtr pkt) override;
+    virtual bool empty() const;
+    int outstandingCount() const override { return m_outstanding_count; }
 
-    bool isDeadlockEventScheduled() const
+    bool isDeadlockEventScheduled() const override
     { return deadlockCheckEvent.scheduled(); }
 
-    void descheduleDeadlockEvent()
+    void descheduleDeadlockEvent() override
     { deschedule(deadlockCheckEvent); }
 
-    void print(std::ostream& out) const;
-    void printStats(std::ostream& out) const;
-    void checkCoherence(const Address& address);
+    virtual void print(std::ostream& out) const;
 
     void markRemoved();
-    void removeRequest(SequencerRequest* request);
-    void evictionCallback(const Address& address);
-    void invalidateSC(const Address& address);
+    void evictionCallback(Addr address);
+    int coreId() const { return m_coreId; }
+
+    virtual int functionalWrite(Packet *func_pkt) override;
 
     void recordRequestType(SequencerRequestType requestType);
-    Histogram& getOutstandReqHist() { return m_outstandReqHist; }
+    Stats::Histogram& getOutstandReqHist() { return m_outstandReqHist; }
 
-    Histogram& getLatencyHist() { return m_latencyHist; }
-    Histogram& getTypeLatencyHist(uint32_t t)
-    { return m_typeLatencyHist[t]; }
+    Stats::Histogram& getLatencyHist() { return m_latencyHist; }
+    Stats::Histogram& getTypeLatencyHist(uint32_t t)
+    { return *m_typeLatencyHist[t]; }
 
-    Histogram& getHitLatencyHist() { return m_hitLatencyHist; }
-    Histogram& getHitTypeLatencyHist(uint32_t t)
-    { return m_hitTypeLatencyHist[t]; }
+    Stats::Histogram& getHitLatencyHist() { return m_hitLatencyHist; }
+    Stats::Histogram& getHitTypeLatencyHist(uint32_t t)
+    { return *m_hitTypeLatencyHist[t]; }
 
-    Histogram& getHitMachLatencyHist(uint32_t t)
-    { return m_hitMachLatencyHist[t]; }
+    Stats::Histogram& getHitMachLatencyHist(uint32_t t)
+    { return *m_hitMachLatencyHist[t]; }
 
-    Histogram& getHitTypeMachLatencyHist(uint32_t r, uint32_t t)
-    { return m_hitTypeMachLatencyHist[r][t]; }
+    Stats::Histogram& getHitTypeMachLatencyHist(uint32_t r, uint32_t t)
+    { return *m_hitTypeMachLatencyHist[r][t]; }
 
-    Histogram& getMissLatencyHist() { return m_missLatencyHist; }
-    Histogram& getMissTypeLatencyHist(uint32_t t)
-    { return m_missTypeLatencyHist[t]; }
+    Stats::Histogram& getMissLatencyHist()
+    { return m_missLatencyHist; }
+    Stats::Histogram& getMissTypeLatencyHist(uint32_t t)
+    { return *m_missTypeLatencyHist[t]; }
 
-    Histogram& getMissMachLatencyHist(uint32_t t)
-    { return m_missMachLatencyHist[t]; }
+    Stats::Histogram& getMissMachLatencyHist(uint32_t t) const
+    { return *m_missMachLatencyHist[t]; }
 
-    Histogram& getMissTypeMachLatencyHist(uint32_t r, uint32_t t)
-    { return m_missTypeMachLatencyHist[r][t]; }
+    Stats::Histogram&
+    getMissTypeMachLatencyHist(uint32_t r, uint32_t t) const
+    { return *m_missTypeMachLatencyHist[r][t]; }
 
-    Histogram& getIssueToInitialDelayHist(uint32_t t)
-    { return m_IssueToInitialDelayHist[t]; }
+    Stats::Histogram& getIssueToInitialDelayHist(uint32_t t) const
+    { return *m_IssueToInitialDelayHist[t]; }
 
-    Histogram& getInitialToForwardDelayHist(const MachineType t)
-    { return m_InitialToForwardDelayHist[t]; }
+    Stats::Histogram&
+    getInitialToForwardDelayHist(const MachineType t) const
+    { return *m_InitialToForwardDelayHist[t]; }
 
-    Histogram& getForwardRequestToFirstResponseHist(const MachineType t)
-    { return m_ForwardToFirstResponseDelayHist[t]; }
+    Stats::Histogram&
+    getForwardRequestToFirstResponseHist(const MachineType t) const
+    { return *m_ForwardToFirstResponseDelayHist[t]; }
 
-    Histogram& getFirstResponseToCompletionDelayHist(const MachineType t)
-    { return m_FirstResponseToCompletionDelayHist[t]; }
+    Stats::Histogram&
+    getFirstResponseToCompletionDelayHist(const MachineType t) const
+    { return *m_FirstResponseToCompletionDelayHist[t]; }
 
-    const uint64_t getIncompleteTimes(const MachineType t) const
+    Stats::Counter getIncompleteTimes(const MachineType t) const
     { return m_IncompleteTimes[t]; }
 
   private:
     void issueRequest(PacketPtr pkt, RubyRequestType type);
 
-    void hitCallback(SequencerRequest* request, DataBlock& data,
+    void hitCallback(SequencerRequest* srequest, DataBlock& data,
                      bool llscSuccess,
                      const MachineType mach, const bool externalHit,
                      const Cycles initialRequestTime,
                      const Cycles forwardRequestTime,
                      const Cycles firstResponseTime);
 
-    void recordMissLatency(const Cycles t, const RubyRequestType type,
+    void recordMissLatency(SequencerRequest* srequest, bool llscSuccess,
                            const MachineType respondingMach,
-                           bool isExternalHit, Cycles issuedTime,
-                           Cycles initialRequestTime,
-                           Cycles forwardRequestTime, Cycles firstResponseTime,
-                           Cycles completionTime);
-
-    RequestStatus insertRequest(PacketPtr pkt, RubyRequestType request_type);
-    bool handleLlsc(const Address& address, SequencerRequest* request);
+                           bool isExternalHit, Cycles initialRequestTime,
+                           Cycles forwardRequestTime,
+                           Cycles firstResponseTime);
 
     // Private copy constructor and assignment operator
     Sequencer(const Sequencer& obj);
     Sequencer& operator=(const Sequencer& obj);
 
+  protected:
+    // RequestTable contains both read and write requests, handles aliasing
+    std::unordered_map<Addr, std::list<SequencerRequest>> m_RequestTable;
+
+    Cycles m_deadlock_threshold;
+
+    virtual RequestStatus insertRequest(PacketPtr pkt,
+                                        RubyRequestType primary_type,
+                                        RubyRequestType secondary_type);
+
   private:
     int m_max_outstanding_requests;
-    Cycles m_deadlock_threshold;
 
     CacheMemory* m_dataCache_ptr;
     CacheMemory* m_instCache_ptr;
 
-    typedef m5::hash_map<Address, SequencerRequest*> RequestTable;
-    RequestTable m_writeRequestTable;
-    RequestTable m_readRequestTable;
+    // The cache access latency for top-level caches (L0/L1). These are
+    // currently assessed at the beginning of each memory access through the
+    // sequencer.
+    // TODO: Migrate these latencies into top-level cache controllers.
+    Cycles m_data_cache_hit_latency;
+    Cycles m_inst_cache_hit_latency;
+
     // Global outstanding request count, across all request tables
     int m_outstanding_count;
     bool m_deadlock_check_scheduled;
 
-    uint32_t m_store_waiting_on_load_cycles;
-    uint32_t m_store_waiting_on_store_cycles;
-    uint32_t m_load_waiting_on_store_cycles;
-    uint32_t m_load_waiting_on_load_cycles;
+    int m_coreId;
 
-    bool m_usingNetworkTester;
+    bool m_runningGarnetStandalone;
 
     //! Histogram for number of outstanding requests per cycle.
-    Histogram m_outstandReqHist;
+    Stats::Histogram m_outstandReqHist;
 
     //! Histogram for holding latency profile of all requests.
-    Histogram m_latencyHist;
-    std::vector<Histogram> m_typeLatencyHist;
+    Stats::Histogram m_latencyHist;
+    std::vector<Stats::Histogram *> m_typeLatencyHist;
 
     //! Histogram for holding latency profile of all requests that
     //! hit in the controller connected to this sequencer.
-    Histogram m_hitLatencyHist;
-    std::vector<Histogram> m_hitTypeLatencyHist;
+    Stats::Histogram m_hitLatencyHist;
+    std::vector<Stats::Histogram *> m_hitTypeLatencyHist;
 
     //! Histograms for profiling the latencies for requests that
     //! did not required external messages.
-    std::vector<Histogram> m_hitMachLatencyHist;
-    std::vector< std::vector<Histogram> > m_hitTypeMachLatencyHist;
+    std::vector<Stats::Histogram *> m_hitMachLatencyHist;
+    std::vector< std::vector<Stats::Histogram *> > m_hitTypeMachLatencyHist;
 
     //! Histogram for holding latency profile of all requests that
     //! miss in the controller connected to this sequencer.
-    Histogram m_missLatencyHist;
-    std::vector<Histogram> m_missTypeLatencyHist;
+    Stats::Histogram m_missLatencyHist;
+    std::vector<Stats::Histogram *> m_missTypeLatencyHist;
 
     //! Histograms for profiling the latencies for requests that
     //! required external messages.
-    std::vector<Histogram> m_missMachLatencyHist;
-    std::vector< std::vector<Histogram> > m_missTypeMachLatencyHist;
+    std::vector<Stats::Histogram *> m_missMachLatencyHist;
+    std::vector< std::vector<Stats::Histogram *> > m_missTypeMachLatencyHist;
 
     //! Histograms for recording the breakdown of miss latency
-    std::vector<Histogram> m_IssueToInitialDelayHist;
-    std::vector<Histogram> m_InitialToForwardDelayHist;
-    std::vector<Histogram> m_ForwardToFirstResponseDelayHist;
-    std::vector<Histogram> m_FirstResponseToCompletionDelayHist;
-    std::vector<uint64_t> m_IncompleteTimes;
+    std::vector<Stats::Histogram *> m_IssueToInitialDelayHist;
+    std::vector<Stats::Histogram *> m_InitialToForwardDelayHist;
+    std::vector<Stats::Histogram *> m_ForwardToFirstResponseDelayHist;
+    std::vector<Stats::Histogram *> m_FirstResponseToCompletionDelayHist;
+    std::vector<Stats::Counter> m_IncompleteTimes;
+
+    EventFunctionWrapper deadlockCheckEvent;
+
+    // support for LL/SC
+
+    /**
+     * Places the cache line address into the global monitor
+     * tagged with this Sequencer object's version id.
+     */
+    void llscLoadLinked(const Addr);
+
+    /**
+     * Removes the cache line address from the global monitor.
+     * This is independent of this Sequencer object's version id.
+     */
+    void llscClearMonitor(const Addr);
+
+    /**
+     * Searches for cache line address in the global monitor
+     * tagged with this Sequencer object's version id.
+     * If a match is found, the entry is is erased from
+     * the global monitor.
+     *
+     * @return a boolean indicating if the line address was found.
+     */
+    bool llscStoreConditional(const Addr);
+
+  public:
+    /**
+     * Searches for cache line address in the global monitor
+     * tagged with this Sequencer object's version id.
+     *
+     * @return a boolean indicating if the line address was found.
+     */
+    bool llscCheckMonitor(const Addr);
 
 
-    class SequencerWakeupEvent : public Event
-    {
-      private:
-        Sequencer *m_sequencer_ptr;
-
-      public:
-        SequencerWakeupEvent(Sequencer *_seq) : m_sequencer_ptr(_seq) {}
-        void process() { m_sequencer_ptr->wakeup(); }
-        const char *description() const { return "Sequencer deadlock check"; }
-    };
-
-    SequencerWakeupEvent deadlockCheckEvent;
+    /**
+     * Removes all addresses from the local monitor.
+     * This is independent of this Sequencer object's version id.
+     */
+    void llscClearLocalMonitor();
 };
 
 inline std::ostream&

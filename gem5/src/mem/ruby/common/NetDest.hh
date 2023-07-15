@@ -26,23 +26,16 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-// NetDest specifies the network destination of a NetworkMessage
-// This is backward compatible with the Set class that was previously
-// used to specify network destinations.
-// NetDest supports both node networks and component networks
-
 #ifndef __MEM_RUBY_COMMON_NETDEST_HH__
 #define __MEM_RUBY_COMMON_NETDEST_HH__
 
 #include <iostream>
 #include <vector>
 
-#include "debug/RubyMemory.hh"
-#include "mem/protocol/MachineType.hh"
-#include "mem/ruby/common/Global.hh"
 #include "mem/ruby/common/Set.hh"
-#include "mem/ruby/system/MachineID.hh"
+#include "mem/ruby/common/MachineID.hh"
 
+// NetDest specifies the network destination of a Message
 class NetDest
 {
   public:
@@ -58,7 +51,6 @@ class NetDest
 
     void add(MachineID newElement);
     void addNetDest(const NetDest& netDest);
-    void addRandom();
     void setNetDest(MachineType machine, const Set& set);
     void remove(MachineID oldElement);
     void removeNetDest(const NetDest& netDest);
@@ -111,11 +103,7 @@ class NetDest
         return vec_index;
     }
 
-    NodeID
-    bitIndex(NodeID index) const
-    {
-        return index;
-    }
+    NodeID bitIndex(NodeID index) const { return index; }
 
     std::vector<Set> m_bits;  // a vector of bit vectors - i.e. Sets
 };
@@ -129,4 +117,3 @@ operator<<(std::ostream& out, const NetDest& obj)
 }
 
 #endif // __MEM_RUBY_COMMON_NETDEST_HH__
-

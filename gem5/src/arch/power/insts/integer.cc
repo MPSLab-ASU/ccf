@@ -24,8 +24,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Timothy M. Jones
  */
 
 #include "arch/power/insts/integer.hh"
@@ -34,7 +32,7 @@ using namespace std;
 using namespace PowerISA;
 
 string
-IntOp::generateDisassembly(Addr pc, const SymbolTable *symtab) const
+IntOp::generateDisassembly(Addr pc, const Loader::SymbolTable *symtab) const
 {
     stringstream ss;
     bool printDest = true;
@@ -81,7 +79,7 @@ IntOp::generateDisassembly(Addr pc, const SymbolTable *symtab) const
 
 
 string
-IntImmOp::generateDisassembly(Addr pc, const SymbolTable *symtab) const
+IntImmOp::generateDisassembly(Addr pc, const Loader::SymbolTable *symtab) const
 {
     stringstream ss;
 
@@ -117,7 +115,8 @@ IntImmOp::generateDisassembly(Addr pc, const SymbolTable *symtab) const
 
 
 string
-IntShiftOp::generateDisassembly(Addr pc, const SymbolTable *symtab) const
+IntShiftOp::generateDisassembly(
+        Addr pc, const Loader::SymbolTable *symtab) const
 {
     stringstream ss;
 
@@ -144,7 +143,8 @@ IntShiftOp::generateDisassembly(Addr pc, const SymbolTable *symtab) const
 
 
 string
-IntRotateOp::generateDisassembly(Addr pc, const SymbolTable *symtab) const
+IntRotateOp::generateDisassembly(
+        Addr pc, const Loader::SymbolTable *symtab) const
 {
     stringstream ss;
 

@@ -23,8 +23,6 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Ron Dreslinski
 
 import m5
 from m5.objects import *
@@ -32,16 +30,10 @@ from m5.defines import buildEnv
 from m5.util import addToPath
 import os, optparse, sys
 
-# Get paths we might need
-config_path = os.path.dirname(os.path.abspath(__file__))
-config_root = os.path.dirname(config_path)
-m5_root = os.path.dirname(config_root)
-addToPath(config_root+'/configs/common')
-addToPath(config_root+'/configs/ruby')
-addToPath(config_root+'/configs/topologies')
+m5.util.addToPath('../configs/')
 
-import Options
-import Ruby
+from common import Options
+from ruby import Ruby
 
 parser = optparse.OptionParser()
 Options.addCommonOptions(parser)
@@ -65,25 +57,24 @@ options.l2_assoc=2
 options.l3_assoc=2
 
 nb_cores = 4
-cpus = [ TimingSimpleCPU(cpu_id=i) for i in xrange(nb_cores) ]
+cpus = [ TimingSimpleCPU(cpu_id=i) for i in range(nb_cores) ]
 
 # overwrite the num_cpus to equal nb_cores
 options.num_cpus = nb_cores
 
 # system simulated
-system = System(cpu = cpus, physmem = SimpleMemory(),
-                clk_domain = SrcClockDomain(clock = '1GHz'))
+system = System(cpu = cpus, clk_domain = SrcClockDomain(clock = '1GHz'))
 
 # Create a seperate clock domain for components that should run at
 # CPUs frequency
 system.cpu.clk_domain = SrcClockDomain(clock = '2GHz')
 
-Ruby.create_system(options, system)
+Ruby.create_system(options, False, system)
 
 # Create a separate clock domain for Ruby
 system.ruby.clk_domain = SrcClockDomain(clock = options.ruby_clock)
 
-assert(options.num_cpus == len(system.ruby._cpu_ruby_ports))
+assert(options.num_cpus == len(system.ruby._cpu_ports))
 
 for (i, cpu) in enumerate(system.cpu):
     # create the interrupt controller
@@ -92,7 +83,7 @@ for (i, cpu) in enumerate(system.cpu):
     #
     # Tie the cpu ports to the ruby cpu ports
     #
-    cpu.connectAllPorts(system.ruby._cpu_ruby_ports[i])
+    cpu.connectAllPorts(system.ruby._cpu_ports[i])
 
 # -----------------------
 # run simulation
@@ -100,6 +91,3 @@ for (i, cpu) in enumerate(system.cpu):
 
 root = Root( full_system=False, system = system )
 root.system.mem_mode = 'timing'
-
-# Not much point in this being higher than the L1 latency
-m5.ticks.setGlobalFrequency('1ns')

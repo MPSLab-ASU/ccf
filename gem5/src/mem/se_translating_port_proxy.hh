@@ -36,35 +36,14 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Ron Dreslinski
- *          Ali Saidi
- *          Andreas Hansson
  */
 
 #ifndef __MEM_SE_TRANSLATING_PORT_PROXY_HH__
 #define __MEM_SE_TRANSLATING_PORT_PROXY_HH__
 
-#include "mem/page_table.hh"
-#include "mem/port_proxy.hh"
+#include "mem/translating_port_proxy.hh"
 
-class Process;
-
-/**
- * @file
- * TranslatingPortProxy Object Declaration for SE.
- *
- * Port proxies are used when non structural entities need access to
- * the memory system. Proxy objects replace the previous
- * FunctionalPort, TranslatingPort and VirtualPort objects, which
- * provided the same functionality as the proxies, but were instances
- * of ports not corresponding to real structural ports of the
- * simulated system. Via the port proxies all the accesses go through
- * an actual port and thus are transparent to a potentially
- * distributed memory and automatically adhere to the memory map of
- * the system.
- */
-class SETranslatingPortProxy : public PortProxy
+class SETranslatingPortProxy : public TranslatingPortProxy
 {
 
   public:
@@ -75,26 +54,14 @@ class SETranslatingPortProxy : public PortProxy
     };
 
   private:
-    PageTable *pTable;
-    Process *process;
     AllocType allocating;
 
+  protected:
+    bool fixupAddr(Addr addr, BaseTLB::Mode mode) const override;
+
   public:
-    SETranslatingPortProxy(MasterPort& port, Process* p, AllocType alloc);
-    virtual ~SETranslatingPortProxy();
-
-    bool tryReadBlob(Addr addr, uint8_t *p, int size) const;
-    bool tryWriteBlob(Addr addr, uint8_t *p, int size) const;
-    bool tryMemsetBlob(Addr addr, uint8_t val, int size) const;
-    bool tryWriteString(Addr addr, const char *str) const;
-    bool tryReadString(std::string &str, Addr addr) const;
-
-    virtual void readBlob(Addr addr, uint8_t *p, int size) const;
-    virtual void writeBlob(Addr addr, uint8_t *p, int size) const;
-    virtual void memsetBlob(Addr addr, uint8_t val, int size) const;
-
-    void writeString(Addr addr, const char *str) const;
-    void readString(std::string &str, Addr addr) const;
+    SETranslatingPortProxy(ThreadContext *tc, AllocType alloc=NextPage,
+                           Request::Flags _flags=0);
 };
 
 #endif // __MEM_SE_TRANSLATING_PORT_PROXY_HH__

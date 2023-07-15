@@ -29,7 +29,7 @@ from slicc.symbols.Symbol import Symbol
 from slicc.symbols.Type import Type
 
 class Func(Symbol):
-    def __init__(self, table, ident, location, return_type, param_types,
+    def __init__(self, table, ident, name, location, return_type, param_types,
                  param_strings, body, pairs):
         super(Func, self).__init__(table, ident, location, pairs)
         self.return_type = return_type
@@ -38,6 +38,7 @@ class Func(Symbol):
         self.body = body
         self.isInternalMachineFunc = False
         self.c_ident = ident
+        self.c_name = name
         self.class_name = ""
 
     def __repr__(self):
@@ -55,11 +56,32 @@ class Func(Symbol):
         elif "return_by_pointer" in self and self.return_type != void_type:
             return_type += "*"
 
-        return "%s %s(%s);" % (return_type, self.c_ident,
+        return "%s %s(%s);" % (return_type, self.c_name,
                                ", ".join(self.param_strings))
 
     def writeCodeFiles(self, path, includes):
         return
+
+    def checkArguments(self, args):
+        if len(args) != len(self.param_types):
+            self.error("Wrong number of arguments passed to function : '%s'" +\
+                       " Expected %d, got %d", self.c_ident,
+                       len(self.param_types), len(args))
+
+        cvec = []
+        type_vec = []
+        for expr,expected_type in zip(args, self.param_types):
+            # Check the types of the parameter
+            actual_type,param_code = expr.inline(True)
+            if str(actual_type) != 'OOD' and \
+               str(actual_type) != str(expected_type) and \
+               str(actual_type["interface"]) != str(expected_type):
+                expr.error("Type mismatch: expected: %s actual: %s" % \
+                           (expected_type, actual_type))
+            cvec.append(param_code)
+            type_vec.append(expected_type)
+
+        return cvec, type_vec
 
     def generateCode(self):
         '''This write a function of object Chip'''
@@ -80,7 +102,7 @@ class Func(Symbol):
 
         code('''
 $return_type
-${{self.class_name}}::${{self.c_ident}}($params)
+${{self.class_name}}::${{self.c_name}}($params)
 {
 ${{self.body}}
 }

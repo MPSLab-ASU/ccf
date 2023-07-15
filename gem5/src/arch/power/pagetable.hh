@@ -27,12 +27,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Nathan Binkert
- *          Steve Reinhardt
- *          Jaidev Patwardhan
- *          Stephen Hines
- *          Timothy M. Jones
  */
 
 #ifndef __ARCH_POWER_PAGETABLE_H__
@@ -40,70 +34,9 @@
 
 #include "arch/power/isa_traits.hh"
 #include "arch/power/utility.hh"
-#include "arch/power/vtophys.hh"
 
-namespace PowerISA {
-
-struct VAddr
+namespace PowerISA
 {
-    static const int ImplBits = 43;
-    static const Addr ImplMask = (ULL(1) << ImplBits) - 1;
-    static const Addr UnImplMask = ~ImplMask;
-
-    Addr addr;
-
-    VAddr(Addr a)
-        : addr(a)
-    {}
-
-    operator Addr() const
-    {
-        return addr;
-    }
-
-    const VAddr
-    &operator=(Addr a)
-    {
-        addr = a;
-        return *this;
-    }
-
-    Addr
-    vpn() const
-    {
-        return (addr & ImplMask) >> PageShift;
-    }
-
-    Addr
-    page() const
-    {
-        return addr & Page_Mask;
-    }
-
-    Addr
-    offset() const
-    {
-        return addr & PageOffset;
-    }
-
-    Addr
-    level3() const
-    {
-        return PowerISA::PteAddr(addr >> PageShift);
-    }
-
-    Addr
-    level2() const
-    {
-        return PowerISA::PteAddr(addr >> (NPtePageShift + PageShift));
-    }
-
-    Addr
-    level1() const
-    {
-        return PowerISA::PteAddr(addr >> (2 * NPtePageShift + PageShift));
-    }
-};
 
 // ITB/DTB page table entry
 struct PTE
@@ -146,9 +79,8 @@ struct PTE
         return (V0 | V1);
     };
 
-    void serialize(std::ostream &os);
-
-    void unserialize(Checkpoint *cp, const std::string &section);
+    void serialize(CheckpointOut &cp) const;
+    void unserialize(CheckpointIn &cp);
 };
 
 } // namespace PowerISA

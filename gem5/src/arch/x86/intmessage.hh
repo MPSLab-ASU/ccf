@@ -24,8 +24,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Gabe Black
  */
 
 #ifndef __ARCH_X86_INTMESSAGE_HH__
@@ -34,6 +32,7 @@
 #include "arch/x86/x86_traits.hh"
 #include "base/bitunion.hh"
 #include "base/types.hh"
+#include "dev/x86/intdev.hh"
 #include "mem/packet.hh"
 #include "mem/packet_access.hh"
 #include "mem/request.hh"
@@ -77,36 +76,10 @@ namespace X86ISA
     static const Addr TriggerIntOffset = 0;
 
     static inline PacketPtr
-    prepIntRequest(const uint8_t id, Addr offset, Addr size)
+    buildIntTriggerPacket(int id, TriggerIntMessage message)
     {
-        RequestPtr req = new Request(x86InterruptAddress(id, offset),
-                                     size, Request::UNCACHEABLE,
-                                     Request::intMasterId);
-        PacketPtr pkt = new Packet(req, MemCmd::MessageReq);
-        pkt->allocate();
-        return pkt;
-    }
-
-    template<class T>
-    PacketPtr
-    buildIntRequest(const uint8_t id, T payload, Addr offset, Addr size)
-    {
-        PacketPtr pkt = prepIntRequest(id, offset, size);
-        pkt->set<T>(payload);
-        return pkt;
-    }
-
-    static inline PacketPtr
-    buildIntRequest(const uint8_t id, TriggerIntMessage payload)
-    {
-        return buildIntRequest(id, payload, TriggerIntOffset,
-                sizeof(TriggerIntMessage));
-    }
-
-    static inline PacketPtr
-    buildIntResponse()
-    {
-        panic("buildIntResponse not implemented.\n");
+        Addr addr = x86InterruptAddress(id, TriggerIntOffset);
+        return buildIntPacket(addr, message);
     }
 }
 

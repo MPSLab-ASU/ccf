@@ -26,14 +26,11 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Korey Sewell
- *          Stephen Hines
- *          Timothy M. Jones
  */
 
 #include "arch/power/utility.hh"
-#include "base/misc.hh"
+
+#include "base/logging.hh"
 
 namespace PowerISA {
 
@@ -46,7 +43,7 @@ copyRegs(ThreadContext *src, ThreadContext *dest)
 
     // Then loop through the floating point registers.
     for (int i = 0; i < NumFloatRegs; ++i)
-        dest->setFloatRegBits(i, src->readFloatRegBits(i));
+        dest->setFloatReg(i, src->readFloatReg(i));
 
     // Would need to add condition-code regs if implemented
     assert(NumCCRegs == 0);
@@ -64,18 +61,5 @@ getArgument(ThreadContext *tc, int &number, uint16_t size, bool fp)
     panic("getArgument not implemented for POWER.\n");
     return 0;
 }
-
-void
-skipFunction(ThreadContext *tc)
-{
-    panic("Not Implemented for POWER");
-}
-
-void
-initCPU(ThreadContext *tc, int cpuId)
-{
-    panic("initCPU not implemented for POWER.\n");
-}
-
 
 } // namespace PowerISA

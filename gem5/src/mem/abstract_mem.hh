@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 ARM Limited
+ * Copyright (c) 2012, 2019 ARM Limited
  * All rights reserved
  *
  * The license below extends only to copyright in the software and shall
@@ -36,9 +36,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Ron Dreslinski
- *          Andreas Hansson
  */
 
 /**
@@ -46,11 +43,13 @@
  * AbstractMemory declaration
  */
 
-#ifndef __ABSTRACT_MEMORY_HH__
-#define __ABSTRACT_MEMORY_HH__
+#ifndef __MEM_ABSTRACT_MEMORY_HH__
+#define __MEM_ABSTRACT_MEMORY_HH__
 
-#include "mem/mem_object.hh"
+#include "mem/backdoor.hh"
+#include "mem/port.hh"
 #include "params/AbstractMemory.hh"
+#include "sim/clocked_object.hh"
 #include "sim/stats.hh"
 
 
@@ -74,18 +73,20 @@ class LockedAddr {
     Addr addr;
 
     // locking hw context
-    const int contextId;
+    const ContextID contextId;
 
     static Addr mask(Addr paddr) { return (paddr & ~Addr_Mask); }
 
     // check for matching execution context
-    bool matchesContext(Request *req) const
+    bool matchesContext(const RequestPtr &req) const
     {
+        assert(contextId != InvalidContextID);
+        assert(req->hasContextId());
         return (contextId == req->contextId());
     }
 
-    LockedAddr(Request *req) : addr(mask(req->getPaddr())),
-                               contextId(req->contextId())
+    LockedAddr(const RequestPtr &req) : addr(mask(req->getPaddr())),
+                                        contextId(req->contextId())
     {}
 
     // constructor for unserialization use
@@ -97,10 +98,10 @@ class LockedAddr {
  * An abstract memory represents a contiguous block of physical
  * memory, with an associated address range, and also provides basic
  * functionality for reading and writing this memory without any
- * timing information. It is a MemObject since any subclass must have
- * at least one slave port.
+ * timing information. It is a ClockedObject since subclasses may need timing
+ * information.
  */
-class AbstractMemory : public MemObject
+class AbstractMemory : public ClockedObject
 {
   protected:
 
@@ -110,11 +111,17 @@ class AbstractMemory : public MemObject
     // Pointer to host memory used to implement this memory
     uint8_t* pmemAddr;
 
+    // Backdoor to access this memory.
+    MemBackdoor backdoor;
+
     // Enable specific memories to be reported to the configuration table
-    bool confTableReported;
+    const bool confTableReported;
 
     // Should the memory appear in the global address map
-    bool inAddrMap;
+    const bool inAddrMap;
+
+    // Should KVM map this memory for the guest
+    const bool kvmMap;
 
     std::list<LockedAddr> lockedAddrList;
 
@@ -137,7 +144,7 @@ class AbstractMemory : public MemObject
     // this method must be called on *all* stores since even
     // non-conditional stores must clear any matching lock addresses.
     bool writeOK(PacketPtr pkt) {
-        Request *req = pkt->req;
+        const RequestPtr &req = pkt->req;
         if (lockedAddrList.empty()) {
             // no locked addrs: nothing to check, store_conditional fails
             bool isLLSC = pkt->isLLSC();
@@ -151,32 +158,40 @@ class AbstractMemory : public MemObject
         }
     }
 
-    /** Number of total bytes read from this memory */
-    Stats::Vector bytesRead;
-    /** Number of instruction bytes read from this memory */
-    Stats::Vector bytesInstRead;
-    /** Number of bytes written to this memory */
-    Stats::Vector bytesWritten;
-    /** Number of read requests */
-    Stats::Vector numReads;
-    /** Number of write requests */
-    Stats::Vector numWrites;
-    /** Number of other requests */
-    Stats::Vector numOther;
-    /** Read bandwidth from this memory */
-    Stats::Formula bwRead;
-    /** Read bandwidth from this memory */
-    Stats::Formula bwInstRead;
-    /** Write bandwidth from this memory */
-    Stats::Formula bwWrite;
-    /** Total bandwidth from this memory */
-    Stats::Formula bwTotal;
-
-    /** Pointor to the System object.
-     * This is used for getting the number of masters in the system which is
+    /** Pointer to the System object.
+     * This is used for getting the number of requestors in the system which is
      * needed when registering stats
      */
     System *_system;
+
+    struct MemStats : public Stats::Group {
+        MemStats(AbstractMemory &mem);
+
+        void regStats() override;
+
+        const AbstractMemory &mem;
+
+        /** Number of total bytes read from this memory */
+        Stats::Vector bytesRead;
+        /** Number of instruction bytes read from this memory */
+        Stats::Vector bytesInstRead;
+        /** Number of bytes written to this memory */
+        Stats::Vector bytesWritten;
+        /** Number of read requests */
+        Stats::Vector numReads;
+        /** Number of write requests */
+        Stats::Vector numWrites;
+        /** Number of other requests */
+        Stats::Vector numOther;
+        /** Read bandwidth from this memory */
+        Stats::Formula bwRead;
+        /** Read bandwidth from this memory */
+        Stats::Formula bwInstRead;
+        /** Write bandwidth from this memory */
+        Stats::Formula bwWrite;
+        /** Total bandwidth from this memory */
+        Stats::Formula bwTotal;
+    } stats;
 
 
   private:
@@ -193,6 +208,8 @@ class AbstractMemory : public MemObject
 
     AbstractMemory(const Params* p);
     virtual ~AbstractMemory() {}
+
+    void initState() override;
 
     /**
      * See if this is a null memory that should never store data and
@@ -248,6 +265,19 @@ class AbstractMemory : public MemObject
     AddrRange getAddrRange() const;
 
     /**
+     * Transform a gem5 address space address into its physical counterpart
+     * in the host address space.
+     *
+     * @param addr Address in gem5's address space.
+     * @return Pointer to the corresponding memory address of the host.
+     */
+    inline uint8_t *
+    toHostAddr(Addr addr) const
+    {
+        return pmemAddr + addr - range.start();
+    }
+
+    /**
      * Get the memory size.
      *
      * @return the size of the memory
@@ -278,6 +308,14 @@ class AbstractMemory : public MemObject
     bool isInAddrMap() const { return inAddrMap; }
 
     /**
+     * When shadow memories are in use, KVM may want to make one or the other,
+     * but cannot map both into the guest address space.
+     *
+     * @return if this memory should be mapped into the KVM guest address space
+     */
+    bool isKvmMap() const { return kvmMap; }
+
+    /**
      * Perform an untimed memory access and update all the state
      * (e.g. locked addresses) and statistics accordingly. The packet
      * is turned into a response if required.
@@ -295,12 +333,6 @@ class AbstractMemory : public MemObject
      * @param pkt Packet performing the access
      */
     void functionalAccess(PacketPtr pkt);
-
-    /**
-     * Register Statistics
-     */
-    virtual void regStats();
-
 };
 
-#endif //__ABSTRACT_MEMORY_HH__
+#endif //__MEM_ABSTRACT_MEMORY_HH__

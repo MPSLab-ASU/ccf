@@ -23,17 +23,14 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Korey Sewell
 
 from m5.params import *
 from m5.proxy import *
 
-from BadDevice import BadDevice
-from Device import BasicPioDevice
-from Pci import PciConfigAll
-from Platform import Platform
-from Uart import Uart8250
+from m5.objects.BadDevice import BadDevice
+from m5.objects.Device import BasicPioDevice
+from m5.objects.Platform import Platform
+from m5.objects.Uart import Uart8250
 
 class MaltaCChip(BasicPioDevice):
     type = 'MaltaCChip'
@@ -50,11 +47,6 @@ class MaltaIO(BasicPioDevice):
     malta = Param.Malta(Parent.any, "Malta")
     frequency = Param.Frequency('1024Hz', "frequency of interrupts")
 
-class MaltaPChip(BasicPioDevice):
-    type = 'MaltaPChip'
-    cxx_header = "dev/mips/malta_pchip.hh"
-    malta = Param.Malta(Parent.any, "Malta")
-
 class Malta(Platform):
     type = 'Malta'
     cxx_header = "dev/mips/malta.hh"
@@ -67,6 +59,6 @@ class Malta(Platform):
     # earlier, since the bus object itself is typically defined at the
     # System level.
     def attachIO(self, bus):
-        self.cchip.pio = bus.master
-        self.io.pio = bus.master
-        self.uart.pio = bus.master
+        self.cchip.pio = bus.mem_side_ports
+        self.io.pio = bus.mem_side_ports
+        self.uart.pio = bus.mem_side_ports

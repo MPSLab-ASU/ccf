@@ -25,9 +25,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Stephen Hines
- *          Timothy M. Jones
  */
 
 #ifndef __POWER_PROCESS_HH__
@@ -36,27 +33,55 @@
 #include <string>
 #include <vector>
 
+#include "mem/page_table.hh"
 #include "sim/process.hh"
+#include "sim/syscall_abi.hh"
 
-class LiveProcess;
+namespace Loader
+{
 class ObjectFile;
-class System;
+} // namespace Loader;
 
-class PowerLiveProcess : public LiveProcess
+class PowerProcess : public Process
 {
   protected:
-    PowerLiveProcess(LiveProcessParams * params, ObjectFile *objFile);
+    PowerProcess(ProcessParams * params, ::Loader::ObjectFile *objFile);
 
-    void initState();
+    void initState() override;
 
   public:
     void argsInit(int intSize, int pageSize);
-    PowerISA::IntReg getSyscallArg(ThreadContext *tc, int &i);
-    /// Explicitly import the otherwise hidden getSyscallArg
-    using LiveProcess::getSyscallArg;
-    void setSyscallArg(ThreadContext *tc, int i, PowerISA::IntReg val);
-    void setSyscallReturn(ThreadContext *tc, SyscallReturn return_value);
+
+    struct SyscallABI : public GenericSyscallABI64
+    {
+        static const std::vector<int> ArgumentRegs;
+    };
 };
+
+namespace GuestABI
+{
+
+template <>
+struct Result<PowerProcess::SyscallABI, SyscallReturn>
+{
+    static void
+    store(ThreadContext *tc, const SyscallReturn &ret)
+    {
+        if (ret.suppressed() || ret.needsRetry())
+            return;
+
+        PowerISA::Cr cr = tc->readIntReg(PowerISA::INTREG_CR);
+        if (ret.successful()) {
+            cr.cr0.so = 0;
+        } else {
+            cr.cr0.so = 1;
+        }
+        tc->setIntReg(PowerISA::INTREG_CR, cr);
+        tc->setIntReg(PowerISA::ReturnValueReg, ret.encodedValue());
+    }
+};
+
+} // namespace GuestABI
 
 #endif // __POWER_PROCESS_HH__
 

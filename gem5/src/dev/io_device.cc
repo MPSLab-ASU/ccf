@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 ARM Limited
+ * Copyright (c) 2012, 2015 ARM Limited
  * All rights reserved.
  *
  * The license below extends only to copyright in the software and shall
@@ -36,38 +36,16 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Ali Saidi
- *          Nathan Binkert
  */
 
-#include "base/trace.hh"
-#include "debug/BusAddrRanges.hh"
 #include "dev/io_device.hh"
+
+#include "base/trace.hh"
+#include "debug/AddrRanges.hh"
 #include "sim/system.hh"
 
-PioPort::PioPort(PioDevice *dev)
-    : SimpleTimingPort(dev->name() + ".pio", dev), device(dev)
-{
-}
-
-Tick
-PioPort::recvAtomic(PacketPtr pkt)
-{
-    // @todo: We need to pay for this and not just zero it out
-    pkt->busFirstWordDelay = pkt->busLastWordDelay = 0;
-
-    return pkt->isRead() ? device->read(pkt) : device->write(pkt);
-}
-
-AddrRangeList
-PioPort::getAddrRanges() const
-{
-    return device->getAddrRanges();
-}
-
 PioDevice::PioDevice(const Params *p)
-    : MemObject(p), sys(p->system), pioPort(this)
+    : ClockedObject(p), sys(p->system), pioPort(this)
 {}
 
 PioDevice::~PioDevice()
@@ -82,25 +60,13 @@ PioDevice::init()
     pioPort.sendRangeChange();
 }
 
-BaseSlavePort &
-PioDevice::getSlavePort(const std::string &if_name, PortID idx)
+Port &
+PioDevice::getPort(const std::string &if_name, PortID idx)
 {
     if (if_name == "pio") {
         return pioPort;
     }
-    return MemObject::getSlavePort(if_name, idx);
-}
-
-unsigned int
-PioDevice::drain(DrainManager *dm)
-{
-    unsigned int count;
-    count = pioPort.drain(dm);
-    if (count)
-        setDrainState(Drainable::Draining);
-    else
-        setDrainState(Drainable::Drained);
-    return count;
+    return ClockedObject::getPort(if_name, idx);
 }
 
 BasicPioDevice::BasicPioDevice(const Params *p, Addr size)
@@ -113,7 +79,7 @@ BasicPioDevice::getAddrRanges() const
 {
     assert(pioSize != 0);
     AddrRangeList ranges;
-    DPRINTF(BusAddrRanges, "registering range: %#x-%#x\n", pioAddr, pioSize);
+    DPRINTF(AddrRanges, "registering range: %#x-%#x\n", pioAddr, pioSize);
     ranges.push_back(RangeSize(pioAddr, pioSize));
     return ranges;
 }

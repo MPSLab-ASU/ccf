@@ -1,4 +1,4 @@
-# Copyright (c) 2012 ARM Limited
+# Copyright (c) 2012, 2015-2017, 2019-2020 ARM Limited
 # All rights reserved.
 #
 # The license below extends only to copyright in the software and shall
@@ -32,9 +32,8 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Andreas Hansson
 
+from m5.objects.PowerState import PowerState
 from m5.SimObject import SimObject
 from m5.params import *
 from m5.proxy import *
@@ -47,3 +46,9 @@ class ClockedObject(SimObject):
     # The clock domain this clocked object belongs to, inheriting the
     # parent's clock domain by default
     clk_domain = Param.ClockDomain(Parent.clk_domain, "Clock domain")
+
+    # Power model for this ClockedObject
+    power_model = VectorParam.PowerModel([], "Power models")
+
+    power_state = Param.PowerState(PowerState(), "Power state")
+

@@ -1,4 +1,5 @@
 #
+# Copyright (c) 2013 Advanced Micro Devices, Inc.
 # Copyright (c) 2011 Mark D. Hill and David A. Wood
 # All rights reserved.
 #
@@ -43,6 +44,14 @@ class LocalVariableAST(StatementAST):
     def name(self):
         return self.var_name
 
+    def inline(self, get_type=False):
+        code = self.slicc.codeFormatter(fix_newlines=False)
+        return_type = self.generate(code)
+        if get_type:
+            return return_type, code
+        else:
+            return code
+
     def generate(self, code):
         type = self.type_ast.type;
         ident = "%s" % self.ident;
@@ -52,9 +61,10 @@ class LocalVariableAST(StatementAST):
                 self.pairs)
         self.symtab.newSymbol(v)
         if self.pointer or str(type) == "TBE" or (
+        # Check whether type is Entry by checking interface since
+        # entries in protocol files use AbstractCacheEntry as interfaces.
            "interface" in type and (
-               type["interface"] == "AbstractCacheEntry" or
-               type["interface"] == "AbstractEntry")):
+               type["interface"] == "AbstractCacheEntry")):
             code += "%s* %s" % (type.c_ident, ident)
         else:
             code += "%s %s" % (type.c_ident, ident)

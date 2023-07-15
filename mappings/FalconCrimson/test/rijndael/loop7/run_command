@@ -1,0 +1,4 @@
+#!/bin/bash
+
+~/git_repos/ullmann/Debug/Ullmann -EDGE loop108_edge.txt -NODE loop108_node.txt -X 4 -Y 4 -R 0 -MSA 1 -MAPII 10 -MAX_MAP 100 -MAX_II 50 -MAP_MODE 4 > debug
+

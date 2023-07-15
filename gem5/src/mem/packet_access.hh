@@ -1,4 +1,16 @@
 /*
+ * Copyright (c) 2015 ARM Limited
+ * All rights reserved
+ *
+ * The license below extends only to copyright in the software and shall
+ * not be construed as granting a license to any other intellectual
+ * property including but not limited to intellectual property relating
+ * to a hardware implementation of the functionality of the software
+ * licensed hereunder.  You may use the software subject to the license
+ * terms below provided that you ensure that this notice is replicated
+ * unmodified and in its entirety in all distributions of the software,
+ * modified or unmodified, in source code or in binary form.
+ *
  * Copyright (c) 2006 The Regents of The University of Michigan
  * All rights reserved.
  *
@@ -24,42 +36,91 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Ali Saidi
- *          Nathan Binkert
  */
-
-#include "arch/isa_traits.hh"
-#include "base/bigint.hh"
-#include "config/the_isa.hh"
-#include "mem/packet.hh"
-#include "sim/byteswap.hh"
 
 #ifndef __MEM_PACKET_ACCESS_HH__
 #define __MEM_PACKET_ACCESS_HH__
-// The memory system needs to have an endianness. This is the easiest
-// way to deal with it for now. At some point, we will have to remove
-// these functions and make the users do their own byte swapping since
-// the memory system does not in fact have an endianness.
 
-/** return the value of what is pointed to in the packet. */
+#include "mem/packet.hh"
+#include "sim/byteswap.hh"
+
 template <typename T>
 inline T
-Packet::get()
+Packet::getRaw() const
 {
     assert(flags.isSet(STATIC_DATA|DYNAMIC_DATA));
     assert(sizeof(T) <= size);
-    return TheISA::gtoh(*(T*)data);
+    return *(T*)data;
 }
 
-/** set the value in the data pointer to v. */
 template <typename T>
 inline void
-Packet::set(T v)
+Packet::setRaw(T v)
 {
     assert(flags.isSet(STATIC_DATA|DYNAMIC_DATA));
     assert(sizeof(T) <= size);
-    *(T*)data = TheISA::htog(v);
+    *(T*)data = v;
+}
+
+
+template <typename T>
+inline T
+Packet::getBE() const
+{
+    return betoh(getRaw<T>());
+}
+
+template <typename T>
+inline T
+Packet::getLE() const
+{
+    return letoh(getRaw<T>());
+}
+
+template <typename T>
+inline T
+Packet::get(ByteOrder endian) const
+{
+    switch (endian) {
+      case ByteOrder::big:
+        return getBE<T>();
+
+      case ByteOrder::little:
+        return getLE<T>();
+
+      default:
+        panic("Illegal byte order in Packet::get()\n");
+    };
+}
+
+template <typename T>
+inline void
+Packet::setBE(T v)
+{
+    setRaw(htobe(v));
+}
+
+template <typename T>
+inline void
+Packet::setLE(T v)
+{
+    setRaw(htole(v));
+}
+
+template <typename T>
+inline void
+Packet::set(T v, ByteOrder endian)
+{
+    switch (endian) {
+      case ByteOrder::big:
+        return setBE<T>(v);
+
+      case ByteOrder::little:
+        return setLE<T>(v);
+
+      default:
+        panic("Illegal byte order in Packet::set()\n");
+    };
 }
 
 #endif //__MEM_PACKET_ACCESS_HH__

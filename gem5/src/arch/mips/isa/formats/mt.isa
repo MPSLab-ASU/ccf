@@ -25,8 +25,6 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Authors: Korey Sewell
 
 ////////////////////////////////////////////////////////////////////
 //
@@ -34,41 +32,34 @@
 //
 
 output header {{
-        /**
-         * Base class for MIPS MT ASE operations.
-         */
-        class MTOp : public MipsStaticInst
+    /**
+     * Base class for MIPS MT ASE operations.
+     */
+    class MTOp : public MipsStaticInst
+    {
+      protected:
+        using MipsStaticInst::MipsStaticInst;
+
+        std::string generateDisassembly(
+                Addr pc, const Loader::SymbolTable *symtab) const override;
+
+        bool user_mode = false;
+    };
+
+    class MTUserModeOp : public MTOp
+    {
+      protected:
+        MTUserModeOp(const char *mnem, MachInst _machInst, OpClass __opClass) :
+            MTOp(mnem, _machInst, __opClass)
         {
-                protected:
-
-                /// Constructor
-                MTOp(const char *mnem, MachInst _machInst, OpClass __opClass) :
-                    MipsStaticInst(mnem, _machInst, __opClass), user_mode(false)
-                {
-                }
-
-               std::string generateDisassembly(Addr pc, const SymbolTable *symtab) const;
-
-                bool user_mode;
-        };
-
-        class MTUserModeOp : public MTOp
-        {
-                protected:
-
-                /// Constructor
-                MTUserModeOp(const char *mnem, MachInst _machInst, OpClass __opClass) :
-                    MTOp(mnem, _machInst, __opClass)
-                {
-                    user_mode = true;
-                }
-
-            //std::string generateDisassembly(Addr pc, const SymbolTable *symtab) const;
-        };
+            user_mode = true;
+        }
+    };
 }};
 
 output decoder {{
-    std::string MTOp::generateDisassembly(Addr pc, const SymbolTable *symtab) const
+    std::string
+    MTOp::generateDisassembly(Addr pc, const Loader::SymbolTable *symtab) const
     {
         std::stringstream ss;
 
@@ -85,37 +76,39 @@ output decoder {{
 }};
 
 output header {{
-   void getThrRegExValues(%(CPU_exec_context)s *xc,
+   void getThrRegExValues(ExecContext *xc,
                           MipsISA::VPEConf0Reg &vpe_conf0,
                           MipsISA::TCBindReg &tc_bind_mt,
                           MipsISA::TCBindReg &tc_bind,
                           MipsISA::VPEControlReg &vpe_control,
                           MipsISA::MVPConf0Reg &mvp_conf0);
 
-   void getMTExValues(%(CPU_exec_context)s *xc, MipsISA::Config3Reg &config3);
+   void getMTExValues(ExecContext *xc, MipsISA::Config3Reg &config3);
 }};
 
 output exec {{
-    void getThrRegExValues(%(CPU_exec_context)s *xc,
+    void getThrRegExValues(ExecContext *xc,
             VPEConf0Reg &vpe_conf0, TCBindReg &tc_bind_mt,
             TCBindReg &tc_bind, VPEControlReg &vpe_control,
             MVPConf0Reg &mvp_conf0)
     {
         vpe_conf0 = xc->readMiscReg(MISCREG_VPE_CONF0);
-        tc_bind_mt = xc->readRegOtherThread(MISCREG_TC_BIND + Misc_Reg_Base);
+        tc_bind_mt = readRegOtherThread(xc, RegId(MiscRegClass,
+                                                  MISCREG_TC_BIND));
         tc_bind = xc->readMiscReg(MISCREG_TC_BIND);
         vpe_control = xc->readMiscReg(MISCREG_VPE_CONTROL);
         mvp_conf0 = xc->readMiscReg(MISCREG_MVP_CONF0);
     }
 
-    void getMTExValues(%(CPU_exec_context)s *xc, Config3Reg &config3)
+    void getMTExValues(ExecContext *xc, Config3Reg &config3)
     {
         config3 = xc->readMiscReg(MISCREG_CONFIG3);
     }
 }};
 
 def template ThreadRegisterExecute {{
-        Fault %(class_name)s::execute(%(CPU_exec_context)s *xc, Trace::InstRecord *traceData) const
+        Fault %(class_name)s::execute(
+            ExecContext *xc, Trace::InstRecord *traceData) const
         {
             Fault fault = NoFault;
             int64_t data M5_VAR_USED;
@@ -140,7 +133,7 @@ def template ThreadRegisterExecute {{
                     %(code)s;
                 }
             } else {
-                fault = new CoprocessorUnusableFault(0);
+                fault = std::make_shared<CoprocessorUnusableFault>(0);
             }
 
             if(fault == NoFault)
@@ -153,7 +146,8 @@ def template ThreadRegisterExecute {{
 }};
 
 def template MTExecute{{
-        Fault %(class_name)s::execute(%(CPU_exec_context)s *xc, Trace::InstRecord *traceData) const
+        Fault %(class_name)s::execute(
+            ExecContext *xc, Trace::InstRecord *traceData) const
         {
                 Fault fault = NoFault;
                 %(op_decl)s;
@@ -167,10 +161,10 @@ def template MTExecute{{
                     if (config3.mt == 1) {
                         %(code)s;
                     } else {
-                        fault = new ReservedInstructionFault();
+                        fault = std::make_shared<ReservedInstructionFault>();
                     }
                 } else {
-                    fault = new CoprocessorUnusableFault(0);
+                    fault = std::make_shared<CoprocessorUnusableFault>(0);
                 }
 
                 if(fault == NoFault)

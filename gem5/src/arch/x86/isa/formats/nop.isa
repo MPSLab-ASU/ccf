@@ -34,8 +34,6 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Authors: Gabe Black
 
 ////////////////////////////////////////////////////////////////////
 //
@@ -56,13 +54,13 @@ output header {{
         }
 
         std::string generateDisassembly(Addr pc,
-                const SymbolTable *symtab) const;
+                const Loader::SymbolTable *symtab) const override;
     };
 }};
 
 output decoder {{
     std::string NopInst::generateDisassembly(Addr PC,
-            const SymbolTable *symtab) const
+            const Loader::SymbolTable *symtab) const
     {
         std::stringstream response;
 
@@ -72,7 +70,7 @@ output decoder {{
 }};
 
 def template NopExecute {{
-    Fault %(class_name)s::execute(%(CPU_exec_context)s *xc,
+    Fault %(class_name)s::execute(ExecContext *xc,
             Trace::InstRecord *traceData) const
     {
         return NoFault;

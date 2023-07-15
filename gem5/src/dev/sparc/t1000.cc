@@ -24,27 +24,22 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Ali Saidi
  */
 
 /** @file
  * Implementation of T1000 platform.
  */
 
+#include "dev/sparc/t1000.hh"
+
 #include <deque>
 #include <string>
 #include <vector>
 
-#include "config/the_isa.hh"
 #include "cpu/intr_control.hh"
-#include "dev/sparc/t1000.hh"
-#include "dev/terminal.hh"
 #include "sim/system.hh"
 
 using namespace std;
-//Should this be AlphaISA?
-using namespace TheISA;
 
 T1000::T1000(const Params *p)
     : Platform(p), system(p->system)

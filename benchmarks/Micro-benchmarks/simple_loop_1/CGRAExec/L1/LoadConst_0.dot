@@ -1,0 +1,28 @@
+digraph LoadConst { 
+{
+0 [color=red ];
+
+1 [color=red ];
+
+2 [color=red ];
+
+3 [color=red ];
+
+4 [color=red ];
+
+5 [color=red ];
+
+6 [color=red ];
+5 -> 0 [style=bold, color=red, label=1] 
+4 -> 1 [style=bold, color=red, label=1] 
+0 -> 2
+1 -> 3
+2 -> 4 [style=bold, color=blue ]
+3 -> 4
+1 -> 4
+0 -> 5
+5 -> 6
+
+}
+
+}

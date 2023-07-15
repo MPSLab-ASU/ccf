@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2013 ARM Limited
+ * Copyright (c) 2010-2013, 2015, 2017 ARM Limited
  * All rights reserved
  *
  * The license below extends only to copyright in the software and shall
@@ -33,8 +33,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Chris Emmons
  */
 
 
@@ -61,42 +59,63 @@
  * content of an underrun frame.
  *
  * KNOWN ISSUES
- * 1.  The default kernel driver used in testing sets the line count to one
- * less than the expected 768.  However, it also sets the v_count to 767.
- * The controller specifies that 1 should be added to v_count but does not
- * specify adding 1 to the line count.  The driver is probably wrong.
- * However, to sync these two numbers up, this model uses fb_line_count and
- * fb_line_length rather than using v_data or h_data values to determine the
- * width and height of the frame; those values are ignored.
- * 2.  The HDLcd is implemented here as an AmbaDmaDevice, but it doesn't have
- * an AMBA ID as far as I know.  That is the only bit of the AmbaDmaDevice
- * interface that is irrelevant to it, so a fake AMBA ID is used for now.
- * I didn't think inserting an extra layer of hierachy between AmbaDmaDevice
- * and DmaDevice would be helpful to anyone else, but that may be the right
- * answer.
- * 3.  The internal buffer size is either 1 or 2 KB depending on which
- * specification is referenced for the different Versatile Express tiles.
- * This implementation uses the larger 2 KB buffer by default.
+ * <ul>
+ *   <li>The HDLcd is implemented here as an AmbaDmaDevice, but it
+ *       doesn't have an AMBA ID as far as I know.  That is the only
+ *       bit of the AmbaDmaDevice interface that is irrelevant to it,
+ *       so a fake AMBA ID is used for now.  I didn't think inserting
+ *       an extra layer of hierachy between AmbaDmaDevice and
+ *       DmaDevice would be helpful to anyone else, but that may be
+ *       the right answer.
+ * </ul>
  */
 
 #ifndef __DEV_ARM_HDLCD_HH__
 #define __DEV_ARM_HDLCD_HH__
 
 #include <fstream>
+#include <memory>
 
+#include "base/framebuffer.hh"
+#include "base/imgwriter.hh"
+#include "base/output.hh"
 #include "dev/arm/amba_device.hh"
-#include "params/HDLcd.hh"
+#include "dev/pixelpump.hh"
 #include "sim/serialize.hh"
 
 class VncInput;
-class Bitmap;
+struct HDLcdParams;
+class HDLcdPixelPump;
 
 class HDLcd: public AmbaDmaDevice
 {
-  protected:
-    /** fake AMBA ID -- unused */
-    static const uint64_t AMBA_ID       = ULL(0xb105f00d00141000);
+  public:
+    HDLcd(const HDLcdParams *p);
+    ~HDLcd();
 
+    void regStats() override;
+
+    void serialize(CheckpointOut &cp) const override;
+    void unserialize(CheckpointIn &cp) override;
+
+    void drainResume() override;
+
+  public: // IO device interface
+    Tick read(PacketPtr pkt) override;
+    Tick write(PacketPtr pkt) override;
+
+    AddrRangeList getAddrRanges() const override { return addrRanges; }
+
+  protected: // Parameters
+    VncInput *vnc;
+    const bool workaroundSwapRB;
+    const bool workaroundDmaLineCount;
+    const AddrRangeList addrRanges;
+    const bool enableCapture;
+    const Addr pixelBufferSize;
+    const Tick virtRefreshRate;
+
+  protected: // Register handling
     /** ARM HDLcd register offsets */
     enum RegisterOffset {
         Version          = 0x0000,
@@ -122,25 +141,23 @@ class HDLcd: public AmbaDmaDevice
         Pixel_Format     = 0x0240,
         Red_Select       = 0x0244,
         Green_Select     = 0x0248,
-        Blue_Select      = 0x024C };
+        Blue_Select      = 0x024C,
+    };
 
     /** Reset value for Bus_Options register */
-    static const size_t BUS_OPTIONS_RESETV = 0x408;
+    static constexpr size_t BUS_OPTIONS_RESETV = 0x408;
 
     /** Reset value for Version register */
-    static const size_t VERSION_RESETV = 0x1CDC0000;
-
-    /** max number of outstanding DMA requests possible */
-    static const size_t MAX_OUTSTANDING_DMA_REQ_CAPACITY = 16;
-
-    /** max number of beats delivered in one dma burst */
-    static const size_t MAX_BURST_LEN = 16;
-
-    /** size of internal buffer in bytes */
-    static const size_t PIXEL_BUFFER_CAPACITY = 2048;
+    static constexpr size_t VERSION_RESETV = 0x1CDC0000;
 
     /** AXI port width in bytes */
-    static const size_t AXI_PORT_WIDTH = 8;
+    static constexpr size_t AXI_PORT_WIDTH = 8;
+
+    /** max number of beats delivered in one dma burst */
+    static constexpr size_t MAX_BURST_LEN = 16;
+
+    /** Maximum number of bytes per pixel */
+    static constexpr size_t MAX_PIXEL_SIZE = 4;
 
     /**
      * @name RegisterFieldLayouts
@@ -153,12 +170,10 @@ class HDLcd: public AmbaDmaDevice
         Bitfield<31,16> product_id;
     EndBitUnion(VersionReg)
 
-    BitUnion32(InterruptReg)
-        Bitfield<0> dma_end;
-        Bitfield<1> bus_error;
-        Bitfield<2> vsync;
-        Bitfield<3> underrun;
-    EndBitUnion(InterruptReg)
+    static constexpr uint32_t INT_DMA_END = (1UL << 0);
+    static constexpr uint32_t INT_BUS_ERROR = (1UL << 1);
+    static constexpr uint32_t INT_VSYNC = (1UL << 2);
+    static constexpr uint32_t INT_UNDERRUN = (1UL << 3);
 
     BitUnion32(FbLineCountReg)
         Bitfield<11,0>  fb_line_count;
@@ -213,15 +228,13 @@ class HDLcd: public AmbaDmaDevice
      * HDLCD register contents.
      */
     /**@{*/
-    VersionReg version;             /**< Version register */
-    InterruptReg int_rawstat;       /**< Interrupt raw status register */
-    InterruptReg int_clear;         /**< Interrupt clear register */
-    InterruptReg int_mask;          /**< Interrupt mask register */
-    InterruptReg int_status;        /**< Interrupt status register */
+    const VersionReg version;       /**< Version register */
+    uint32_t int_rawstat;           /**< Interrupt raw status register */
+    uint32_t int_mask;              /**< Interrupt mask register */
     uint32_t fb_base;               /**< Frame buffer base address register */
     uint32_t fb_line_length;        /**< Frame buffer Line length register */
     FbLineCountReg fb_line_count;   /**< Frame buffer Line count register */
-    uint32_t fb_line_pitch;         /**< Frame buffer Line pitch register */
+    int32_t fb_line_pitch;          /**< Frame buffer Line pitch register */
     BusOptsReg bus_options;         /**< Bus options register */
     TimingReg v_sync;               /**< Vertical sync width register */
     TimingReg v_back_porch;         /**< Vertical back porch width register */
@@ -239,266 +252,148 @@ class HDLcd: public AmbaDmaDevice
     ColorSelectReg blue_select;     /**< Blue color select register */
     /** @} */
 
-    /** Pixel clock period */
-    const Tick pixelClock;
+    uint32_t readReg(Addr offset);
+    void writeReg(Addr offset, uint32_t value);
 
-    /** VNC server */
-    VncInput *vnc;
+    PixelConverter pixelConverter() const;
+    DisplayTimings displayTimings() const;
 
-    /** Helper to write out bitmaps */
-    Bitmap *bmp;
+    void createDmaEngine();
 
-    /** Picture of what the current frame buffer looks like */
-    std::ostream *pic;
+    void cmdEnable();
+    void cmdDisable();
+
+    bool enabled() const { return command.enable; }
+
+  public: // Pixel pump callbacks
+    bool pxlNext(Pixel &p);
+    void pxlVSyncBegin();
+    void pxlVSyncEnd();
+    void pxlUnderrun();
+    void pxlFrameDone();
+
+  protected: // Interrupt handling
+    /**
+     * Assign new interrupt values and update interrupt signals
+     *
+     * A new interrupt is scheduled signalled if the set of unmasked
+     * interrupts goes empty to non-empty. Conversely, if the set of
+     * unmasked interrupts goes from non-empty to empty, the interrupt
+     * signal is cleared.
+     *
+     * @param ints New <i>raw</i> interrupt status
+     * @param mask New interrupt mask
+     */
+    void setInterrupts(uint32_t ints, uint32_t mask);
 
     /**
-     * Event wrapper for dmaDone()
+     * Convenience function to update the interrupt mask
      *
-     * This event call pushes its this pointer onto the freeDoneEvent vector
-     * and calls dmaDone() when triggered.  While most of the time the burst
-     * length of a transaction will be the max burst length set by the driver,
-     * any trailing bytes must be handled with smaller lengths thus requiring
-     * the configurable burst length option.
+     * @see setInterrupts
+     * @param mask New interrupt mask
      */
-    class DmaDoneEvent : public Event
+    void intMask(uint32_t mask) { setInterrupts(int_rawstat, mask); }
+
+    /**
+     * Convenience function to raise a new interrupt
+     *
+     * @see setInterrupts
+     * @param ints Set of interrupts to raise
+     */
+    void intRaise(uint32_t ints) {
+        setInterrupts(int_rawstat | ints, int_mask);
+    }
+
+    /**
+     * Convenience function to clear interrupts
+     *
+     * @see setInterrupts
+     * @param ints Set of interrupts to clear
+     */
+    void intClear(uint32_t ints) {
+        setInterrupts(int_rawstat & ~ints, int_mask);
+    }
+
+    /** Masked interrupt status register */
+    uint32_t intStatus() const { return int_rawstat & int_mask; }
+
+  protected: // Pixel output
+    class PixelPump : public BasePixelPump
     {
-      private:
-        /** Reference to HDLCD that issued the corresponding DMA transaction */
-        HDLcd &obj;
-
-        /** Transaction size */
-        size_t transSize;
-
       public:
-        /**
-         * Constructor.
-         *
-         * @param _obj HDLCD that issued the corresponding DMA transaction
-         */
-        DmaDoneEvent(HDLcd *_obj)
-            : Event(), obj(*_obj), transSize(0) {}
+        PixelPump(HDLcd &p, ClockDomain &pxl_clk, unsigned pixel_chunk)
+            : BasePixelPump(p, pxl_clk, pixel_chunk), parent(p) {}
 
-        /**
-         * Sets the size of this transaction.
-         *
-         * @param len size of the transaction in bytes
-         */
-        void setTransactionSize(size_t len) {
-            transSize = len;
+        void dumpSettings();
+
+      protected:
+        bool nextPixel(Pixel &p) override { return parent.pxlNext(p); }
+
+        void onVSyncBegin() override { return parent.pxlVSyncBegin(); }
+        void onVSyncEnd() override { return parent.pxlVSyncEnd(); }
+
+        void onUnderrun(unsigned x, unsigned y) override {
+            parent.pxlUnderrun();
         }
 
-        /**
-         * Gets the size of this transaction.
-         *
-         * @return size of this transaction in bytes
-         */
-        size_t getTransactionSize() const {
-            return transSize;
-        }
+        void onFrameDone() override { parent.pxlFrameDone(); }
 
-        void process() {
-            obj.dmaDone(this);
-        }
-
-        const std::string name() const {
-            return obj.name() + ".DmaDoneEvent";
-        }
+      protected:
+        HDLcd &parent;
     };
 
-    /** Start time for frame buffer dma read */
-    Tick frameReadStartTime;
+    /** Handler for fast frame refresh in KVM-mode */
+    void virtRefresh();
+    EventFunctionWrapper virtRefreshEvent;
 
-    /** Starting address for the current frame */
-    Addr dmaStartAddr;
+    /** Helper to write out bitmaps */
+    std::unique_ptr<ImgWriter> imgWriter;
 
-    /** Next address the dma should read from */
-    Addr dmaCurAddr;
+    /** Image Format */
+    Enums::ImageFormat imgFormat;
 
-    /** One byte past the address of the last byte the dma should read
-      * from */
-    Addr dmaMaxAddr;
+    /** Picture of what the current frame buffer looks like */
+    OutputStream *pic;
 
-    /** Number of pending dma reads */
-    size_t dmaPendingNum;
+    /** Cached pixel converter, set when the converter is enabled. */
+    PixelConverter conv;
 
-    /** Flag indicating whether current frame has underrun */
-    bool frameUnderrun;
+    PixelPump pixelPump;
 
-    /** HDLcd virtual display buffer */
-    uint8_t *virtualDisplayBuffer;
-
-    /** Size of the pixel buffer */
-    size_t pixelBufferSize;
-
-    /** Index of the next pixel to render */
-    size_t pixelIndex;
-
-    /** Flag indicating whether video parameters need updating */
-    bool doUpdateParams;
-
-    /** Flag indicating whether a frame read / display is in progress */
-    bool frameUnderway;
-
-    /**
-     * Number of bytes in flight from DMA that have not reached the pixel
-     * buffer yet
-     */
-    uint32_t dmaBytesInFlight;
-
-    /**
-     * Gets the number of oustanding DMA transactions allowed on the bus at a
-     * time.
-     *
-     * @return gets the driver-specified number of outstanding DMA transactions
-     *         from the hdlcd controller that are allowed on the bus at a time
-     */
-    inline uint16_t maxOutstandingDma() const {
-        return bus_options.max_outstanding;
-    }
-
-    /**
-     * Gets the number of bytes free in the pixel buffer.
-     *
-     * @return number of bytes free in the internal pixel buffer
-     */
-    inline uint32_t bytesFreeInPixelBuffer() const {
-        return PIXEL_BUFFER_CAPACITY - (pixelBufferSize + dmaBytesInFlight);
-    }
-
-    /**
-     * Gets the number of beats-per-burst for bus transactions.
-     *
-     * @return number of beats-per-burst per HDLcd DMA transaction
-     */
-    inline size_t dmaBurstLength() const {
-        assert(bus_options.burst_len <= MAX_BURST_LEN);
-        return bus_options.burst_len;
-    }
-
-    /**
-     * Gets the number of bytes per pixel.
-     *
-     * @return bytes per pixel
-     */
-    inline size_t bytesPerPixel() const {
-        return pixel_format.bytes_per_pixel + 1;
-    }
-
-    /**
-     * Gets frame buffer width.
-     *
-     * @return frame buffer width (pixels per line)
-     */
-    inline size_t width() const {
-        return fb_line_length / bytesPerPixel();
-    }
-
-    /**
-     * Gets frame buffer height.
-     *
-     * @return frame buffer height (lines per panel)
-     */
-    inline size_t height() const {
-        return fb_line_count.fb_line_count;
-    }
-
-    /**
-     * Gets the total number of pixel clocks per display line.
-     *
-     * @return number of pixel clocks per display line including porch delays
-     *         and horizontal sync time
-     */
-    inline uint64_t PClksPerLine() const {
-        return h_back_porch.val + 1 +
-               h_data.val + 1 +
-               h_front_porch.val + 1 +
-               h_sync.val + 1;
-    }
-
-    /** Send updated parameters to the vnc server */
-    void updateVideoParams(bool unserializing);
-
-    /** Generates an interrupt */
-    void generateInterrupt();
-
-    /** Start reading the next frame */
-    void startFrame();
-
-    /** End of frame reached */
-    void endFrame();
-
-    /** Generate DMA read requests from frame buffer into pixel buffer */
-    void fillPixelBuffer();
-
-    /** DMA done event */
-    void dmaDone(DmaDoneEvent *event);
-
-    /** Called when it is time to render a pixel */
-    void renderPixel();
-
-    /** Start of frame event */
-    EventWrapper<HDLcd, &HDLcd::startFrame> startFrameEvent;
-
-    /** End of frame event */
-    EventWrapper<HDLcd, &HDLcd::endFrame> endFrameEvent;
-
-    /** Pixel render event */
-    EventWrapper<HDLcd, &HDLcd::renderPixel> renderPixelEvent;
-
-    /** Fill fifo */
-    EventWrapper<HDLcd, &HDLcd::fillPixelBuffer> fillPixelBufferEvent;
-
-    /** Wrapper to create an event out of the interrupt */
-    EventWrapper<HDLcd, &HDLcd::generateInterrupt> intEvent;
-
-    /**@{*/
-    /**
-     * All pre-allocated DMA done events
-     *
-     * The HDLCD model preallocates maxOutstandingDma() number of
-     * DmaDoneEvents to avoid having to heap allocate every single
-     * event when it is needed. In order to keep track of which events
-     * are in flight and which are ready to be used, we use two
-     * different vectors. dmaDoneEventAll contains <i>all</i>
-     * DmaDoneEvents that the object may use, while dmaDoneEventFree
-     * contains a list of currently <i>unused</i> events. When an
-     * event needs to be scheduled, the last element of the
-     * dmaDoneEventFree is used and removed from the list. When an
-     * event fires, it is added to the end of the
-     * dmaEventFreeList. dmaDoneEventAll is never used except for in
-     * initialization and serialization.
-     */
-    std::vector<DmaDoneEvent> dmaDoneEventAll;
-
-    /** Unused DMA done events that are ready to be scheduled */
-    std::vector<DmaDoneEvent *> dmaDoneEventFree;
-    /**@}*/
-
-    bool enableCapture;
-
-  public:
-    typedef HDLcdParams Params;
-
-    const Params *
-    params() const
+  protected: // DMA handling
+    class DmaEngine : public DmaReadFifo
     {
-        return dynamic_cast<const Params *>(_params);
-    }
-    HDLcd(const Params *p);
-    ~HDLcd();
+      public:
+        DmaEngine(HDLcd &_parent, size_t size,
+                  unsigned request_size, unsigned max_pending,
+                  size_t line_size, ssize_t line_pitch, unsigned num_lines);
 
-    virtual Tick read(PacketPtr pkt);
-    virtual Tick write(PacketPtr pkt);
+        void startFrame(Addr fb_base);
+        void abortFrame();
+        void dumpSettings();
 
-    virtual void serialize(std::ostream &os);
-    virtual void unserialize(Checkpoint *cp, const std::string &section);
+        void serialize(CheckpointOut &cp) const override;
+        void unserialize(CheckpointIn &cp) override;
 
-    /**
-     * Determine the address ranges that this device responds to.
-     *
-     * @return a list of non-overlapping address ranges
-     */
-    AddrRangeList getAddrRanges() const;
+      protected:
+        void onEndOfBlock() override;
+        void onIdle() override;
+
+        HDLcd &parent;
+        const size_t lineSize;
+        const ssize_t linePitch;
+        const unsigned numLines;
+
+        Addr nextLineAddr;
+        Addr frameEnd;
+    };
+
+    std::unique_ptr<DmaEngine> dmaEngine;
+
+  protected: // Statistics
+    struct {
+        Stats::Scalar underruns;
+    } stats;
 };
 
 #endif

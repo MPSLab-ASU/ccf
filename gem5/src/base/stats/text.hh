@@ -1,4 +1,16 @@
 /*
+ * Copyright (c) 2019-2020 Arm Limited
+ * All rights reserved.
+ *
+ * The license below extends only to copyright in the software and shall
+ * not be construed as granting a license to any other intellectual
+ * property including but not limited to intellectual property relating
+ * to a hardware implementation of the functionality of the software
+ * licensed hereunder.  You may use the software subject to the license
+ * terms below provided that you ensure that this notice is replicated
+ * unmodified and in its entirety in all distributions of the software,
+ * modified or unmodified, in source code or in binary form.
+ *
  * Copyright (c) 2004-2005 The Regents of The University of Michigan
  * All rights reserved.
  *
@@ -24,14 +36,13 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Nathan Binkert
  */
 
 #ifndef __BASE_STATS_TEXT_HH__
 #define __BASE_STATS_TEXT_HH__
 
 #include <iosfwd>
+#include <stack>
 #include <string>
 
 #include "base/stats/output.hh"
@@ -46,11 +57,15 @@ class Text : public Output
     bool mystream;
     std::ostream *stream;
 
+    // Object/group path
+    std::stack<std::string> path;
+
   protected:
     bool noOutput(const Info &info);
 
   public:
     bool descriptions;
+    bool spaces;
 
   public:
     Text();
@@ -60,25 +75,30 @@ class Text : public Output
 
     void open(std::ostream &stream);
     void open(const std::string &file);
+    std::string statName(const std::string &name) const;
 
     // Implement Visit
-    virtual void visit(const ScalarInfo &info);
-    virtual void visit(const VectorInfo &info);
-    virtual void visit(const DistInfo &info);
-    virtual void visit(const VectorDistInfo &info);
-    virtual void visit(const Vector2dInfo &info);
-    virtual void visit(const FormulaInfo &info);
-    virtual void visit(const SparseHistInfo &info);
+    void visit(const ScalarInfo &info) override;
+    void visit(const VectorInfo &info) override;
+    void visit(const DistInfo &info) override;
+    void visit(const VectorDistInfo &info) override;
+    void visit(const Vector2dInfo &info) override;
+    void visit(const FormulaInfo &info) override;
+    void visit(const SparseHistInfo &info) override;
+
+    // Group handling
+    void beginGroup(const char *name) override;
+    void endGroup() override;
 
     // Implement Output
-    virtual bool valid() const;
-    virtual void begin();
-    virtual void end();
+    bool valid() const override;
+    void begin() override;
+    void end() override;
 };
 
 std::string ValueToString(Result value, int precision);
 
-Output *initText(const std::string &filename, bool desc);
+Output *initText(const std::string &filename, bool desc, bool spaces);
 
 } // namespace Stats
 

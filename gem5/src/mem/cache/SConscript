@@ -25,21 +25,31 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Nathan Binkert
 
 Import('*')
 
-SimObject('BaseCache.py')
+SimObject('Cache.py')
 
 Source('base.cc')
 Source('cache.cc')
-Source('blk.cc')
+Source('cache_blk.cc')
 Source('mshr.cc')
 Source('mshr_queue.cc')
+Source('noncoherent_cache.cc')
+Source('write_queue.cc')
+Source('write_queue_entry.cc')
 
 DebugFlag('Cache')
+DebugFlag('CacheComp')
 DebugFlag('CachePort')
 DebugFlag('CacheRepl')
 DebugFlag('CacheTags')
+DebugFlag('CacheVerbose')
 DebugFlag('HWPrefetch')
+
+# CacheTags is so outrageously verbose, printing the cache's entire tag
+# array on each timing access, that you should probably have to ask for
+# it explicitly even above and beyond CacheAll.
+CompoundFlag('CacheAll', ['Cache', 'CacheComp', 'CachePort', 'CacheRepl',
+                          'CacheVerbose', 'HWPrefetch'])
+

@@ -24,24 +24,24 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Nathan Binkert
- *          Lisa Hsu
- *          Ali Saidi
  */
 
-#ifndef __SYSTEM_EVENTS_HH__
-#define __SYSTEM_EVENTS_HH__
+#ifndef __KERN_SYSTEM_EVENTS_HH__
+#define __KERN_SYSTEM_EVENTS_HH__
 
 #include "cpu/pc_event.hh"
 
-class SkipFuncEvent : public PCEvent
+class SkipFuncBase : public PCEvent
 {
+  protected:
+    virtual void returnFromFuncIn(ThreadContext *tc) = 0;
+
   public:
-    SkipFuncEvent(PCEventQueue *q, const std::string &desc, Addr addr)
-        : PCEvent(q, desc, addr)
+    SkipFuncBase(PCEventScope *s, const std::string &desc, Addr addr) :
+        PCEvent(s, desc, addr)
     {}
-    virtual void process(ThreadContext *tc);
+
+    void process(ThreadContext *tc) override;
 };
 
-#endif // __SYSTEM_EVENTS_HH__
+#endif // __KERN_SYSTEM_EVENTS_HH__

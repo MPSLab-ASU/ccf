@@ -33,11 +33,10 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Gabe Black
  */
 
 #include "arch/x86/bios/e820.hh"
+
 #include "arch/x86/isa_traits.hh"
 #include "mem/port_proxy.hh"
 #include "sim/byteswap.hh"
@@ -48,8 +47,8 @@ using namespace X86ISA;
 template<class T>
 void writeVal(T val, PortProxy& proxy, Addr &addr)
 {
-    T guestVal = htog(val);
-    proxy.writeBlob(addr, (uint8_t *)&guestVal, sizeof(T));
+    T guestVal = htole(val);
+    proxy.writeBlob(addr, &guestVal, sizeof(T));
     addr += sizeof(T);
 }
 
@@ -61,9 +60,9 @@ void X86ISA::E820Table::writeTo(PortProxy& proxy, Addr countAddr, Addr addr)
     // would be capable of handling.
     assert(e820Nr <= 128);
 
-    uint8_t guestE820Nr = htog(e820Nr);
+    uint8_t guestE820Nr = htole(e820Nr);
 
-    proxy.writeBlob(countAddr, (uint8_t *)&guestE820Nr, sizeof(guestE820Nr));
+    proxy.writeBlob(countAddr, &guestE820Nr, sizeof(guestE820Nr));
 
     for (int i = 0; i < e820Nr; i++) {
         writeVal(entries[i]->addr, proxy, addr);

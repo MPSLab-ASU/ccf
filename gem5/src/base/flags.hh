@@ -24,8 +24,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Nathan Binkert
  */
 
 #ifndef __BASE_FLAGS_HH__
@@ -39,12 +37,24 @@ class Flags
 
   public:
     typedef T Type;
+
+    /**
+     * @ingroup api_flags
+     * @{
+     */
     Flags() : _flags(0) {}
     Flags(Type flags) : _flags(flags) {}
+    /** @} */ // end of api_flags
 
+    /**
+     * @ingroup api_flags
+     */
     operator const Type() const { return _flags; }
 
-    template <typename U> 
+    /**
+     * @ingroup api_flags
+     */
+    template <typename U>
     const Flags<T> &
     operator=(const Flags<U> &flags)
     {
@@ -52,13 +62,20 @@ class Flags
         return *this;
     }
 
+    /**
+     * @ingroup api_flags
+     */
     const Flags<T> &
     operator=(T flags)
     {
         _flags = flags;
         return *this;
     }
-    
+
+    /**
+     * @ingroup api_flags
+     * @{
+     */
     bool isSet() const { return _flags; }
     bool isSet(Type flags) const { return (_flags & flags); }
     bool allSet() const { return !(~_flags); }
@@ -74,6 +91,7 @@ class Flags
     {
         _flags = (_flags & ~mask) | (flags & mask);
     }
+    /** @} */ // end of api_flags
 };
 
 #endif // __BASE_FLAGS_HH__

@@ -1,4 +1,5 @@
 // Copyright (c) 2007-2008 The Hewlett-Packard Development Company
+// Copyright (c) 2015 Advanced Micro Devices, Inc.
 // All rights reserved.
 //
 // The license below extends only to copyright in the software and shall
@@ -37,8 +38,6 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Authors: Gabe Black
 
 def operand_types {{
     'sb' : 'int8_t',
@@ -49,6 +48,7 @@ def operand_types {{
     'udw' : 'uint32_t',
     'sqw' : 'int64_t',
     'uqw' : 'uint64_t',
+    'u2qw' : 'std::array<uint64_t, 2>',
     'sf' : 'float',
     'df' : 'double',
 }};
@@ -96,6 +96,8 @@ def operands {{
         'DestReg':       foldInt('dest', 'foldOBit', 5),
         'SDestReg':      intReg('dest', 5),
         'Data':          foldInt('data', 'foldOBit', 6),
+        'DataLow':       foldInt('dataLow', 'foldOBit', 6),
+        'DataHi':        foldInt('dataHi', 'foldOBit', 6),
         'ProdLow':       impIntReg(0, 7),
         'ProdHi':        impIntReg(1, 8),
         'Quotient':      impIntReg(2, 9),
@@ -110,10 +112,12 @@ def operands {{
         'Rbp':           intReg('(INTREG_RBP)', 17),
         'Rsi':           intReg('(INTREG_RSI)', 18),
         'Rdi':           intReg('(INTREG_RDI)', 19),
-        'FpSrcReg1':     floatReg('src1', 20),
-        'FpSrcReg2':     floatReg('src2', 21),
-        'FpDestReg':     floatReg('dest', 22),
-        'FpData':        floatReg('data', 23),
+        'R8':            intReg('(INTREG_R8)', 20),
+        'R9':            intReg('(INTREG_R9)', 21),
+        'FpSrcReg1':     floatReg('src1', 22),
+        'FpSrcReg2':     floatReg('src2', 23),
+        'FpDestReg':     floatReg('dest', 24),
+        'FpData':        floatReg('data', 25),
         'RIP':           ('PCState', 'uqw', 'pc',
                           (None, None, 'IsControl'), 50),
         'NRIP':          ('PCState', 'uqw', 'npc',

@@ -24,18 +24,14 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Steve Reinhardt
- *          Lisa Hsu
- *          Nathan Binkert
- *          Steve Raasch
  */
+
+#include "cpu/inteltrace.hh"
 
 #include <iomanip>
 
 #include "config/the_isa.hh"
 #include "cpu/exetrace.hh"
-#include "cpu/inteltrace.hh"
 #include "cpu/static_inst.hh"
 
 using namespace std;

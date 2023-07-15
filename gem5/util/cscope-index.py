@@ -24,8 +24,6 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Steve Reinhardt
 
 # Generate list of files to index with cscope and then generate cscope index.
 
@@ -46,8 +44,9 @@ def oksuffix(f):
     return False
 
 file_list = file('cscope.files', 'w')
+cwd = os.getcwd()
 
-for dirpath,subdirs,files in os.walk('src'):
+for dirpath,subdirs,files in os.walk(os.path.join(cwd, 'src')):
     # filter out undesirable subdirectories
     for i,dir in enumerate(subdirs):
         if dir == 'SCCS':

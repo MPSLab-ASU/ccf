@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 ARM Limited
+ * Copyright (c) 2011-2012,2015,2018,2020 ARM Limited
  * Copyright (c) 2013 Advanced Micro Devices, Inc.
  * All rights reserved
  *
@@ -37,19 +37,16 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Steve Reinhardt
- *          Dave Greene
- *          Nathan Binkert
  */
 
-#ifndef __CGRA_BASE_HH__
-#define __CGRA_BASE_HH__
+#ifndef __CPU_SIMPLE_BASE_HH__
+#define __CPU_SIMPLE_BASE_HH__
 
 #include "base/statistics.hh"
 #include "config/the_isa.hh"
 #include "cpu/base.hh"
 #include "cpu/checker/cpu.hh"
+#include "cpu/exec_context.hh"
 #include "cpu/pc_event.hh"
 #include "cpu/simple_thread.hh"
 #include "cpu/static_inst.hh"
@@ -77,58 +74,38 @@ namespace Trace {
 }
 
 struct BaseCGRAParams;
-
+class BPredUnit;
+class SimpleExecContext;
 
 class BaseCGRA : public BaseCPU
 {
   protected:
-    typedef TheISA::MiscReg MiscReg;
-    typedef TheISA::FloatReg FloatReg;
-    typedef TheISA::FloatRegBits FloatRegBits;
-    typedef TheISA::CCReg CCReg;
+    ThreadID curThread;
+    BPredUnit *branchPred;
 
-  protected:
-    Trace::InstRecord *traceData;
-
-    inline void checkPcEventQueue() {
-        Addr oldpc, pc = thread->instAddr();
-        do {
-            oldpc = pc;
-            system->pcEventQueue.service(tc);
-            pc = thread->instAddr();
-        } while (oldpc != pc);
-    }
-
-  public:
-    void wakeup();
-
-    void zero_fill_64(Addr addr) {
-      static int warned = 0;
-      if (!warned) {
-        warn ("WH64 is not implemented");
-        warned = 1;
-      }
-    };
+    void checkPcEventQueue();
+    void swapActiveThread();
 
   public:
     BaseCGRA(BaseCGRAParams *params);
     virtual ~BaseCGRA();
-
+    void wakeup(ThreadID tid) override;
+    void init() override;
   public:
-    /** SimpleThread object, provides all the architectural state. */
-    SimpleThread *thread;
-
-    /** ThreadContext object, provides an interface for external
-     * objects to modify this thread's state.
-     */
-    ThreadContext *tc;
-
+    Trace::InstRecord *traceData;
     CheckerCPU *checker;
 
+    std::vector<SimpleExecContext*> threadInfo;
+    std::list<ThreadID> activeThreads;
 
+    /** Current instruction */
+    TheISA::MachInst inst;
+    StaticInstPtr curStaticInst;
+    StaticInstPtr curMacroStaticInst;
+
+  protected:
     enum Status {
         Idle,
-        WaitForMemory,
         Running,
         Faulting,
         ITBWaitResponse,
@@ -141,312 +118,79 @@ class BaseCGRA : public BaseCPU
         DcacheWaitSwitch,
     };
 
-  protected:
     Status _status;
 
+    /**
+     * Handler used when encountering a fault; its purpose is to
+     * tear down the InstRecord. If a fault is meant to be traced,
+     * the handler won't delete the record and it will annotate
+     * the record as coming from a faulting instruction.
+     */
+    void traceFault();
+
   public:
-
-    Addr dbg_vtophys(Addr addr);
-
-    bool interval_stats;
-
-    // current instruction
-    TheISA::MachInst inst;
-
-    StaticInstPtr curStaticInst;
-    StaticInstPtr curMacroStaticInst;
-
-    //This is the offset from the current pc that fetch should be performed at
-    Addr fetchOffset;
-    //This flag says to stay at the current pc. This is useful for
-    //instructions which go beyond MachInst boundaries.
-    bool stayAtPC;
-
     void checkForInterrupts();
-    void setupFetchRequest(Request *req);
+    void setupFetchRequest(const RequestPtr &req);
     void preExecute();
     void postExecute();
-    void advancePC(Fault fault);
+    void advancePC(const Fault &fault);
 
-    virtual void deallocateContext(ThreadID thread_num);
-    virtual void haltContext(ThreadID thread_num);
+    void haltContext(ThreadID thread_num) override;
 
     // statistics
-    virtual void regStats();
-    virtual void resetStats();
+    void regStats() override;
+    void resetStats() override;
 
-    virtual void startup();
+    virtual Fault readMem(Addr addr, uint8_t* data, unsigned size,
+                          Request::Flags flags,
+                          const std::vector<bool>& byte_enable =
+                              std::vector<bool>())
+    { panic("readMem() is not implemented\n"); }
 
-    // number of simulated instructions
-    Counter numInst;
-    Counter startNumInst;
-    Stats::Scalar numInsts;
-    Counter numOp;
-    Counter startNumOp;
-    Stats::Scalar numOps;
+    virtual Fault initiateMemRead(Addr addr, unsigned size,
+                                  Request::Flags flags,
+                                  const std::vector<bool>& byte_enable =
+                                      std::vector<bool>())
+    { panic("initiateMemRead() is not implemented\n"); }
 
-    void countInst()
-    {
-        if (!curStaticInst->isMicroop() || curStaticInst->isLastMicroop()) {
-            numInst++;
-            numInsts++;
-        }
-        numOp++;
-        numOps++;
+    virtual Fault writeMem(uint8_t* data, unsigned size, Addr addr,
+                           Request::Flags flags, uint64_t* res,
+                           const std::vector<bool>& byte_enable =
+                               std::vector<bool>())
+    { panic("writeMem() is not implemented\n"); }
 
-        system->totalNumInsts++;
-        thread->funcExeInst++;
-    }
+    virtual Fault amoMem(Addr addr, uint8_t* data, unsigned size,
+                         Request::Flags flags,
+                         AtomicOpFunctorPtr amo_op)
+    { panic("amoMem() is not implemented\n"); }
 
-    virtual Counter totalInsts() const
-    {
-        return numInst - startNumInst;
-    }
+    virtual Fault initiateMemAMO(Addr addr, unsigned size,
+                                 Request::Flags flags,
+                                 AtomicOpFunctorPtr amo_op)
+    { panic("initiateMemAMO() is not implemented\n"); }
 
-    virtual Counter totalOps() const
-    {
-        return numOp - startNumOp;
-    }
+    void countInst();
+    Counter totalInsts() const override;
+    Counter totalOps() const override;
 
-    //number of integer alu accesses
-    Stats::Scalar numIntAluAccesses;
+    void serializeThread(CheckpointOut &cp, ThreadID tid) const override;
+    void unserializeThread(CheckpointIn &cp, ThreadID tid) override;
 
-    //number of float alu accesses
-    Stats::Scalar numFpAluAccesses;
+    /** Hardware transactional memory commands (HtmCmds), e.g. start a
+     * transaction and commit a transaction, are memory operations but are
+     * neither really (true) loads nor stores. For this reason the interface
+     * is extended and initiateHtmCmd() is used to instigate the command. */
+    virtual Fault initiateHtmCmd(Request::Flags flags) = 0;
 
-    //number of function calls/returns
-    Stats::Scalar numCallsReturns;
-
-    //conditional control instructions;
-    Stats::Scalar numCondCtrlInsts;
-
-    //number of int instructions
-    Stats::Scalar numIntInsts;
-
-    //number of float instructions
-    Stats::Scalar numFpInsts;
-
-    //number of integer register file accesses
-    Stats::Scalar numIntRegReads;
-    Stats::Scalar numIntRegWrites;
-
-    //number of float register file accesses
-    Stats::Scalar numFpRegReads;
-    Stats::Scalar numFpRegWrites;
-
-    //number of condition code register file accesses
-    Stats::Scalar numCCRegReads;
-    Stats::Scalar numCCRegWrites;
-
-    // number of simulated memory references
-    Stats::Scalar numMemRefs;
-    Stats::Scalar numLoadInsts;
-    Stats::Scalar numStoreInsts;
-
-    // number of idle cycles
-    Stats::Formula numIdleCycles;
-
-    // number of busy cycles
-    Stats::Formula numBusyCycles;
-
-    // number of simulated loads
-    Counter numLoad;
-    Counter startNumLoad;
-
-    // number of idle cycles
-    Stats::Average notIdleFraction;
-    Stats::Formula idleFraction;
-
-    // number of cycles stalled for I-cache responses
-    Stats::Scalar icacheStallCycles;
-    Counter lastIcacheStall;
-
-    // number of cycles stalled for I-cache retries
-    Stats::Scalar icacheRetryCycles;
-    Counter lastIcacheRetry;
-
-    // number of cycles stalled for D-cache responses
-    Stats::Scalar dcacheStallCycles;
-    Counter lastDcacheStall;
-
-    // number of cycles stalled for D-cache retries
-    Stats::Scalar dcacheRetryCycles;
-    Counter lastDcacheRetry;
-
-    void serializeThread(std::ostream &os, ThreadID tid);
-    void unserializeThread(Checkpoint *cp, const std::string &section,
-                           ThreadID tid);
-
-    // These functions are only used in CPU models that split
-    // effective address computation from the actual memory access.
-    void setEA(Addr EA) { panic("BaseCGRA::setEA() not implemented\n"); }
-    Addr getEA()        { panic("BaseCGRA::getEA() not implemented\n");
-        M5_DUMMY_RETURN}
-
-    // The register accessor methods provide the index of the
-    // instruction's operand (e.g., 0 or 1), not the architectural
-    // register index, to simplify the implementation of register
-    // renaming.  We find the architectural register index by indexing
-    // into the instruction's own operand index table.  Note that a
-    // raw pointer to the StaticInst is provided instead of a
-    // ref-counted StaticInstPtr to redice overhead.  This is fine as
-    // long as these methods don't copy the pointer into any long-term
-    // storage (which is pretty hard to imagine they would have reason
-    // to do).
-
-    uint64_t readIntRegOperand(const StaticInst *si, int idx)
-    {
-        numIntRegReads++;
-        return thread->readIntReg(si->srcRegIdx(idx));
-    }
-
-    FloatReg readFloatRegOperand(const StaticInst *si, int idx)
-    {
-        numFpRegReads++;
-        int reg_idx = si->srcRegIdx(idx) - TheISA::FP_Reg_Base;
-        return thread->readFloatReg(reg_idx);
-    }
-
-    FloatRegBits readFloatRegOperandBits(const StaticInst *si, int idx)
-    {
-        numFpRegReads++;
-        int reg_idx = si->srcRegIdx(idx) - TheISA::FP_Reg_Base;
-        return thread->readFloatRegBits(reg_idx);
-    }
-
-    CCReg readCCRegOperand(const StaticInst *si, int idx)
-    {
-        numCCRegReads++;
-        int reg_idx = si->srcRegIdx(idx) - TheISA::CC_Reg_Base;
-        return thread->readCCReg(reg_idx);
-    }
-
-    void setIntRegOperand(const StaticInst *si, int idx, uint64_t val)
-    {
-        numIntRegWrites++;
-        thread->setIntReg(si->destRegIdx(idx), val);
-    }
-
-    void setFloatRegOperand(const StaticInst *si, int idx, FloatReg val)
-    {
-        numFpRegWrites++;
-        int reg_idx = si->destRegIdx(idx) - TheISA::FP_Reg_Base;
-        thread->setFloatReg(reg_idx, val);
-    }
-
-    void setFloatRegOperandBits(const StaticInst *si, int idx,
-                                FloatRegBits val)
-    {
-        numFpRegWrites++;
-        int reg_idx = si->destRegIdx(idx) - TheISA::FP_Reg_Base;
-        thread->setFloatRegBits(reg_idx, val);
-    }
-
-    void setCCRegOperand(const StaticInst *si, int idx, CCReg val)
-    {
-        numCCRegWrites++;
-        int reg_idx = si->destRegIdx(idx) - TheISA::CC_Reg_Base;
-        thread->setCCReg(reg_idx, val);
-    }
-
-    bool readPredicate() { return thread->readPredicate(); }
-    void setPredicate(bool val)
-    {
-        thread->setPredicate(val);
-        if (traceData) {
-            traceData->setPredicate(val);
-        }
-    }
-    TheISA::PCState pcState() { return thread->pcState(); }
-    void pcState(const TheISA::PCState &val) { thread->pcState(val); }
-    Addr instAddr() { return thread->instAddr(); }
-    Addr nextInstAddr() { return thread->nextInstAddr(); }
-    MicroPC microPC() { return thread->microPC(); }
-
-    MiscReg readMiscRegNoEffect(int misc_reg)
-    {
-        return thread->readMiscRegNoEffect(misc_reg);
-    }
-
-    MiscReg readMiscReg(int misc_reg)
-    {
-        numIntRegReads++;
-        return thread->readMiscReg(misc_reg);
-    }
-
-    void setMiscReg(int misc_reg, const MiscReg &val)
-    {
-        numIntRegWrites++;
-        return thread->setMiscReg(misc_reg, val);
-    }
-
-    MiscReg readMiscRegOperand(const StaticInst *si, int idx)
-    {
-        numIntRegReads++;
-        int reg_idx = si->srcRegIdx(idx) - TheISA::Misc_Reg_Base;
-        return thread->readMiscReg(reg_idx);
-    }
-
-    void setMiscRegOperand(
-            const StaticInst *si, int idx, const MiscReg &val)
-    {
-        numIntRegWrites++;
-        int reg_idx = si->destRegIdx(idx) - TheISA::Misc_Reg_Base;
-        return thread->setMiscReg(reg_idx, val);
-    }
-
-    void demapPage(Addr vaddr, uint64_t asn)
-    {
-        thread->demapPage(vaddr, asn);
-    }
-
-    void demapInstPage(Addr vaddr, uint64_t asn)
-    {
-        thread->demapInstPage(vaddr, asn);
-    }
-
-    void demapDataPage(Addr vaddr, uint64_t asn)
-    {
-        thread->demapDataPage(vaddr, asn);
-    }
-
-    unsigned readStCondFailures() {
-        return thread->readStCondFailures();
-    }
-
-    void setStCondFailures(unsigned sc_failures) {
-        thread->setStCondFailures(sc_failures);
-    }
-
-     MiscReg readRegOtherThread(int regIdx, ThreadID tid = InvalidThreadID)
-     {
-        panic("Simple CPU models do not support multithreaded "
-              "register access.\n");
-     }
-
-     void setRegOtherThread(int regIdx, const MiscReg &val,
-                            ThreadID tid = InvalidThreadID)
-     {
-        panic("Simple CPU models do not support multithreaded "
-              "register access.\n");
-     }
-
-    //Fault CacheOp(uint8_t Op, Addr EA);
-
-    Fault hwrei() { return thread->hwrei(); }
-    bool simPalCheck(int palFunc) { return thread->simPalCheck(palFunc); }
-
-    void
-    syscall(int64_t callnum)
-    {
-        if (FullSystem)
-            panic("Syscall emulation isn't available in FS mode.\n");
-
-        thread->syscall(callnum);
-    }
-
-    bool misspeculating() { return thread->misspeculating(); }
-    ThreadContext *tcBase() { return tc; }
+    /** This function is used to instruct the memory subsystem that a
+     * transaction should be aborted and the speculative state should be
+     * thrown away.  This is called in the transaction's very last breath in
+     * the core.  Afterwards, the core throws away its speculative state and
+     * resumes execution at the point the transaction started, i.e. reverses
+     * time.  When instruction execution resumes, the core expects the
+     * memory subsystem to be in a stable, i.e. pre-speculative, state as
+     * well. */
+    virtual void htmSendAbortSignal(HtmFailureFaultCause cause) = 0;
 };
 
-#endif // __CGRA_BASE_HH__
+#endif // __CPU_SIMPLE_BASE_HH__

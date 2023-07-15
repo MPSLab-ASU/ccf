@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 ARM Limited
+ * Copyright (c) 2013-2014, 2019 ARM Limited
  * Copyright (c) 2013 Cornell University
  * All rights reserved
  *
@@ -34,10 +34,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Vasileios Spiliopoulos
- *          Akash Bagdia
- *          Christopher Torng
  */
 
 /**
@@ -61,7 +57,7 @@
  */
 class DerivedClockDomain;
 class VoltageDomain;
-class ClockedObject;
+class Clocked;
 
 /**
  * The ClockDomain provides clock to group of clocked objects bundled
@@ -71,7 +67,6 @@ class ClockedObject;
  */
 class ClockDomain : public SimObject
 {
-
   protected:
 
     /**
@@ -95,29 +90,26 @@ class ClockDomain : public SimObject
      * Pointers to members of this clock domain, so that when the clock
      * period changes, we can update each member's tick.
      */
-    std::vector<ClockedObject*> members;
+    std::vector<Clocked *> members;
 
   public:
 
     typedef ClockDomainParams Params;
-    ClockDomain(const Params *p, VoltageDomain *voltage_domain) :
-        SimObject(p),
-        _clockPeriod(0),
-        _voltageDomain(voltage_domain) {}
+    ClockDomain(const Params *p, VoltageDomain *voltage_domain);
 
     /**
      * Get the clock period.
      *
      * @return Clock period in ticks
      */
-    inline Tick clockPeriod() const { return _clockPeriod; }
+    Tick clockPeriod() const { return _clockPeriod; }
 
     /**
-     * Register a ClockedObject to this ClockDomain.
+     * Register a Clocked object with this ClockDomain.
      *
-     * @param ClockedObject to add as a member
+     * @param Clocked to add as a member
      */
-    void registerWithClockDomain(ClockedObject *c)
+    void registerWithClockDomain(Clocked *c)
     {
         assert(c != NULL);
         assert(std::find(members.begin(), members.end(), c) == members.end());
@@ -137,7 +129,7 @@ class ClockDomain : public SimObject
      *
      * @return Voltage applied to the clock domain
      */
-    inline double voltage() const;
+    double voltage() const;
 
     /**
      * Add a derived domain.
@@ -147,12 +139,26 @@ class ClockDomain : public SimObject
     void addDerivedDomain(DerivedClockDomain *clock_domain)
     { children.push_back(clock_domain); }
 
+  private:
+    struct ClockDomainStats : public Stats::Group
+    {
+        ClockDomainStats(ClockDomain &cd);
+
+        /**
+         * Stat to report clock period of clock domain
+         */
+        Stats::Value clock;
+    } stats;
 };
 
 /**
  * The source clock domains provides the notion of a clock domain that is
  * connected to a tunable clock source. It maintains the clock period and
- * provides methods for setting/getting the clock.
+ * provides methods for setting/getting the clock and  configuration parameters
+ * for clock domain that handler is going to manage. This includes frequency
+ * values at various performance levels, domain id, and current performance
+ * level. Note that a performance level as requested by the software corresponds
+ * to one of the frequency operational points the domain can operate at.
  */
 class SrcClockDomain : public ClockDomain
 {
@@ -170,6 +176,91 @@ class SrcClockDomain : public ClockDomain
 
     // Explicitly import the otherwise hidden clockPeriod
     using ClockDomain::clockPeriod;
+
+    typedef int32_t DomainID;
+    static const DomainID emptyDomainID = -1;
+
+    /**
+     * @return the domainID of the domain
+     */
+    uint32_t domainID() const { return _domainID; }
+
+    typedef uint32_t PerfLevel;
+    /**
+     * Checks whether the performance level requested exists in the current
+     * domain configuration
+     *
+     * @param the target performance level of the domain
+     *
+     * @return validity status of the given performance level
+     */
+    bool validPerfLevel(PerfLevel perf_level) const {
+        return perf_level < numPerfLevels();
+    }
+
+    /**
+     * Sets the current performance level of the domain
+     *
+     * @param perf_level the target performance level
+     */
+    void perfLevel(PerfLevel perf_level);
+
+    /**
+     * @return the current performance level of the domain
+     */
+    PerfLevel perfLevel() const { return _perfLevel; }
+
+    /**
+     * Get the number of available performance levels for this clock domain.
+     *
+     * @return Number of perf levels configured for this domain.
+     */
+    PerfLevel numPerfLevels() const {return freqOpPoints.size();}
+
+    /**
+     * @returns the clock period (expressed in ticks) for the current
+     * performance level
+     */
+    Tick clkPeriodAtPerfLevel() const { return freqOpPoints[perfLevel()]; }
+
+    Tick clkPeriodAtPerfLevel(PerfLevel perf_level) const
+    {
+        assert(validPerfLevel(perf_level));
+        return freqOpPoints[perf_level];
+    }
+
+    void startup() override;
+
+    void serialize(CheckpointOut &cp) const override;
+    void unserialize(CheckpointIn &cp) override;
+
+  private:
+    /**
+     * Inform other components about the changed performance level
+     */
+    void signalPerfLevelUpdate();
+
+    /**
+      * List of possible frequency operational points, should be in
+      * descending order
+      * An empty list corresponds to default frequency specified for its
+      * clock domain, overall implying NO DVFS
+      */
+    const std::vector<Tick> freqOpPoints;
+
+    /**
+      * Software recognizable id number for the domain, should be unique for
+      * each domain
+      */
+    const uint32_t _domainID;
+
+    /**
+      * Current performance level the domain is set to.
+      * The performance level corresponds to one selected frequency (and related
+      * voltage) from the supplied list of frequencies, with perfLevel = 0 being
+      * the fastest performance state.
+      */
+    PerfLevel _perfLevel;
 };
 
 /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 ARM Limited
+ * Copyright (c) 2012, 2017 ARM Limited
  * All rights reserved
  *
  * The license below extends only to copyright in the software and shall
@@ -12,6 +12,7 @@
  * modified or unmodified, in source code or in binary form.
  *
  * Copyright (c) 2004-2006 The Regents of The University of Michigan
+ * Copyright (c) 2013 Advanced Micro Devices, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,18 +37,18 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Kevin Lim
  */
 
 #ifndef __CPU_O3_RENAME_HH__
 #define __CPU_O3_RENAME_HH__
 
 #include <list>
+#include <utility>
 
 #include "base/statistics.hh"
 #include "config/the_isa.hh"
 #include "cpu/timebuf.hh"
+#include "sim/probe/probe.hh"
 
 struct DerivO3CPUParams;
 
@@ -82,15 +83,11 @@ class DefaultRename
     typedef typename CPUPol::IEW IEW;
     typedef typename CPUPol::Commit Commit;
 
-    // Typedefs from the ISA.
-    typedef TheISA::RegIndex RegIndex;
-
-    // A list is used to queue the instructions.  Barrier insts must
-    // be added to the front of the list, which is the only reason for
-    // using a list instead of a queue. (Most other stages use a
+    // A deque is used to queue the instructions. Barrier insts must
+    // be added to the front of the queue, which is the only reason for
+    // using a deque instead of a queue. (Most other stages use a
     // queue)
-    typedef std::list<DynInstPtr> InstQueue;
-    typedef typename std::list<DynInstPtr>::iterator ListIt;
+    typedef std::deque<DynInstPtr> InstQueue;
 
   public:
     /** Overall rename status. Used to determine if the CPU can
@@ -119,6 +116,16 @@ class DefaultRename
     /** Per-thread status. */
     ThreadStatus renameStatus[Impl::MaxThreads];
 
+    /** Probe points. */
+    typedef typename std::pair<InstSeqNum, PhysRegIdPtr> SeqNumRegPair;
+    /** To probe when register renaming for an instruction is complete */
+    ProbePointArg<DynInstPtr> *ppRename;
+    /**
+     * To probe when an instruction is squashed and the register mapping
+     * for it needs to be undone
+     */
+    ProbePointArg<SeqNumRegPair> *ppSquashInRename;
+
   public:
     /** DefaultRename constructor. */
     DefaultRename(O3CPU *_cpu, DerivO3CPUParams *params);
@@ -126,8 +133,8 @@ class DefaultRename
     /** Returns the name of rename. */
     std::string name() const;
 
-    /** Registers statistics. */
-    void regStats();
+    /** Registers probes. */
+    void regProbePoints();
 
     /** Sets the main backwards communication time buffer pointer. */
     void setTimeBuffer(TimeBuffer<TimeStruct> *tb_ptr);
@@ -156,6 +163,9 @@ class DefaultRename
   public:
     /** Initializes variables for the stage. */
     void startupStage();
+
+    /** Clear all thread-specific states */
+    void clearStates(ThreadID tid);
 
     /** Sets pointer to list of active threads. */
     void setActiveThreads(std::list<ThreadID> *at_ptr);
@@ -240,10 +250,10 @@ class DefaultRename
     void removeFromHistory(InstSeqNum inst_seq_num, ThreadID tid);
 
     /** Renames the source registers of an instruction. */
-    inline void renameSrcRegs(DynInstPtr &inst, ThreadID tid);
+    inline void renameSrcRegs(const DynInstPtr &inst, ThreadID tid);
 
     /** Renames the destination registers of an instruction. */
-    inline void renameDestRegs(DynInstPtr &inst, ThreadID tid);
+    inline void renameDestRegs(const DynInstPtr &inst, ThreadID tid);
 
     /** Calculates the number of free ROB entries for a specific thread. */
     inline int calcFreeROBEntries(ThreadID tid);
@@ -251,8 +261,11 @@ class DefaultRename
     /** Calculates the number of free IQ entries for a specific thread. */
     inline int calcFreeIQEntries(ThreadID tid);
 
-    /** Calculates the number of free LSQ entries for a specific thread. */
-    inline int calcFreeLSQEntries(ThreadID tid);
+    /** Calculates the number of free LQ entries for a specific thread. */
+    inline int calcFreeLQEntries(ThreadID tid);
+
+    /** Calculates the number of free SQ entries for a specific thread. */
+    inline int calcFreeSQEntries(ThreadID tid);
 
     /** Returns the number of valid instructions coming from decode. */
     unsigned validInsts();
@@ -283,8 +296,9 @@ class DefaultRename
      * register for that arch. register, and the new physical register.
      */
     struct RenameHistory {
-        RenameHistory(InstSeqNum _instSeqNum, RegIndex _archReg,
-                      PhysRegIndex _newPhysReg, PhysRegIndex _prevPhysReg)
+        RenameHistory(InstSeqNum _instSeqNum, const RegId& _archReg,
+                      PhysRegIdPtr _newPhysReg,
+                      PhysRegIdPtr _prevPhysReg)
             : instSeqNum(_instSeqNum), archReg(_archReg),
               newPhysReg(_newPhysReg), prevPhysReg(_prevPhysReg)
         {
@@ -293,11 +307,12 @@ class DefaultRename
         /** The sequence number of the instruction that renamed. */
         InstSeqNum instSeqNum;
         /** The architectural register index that was renamed. */
-        RegIndex archReg;
+        RegId archReg;
         /** The new physical register that the arch. register is renamed to. */
-        PhysRegIndex newPhysReg;
-        /** The old physical register that the arch. register was renamed to. */
-        PhysRegIndex prevPhysReg;
+        PhysRegIdPtr newPhysReg;
+        /** The old physical register that the arch. register was renamed to.
+         */
+        PhysRegIdPtr prevPhysReg;
     };
 
     /** A per-thread list of all destination register renames, used to either
@@ -355,6 +370,16 @@ class DefaultRename
      */
     int instsInProgress[Impl::MaxThreads];
 
+    /** Count of Load instructions in progress that have been sent off to the IQ
+     * and ROB, but are not yet included in their occupancy counts.
+     */
+    int loadsInProgress[Impl::MaxThreads];
+
+    /** Count of Store instructions in progress that have been sent off to the IQ
+     * and ROB, but are not yet included in their occupancy counts.
+     */
+    int storesInProgress[Impl::MaxThreads];
+
     /** Variable that tracks if decode has written to the time buffer this
      * cycle. Used to tell CPU if there is activity this cycle.
      */
@@ -365,8 +390,9 @@ class DefaultRename
      */
     struct FreeEntries {
         unsigned iqEntries;
-        unsigned lsqEntries;
         unsigned robEntries;
+        unsigned lqEntries;
+        unsigned sqEntries;
     };
 
     /** Per-thread tracking of the number of free entries of back-end
@@ -436,15 +462,14 @@ class DefaultRename
     /** The maximum skid buffer size. */
     unsigned skidBufferMax;
 
-    PhysRegIndex maxPhysicalRegs;
-
     /** Enum to record the source of a structure full stall.  Can come from
      * either ROB, IQ, LSQ, and it is priortized in that order.
      */
     enum FullSource {
         ROB,
         IQ,
-        LSQ,
+        LQ,
+        SQ,
         NONE
     };
 
@@ -453,47 +478,62 @@ class DefaultRename
      */
     inline void incrFullStat(const FullSource &source);
 
-    /** Stat for total number of cycles spent squashing. */
-    Stats::Scalar renameSquashCycles;
-    /** Stat for total number of cycles spent idle. */
-    Stats::Scalar renameIdleCycles;
-    /** Stat for total number of cycles spent blocking. */
-    Stats::Scalar renameBlockCycles;
-    /** Stat for total number of cycles spent stalling for a serializing inst. */
-    Stats::Scalar renameSerializeStallCycles;
-    /** Stat for total number of cycles spent running normally. */
-    Stats::Scalar renameRunCycles;
-    /** Stat for total number of cycles spent unblocking. */
-    Stats::Scalar renameUnblockCycles;
-    /** Stat for total number of renamed instructions. */
-    Stats::Scalar renameRenamedInsts;
-    /** Stat for total number of squashed instructions that rename discards. */
-    Stats::Scalar renameSquashedInsts;
-    /** Stat for total number of times that the ROB starts a stall in rename. */
-    Stats::Scalar renameROBFullEvents;
-    /** Stat for total number of times that the IQ starts a stall in rename. */
-    Stats::Scalar renameIQFullEvents;
-    /** Stat for total number of times that the LSQ starts a stall in rename. */
-    Stats::Scalar renameLSQFullEvents;
-    /** Stat for total number of times that rename runs out of free registers
-     * to use to rename. */
-    Stats::Scalar renameFullRegistersEvents;
-    /** Stat for total number of renamed destination registers. */
-    Stats::Scalar renameRenamedOperands;
-    /** Stat for total number of source register rename lookups. */
-    Stats::Scalar renameRenameLookups;
-    Stats::Scalar intRenameLookups;
-    Stats::Scalar fpRenameLookups;
-    /** Stat for total number of committed renaming mappings. */
-    Stats::Scalar renameCommittedMaps;
-    /** Stat for total number of mappings that were undone due to a squash. */
-    Stats::Scalar renameUndoneMaps;
-    /** Number of serialize instructions handled. */
-    Stats::Scalar renamedSerializing;
-    /** Number of instructions marked as temporarily serializing. */
-    Stats::Scalar renamedTempSerializing;
-    /** Number of instructions inserted into skid buffers. */
-    Stats::Scalar renameSkidInsts;
+    struct RenameStats : public Stats::Group {
+        RenameStats(Stats::Group *parent);
+
+        /** Stat for total number of cycles spent squashing. */
+        Stats::Scalar squashCycles;
+        /** Stat for total number of cycles spent idle. */
+        Stats::Scalar idleCycles;
+        /** Stat for total number of cycles spent blocking. */
+        Stats::Scalar blockCycles;
+        /** Stat for total number of cycles spent stalling for a serializing
+         *  inst. */
+        Stats::Scalar serializeStallCycles;
+        /** Stat for total number of cycles spent running normally. */
+        Stats::Scalar runCycles;
+        /** Stat for total number of cycles spent unblocking. */
+        Stats::Scalar unblockCycles;
+        /** Stat for total number of renamed instructions. */
+        Stats::Scalar renamedInsts;
+        /** Stat for total number of squashed instructions that rename
+         * discards. */
+        Stats::Scalar squashedInsts;
+        /** Stat for total number of times that the ROB starts a stall in
+         * rename. */
+        Stats::Scalar ROBFullEvents;
+        /** Stat for total number of times that the IQ starts a stall in
+         *  rename. */
+        Stats::Scalar IQFullEvents;
+        /** Stat for total number of times that the LQ starts a stall in
+         *  rename. */
+        Stats::Scalar LQFullEvents;
+        /** Stat for total number of times that the SQ starts a stall in
+         *  rename. */
+        Stats::Scalar SQFullEvents;
+        /** Stat for total number of times that rename runs out of free
+         *  registers to use to rename. */
+        Stats::Scalar fullRegistersEvents;
+        /** Stat for total number of renamed destination registers. */
+        Stats::Scalar renamedOperands;
+        /** Stat for total number of source register rename lookups. */
+        Stats::Scalar lookups;
+        Stats::Scalar intLookups;
+        Stats::Scalar fpLookups;
+        Stats::Scalar vecLookups;
+        Stats::Scalar vecPredLookups;
+        /** Stat for total number of committed renaming mappings. */
+        Stats::Scalar committedMaps;
+        /** Stat for total number of mappings that were undone due to a
+         *  squash. */
+        Stats::Scalar undoneMaps;
+        /** Number of serialize instructions handled. */
+        Stats::Scalar serializing;
+        /** Number of instructions marked as temporarily serializing. */
+        Stats::Scalar tempSerializing;
+        /** Number of instructions inserted into skid buffers. */
+        Stats::Scalar skidInsts;
+    } stats;
 };
 
 #endif // __CPU_O3_RENAME_HH__

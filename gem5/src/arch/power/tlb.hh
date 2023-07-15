@@ -27,11 +27,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Nathan Binkert
- *          Steve Reinhardt
- *          Stephen Hines
- *          Timothy M. Jones
  */
 
 #ifndef __ARCH_POWER_TLB_HH__
@@ -39,15 +34,13 @@
 
 #include <map>
 
+#include "arch/generic/tlb.hh"
 #include "arch/power/isa_traits.hh"
 #include "arch/power/pagetable.hh"
 #include "arch/power/utility.hh"
-#include "arch/power/vtophys.hh"
 #include "base/statistics.hh"
 #include "mem/request.hh"
 #include "params/PowerTLB.hh"
-#include "sim/fault_fwd.hh"
-#include "sim/tlb.hh"
 
 class ThreadContext;
 
@@ -63,9 +56,13 @@ struct TlbEntry
     {
     }
 
-    TlbEntry(Addr asn, Addr vaddr, Addr paddr)
+    TlbEntry(Addr asn, Addr vaddr, Addr paddr,
+             bool uncacheable, bool read_only)
         : _pageStart(paddr)
     {
+        if (uncacheable || read_only)
+            warn("Power TlbEntry does not support uncacheable"
+                 " or read-only mappings\n");
     }
 
     void
@@ -81,13 +78,13 @@ struct TlbEntry
     }
 
     void
-    serialize(std::ostream &os)
+    serialize(CheckpointOut &cp) const
     {
         SERIALIZE_SCALAR(_pageStart);
     }
 
     void
-    unserialize(Checkpoint *cp, const std::string &section)
+    unserialize(CheckpointIn &cp)
     {
         UNSERIALIZE_SCALAR(_pageStart);
     }
@@ -113,22 +110,12 @@ class TLB : public BaseTLB
 
     PowerISA::PTE *lookup(Addr vpn, uint8_t asn) const;
 
-    mutable Stats::Scalar read_hits;
-    mutable Stats::Scalar read_misses;
-    mutable Stats::Scalar read_acv;
-    mutable Stats::Scalar read_accesses;
-    mutable Stats::Scalar write_hits;
-    mutable Stats::Scalar write_misses;
-    mutable Stats::Scalar write_acv;
-    mutable Stats::Scalar write_accesses;
-    Stats::Formula hits;
-    Stats::Formula misses;
-    Stats::Formula accesses;
-
   public:
     typedef PowerTLBParams Params;
     TLB(const Params *p);
     virtual ~TLB();
+
+    void takeOverFrom(BaseTLB *otlb) override {}
 
     int probeEntry(Addr vpn,uint8_t) const;
     PowerISA::PTE *getEntry(unsigned) const;
@@ -144,32 +131,33 @@ class TLB : public BaseTLB
     PowerISA::PTE &index(bool advance = true);
     void insert(Addr vaddr, PowerISA::PTE &pte);
     void insertAt(PowerISA::PTE &pte, unsigned Index, int _smallPages);
-    void flushAll();
+    void flushAll() override;
 
     void
-    demapPage(Addr vaddr, uint64_t asn)
+    demapPage(Addr vaddr, uint64_t asn) override
     {
         panic("demapPage unimplemented.\n");
     }
 
     // static helper functions... really
     static bool validVirtualAddress(Addr vaddr);
-    static Fault checkCacheability(RequestPtr &req);
-    Fault translateInst(RequestPtr req, ThreadContext *tc);
-    Fault translateData(RequestPtr req, ThreadContext *tc, bool write);
-    Fault translateAtomic(RequestPtr req, ThreadContext *tc, Mode mode);
-    void translateTiming(RequestPtr req, ThreadContext *tc,
-                         Translation *translation, Mode mode);
-    /** Stub function for CheckerCPU compilation support.  Power ISA not
-     *  supported by Checker at the moment
-     */
-    Fault translateFunctional(RequestPtr req, ThreadContext *tc, Mode mode);
-    Fault finalizePhysical(RequestPtr req, ThreadContext *tc, Mode mode) const;
+    static Fault checkCacheability(const RequestPtr &req);
+    Fault translateInst(const RequestPtr &req, ThreadContext *tc);
+    Fault translateData(const RequestPtr &req, ThreadContext *tc, bool write);
+    Fault translateAtomic(
+            const RequestPtr &req, ThreadContext *tc, Mode mode) override;
+    void translateTiming(
+            const RequestPtr &req, ThreadContext *tc,
+            Translation *translation, Mode mode) override;
+    Fault translateFunctional(
+            const RequestPtr &req, ThreadContext *tc, Mode mode) override;
+    Fault finalizePhysical(
+            const RequestPtr &req,
+            ThreadContext *tc, Mode mode) const override;
 
     // Checkpointing
-    void serialize(std::ostream &os);
-    void unserialize(Checkpoint *cp, const std::string &section);
-    void regStats();
+    void serialize(CheckpointOut &cp) const override;
+    void unserialize(CheckpointIn &cp) override;
 };
 
 } // namespace PowerISA

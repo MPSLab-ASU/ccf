@@ -1,4 +1,16 @@
 /*
+ * Copyright (c) 2020 ARM Limited
+ * All rights reserved
+ *
+ * The license below extends only to copyright in the software and shall
+ * not be construed as granting a license to any other intellectual
+ * property including but not limited to intellectual property relating
+ * to a hardware implementation of the functionality of the software
+ * licensed hereunder.  You may use the software subject to the license
+ * terms below provided that you ensure that this notice is replicated
+ * unmodified and in its entirety in all distributions of the software,
+ * modified or unmodified, in source code or in binary form.
+ *
  * Copyright (c) 2003-2005 The Regents of The University of Michigan
  * All rights reserved.
  *
@@ -24,9 +36,9 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Nathan Binkert
  */
+
+#include "base/debug.hh"
 
 #include <sys/types.h>
 #include <unistd.h>
@@ -35,8 +47,7 @@
 #include <csignal>
 
 #include "base/cprintf.hh"
-#include "base/debug.hh"
-#include "base/misc.hh"
+#include "base/logging.hh"
 
 using namespace std;
 
@@ -68,6 +79,8 @@ allFlags()
     return flags;
 }
 
+bool Flag::_globalEnable = false;
+
 Flag *
 findFlag(const std::string &name)
 {
@@ -95,48 +108,48 @@ Flag::~Flag()
 }
 
 void
+Flag::globalEnable()
+{
+    _globalEnable = true;
+    for (auto& i : allFlags())
+        i.second->sync();
+}
+
+void
+Flag::globalDisable()
+{
+    _globalEnable = false;
+    for (auto& i : allFlags())
+        i.second->sync();
+}
+
+void
 CompoundFlag::enable()
 {
-    SimpleFlag::enable();
-    for_each(_kids.begin(), _kids.end(), mem_fun(&Flag::enable));
+    for (auto& k : _kids)
+        k->enable();
 }
 
 void
 CompoundFlag::disable()
 {
-    SimpleFlag::disable();
-    for_each(_kids.begin(), _kids.end(), mem_fun(&Flag::disable));
+    for (auto& k : _kids)
+        k->disable();
 }
 
-struct AllFlags : public Flag
+bool
+CompoundFlag::status() const
 {
-    AllFlags()
-        : Flag("All", "All Flags")
-    {}
+    if (_kids.empty())
+        return false;
 
-    void
-    enable()
-    {
-        FlagsMap::iterator i = allFlags().begin();
-        FlagsMap::iterator end = allFlags().end();
-        for (; i != end; ++i)
-            if (i->second != this)
-                i->second->enable();
+    for (auto& k : _kids) {
+        if (!k->status())
+            return false;
     }
 
-    void
-    disable()
-    {
-        FlagsMap::iterator i = allFlags().begin();
-        FlagsMap::iterator end = allFlags().end();
-        for (; i != end; ++i)
-            if (i->second != this)
-                i->second->disable();
-    }
-};
-
-AllFlags theAllFlags;
-Flag *const All = &theAllFlags;
+    return true;
+}
 
 bool
 changeFlag(const char *s, bool value)

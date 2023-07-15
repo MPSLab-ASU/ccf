@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 ARM Limited
+ * Copyright (c) 2010, 2012-2021 ARM Limited
  * All rights reserved
  *
  * The license below extends only to copyright in the software and shall
@@ -36,174 +36,821 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Gabe Black
  */
 
 #ifndef __ARCH_ARM_ISA_HH__
 #define __ARCH_ARM_ISA_HH__
 
+#include "arch/arm/isa_device.hh"
+#include "arch/arm/miscregs.hh"
 #include "arch/arm/registers.hh"
+#include "arch/arm/self_debug.hh"
+#include "arch/arm/system.hh"
 #include "arch/arm/tlb.hh"
 #include "arch/arm/types.hh"
+#include "arch/generic/isa.hh"
+#include "arch/generic/traits.hh"
 #include "debug/Checkpoint.hh"
+#include "enums/DecoderFlavor.hh"
+#include "enums/VecRegRenameMode.hh"
 #include "sim/sim_object.hh"
 
 struct ArmISAParams;
-class ThreadContext;
+struct DummyArmISADeviceParams;
 class Checkpoint;
 class EventManager;
 
 namespace ArmISA
 {
-    class ISA : public SimObject
+    class ISA : public BaseISA
     {
       protected:
-        MiscReg miscRegs[NumMiscRegs];
+        // Parent system
+        ArmSystem *system;
+
+        // Micro Architecture
+        const Enums::DecoderFlavor _decoderFlavor;
+        const Enums::VecRegRenameMode _vecRegRenameMode;
+
+        /** Dummy device for to handle non-existing ISA devices */
+        DummyISADevice dummyDevice;
+
+        // PMU belonging to this ISA
+        BaseISADevice *pmu;
+
+        // Generic timer interface belonging to this ISA
+        std::unique_ptr<BaseISADevice> timer;
+
+        // GICv3 CPU interface belonging to this ISA
+        std::unique_ptr<BaseISADevice> gicv3CpuInterface;
+
+        // Cached copies of system-level properties
+        bool highestELIs64;
+        bool haveSecurity;
+        bool haveLPAE;
+        bool haveVirtualization;
+        bool haveCrypto;
+        bool haveLargeAsid64;
+        uint8_t physAddrRange;
+        bool haveSVE;
+        bool haveLSE;
+        bool haveVHE;
+        bool havePAN;
+        bool haveSecEL2;
+        bool haveTME;
+
+        /** SVE vector length in quadwords */
+        unsigned sveVL;
+
+        /**
+         * If true, accesses to IMPLEMENTATION DEFINED registers are treated
+         * as NOP hence not causing UNDEFINED INSTRUCTION.
+         */
+        bool impdefAsNop;
+
+        bool afterStartup;
+
+        SelfDebug * selfDebug;
+
+        /** MiscReg metadata **/
+        struct MiscRegLUTEntry {
+            uint32_t lower;  // Lower half mapped to this register
+            uint32_t upper;  // Upper half mapped to this register
+            uint64_t _reset; // value taken on reset (i.e. initialization)
+            uint64_t _res0;  // reserved
+            uint64_t _res1;  // reserved
+            uint64_t _raz;   // read as zero (fixed at 0)
+            uint64_t _rao;   // read as one (fixed at 1)
+          public:
+            MiscRegLUTEntry() :
+              lower(0), upper(0),
+              _reset(0), _res0(0), _res1(0), _raz(0), _rao(0) {}
+            uint64_t reset() const { return _reset; }
+            uint64_t res0()  const { return _res0; }
+            uint64_t res1()  const { return _res1; }
+            uint64_t raz()   const { return _raz; }
+            uint64_t rao()   const { return _rao; }
+            // raz/rao implies writes ignored
+            uint64_t wi()    const { return _raz | _rao; }
+        };
+
+        /** Metadata table accessible via the value of the register */
+        static std::vector<struct MiscRegLUTEntry> lookUpMiscReg;
+
+        class MiscRegLUTEntryInitializer {
+            struct MiscRegLUTEntry &entry;
+            std::bitset<NUM_MISCREG_INFOS> &info;
+            typedef const MiscRegLUTEntryInitializer& chain;
+          public:
+            chain mapsTo(uint32_t l, uint32_t u = 0) const {
+                entry.lower = l;
+                entry.upper = u;
+                return *this;
+            }
+            chain res0(uint64_t mask) const {
+                entry._res0 = mask;
+                return *this;
+            }
+            chain res1(uint64_t mask) const {
+                entry._res1 = mask;
+                return *this;
+            }
+            chain raz(uint64_t mask) const {
+                entry._raz  = mask;
+                return *this;
+            }
+            chain rao(uint64_t mask) const {
+                entry._rao  = mask;
+                return *this;
+            }
+            chain implemented(bool v = true) const {
+                info[MISCREG_IMPLEMENTED] = v;
+                return *this;
+            }
+            chain unimplemented() const {
+                return implemented(false);
+            }
+            chain unverifiable(bool v = true) const {
+                info[MISCREG_UNVERIFIABLE] = v;
+                return *this;
+            }
+            chain warnNotFail(bool v = true) const {
+                info[MISCREG_WARN_NOT_FAIL] = v;
+                return *this;
+            }
+            chain mutex(bool v = true) const {
+                info[MISCREG_MUTEX] = v;
+                return *this;
+            }
+            chain banked(bool v = true) const {
+                info[MISCREG_BANKED] = v;
+                return *this;
+            }
+            chain banked64(bool v = true) const {
+                info[MISCREG_BANKED64] = v;
+                return *this;
+            }
+            chain bankedChild(bool v = true) const {
+                info[MISCREG_BANKED_CHILD] = v;
+                return *this;
+            }
+            chain userNonSecureRead(bool v = true) const {
+                info[MISCREG_USR_NS_RD] = v;
+                return *this;
+            }
+            chain userNonSecureWrite(bool v = true) const {
+                info[MISCREG_USR_NS_WR] = v;
+                return *this;
+            }
+            chain userSecureRead(bool v = true) const {
+                info[MISCREG_USR_S_RD] = v;
+                return *this;
+            }
+            chain userSecureWrite(bool v = true) const {
+                info[MISCREG_USR_S_WR] = v;
+                return *this;
+            }
+            chain user(bool v = true) const {
+                userNonSecureRead(v);
+                userNonSecureWrite(v);
+                userSecureRead(v);
+                userSecureWrite(v);
+                return *this;
+            }
+            chain privNonSecureRead(bool v = true) const {
+                info[MISCREG_PRI_NS_RD] = v;
+                return *this;
+            }
+            chain privNonSecureWrite(bool v = true) const {
+                info[MISCREG_PRI_NS_WR] = v;
+                return *this;
+            }
+            chain privNonSecure(bool v = true) const {
+                privNonSecureRead(v);
+                privNonSecureWrite(v);
+                return *this;
+            }
+            chain privSecureRead(bool v = true) const {
+                info[MISCREG_PRI_S_RD] = v;
+                return *this;
+            }
+            chain privSecureWrite(bool v = true) const {
+                info[MISCREG_PRI_S_WR] = v;
+                return *this;
+            }
+            chain privSecure(bool v = true) const {
+                privSecureRead(v);
+                privSecureWrite(v);
+                return *this;
+            }
+            chain priv(bool v = true) const {
+                privSecure(v);
+                privNonSecure(v);
+                return *this;
+            }
+            chain privRead(bool v = true) const {
+                privSecureRead(v);
+                privNonSecureRead(v);
+                return *this;
+            }
+            chain hypE2HRead(bool v = true) const {
+                info[MISCREG_HYP_E2H_RD] = v;
+                return *this;
+            }
+            chain hypE2HWrite(bool v = true) const {
+                info[MISCREG_HYP_E2H_WR] = v;
+                return *this;
+            }
+            chain hypE2H(bool v = true) const {
+                hypE2HRead(v);
+                hypE2HWrite(v);
+                return *this;
+            }
+            chain hypRead(bool v = true) const {
+                hypE2HRead(v);
+                info[MISCREG_HYP_RD] = v;
+                return *this;
+            }
+            chain hypWrite(bool v = true) const {
+                hypE2HWrite(v);
+                info[MISCREG_HYP_WR] = v;
+                return *this;
+            }
+            chain hyp(bool v = true) const {
+                hypRead(v);
+                hypWrite(v);
+                return *this;
+            }
+            chain monE2HRead(bool v = true) const {
+                info[MISCREG_MON_E2H_RD] = v;
+                return *this;
+            }
+            chain monE2HWrite(bool v = true) const {
+                info[MISCREG_MON_E2H_WR] = v;
+                return *this;
+            }
+            chain monE2H(bool v = true) const {
+                monE2HRead(v);
+                monE2HWrite(v);
+                return *this;
+            }
+            chain monSecureRead(bool v = true) const {
+                monE2HRead(v);
+                info[MISCREG_MON_NS0_RD] = v;
+                return *this;
+            }
+            chain monSecureWrite(bool v = true) const {
+                monE2HWrite(v);
+                info[MISCREG_MON_NS0_WR] = v;
+                return *this;
+            }
+            chain monNonSecureRead(bool v = true) const {
+                monE2HRead(v);
+                info[MISCREG_MON_NS1_RD] = v;
+                return *this;
+            }
+            chain monNonSecureWrite(bool v = true) const {
+                monE2HWrite(v);
+                info[MISCREG_MON_NS1_WR] = v;
+                return *this;
+            }
+            chain mon(bool v = true) const {
+                monSecureRead(v);
+                monSecureWrite(v);
+                monNonSecureRead(v);
+                monNonSecureWrite(v);
+                return *this;
+            }
+            chain monSecure(bool v = true) const {
+                monSecureRead(v);
+                monSecureWrite(v);
+                return *this;
+            }
+            chain monNonSecure(bool v = true) const {
+                monNonSecureRead(v);
+                monNonSecureWrite(v);
+                return *this;
+            }
+            chain allPrivileges(bool v = true) const {
+                userNonSecureRead(v);
+                userNonSecureWrite(v);
+                userSecureRead(v);
+                userSecureWrite(v);
+                privNonSecureRead(v);
+                privNonSecureWrite(v);
+                privSecureRead(v);
+                privSecureWrite(v);
+                hypRead(v);
+                hypWrite(v);
+                monSecureRead(v);
+                monSecureWrite(v);
+                monNonSecureRead(v);
+                monNonSecureWrite(v);
+                return *this;
+            }
+            chain nonSecure(bool v = true) const {
+                userNonSecureRead(v);
+                userNonSecureWrite(v);
+                privNonSecureRead(v);
+                privNonSecureWrite(v);
+                hypRead(v);
+                hypWrite(v);
+                monNonSecureRead(v);
+                monNonSecureWrite(v);
+                return *this;
+            }
+            chain secure(bool v = true) const {
+                userSecureRead(v);
+                userSecureWrite(v);
+                privSecureRead(v);
+                privSecureWrite(v);
+                monSecureRead(v);
+                monSecureWrite(v);
+                return *this;
+            }
+            chain reads(bool v) const {
+                userNonSecureRead(v);
+                userSecureRead(v);
+                privNonSecureRead(v);
+                privSecureRead(v);
+                hypRead(v);
+                monSecureRead(v);
+                monNonSecureRead(v);
+                return *this;
+            }
+            chain writes(bool v) const {
+                userNonSecureWrite(v);
+                userSecureWrite(v);
+                privNonSecureWrite(v);
+                privSecureWrite(v);
+                hypWrite(v);
+                monSecureWrite(v);
+                monNonSecureWrite(v);
+                return *this;
+            }
+            chain exceptUserMode() const {
+                user(0);
+                return *this;
+            }
+            chain highest(ArmSystem *const sys) const;
+            MiscRegLUTEntryInitializer(struct MiscRegLUTEntry &e,
+                                       std::bitset<NUM_MISCREG_INFOS> &i)
+              : entry(e),
+                info(i)
+            {
+                // force unimplemented registers to be thusly declared
+                implemented(1);
+            }
+        };
+
+        const MiscRegLUTEntryInitializer InitReg(uint32_t reg) {
+            return MiscRegLUTEntryInitializer(lookUpMiscReg[reg],
+                                              miscRegInfo[reg]);
+        }
+
+        void initializeMiscRegMetadata();
+
+        RegVal miscRegs[NumMiscRegs];
         const IntRegIndex *intRegMap;
 
         void
         updateRegMap(CPSR cpsr)
         {
-            switch (cpsr.mode) {
-              case MODE_USER:
-              case MODE_SYSTEM:
-                intRegMap = IntRegUsrMap;
-                break;
-              case MODE_FIQ:
-                intRegMap = IntRegFiqMap;
-                break;
-              case MODE_IRQ:
-                intRegMap = IntRegIrqMap;
-                break;
-              case MODE_SVC:
-                intRegMap = IntRegSvcMap;
-                break;
-              case MODE_MON:
-                intRegMap = IntRegMonMap;
-                break;
-              case MODE_ABORT:
-                intRegMap = IntRegAbtMap;
-                break;
-              case MODE_UNDEFINED:
-                intRegMap = IntRegUndMap;
-                break;
-              default:
-                panic("Unrecognized mode setting in CPSR.\n");
+            if (cpsr.width == 0) {
+                intRegMap = IntReg64Map;
+            } else {
+                switch (cpsr.mode) {
+                  case MODE_USER:
+                  case MODE_SYSTEM:
+                    intRegMap = IntRegUsrMap;
+                    break;
+                  case MODE_FIQ:
+                    intRegMap = IntRegFiqMap;
+                    break;
+                  case MODE_IRQ:
+                    intRegMap = IntRegIrqMap;
+                    break;
+                  case MODE_SVC:
+                    intRegMap = IntRegSvcMap;
+                    break;
+                  case MODE_MON:
+                    intRegMap = IntRegMonMap;
+                    break;
+                  case MODE_ABORT:
+                    intRegMap = IntRegAbtMap;
+                    break;
+                  case MODE_HYP:
+                    intRegMap = IntRegHypMap;
+                    break;
+                  case MODE_UNDEFINED:
+                    intRegMap = IntRegUndMap;
+                    break;
+                  default:
+                    panic("Unrecognized mode setting in CPSR.\n");
+                }
             }
         }
+
+        BaseISADevice &getGenericTimer();
+        BaseISADevice &getGICv3CPUInterface();
+
+      private:
+        void assert32() { assert(((CPSR)readMiscReg(MISCREG_CPSR)).width); }
+        void assert64() { assert(!((CPSR)readMiscReg(MISCREG_CPSR)).width); }
 
       public:
         void clear();
 
-        MiscReg readMiscRegNoEffect(int misc_reg);
-        MiscReg readMiscReg(int misc_reg, ThreadContext *tc);
-        void setMiscRegNoEffect(int misc_reg, const MiscReg &val);
-        void setMiscReg(int misc_reg, const MiscReg &val, ThreadContext *tc);
+      protected:
+        void clear32(const ArmISAParams *p, const SCTLR &sctlr_rst);
+        void clear64(const ArmISAParams *p);
+        void initID32(const ArmISAParams *p);
+        void initID64(const ArmISAParams *p);
+
+        void addressTranslation(TLB::ArmTranslationType tran_type,
+            BaseTLB::Mode mode, Request::Flags flags, RegVal val);
+        void addressTranslation64(TLB::ArmTranslationType tran_type,
+            BaseTLB::Mode mode, Request::Flags flags, RegVal val);
+
+      public:
+        SelfDebug*
+        getSelfDebug() const
+        {
+            return selfDebug;
+        }
+
+        static SelfDebug*
+        getSelfDebug(ThreadContext *tc)
+        {
+            auto *arm_isa = static_cast<ArmISA::ISA *>(tc->getIsaPtr());
+            return arm_isa->getSelfDebug();
+        }
+
+        RegVal readMiscRegNoEffect(int misc_reg) const;
+        RegVal readMiscReg(int misc_reg);
+        void setMiscRegNoEffect(int misc_reg, RegVal val);
+        void setMiscReg(int misc_reg, RegVal val);
+
+        RegId
+        flattenRegId(const RegId& regId) const
+        {
+            switch (regId.classValue()) {
+              case IntRegClass:
+                return RegId(IntRegClass, flattenIntIndex(regId.index()));
+              case FloatRegClass:
+                return RegId(FloatRegClass, flattenFloatIndex(regId.index()));
+              case VecRegClass:
+                return RegId(VecRegClass, flattenVecIndex(regId.index()));
+              case VecElemClass:
+                return RegId(VecElemClass, flattenVecElemIndex(regId.index()),
+                             regId.elemIndex());
+              case VecPredRegClass:
+                return RegId(VecPredRegClass,
+                             flattenVecPredIndex(regId.index()));
+              case CCRegClass:
+                return RegId(CCRegClass, flattenCCIndex(regId.index()));
+              case MiscRegClass:
+                return RegId(MiscRegClass, flattenMiscIndex(regId.index()));
+            }
+            return RegId();
+        }
 
         int
-        flattenIntIndex(int reg)
+        flattenIntIndex(int reg) const
         {
             assert(reg >= 0);
             if (reg < NUM_ARCH_INTREGS) {
                 return intRegMap[reg];
             } else if (reg < NUM_INTREGS) {
                 return reg;
-            } else {
-                int mode = reg / intRegsPerMode;
-                reg = reg % intRegsPerMode;
-                switch (mode) {
-                  case MODE_USER:
-                  case MODE_SYSTEM:
-                    return INTREG_USR(reg);
-                  case MODE_FIQ:
-                    return INTREG_FIQ(reg);
-                  case MODE_IRQ:
-                    return INTREG_IRQ(reg);
-                  case MODE_SVC:
-                    return INTREG_SVC(reg);
-                  case MODE_MON:
-                    return INTREG_MON(reg);
-                  case MODE_ABORT:
-                    return INTREG_ABT(reg);
-                  case MODE_UNDEFINED:
-                    return INTREG_UND(reg);
+            } else if (reg == INTREG_SPX) {
+                CPSR cpsr = miscRegs[MISCREG_CPSR];
+                ExceptionLevel el = opModeToEL(
+                    (OperatingMode) (uint8_t) cpsr.mode);
+                if (!cpsr.sp && el != EL0)
+                    return INTREG_SP0;
+                switch (el) {
+                  case EL3:
+                    return INTREG_SP3;
+                  case EL2:
+                    return INTREG_SP2;
+                  case EL1:
+                    return INTREG_SP1;
+                  case EL0:
+                    return INTREG_SP0;
                   default:
-                    panic("Flattening into an unknown mode.\n");
+                    panic("Invalid exception level");
+                    return 0;  // Never happens.
                 }
+            } else {
+                return flattenIntRegModeIndex(reg);
             }
         }
 
         int
-        flattenFloatIndex(int reg)
+        flattenFloatIndex(int reg) const
         {
-            return reg;
-        }
-
-        // dummy
-        int
-        flattenCCIndex(int reg)
-        {
+            assert(reg >= 0);
             return reg;
         }
 
         int
-        flattenMiscIndex(int reg)
+        flattenVecIndex(int reg) const
         {
+            assert(reg >= 0);
+            return reg;
+        }
+
+        int
+        flattenVecElemIndex(int reg) const
+        {
+            assert(reg >= 0);
+            return reg;
+        }
+
+        int
+        flattenVecPredIndex(int reg) const
+        {
+            assert(reg >= 0);
+            return reg;
+        }
+
+        int
+        flattenCCIndex(int reg) const
+        {
+            assert(reg >= 0);
+            return reg;
+        }
+
+        int
+        flattenMiscIndex(int reg) const
+        {
+            assert(reg >= 0);
+            int flat_idx = reg;
+
             if (reg == MISCREG_SPSR) {
-                int spsr_idx = NUM_MISCREGS;
                 CPSR cpsr = miscRegs[MISCREG_CPSR];
                 switch (cpsr.mode) {
+                  case MODE_EL0T:
+                    warn("User mode does not have SPSR\n");
+                    flat_idx = MISCREG_SPSR;
+                    break;
+                  case MODE_EL1T:
+                  case MODE_EL1H:
+                    flat_idx = MISCREG_SPSR_EL1;
+                    break;
+                  case MODE_EL2T:
+                  case MODE_EL2H:
+                    flat_idx = MISCREG_SPSR_EL2;
+                    break;
+                  case MODE_EL3T:
+                  case MODE_EL3H:
+                    flat_idx = MISCREG_SPSR_EL3;
+                    break;
                   case MODE_USER:
                     warn("User mode does not have SPSR\n");
-                    spsr_idx = MISCREG_SPSR;
+                    flat_idx = MISCREG_SPSR;
                     break;
                   case MODE_FIQ:
-                    spsr_idx = MISCREG_SPSR_FIQ;
+                    flat_idx = MISCREG_SPSR_FIQ;
                     break;
                   case MODE_IRQ:
-                    spsr_idx = MISCREG_SPSR_IRQ;
+                    flat_idx = MISCREG_SPSR_IRQ;
                     break;
                   case MODE_SVC:
-                    spsr_idx = MISCREG_SPSR_SVC;
+                    flat_idx = MISCREG_SPSR_SVC;
                     break;
                   case MODE_MON:
-                    spsr_idx = MISCREG_SPSR_MON;
+                    flat_idx = MISCREG_SPSR_MON;
                     break;
                   case MODE_ABORT:
-                    spsr_idx = MISCREG_SPSR_ABT;
+                    flat_idx = MISCREG_SPSR_ABT;
+                    break;
+                  case MODE_HYP:
+                    flat_idx = MISCREG_SPSR_HYP;
                     break;
                   case MODE_UNDEFINED:
-                    spsr_idx = MISCREG_SPSR_UND;
+                    flat_idx = MISCREG_SPSR_UND;
                     break;
                   default:
                     warn("Trying to access SPSR in an invalid mode: %d\n",
                          cpsr.mode);
-                    spsr_idx = MISCREG_SPSR;
+                    flat_idx = MISCREG_SPSR;
                     break;
                 }
-                return spsr_idx;
+            } else if (miscRegInfo[reg][MISCREG_MUTEX]) {
+                // Mutually exclusive CP15 register
+                switch (reg) {
+                  case MISCREG_PRRR_MAIR0:
+                  case MISCREG_PRRR_MAIR0_NS:
+                  case MISCREG_PRRR_MAIR0_S:
+                    {
+                        TTBCR ttbcr = readMiscRegNoEffect(MISCREG_TTBCR);
+                        // If the muxed reg has been flattened, work out the
+                        // offset and apply it to the unmuxed reg
+                        int idxOffset = reg - MISCREG_PRRR_MAIR0;
+                        if (ttbcr.eae)
+                            flat_idx = flattenMiscIndex(MISCREG_MAIR0 +
+                                                        idxOffset);
+                        else
+                            flat_idx = flattenMiscIndex(MISCREG_PRRR +
+                                                        idxOffset);
+                    }
+                    break;
+                  case MISCREG_NMRR_MAIR1:
+                  case MISCREG_NMRR_MAIR1_NS:
+                  case MISCREG_NMRR_MAIR1_S:
+                    {
+                        TTBCR ttbcr = readMiscRegNoEffect(MISCREG_TTBCR);
+                        // If the muxed reg has been flattened, work out the
+                        // offset and apply it to the unmuxed reg
+                        int idxOffset = reg - MISCREG_NMRR_MAIR1;
+                        if (ttbcr.eae)
+                            flat_idx = flattenMiscIndex(MISCREG_MAIR1 +
+                                                        idxOffset);
+                        else
+                            flat_idx = flattenMiscIndex(MISCREG_NMRR +
+                                                        idxOffset);
+                    }
+                    break;
+                  case MISCREG_PMXEVTYPER_PMCCFILTR:
+                    {
+                        PMSELR pmselr = miscRegs[MISCREG_PMSELR];
+                        if (pmselr.sel == 31)
+                            flat_idx = flattenMiscIndex(MISCREG_PMCCFILTR);
+                        else
+                            flat_idx = flattenMiscIndex(MISCREG_PMXEVTYPER);
+                    }
+                    break;
+                  default:
+                    panic("Unrecognized misc. register.\n");
+                    break;
+                }
+            } else {
+                if (miscRegInfo[reg][MISCREG_BANKED]) {
+                    bool secureReg = haveSecurity && !highestELIs64 &&
+                                     inSecureState(miscRegs[MISCREG_SCR],
+                                                   miscRegs[MISCREG_CPSR]);
+                    flat_idx += secureReg ? 2 : 1;
+                } else {
+                    flat_idx = snsBankedIndex64((MiscRegIndex)reg,
+                        !inSecureState(miscRegs[MISCREG_SCR],
+                                       miscRegs[MISCREG_CPSR]));
+                }
             }
-            return reg;
+            return flat_idx;
         }
 
-        void serialize(std::ostream &os)
+        /**
+         * Returns the enconcing equivalent when VHE is implemented and
+         * HCR_EL2.E2H is enabled and executing at EL2
+         */
+        int
+        redirectRegVHE(ThreadContext * tc, int misc_reg)
+        {
+            const HCR hcr = readMiscRegNoEffect(MISCREG_HCR_EL2);
+            if (hcr.e2h == 0x0 || currEL(tc) != EL2)
+                return misc_reg;
+            SCR scr = readMiscRegNoEffect(MISCREG_SCR_EL3);
+            bool sec_el2 = scr.eel2 && haveSecEL2;
+            switch(misc_reg) {
+              case MISCREG_SPSR_EL1:
+                  return MISCREG_SPSR_EL2;
+              case MISCREG_ELR_EL1:
+                  return MISCREG_ELR_EL2;
+              case MISCREG_SCTLR_EL1:
+                  return MISCREG_SCTLR_EL2;
+              case MISCREG_CPACR_EL1:
+                  return MISCREG_CPTR_EL2;
+        //      case :
+        //          return MISCREG_TRFCR_EL2;
+              case MISCREG_TTBR0_EL1:
+                  return MISCREG_TTBR0_EL2;
+              case MISCREG_TTBR1_EL1:
+                  return MISCREG_TTBR1_EL2;
+              case MISCREG_TCR_EL1:
+                  return MISCREG_TCR_EL2;
+              case MISCREG_AFSR0_EL1:
+                  return MISCREG_AFSR0_EL2;
+              case MISCREG_AFSR1_EL1:
+                  return MISCREG_AFSR1_EL2;
+              case MISCREG_ESR_EL1:
+                  return MISCREG_ESR_EL2;
+              case MISCREG_FAR_EL1:
+                  return MISCREG_FAR_EL2;
+              case MISCREG_MAIR_EL1:
+                  return MISCREG_MAIR_EL2;
+              case MISCREG_AMAIR_EL1:
+                  return MISCREG_AMAIR_EL2;
+              case MISCREG_VBAR_EL1:
+                  return MISCREG_VBAR_EL2;
+              case MISCREG_CONTEXTIDR_EL1:
+                  return MISCREG_CONTEXTIDR_EL2;
+              case MISCREG_CNTKCTL_EL1:
+                  return MISCREG_CNTHCTL_EL2;
+              case MISCREG_CNTP_TVAL_EL0:
+                  return sec_el2? MISCREG_CNTHPS_TVAL_EL2:
+                                 MISCREG_CNTHP_TVAL_EL2;
+              case MISCREG_CNTP_CTL_EL0:
+                  return sec_el2? MISCREG_CNTHPS_CTL_EL2:
+                                 MISCREG_CNTHP_CTL_EL2;
+              case MISCREG_CNTP_CVAL_EL0:
+                  return sec_el2? MISCREG_CNTHPS_CVAL_EL2:
+                                 MISCREG_CNTHP_CVAL_EL2;
+              case MISCREG_CNTV_TVAL_EL0:
+                  return sec_el2? MISCREG_CNTHVS_TVAL_EL2:
+                                 MISCREG_CNTHV_TVAL_EL2;
+              case MISCREG_CNTV_CTL_EL0:
+                  return sec_el2? MISCREG_CNTHVS_CTL_EL2:
+                                 MISCREG_CNTHV_CTL_EL2;
+              case MISCREG_CNTV_CVAL_EL0:
+                  return sec_el2? MISCREG_CNTHVS_CVAL_EL2:
+                                 MISCREG_CNTHV_CVAL_EL2;
+              default:
+                  return misc_reg;
+            }
+            /*should not be accessible */
+            return misc_reg;
+        }
+
+        int
+        snsBankedIndex64(MiscRegIndex reg, bool ns) const
+        {
+            int reg_as_int = static_cast<int>(reg);
+            if (miscRegInfo[reg][MISCREG_BANKED64]) {
+                reg_as_int += (haveSecurity && !ns) ? 2 : 1;
+            }
+            return reg_as_int;
+        }
+
+        std::pair<int,int> getMiscIndices(int misc_reg) const
+        {
+            // Note: indexes of AArch64 registers are left unchanged
+            int flat_idx = flattenMiscIndex(misc_reg);
+
+            if (lookUpMiscReg[flat_idx].lower == 0) {
+                return std::make_pair(flat_idx, 0);
+            }
+
+            // do additional S/NS flattenings if mapped to NS while in S
+            bool S = haveSecurity && !highestELIs64 &&
+                     inSecureState(miscRegs[MISCREG_SCR],
+                                   miscRegs[MISCREG_CPSR]);
+            int lower = lookUpMiscReg[flat_idx].lower;
+            int upper = lookUpMiscReg[flat_idx].upper;
+            // upper == 0, which is CPSR, is not MISCREG_BANKED_CHILD (no-op)
+            lower += S && miscRegInfo[lower][MISCREG_BANKED_CHILD];
+            upper += S && miscRegInfo[upper][MISCREG_BANKED_CHILD];
+            return std::make_pair(lower, upper);
+        }
+
+        unsigned getCurSveVecLenInBits() const;
+
+        unsigned getCurSveVecLenInBitsAtReset() const { return sveVL * 128; }
+
+        static void zeroSveVecRegUpperPart(VecRegContainer &vc,
+                                           unsigned eCount);
+
+        void
+        serialize(CheckpointOut &cp) const override
         {
             DPRINTF(Checkpoint, "Serializing Arm Misc Registers\n");
-            SERIALIZE_ARRAY(miscRegs, NumMiscRegs);
+            SERIALIZE_ARRAY(miscRegs, NUM_PHYS_MISCREGS);
         }
-        void unserialize(Checkpoint *cp, const std::string &section)
+
+        void
+        unserialize(CheckpointIn &cp) override
         {
             DPRINTF(Checkpoint, "Unserializing Arm Misc Registers\n");
-            UNSERIALIZE_ARRAY(miscRegs, NumMiscRegs);
+            UNSERIALIZE_ARRAY(miscRegs, NUM_PHYS_MISCREGS);
             CPSR tmp_cpsr = miscRegs[MISCREG_CPSR];
             updateRegMap(tmp_cpsr);
         }
 
-        void startup(ThreadContext *tc) {}
+        void startup() override;
 
-        /// Explicitly import the otherwise hidden startup
-        using SimObject::startup;
+        void setupThreadContext();
+
+        void takeOverFrom(ThreadContext *new_tc,
+                          ThreadContext *old_tc) override;
+
+        Enums::DecoderFlavor decoderFlavor() const { return _decoderFlavor; }
+
+        /** Returns true if the ISA has a GICv3 cpu interface */
+        bool haveGICv3CpuIfc() const
+        {
+            // gicv3CpuInterface is initialized at startup time, hence
+            // trying to read its value before the startup stage will lead
+            // to an error
+            assert(afterStartup);
+            return gicv3CpuInterface != nullptr;
+        }
+
+        Enums::VecRegRenameMode
+        vecRegRenameMode() const
+        {
+            return _vecRegRenameMode;
+        }
 
         typedef ArmISAParams Params;
 
@@ -212,5 +859,33 @@ namespace ArmISA
         ISA(Params *p);
     };
 }
+
+template<>
+struct RenameMode<ArmISA::ISA>
+{
+    static Enums::VecRegRenameMode
+    init(const BaseISA* isa)
+    {
+        auto arm_isa = dynamic_cast<const ArmISA::ISA *>(isa);
+        assert(arm_isa);
+        return arm_isa->vecRegRenameMode();
+    }
+
+    static Enums::VecRegRenameMode
+    mode(const ArmISA::PCState& pc)
+    {
+        if (pc.aarch64()) {
+            return Enums::Full;
+        } else {
+            return Enums::Elem;
+        }
+    }
+
+    static bool
+    equalsInit(const BaseISA* isa1, const BaseISA* isa2)
+    {
+        return init(isa1) == init(isa2);
+    }
+};
 
 #endif

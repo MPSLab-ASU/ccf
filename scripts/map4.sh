@@ -1,0 +1,28 @@
+#!/bin/bash
+cfile="$1"
+name=${cfile%.c}
+llfile="$name.ll"
+dfgfile="$name.dfg"
+schfile="$name.sch"
+#toolchain="/home/shail/ccf-init"
+toolchain="/home/mahesh/git_repos"
+#map="$toolchain/RAMP/Release"
+map="/home/mahesh/git_repos/S3RMap/Debug"
+
+nodefile="$toolchain/S3RMap/DFGFiles"
+
+node="$1"
+edge="$2"
+X="$3"
+Y="$4"
+R="$5"
+MODE="$6"
+
+#$map/RAMP -EDGE $edge -NODE $node -X $X -Y $Y -R $R > $schfile
+
+$map/SSSRMap -EDGE $edge -NODE $node -X $X -Y $Y -R $R -MSA 10 -MAPII 10 -MAX_MAP 0.05 -MAX_II 50 -MAP_MODE $MODE -LAMBDA 0.05 > debug
+
+
+$nodefile/nodefile $node DUMP_node.txt > final_node.txt
+
+exit

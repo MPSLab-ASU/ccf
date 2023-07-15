@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2007 The Hewlett-Packard Development Company
+ * Copyright (c) 2015 Advanced Micro Devices, Inc.
  * All rights reserved.
  *
  * The license below extends only to copyright in the software and shall
@@ -33,32 +34,23 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Gabe Black
  */
 
 #ifndef __ARCH_X86_INSTS_MICROLDSTOP_HH__
 #define __ARCH_X86_INSTS_MICROLDSTOP_HH__
 
 #include "arch/x86/insts/microop.hh"
+#include "arch/x86/ldstflags.hh"
 #include "mem/packet.hh"
 #include "mem/request.hh"
 #include "sim/faults.hh"
 
 namespace X86ISA
 {
-    const Request::FlagsType SegmentFlagMask = mask(4);
-    const int FlagShift = 4;
-    enum FlagBit {
-        CPL0FlagBit = 1,
-        AddrSizeFlagBit = 2,
-        StoreCheck = 4
-    };
-
     /**
-     * Base class for load and store ops
+     * Base class for memory ops
      */
-    class LdStOp : public X86MicroopBase
+    class MemOp : public X86MicroopBase
     {
       protected:
         const uint8_t scale;
@@ -66,11 +58,41 @@ namespace X86ISA
         const RegIndex base;
         const uint64_t disp;
         const uint8_t segment;
-        const RegIndex data;
         const uint8_t dataSize;
         const uint8_t addressSize;
         const Request::FlagsType memFlags;
         RegIndex foldOBit, foldABit;
+
+        //Constructor
+        MemOp(ExtMachInst _machInst,
+                const char * mnem, const char * _instMnem,
+                uint64_t setFlags,
+                uint8_t _scale, InstRegIndex _index, InstRegIndex _base,
+                uint64_t _disp, InstRegIndex _segment,
+                uint8_t _dataSize, uint8_t _addressSize,
+                Request::FlagsType _memFlags,
+                OpClass __opClass) :
+        X86MicroopBase(_machInst, mnem, _instMnem, setFlags, __opClass),
+                scale(_scale), index(_index.index()), base(_base.index()),
+                disp(_disp), segment(_segment.index()),
+                dataSize(_dataSize), addressSize(_addressSize),
+                memFlags(_memFlags | _segment.index())
+        {
+            assert(_segment.index() < NUM_SEGMENTREGS);
+            foldOBit =
+                (dataSize == 1 && !_machInst.rex.present) ? 1 << 6 : 0;
+            foldABit =
+                (addressSize == 1 && !_machInst.rex.present) ? 1 << 6 : 0;
+        }
+    };
+
+    /**
+     * Base class for load and store ops using one register
+     */
+    class LdStOp : public MemOp
+    {
+      protected:
+        const RegIndex data;
 
         //Constructor
         LdStOp(ExtMachInst _machInst,
@@ -82,21 +104,50 @@ namespace X86ISA
                 uint8_t _dataSize, uint8_t _addressSize,
                 Request::FlagsType _memFlags,
                 OpClass __opClass) :
-        X86MicroopBase(_machInst, mnem, _instMnem, setFlags, __opClass),
-                scale(_scale), index(_index.idx), base(_base.idx),
-                disp(_disp), segment(_segment.idx),
-                data(_data.idx),
-                dataSize(_dataSize), addressSize(_addressSize),
-                memFlags(_memFlags | _segment.idx)
+        MemOp(_machInst, mnem, _instMnem, setFlags,
+                _scale, _index, _base, _disp, _segment,
+                _dataSize, _addressSize, _memFlags,
+                __opClass),
+                data(_data.index())
         {
-            assert(_segment.idx < NUM_SEGMENTREGS);
-            foldOBit = (dataSize == 1 && !_machInst.rex.present) ? 1 << 6 : 0;
-            foldABit =
-                (addressSize == 1 && !_machInst.rex.present) ? 1 << 6 : 0;
         }
 
-        std::string generateDisassembly(Addr pc,
-            const SymbolTable *symtab) const;
+        std::string generateDisassembly(
+                Addr pc, const Loader::SymbolTable *symtab) const override;
+    };
+
+    /**
+     * Base class for load and store ops using two registers, we will
+     * call them split ops for this reason. These are mainly  used to
+     * implement cmpxchg8b and cmpxchg16b.
+     */
+    class LdStSplitOp : public MemOp
+    {
+      protected:
+        const RegIndex dataLow;
+        const RegIndex dataHi;
+
+        //Constructor
+        LdStSplitOp(ExtMachInst _machInst,
+                const char * mnem, const char * _instMnem,
+                uint64_t setFlags,
+                uint8_t _scale, InstRegIndex _index, InstRegIndex _base,
+                uint64_t _disp, InstRegIndex _segment,
+                InstRegIndex _dataLow, InstRegIndex _dataHi,
+                uint8_t _dataSize, uint8_t _addressSize,
+                Request::FlagsType _memFlags,
+                OpClass __opClass) :
+        MemOp(_machInst, mnem, _instMnem, setFlags,
+                _scale, _index, _base, _disp, _segment,
+                _dataSize, _addressSize, _memFlags,
+                __opClass),
+                dataLow(_dataLow.index()),
+                dataHi(_dataHi.index())
+        {
+        }
+
+        std::string generateDisassembly(
+                Addr pc, const Loader::SymbolTable *symtab) const override;
     };
 }
 

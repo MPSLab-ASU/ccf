@@ -36,181 +36,31 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Ron Dreslinski
- *          Steve Reinhardt
- *          Andreas Hansson
  */
 
-#include <string>
-
-#include "arch/isa_traits.hh"
-#include "base/chunk_generator.hh"
-#include "config/the_isa.hh"
-#include "mem/page_table.hh"
 #include "mem/se_translating_port_proxy.hh"
+
 #include "sim/process.hh"
 #include "sim/system.hh"
 
-using namespace TheISA;
-
-SETranslatingPortProxy::SETranslatingPortProxy(MasterPort& port, Process *p,
-                                           AllocType alloc)
-    : PortProxy(port, p->system->cacheLineSize()), pTable(p->pTable),
-      process(p), allocating(alloc)
-{ }
-
-SETranslatingPortProxy::~SETranslatingPortProxy()
-{ }
+SETranslatingPortProxy::SETranslatingPortProxy(
+        ThreadContext *tc, AllocType alloc, Request::Flags _flags) :
+    TranslatingPortProxy(tc, _flags), allocating(alloc)
+{}
 
 bool
-SETranslatingPortProxy::tryReadBlob(Addr addr, uint8_t *p, int size) const
+SETranslatingPortProxy::fixupAddr(Addr addr, BaseTLB::Mode mode) const
 {
-    int prevSize = 0;
+    auto *process = _tc->getProcessPtr();
 
-    for (ChunkGenerator gen(addr, size, VMPageSize); !gen.done(); gen.next()) {
-        Addr paddr;
-
-        if (!pTable->translate(gen.addr(),paddr))
-            return false;
-
-        PortProxy::readBlob(paddr, p + prevSize, gen.size());
-        prevSize += gen.size();
-    }
-
-    return true;
-}
-
-void
-SETranslatingPortProxy::readBlob(Addr addr, uint8_t *p, int size) const
-{
-    if (!tryReadBlob(addr, p, size))
-        fatal("readBlob(0x%x, ...) failed", addr);
-}
-
-
-bool
-SETranslatingPortProxy::tryWriteBlob(Addr addr, uint8_t *p, int size) const
-{
-    int prevSize = 0;
-
-    for (ChunkGenerator gen(addr, size, VMPageSize); !gen.done(); gen.next()) {
-        Addr paddr;
-
-        if (!pTable->translate(gen.addr(), paddr)) {
-            if (allocating == Always) {
-                process->allocateMem(roundDown(gen.addr(), VMPageSize),
-                                     VMPageSize);
-            } else if (allocating == NextPage) {
-                // check if we've accessed the next page on the stack
-                if (!process->fixupStackFault(gen.addr()))
-                    panic("Page table fault when accessing virtual address %#x "
-                            "during functional write\n", gen.addr());
-            } else {
-                return false;
-            }
-            pTable->translate(gen.addr(), paddr);
+    if (mode == BaseTLB::Write) {
+        if (allocating == Always) {
+            process->allocateMem(roundDown(addr, pageBytes), pageBytes);
+            return true;
+        } else if (allocating == NextPage && process->fixupFault(addr)) {
+            // We've accessed the next page on the stack.
+            return true;
         }
-
-        PortProxy::writeBlob(paddr, p + prevSize, gen.size());
-        prevSize += gen.size();
     }
-
-    return true;
+    return false;
 }
-
-
-void
-SETranslatingPortProxy::writeBlob(Addr addr, uint8_t *p, int size) const
-{
-    if (!tryWriteBlob(addr, p, size))
-        fatal("writeBlob(0x%x, ...) failed", addr);
-}
-
-bool
-SETranslatingPortProxy::tryMemsetBlob(Addr addr, uint8_t val, int size) const
-{
-    for (ChunkGenerator gen(addr, size, VMPageSize); !gen.done(); gen.next()) {
-        Addr paddr;
-
-        if (!pTable->translate(gen.addr(), paddr)) {
-            if (allocating == Always) {
-                process->allocateMem(roundDown(gen.addr(), VMPageSize),
-                                     VMPageSize);
-                pTable->translate(gen.addr(), paddr);
-            } else {
-                return false;
-            }
-        }
-
-        PortProxy::memsetBlob(paddr, val, gen.size());
-    }
-
-    return true;
-}
-
-void
-SETranslatingPortProxy::memsetBlob(Addr addr, uint8_t val, int size) const
-{
-    if (!tryMemsetBlob(addr, val, size))
-        fatal("memsetBlob(0x%x, ...) failed", addr);
-}
-
-
-bool
-SETranslatingPortProxy::tryWriteString(Addr addr, const char *str) const
-{
-    uint8_t c;
-
-    Addr vaddr = addr;
-
-    do {
-        c = *str++;
-        Addr paddr;
-
-        if (!pTable->translate(vaddr++, paddr))
-            return false;
-
-        PortProxy::writeBlob(paddr, &c, 1);
-    } while (c);
-
-    return true;
-}
-
-void
-SETranslatingPortProxy::writeString(Addr addr, const char *str) const
-{
-    if (!tryWriteString(addr, str))
-        fatal("writeString(0x%x, ...) failed", addr);
-}
-
-bool
-SETranslatingPortProxy::tryReadString(std::string &str, Addr addr) const
-{
-    uint8_t c;
-
-    Addr vaddr = addr;
-
-    while (true) {
-        Addr paddr;
-
-        if (!pTable->translate(vaddr++, paddr))
-            return false;
-
-        PortProxy::readBlob(paddr, &c, 1);
-        if (c == '\0')
-            break;
-
-        str += c;
-    }
-
-    return true;
-}
-
-void
-SETranslatingPortProxy::readString(std::string &str, Addr addr) const
-{
-    if (!tryReadString(str, addr))
-        fatal("readString(0x%x, ...) failed", addr);
-}
-

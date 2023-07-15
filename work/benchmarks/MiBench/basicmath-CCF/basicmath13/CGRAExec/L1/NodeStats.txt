@@ -1,2 +1,0 @@
-Routing Nodes:	0
-Total Nodes:	27

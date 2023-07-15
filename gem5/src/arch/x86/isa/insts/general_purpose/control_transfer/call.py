@@ -32,8 +32,6 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Gabe Black
 
 microcode = '''
 def macroop CALL_NEAR_I
@@ -41,11 +39,12 @@ def macroop CALL_NEAR_I
     # Make the default data size of calls 64 bits in 64 bit mode
     .adjust_env oszIn64Override
     .function_call
+    .control_direct
 
     limm t1, imm
     rdip t7
     # Check target of call
-    st t7, ss, [0, t0, rsp], "-env.dataSize"
+    stis t7, ss, [0, t0, rsp], "-env.dataSize"
     subi rsp, rsp, ssz
     wrip t7, t1
 };
@@ -55,10 +54,11 @@ def macroop CALL_NEAR_R
     # Make the default data size of calls 64 bits in 64 bit mode
     .adjust_env oszIn64Override
     .function_call
+    .control_indirect
 
     rdip t1
     # Check target of call
-    st t1, ss, [0, t0, rsp], "-env.dataSize"
+    stis t1, ss, [0, t0, rsp], "-env.dataSize"
     subi rsp, rsp, ssz
     wripi reg, 0
 };
@@ -68,6 +68,7 @@ def macroop CALL_NEAR_M
     # Make the default data size of calls 64 bits in 64 bit mode
     .adjust_env oszIn64Override
     .function_call
+    .control_indirect
 
     rdip t7
     ld t1, seg, sib, disp
@@ -82,6 +83,7 @@ def macroop CALL_NEAR_P
     # Make the default data size of calls 64 bits in 64 bit mode
     .adjust_env oszIn64Override
     .function_call
+    .control_indirect
 
     rdip t7
     ld t1, seg, riprel, disp

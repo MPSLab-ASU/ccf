@@ -1,5 +1,6 @@
 # Copyright (c) 1999-2008 Mark D. Hill and David A. Wood
 # Copyright (c) 2009 The Hewlett-Packard Development Company
+# Copyright (c) 2013 Advanced Micro Devices, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -53,6 +54,8 @@ class FuncCallExprAST(ExprAST):
             # handled differently. Hence the check whether or not
             # the str_list is empty.
 
+            dflag = "%s" % (self.exprs[0].name)
+            machine.addDebugFlag(dflag)
             format = "%s" % (self.exprs[1].inline())
             format_length = len(format)
             str_list = []
@@ -61,10 +64,29 @@ class FuncCallExprAST(ExprAST):
                 str_list.append("%s" % self.exprs[i].inline())
 
             if len(str_list) == 0:
-                code('DPRINTF(RubySlicc, "$0: $1")',
+                code('DPRINTF($0, "$1: $2")',
+                     dflag, self.exprs[0].location, format[2:format_length-2])
+            else:
+                code('DPRINTF($0, "$1: $2", $3)',
+                     dflag,
+                     self.exprs[0].location, format[2:format_length-2],
+                     ', '.join(str_list))
+
+            return self.symtab.find("void", Type)
+
+        if self.proc_name == "DPRINTFN":
+            format = "%s" % (self.exprs[0].inline())
+            format_length = len(format)
+            str_list = []
+
+            for i in range(1, len(self.exprs)):
+                str_list.append("%s" % self.exprs[i].inline())
+
+            if len(str_list) == 0:
+                code('DPRINTFN("$0: $1")',
                      self.exprs[0].location, format[2:format_length-2])
             else:
-                code('DPRINTF(RubySlicc, "$0: $1", $2)',
+                code('DPRINTFN("$0: $1", $2)',
                      self.exprs[0].location, format[2:format_length-2],
                      ', '.join(str_list))
 
@@ -76,28 +98,20 @@ class FuncCallExprAST(ExprAST):
             code("APPEND_TRANSITION_COMMENT($0)", self.exprs[0].inline())
             return self.symtab.find("void", Type)
 
+        func_name_args = self.proc_name
+
+        for expr in self.exprs:
+            actual_type,param_code = expr.inline(True)
+            func_name_args += "_" + str(actual_type.ident)
+
         # Look up the function in the symbol table
-        func = self.symtab.find(self.proc_name, Func)
+        func = self.symtab.find(func_name_args, Func)
 
         # Check the types and get the code for the parameters
         if func is None:
-            self.error("Unrecognized function name: '%s'", self.proc_name)
+            self.error("Unrecognized function name: '%s'", func_name_args)
 
-        if len(self.exprs) != len(func.param_types):
-            self.error("Wrong number of arguments passed to function : '%s'" +\
-                       " Expected %d, got %d", self.proc_name,
-                       len(func.param_types), len(self.exprs))
-
-        cvec = []
-        type_vec = []
-        for expr,expected_type in zip(self.exprs, func.param_types):
-            # Check the types of the parameter
-            actual_type,param_code = expr.inline(True)
-            if str(actual_type) != str(expected_type):
-                expr.error("Type mismatch: expected: %s actual: %s" % \
-                           (expected_type, actual_type))
-            cvec.append(param_code)
-            type_vec.append(expected_type)
+        cvec, type_vec = func.checkArguments(self.exprs)
 
         # OK, the semantics of "trigger" here is that, ports in the
         # machine have different priorities. We always check the first
@@ -116,23 +130,22 @@ class FuncCallExprAST(ExprAST):
         if self.proc_name == "trigger":
             code('''
 {
-    Address addr = ${{cvec[1]}};
 ''')
             if machine.TBEType != None and machine.EntryType != None:
                 code('''
-    TransitionResult result = doTransition(${{cvec[0]}}, ${{cvec[2]}}, ${{cvec[3]}}, addr);
+    TransitionResult result = doTransition(${{cvec[0]}}, ${{cvec[2]}}, ${{cvec[3]}}, ${{cvec[1]}});
 ''')
             elif machine.TBEType != None:
                 code('''
-    TransitionResult result = doTransition(${{cvec[0]}}, ${{cvec[2]}}, addr);
+    TransitionResult result = doTransition(${{cvec[0]}}, ${{cvec[2]}}, ${{cvec[1]}});
 ''')
             elif machine.EntryType != None:
                 code('''
-    TransitionResult result = doTransition(${{cvec[0]}}, ${{cvec[2]}}, addr);
+    TransitionResult result = doTransition(${{cvec[0]}}, ${{cvec[2]}}, ${{cvec[1]}});
 ''')
             else:
                 code('''
-    TransitionResult result = doTransition(${{cvec[0]}}, addr);
+    TransitionResult result = doTransition(${{cvec[0]}}, ${{cvec[1]}});
 ''')
 
             code('''
@@ -141,7 +154,8 @@ class FuncCallExprAST(ExprAST):
         continue; // Check the first port again
     }
 
-    if (result == TransitionResult_ResourceStall) {
+    if (result == TransitionResult_ResourceStall ||
+        result == TransitionResult_ProtocolStall) {
         scheduleEvent(Cycles(1));
 
         // Cannot do anything with this transition, go check next doable transition (mostly likely of next port)
@@ -168,6 +182,8 @@ if (!(${{cvec[0]}})) {
             code("set_tbe(m_tbe_ptr, %s);" %(cvec[0]));
         elif self.proc_name == "unset_tbe":
             code("unset_tbe(m_tbe_ptr);");
+        elif self.proc_name == "stallPort":
+            code("scheduleEvent(Cycles(1));")
 
         else:
             # Normal function
@@ -186,7 +202,7 @@ if (!(${{cvec[0]}})) {
                     params += str(param_code);
 
             fix = code.nofix()
-            code('(${{func.c_ident}}($params))')
+            code('(${{func.c_name}}($params))')
             code.fix(fix)
 
         return func.return_type

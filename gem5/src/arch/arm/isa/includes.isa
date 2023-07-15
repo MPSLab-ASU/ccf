@@ -1,6 +1,6 @@
 // -*- mode:c++ -*-
 
-// Copyright (c) 2010 ARM Limited
+// Copyright (c) 2010, 2012, 2017-2018, 2020 ARM Limited
 // All rights reserved
 //
 // The license below extends only to copyright in the software and shall
@@ -37,8 +37,6 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Authors: Stephen Hines
 
 ////////////////////////////////////////////////////////////////////
 //
@@ -50,26 +48,49 @@ output header {{
 #include <sstream>
 
 #include "arch/arm/insts/branch.hh"
+#include "arch/arm/insts/branch64.hh"
+#include "arch/arm/insts/crypto.hh"
+#include "arch/arm/insts/data64.hh"
+#include "arch/arm/insts/fplib.hh"
 #include "arch/arm/insts/macromem.hh"
 #include "arch/arm/insts/mem.hh"
+#include "arch/arm/insts/mem64.hh"
 #include "arch/arm/insts/misc.hh"
+#include "arch/arm/insts/misc64.hh"
 #include "arch/arm/insts/mult.hh"
+#include "arch/arm/insts/neon64_mem.hh"
 #include "arch/arm/insts/pred_inst.hh"
+#include "arch/arm/insts/pseudo.hh"
 #include "arch/arm/insts/static_inst.hh"
+#include "arch/arm/insts/sve.hh"
+#include "arch/arm/insts/sve_mem.hh"
+#include "arch/arm/insts/tme64.hh"
 #include "arch/arm/insts/vfp.hh"
 #include "arch/arm/isa_traits.hh"
+#include "enums/DecoderFlavor.hh"
 #include "mem/packet.hh"
 #include "sim/faults.hh"
+
+namespace ArmISAInst
+{
+using namespace ArmISA;
+}
+
 }};
 
 output decoder {{
+#include <string>
+
+#include <gem5/asm/generic/m5ops.h>
+
 #include "arch/arm/decoder.hh"
 #include "arch/arm/faults.hh"
+#include "arch/arm/insts/sve_macromem.hh"
 #include "arch/arm/intregs.hh"
 #include "arch/arm/isa_traits.hh"
 #include "arch/arm/utility.hh"
-#include "base/loader/symtab.hh"
 #include "base/cprintf.hh"
+#include "base/loader/symtab.hh"
 #include "cpu/thread_context.hh"
 
 using namespace ArmISA;
@@ -79,16 +100,24 @@ output exec {{
 #include <cmath>
 
 #include "arch/arm/faults.hh"
+#include "arch/arm/interrupts.hh"
+#include "arch/arm/isa.hh"
+#include "arch/arm/htm.hh"
 #include "arch/arm/isa_traits.hh"
+#include "arch/arm/pauth_helpers.hh"
+#include "arch/arm/semihosting.hh"
 #include "arch/arm/utility.hh"
 #include "arch/generic/memhelpers.hh"
 #include "base/condcodes.hh"
+#include "base/crc.hh"
+#include "cpu/base.hh"
 #include "sim/pseudo_inst.hh"
+
 #if defined(linux)
 #include <fenv.h>
+
 #endif
 
-#include "base/cp_annotate.hh"
 #include "debug/Arm.hh"
 #include "mem/packet.hh"
 #include "mem/packet_access.hh"
@@ -97,4 +126,3 @@ output exec {{
 using namespace ArmISA;
 
 }};
-

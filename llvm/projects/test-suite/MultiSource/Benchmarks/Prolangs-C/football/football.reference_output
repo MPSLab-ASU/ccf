@@ -1,3 +1,0 @@
-Usage: stats [-p] <yy> [input-file]
-   <yy> is 2 digit year code.
-exit 1

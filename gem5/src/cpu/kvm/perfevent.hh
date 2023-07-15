@@ -33,8 +33,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Andreas Sandberg
  */
 
 #ifndef __CPU_KVM_PERFEVENT_HH__
@@ -297,7 +295,7 @@ public:
      *
      * @param signal Signal to send upon overflow
      */
-    void enableSignals(int signal) { enableSignals(gettid(), signal); }
+    void enableSignals(int signal) { enableSignals(sysGettid(), signal); }
 
 private:
     // Disallow copying
@@ -312,7 +310,7 @@ private:
      *
      * @return Current thread's TID
      */
-    pid_t gettid();
+    pid_t sysGettid();
 
     /**
      * MMAP the PerfEvent file descriptor.

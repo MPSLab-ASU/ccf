@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 ARM Limited
+ * Copyright (c) 2011-2019 ARM Limited
  * All rights reserved
  *
  * The license below extends only to copyright in the software and shall
@@ -12,7 +12,7 @@
  * modified or unmodified, in source code or in binary form.
  *
  * Copyright (c) 2006 The Regents of The University of Michigan
- * Copyright (c) 2010 Advanced Micro Devices, Inc.
+ * Copyright (c) 2010,2015 Advanced Micro Devices, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,9 +37,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Ali Saidi
- *          Steve Reinhardt
  */
 
 /**
@@ -48,15 +45,18 @@
  * between a single level of the memory heirarchy (ie L1->L2).
  */
 
-#include <cstring>
-#include <iostream>
-
-#include "base/cprintf.hh"
-#include "base/misc.hh"
-#include "base/trace.hh"
 #include "mem/packet.hh"
 
-using namespace std;
+#include <algorithm>
+#include <cstring>
+#include <iostream>
+#include <sstream>
+#include <string>
+
+#include "base/cprintf.hh"
+#include "base/logging.hh"
+#include "base/trace.hh"
+#include "mem/packet_access.hh"
 
 // The one downside to bitsets is that static initializers can get ugly.
 #define SET1(a1)                     (1 << (a1))
@@ -65,13 +65,16 @@ using namespace std;
 #define SET4(a1, a2, a3, a4)         (SET3(a1, a2, a3) | SET1(a4))
 #define SET5(a1, a2, a3, a4, a5)     (SET4(a1, a2, a3, a4) | SET1(a5))
 #define SET6(a1, a2, a3, a4, a5, a6) (SET5(a1, a2, a3, a4, a5) | SET1(a6))
+#define SET7(a1, a2, a3, a4, a5, a6, a7) (SET6(a1, a2, a3, a4, a5, a6) | \
+                                          SET1(a7))
 
 const MemCmd::CommandInfo
 MemCmd::commandInfo[] =
 {
     /* InvalidCmd */
     { 0, InvalidCmd, "InvalidCmd" },
-    /* ReadReq */
+    /* ReadReq - Read issued by a non-caching agent such as a CPU or
+     * device, with no restrictions on alignment. */
     { SET3(IsRead, IsRequest, NeedsResponse), ReadResp, "ReadReq" },
     /* ReadResp */
     { SET3(IsRead, IsResponse, HasData), InvalidCmd, "ReadResp" },
@@ -79,18 +82,39 @@ MemCmd::commandInfo[] =
     { SET4(IsRead, IsResponse, HasData, IsInvalidate),
             InvalidCmd, "ReadRespWithInvalidate" },
     /* WriteReq */
-    { SET5(IsWrite, NeedsExclusive, IsRequest, NeedsResponse, HasData),
+    { SET5(IsWrite, NeedsWritable, IsRequest, NeedsResponse, HasData),
             WriteResp, "WriteReq" },
     /* WriteResp */
-    { SET3(IsWrite, NeedsExclusive, IsResponse), InvalidCmd, "WriteResp" },
-    /* Writeback */
-    { SET4(IsWrite, NeedsExclusive, IsRequest, HasData),
-            InvalidCmd, "Writeback" },
+    { SET2(IsWrite, IsResponse), InvalidCmd, "WriteResp" },
+    /* WriteCompleteResp - The WriteCompleteResp command is needed
+     * because in the GPU memory model we use a WriteResp to indicate
+     * that a write has reached the cache controller so we can free
+     * resources at the coalescer. Later, when the write succesfully
+     * completes we send a WriteCompleteResp to the CU so its wait
+     * counters can be updated. Wait counters in the CU is how memory
+     * dependences are handled in the GPU ISA. */
+    { SET2(IsWrite, IsResponse), InvalidCmd, "WriteCompleteResp" },
+    /* WritebackDirty */
+    { SET5(IsWrite, IsRequest, IsEviction, HasData, FromCache),
+            InvalidCmd, "WritebackDirty" },
+    /* WritebackClean - This allows the upstream cache to writeback a
+     * line to the downstream cache without it being considered
+     * dirty. */
+    { SET5(IsWrite, IsRequest, IsEviction, HasData, FromCache),
+            InvalidCmd, "WritebackClean" },
+    /* WriteClean - This allows a cache to write a dirty block to a memory
+       below without evicting its copy. */
+    { SET4(IsWrite, IsRequest, HasData, FromCache), InvalidCmd, "WriteClean" },
+    /* CleanEvict */
+    { SET3(IsRequest, IsEviction, FromCache), InvalidCmd, "CleanEvict" },
     /* SoftPFReq */
     { SET4(IsRead, IsRequest, IsSWPrefetch, NeedsResponse),
             SoftPFResp, "SoftPFReq" },
+    /* SoftPFExReq */
+    { SET6(IsRead, NeedsWritable, IsInvalidate, IsRequest,
+           IsSWPrefetch, NeedsResponse), SoftPFResp, "SoftPFExReq" },
     /* HardPFReq */
-    { SET4(IsRead, IsRequest, IsHWPrefetch, NeedsResponse),
+    { SET5(IsRead, IsRequest, IsHWPrefetch, NeedsResponse, FromCache),
             HardPFResp, "HardPFReq" },
     /* SoftPFResp */
     { SET4(IsRead, IsResponse, IsSWPrefetch, HasData),
@@ -98,62 +122,97 @@ MemCmd::commandInfo[] =
     /* HardPFResp */
     { SET4(IsRead, IsResponse, IsHWPrefetch, HasData),
             InvalidCmd, "HardPFResp" },
-    /* WriteInvalidateReq (currently unused, see packet.hh) */
-    { SET6(IsWrite, NeedsExclusive, IsInvalidate,
-           IsRequest, HasData, NeedsResponse),
-            WriteInvalidateResp, "WriteInvalidateReq" },
-    /* WriteInvalidateResp (currently unused, see packet.hh) */
-    { SET3(IsWrite, NeedsExclusive, IsResponse),
-            InvalidCmd, "WriteInvalidateResp" },
+    /* WriteLineReq */
+    { SET5(IsWrite, NeedsWritable, IsRequest, NeedsResponse, HasData),
+            WriteResp, "WriteLineReq" },
     /* UpgradeReq */
-    { SET5(IsInvalidate, NeedsExclusive, IsUpgrade, IsRequest, NeedsResponse),
+    { SET6(IsInvalidate, NeedsWritable, IsUpgrade, IsRequest, NeedsResponse,
+            FromCache),
             UpgradeResp, "UpgradeReq" },
     /* SCUpgradeReq: response could be UpgradeResp or UpgradeFailResp */
-    { SET6(IsInvalidate, NeedsExclusive, IsUpgrade, IsLlsc,
-           IsRequest, NeedsResponse),
+    { SET7(IsInvalidate, NeedsWritable, IsUpgrade, IsLlsc,
+           IsRequest, NeedsResponse, FromCache),
             UpgradeResp, "SCUpgradeReq" },
     /* UpgradeResp */
-    { SET3(NeedsExclusive, IsUpgrade, IsResponse),
+    { SET2(IsUpgrade, IsResponse),
             InvalidCmd, "UpgradeResp" },
-    /* SCUpgradeFailReq: generates UpgradeFailResp ASAP */
-    { SET5(IsInvalidate, NeedsExclusive, IsLlsc,
-           IsRequest, NeedsResponse),
+    /* SCUpgradeFailReq: generates UpgradeFailResp but still gets the data */
+    { SET7(IsRead, NeedsWritable, IsInvalidate,
+           IsLlsc, IsRequest, NeedsResponse, FromCache),
             UpgradeFailResp, "SCUpgradeFailReq" },
-    /* UpgradeFailResp */
-    { SET2(NeedsExclusive, IsResponse),
+    /* UpgradeFailResp - Behaves like a ReadExReq, but notifies an SC
+     * that it has failed, acquires line as Dirty*/
+    { SET3(IsRead, IsResponse, HasData),
             InvalidCmd, "UpgradeFailResp" },
-    /* ReadExReq */
-    { SET5(IsRead, NeedsExclusive, IsInvalidate, IsRequest, NeedsResponse),
+    /* ReadExReq - Read issues by a cache, always cache-line aligned,
+     * and the response is guaranteed to be writeable (exclusive or
+     * even modified) */
+    { SET6(IsRead, NeedsWritable, IsInvalidate, IsRequest, NeedsResponse,
+            FromCache),
             ReadExResp, "ReadExReq" },
-    /* ReadExResp */
-    { SET4(IsRead, NeedsExclusive, IsResponse, HasData),
+    /* ReadExResp - Response matching a read exclusive, as we check
+     * the need for exclusive also on responses */
+    { SET3(IsRead, IsResponse, HasData),
             InvalidCmd, "ReadExResp" },
+    /* ReadCleanReq - Read issued by a cache, always cache-line
+     * aligned, and the response is guaranteed to not contain dirty data
+     * (exclusive or shared).*/
+    { SET4(IsRead, IsRequest, NeedsResponse, FromCache),
+            ReadResp, "ReadCleanReq" },
+    /* ReadSharedReq - Read issued by a cache, always cache-line
+     * aligned, response is shared, possibly exclusive, owned or even
+     * modified. */
+    { SET4(IsRead, IsRequest, NeedsResponse, FromCache),
+            ReadResp, "ReadSharedReq" },
     /* LoadLockedReq: note that we use plain ReadResp as response, so that
      *                we can also use ReadRespWithInvalidate when needed */
     { SET4(IsRead, IsLlsc, IsRequest, NeedsResponse),
             ReadResp, "LoadLockedReq" },
     /* StoreCondReq */
-    { SET6(IsWrite, NeedsExclusive, IsLlsc,
+    { SET6(IsWrite, NeedsWritable, IsLlsc,
            IsRequest, NeedsResponse, HasData),
             StoreCondResp, "StoreCondReq" },
-    /* StoreCondFailReq: generates failing StoreCondResp ASAP */
-    { SET6(IsWrite, NeedsExclusive, IsLlsc,
+    /* StoreCondFailReq: generates failing StoreCondResp */
+    { SET6(IsWrite, NeedsWritable, IsLlsc,
            IsRequest, NeedsResponse, HasData),
             StoreCondResp, "StoreCondFailReq" },
     /* StoreCondResp */
-    { SET4(IsWrite, NeedsExclusive, IsLlsc, IsResponse),
+    { SET3(IsWrite, IsLlsc, IsResponse),
             InvalidCmd, "StoreCondResp" },
     /* SwapReq -- for Swap ldstub type operations */
-    { SET6(IsRead, IsWrite, NeedsExclusive, IsRequest, HasData, NeedsResponse),
+    { SET6(IsRead, IsWrite, NeedsWritable, IsRequest, HasData, NeedsResponse),
         SwapResp, "SwapReq" },
     /* SwapResp -- for Swap ldstub type operations */
-    { SET5(IsRead, IsWrite, NeedsExclusive, IsResponse, HasData),
+    { SET4(IsRead, IsWrite, IsResponse, HasData),
             InvalidCmd, "SwapResp" },
-    /* IntReq -- for interrupts */
-    { SET4(IsWrite, IsRequest, NeedsResponse, HasData),
-        MessageResp, "MessageReq" },
-    /* IntResp -- for interrupts */
-    { SET2(IsWrite, IsResponse), InvalidCmd, "MessageResp" },
+    { 0, InvalidCmd, "Deprecated_MessageReq" },
+    { 0, InvalidCmd, "Deprecated_MessageResp" },
+    /* MemFenceReq -- for synchronization requests */
+    {SET2(IsRequest, NeedsResponse), MemFenceResp, "MemFenceReq"},
+    /* MemSyncReq */
+    {SET2(IsRequest, NeedsResponse), MemSyncResp, "MemSyncReq"},
+    /* MemSyncResp */
+    {SET1(IsResponse), InvalidCmd, "MemSyncResp"},
+    /* MemFenceResp -- for synchronization responses */
+    {SET1(IsResponse), InvalidCmd, "MemFenceResp"},
+    /* Cache Clean Request -- Update with the latest data all existing
+       copies of the block down to the point indicated by the
+       request */
+    { SET4(IsRequest, IsClean, NeedsResponse, FromCache),
+      CleanSharedResp, "CleanSharedReq" },
+    /* Cache Clean Response - Indicates that all caches up to the
+       specified point of reference have a up-to-date copy of the
+       cache block or no copy at all */
+    { SET2(IsResponse, IsClean), InvalidCmd, "CleanSharedResp" },
+    /* Cache Clean and Invalidate Request -- Invalidate all existing
+       copies down to the point indicated by the request */
+    { SET5(IsRequest, IsInvalidate, IsClean, NeedsResponse, FromCache),
+      CleanInvalidResp, "CleanInvalidReq" },
+     /* Cache Clean and Invalidate Respose -- Indicates that no cache
+        above the specified point holds the block and that the block
+        was written to a memory below the specified point. */
+    { SET3(IsResponse, IsInvalidate, IsClean),
+      InvalidCmd, "CleanInvalidResp" },
     /* InvalidDestError  -- packet dest field invalid */
     { SET2(IsResponse, IsError), InvalidCmd, "InvalidDestError" },
     /* BadAddressError   -- memory address invalid */
@@ -165,154 +224,108 @@ MemCmd::commandInfo[] =
     /* PrintReq */
     { SET2(IsRequest, IsPrint), InvalidCmd, "PrintReq" },
     /* Flush Request */
-    { SET3(IsRequest, IsFlush, NeedsExclusive), InvalidCmd, "FlushReq" },
+    { SET3(IsRequest, IsFlush, NeedsWritable), InvalidCmd, "FlushReq" },
     /* Invalidation Request */
-    { SET3(NeedsExclusive, IsInvalidate, IsRequest),
-      InvalidCmd, "InvalidationReq" },
+    { SET5(IsInvalidate, IsRequest, NeedsWritable, NeedsResponse, FromCache),
+      InvalidateResp, "InvalidateReq" },
+    /* Invalidation Response */
+    { SET2(IsInvalidate, IsResponse),
+      InvalidCmd, "InvalidateResp" },
+      // hardware transactional memory
+    { SET3(IsRead, IsRequest, NeedsResponse), HTMReqResp, "HTMReq" },
+    { SET2(IsRead, IsResponse), InvalidCmd, "HTMReqResp" },
+    { SET2(IsRead, IsRequest), InvalidCmd, "HTMAbort" },
 };
 
-bool
-Packet::checkFunctional(Printable *obj, Addr addr, int size, uint8_t *data)
+AddrRange
+Packet::getAddrRange() const
 {
-    Addr func_start = getAddr();
-    Addr func_end   = getAddr() + getSize() - 1;
-    Addr val_start  = addr;
-    Addr val_end    = val_start + size - 1;
+    return RangeSize(getAddr(), getSize());
+}
 
-    if (func_start > val_end || val_start > func_end) {
+bool
+Packet::trySatisfyFunctional(Printable *obj, Addr addr, bool is_secure, int size,
+                        uint8_t *_data)
+{
+    const Addr func_start = getAddr();
+    const Addr func_end   = getAddr() + getSize() - 1;
+    const Addr val_start  = addr;
+    const Addr val_end    = val_start + size - 1;
+
+    if (is_secure != _isSecure || func_start > val_end ||
+        val_start > func_end) {
         // no intersection
         return false;
     }
 
     // check print first since it doesn't require data
     if (isPrint()) {
-        dynamic_cast<PrintReqState*>(senderState)->printObj(obj);
+        assert(!_data);
+        safe_cast<PrintReqState*>(senderState)->printObj(obj);
         return false;
     }
 
-    // if there's no data, there's no need to look further
-    if (!data) {
+    // we allow the caller to pass NULL to signify the other packet
+    // has no data
+    if (!_data) {
         return false;
     }
 
-    // offset of functional request into supplied value (could be
-    // negative if partial overlap)
-    int offset = func_start - val_start;
+    const Addr val_offset = func_start > val_start ?
+        func_start - val_start : 0;
+    const Addr func_offset = func_start < val_start ?
+        val_start - func_start : 0;
+    const Addr overlap_size = std::min(val_end, func_end)+1 -
+        std::max(val_start, func_start);
 
     if (isRead()) {
-        if (func_start >= val_start && func_end <= val_end) {
-            allocate();
-            memcpy(getPtr<uint8_t>(), data + offset, getSize());
-            return true;
-        } else {
-            // Offsets and sizes to copy in case of partial overlap
-            int func_offset;
-            int val_offset;
-            int overlap_size;
+        std::memcpy(getPtr<uint8_t>() + func_offset,
+               _data + val_offset,
+               overlap_size);
 
-            // calculate offsets and copy sizes for the two byte arrays
-            if (val_start < func_start && val_end <= func_end) {
-                val_offset = func_start - val_start;
-                func_offset = 0;
-                overlap_size = val_end - func_start;
-            } else if (val_start >= func_start && val_end > func_end) {
-                val_offset = 0;
-                func_offset = val_start - func_start;
-                overlap_size = func_end - val_start;
-            } else if (val_start >= func_start && val_end <= func_end) {
-                val_offset = 0;
-                func_offset = val_start - func_start;
-                overlap_size = size;
-            } else {
-                panic("BUG: Missed a case for a partial functional request");
-            }
+        // initialise the tracking of valid bytes if we have not
+        // used it already
+        if (bytesValid.empty())
+            bytesValid.resize(getSize(), false);
 
-            // Figure out how much of the partial overlap should be copied
-            // into the packet and not overwrite previously found bytes.
-            if (bytesValidStart == 0 && bytesValidEnd == 0) {
-                // No bytes have been copied yet, just set indices
-                // to found range
-                bytesValidStart = func_offset;
-                bytesValidEnd = func_offset + overlap_size;
-            } else {
-                // Some bytes have already been copied. Use bytesValid
-                // indices and offset values to figure out how much data
-                // to copy and where to copy it to.
+        // track if we are done filling the functional access
+        bool all_bytes_valid = true;
 
-                // Indice overlap conditions to check
-                int a = func_offset - bytesValidStart;
-                int b = (func_offset + overlap_size) - bytesValidEnd;
-                int c = func_offset - bytesValidEnd;
-                int d = (func_offset + overlap_size) - bytesValidStart;
+        int i = 0;
 
-                if (a >= 0 && b <= 0) {
-                    // bytes already in pkt data array are superset of
-                    // found bytes, will not copy any bytes
-                    overlap_size = 0;
-                } else if (a < 0 && d >= 0 && b <= 0) {
-                    // found bytes will move bytesValidStart towards 0
-                    overlap_size = bytesValidStart - func_offset;
-                    bytesValidStart = func_offset;
-                } else if (b > 0 && c <= 0 && a >= 0) {
-                    // found bytes will move bytesValidEnd
-                    // towards end of pkt data array
-                    overlap_size =
-                        (func_offset + overlap_size) - bytesValidEnd;
-                    val_offset += bytesValidEnd - func_offset;
-                    func_offset = bytesValidEnd;
-                    bytesValidEnd += overlap_size;
-                } else if (a < 0 && b > 0) {
-                    // Found bytes are superset of copied range. Will move
-                    // bytesValidStart towards 0 and bytesValidEnd towards
-                    // end of pkt data array.  Need to break copy into two
-                    // pieces so as to not overwrite previously found data.
+        // check up to func_offset
+        for (; all_bytes_valid && i < func_offset; ++i)
+            all_bytes_valid &= bytesValid[i];
 
-                    // copy the first half
-                    uint8_t *dest = getPtr<uint8_t>() + func_offset;
-                    uint8_t *src = data + val_offset;
-                    memcpy(dest, src, (bytesValidStart - func_offset));
+        // update the valid bytes
+        for (i = func_offset; i < func_offset + overlap_size; ++i)
+            bytesValid[i] = true;
 
-                    // re-calc the offsets and indices to do the copy
-                    // required for the second half
-                    val_offset += (bytesValidEnd - func_offset);
-                    bytesValidStart = func_offset;
-                    overlap_size =
-                        (func_offset + overlap_size) - bytesValidEnd;
-                    func_offset = bytesValidEnd;
-                    bytesValidEnd += overlap_size;
-                } else if ((c > 0 && b > 0)
-                           || (a < 0 && d < 0)) {
-                    // region to be copied is discontiguous! Not supported.
-                    panic("BUG: Discontiguous bytes found"
-                          "for functional copying!");
-                }
-            }
-            assert(bytesValidEnd <= getSize());
+        // check the bit after the update we just made
+        for (; all_bytes_valid && i < getSize(); ++i)
+            all_bytes_valid &= bytesValid[i];
 
-            // copy partial data into the packet's data array
-            uint8_t *dest = getPtr<uint8_t>() + func_offset;
-            uint8_t *src = data + val_offset;
-            memcpy(dest, src, overlap_size);
-
-            // check if we're done filling the functional access
-            bool done = (bytesValidStart == 0) && (bytesValidEnd == getSize());
-            return done;
-        }
+        return all_bytes_valid;
     } else if (isWrite()) {
-        if (offset >= 0) {
-            memcpy(data + offset, getPtr<uint8_t>(),
-                   (min(func_end, val_end) - func_start) + 1);
-        } else {
-            // val_start > func_start
-            memcpy(data, getPtr<uint8_t>() - offset,
-                   (min(func_end, val_end) - val_start) + 1);
-        }
+        std::memcpy(_data + val_offset,
+               getConstPtr<uint8_t>() + func_offset,
+               overlap_size);
     } else {
         panic("Don't know how to handle command %s\n", cmdString());
     }
 
     // keep going with request by default
     return false;
+}
+
+void
+Packet::copyResponderFlags(const PacketPtr pkt)
+{
+    assert(isRequest());
+    // If we have already found a responder, no other cache should
+    // commit to responding
+    assert(!pkt->cacheResponding() || !cacheResponding());
+    flags.set(pkt->flags & RESPONDER_FLAGS);
 }
 
 void
@@ -333,22 +346,94 @@ Packet::popSenderState()
     return sender_state;
 }
 
-void
-Packet::print(ostream &o, const int verbosity, const string &prefix) const
+uint64_t
+Packet::getUintX(ByteOrder endian) const
 {
-    ccprintf(o, "%s[%x:%x] %s\n", prefix,
-             getAddr(), getAddr() + getSize() - 1, cmdString());
+    switch(getSize()) {
+      case 1:
+        return (uint64_t)get<uint8_t>(endian);
+      case 2:
+        return (uint64_t)get<uint16_t>(endian);
+      case 4:
+        return (uint64_t)get<uint32_t>(endian);
+      case 8:
+        return (uint64_t)get<uint64_t>(endian);
+      default:
+        panic("%i isn't a supported word size.\n", getSize());
+    }
+}
+
+void
+Packet::setUintX(uint64_t w, ByteOrder endian)
+{
+    switch(getSize()) {
+      case 1:
+        set<uint8_t>((uint8_t)w, endian);
+        break;
+      case 2:
+        set<uint16_t>((uint16_t)w, endian);
+        break;
+      case 4:
+        set<uint32_t>((uint32_t)w, endian);
+        break;
+      case 8:
+        set<uint64_t>((uint64_t)w, endian);
+        break;
+      default:
+        panic("%i isn't a supported word size.\n", getSize());
+    }
+
+}
+
+void
+Packet::print(std::ostream &o, const int verbosity,
+              const std::string &prefix) const
+{
+    ccprintf(o, "%s%s [%x:%x]%s%s%s%s%s%s", prefix, cmdString(),
+             getAddr(), getAddr() + getSize() - 1,
+             req->isSecure() ? " (s)" : "",
+             req->isInstFetch() ? " IF" : "",
+             req->isUncacheable() ? " UC" : "",
+             isExpressSnoop() ? " ES" : "",
+             req->isToPOC() ? " PoC" : "",
+             req->isToPOU() ? " PoU" : "");
 }
 
 std::string
 Packet::print() const {
-    ostringstream str;
+    std::ostringstream str;
     print(str);
     return str.str();
 }
 
-Packet::PrintReqState::PrintReqState(ostream &_os, int _verbosity)
-    : curPrefixPtr(new string("")), os(_os), verbosity(_verbosity)
+bool
+Packet::matchBlockAddr(const Addr addr, const bool is_secure,
+                       const int blk_size) const
+{
+    return (getBlockAddr(blk_size) == addr) && (isSecure() == is_secure);
+}
+
+bool
+Packet::matchBlockAddr(const PacketPtr pkt, const int blk_size) const
+{
+    return matchBlockAddr(pkt->getBlockAddr(blk_size), pkt->isSecure(),
+                          blk_size);
+}
+
+bool
+Packet::matchAddr(const Addr addr, const bool is_secure) const
+{
+    return (getAddr() == addr) && (isSecure() == is_secure);
+}
+
+bool
+Packet::matchAddr(const PacketPtr pkt) const
+{
+    return matchAddr(pkt->getAddr(), pkt->isSecure());
+}
+
+Packet::PrintReqState::PrintReqState(std::ostream &_os, int _verbosity)
+    : curPrefixPtr(new std::string("")), os(_os), verbosity(_verbosity)
 {
     labelStack.push_back(LabelStackEntry("", curPrefixPtr));
 }
@@ -361,16 +446,18 @@ Packet::PrintReqState::~PrintReqState()
 }
 
 Packet::PrintReqState::
-LabelStackEntry::LabelStackEntry(const string &_label, string *_prefix)
+LabelStackEntry::LabelStackEntry(const std::string &_label,
+                                 std::string *_prefix)
     : label(_label), prefix(_prefix), labelPrinted(false)
 {
 }
 
 void
-Packet::PrintReqState::pushLabel(const string &lbl, const string &prefix)
+Packet::PrintReqState::pushLabel(const std::string &lbl,
+                                 const std::string &prefix)
 {
     labelStack.push_back(LabelStackEntry(lbl, curPrefixPtr));
-    curPrefixPtr = new string(*curPrefixPtr);
+    curPrefixPtr = new std::string(*curPrefixPtr);
     *curPrefixPtr += prefix;
 }
 
@@ -405,4 +492,63 @@ Packet::PrintReqState::printObj(Printable *obj)
 {
     printLabels();
     obj->print(os, verbosity, curPrefix());
+}
+
+void
+Packet::makeHtmTransactionalReqResponse(
+    const HtmCacheFailure htm_return_code)
+{
+    assert(needsResponse());
+    assert(isRequest());
+
+    cmd = cmd.responseCommand();
+
+    setHtmTransactionFailedInCache(htm_return_code);
+
+    // responses are never express, even if the snoop that
+    // triggered them was
+    flags.clear(EXPRESS_SNOOP);
+}
+
+void
+Packet::setHtmTransactionFailedInCache(
+    const HtmCacheFailure htm_return_code)
+{
+    if (htm_return_code != HtmCacheFailure::NO_FAIL)
+        flags.set(FAILS_TRANSACTION);
+
+    htmReturnReason = htm_return_code;
+}
+
+bool
+Packet::htmTransactionFailedInCache() const
+{
+    return flags.isSet(FAILS_TRANSACTION);
+}
+
+HtmCacheFailure
+Packet::getHtmTransactionFailedInCacheRC() const
+{
+    assert(htmTransactionFailedInCache());
+    return htmReturnReason;
+}
+
+void
+Packet::setHtmTransactional(uint64_t htm_uid)
+{
+    flags.set(FROM_TRANSACTION);
+    htmTransactionUid = htm_uid;
+}
+
+bool
+Packet::isHtmTransactional() const
+{
+    return flags.isSet(FROM_TRANSACTION);
+}
+
+uint64_t
+Packet::getHtmTransactionUid() const
+{
+    assert(flags.isSet(FROM_TRANSACTION));
+    return htmTransactionUid;
 }

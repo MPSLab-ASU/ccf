@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 ARM Limited
+ * Copyright (c) 2009, 2014 ARM Limited
  * All rights reserved
  *
  * The license below extends only to copyright in the software and shall
@@ -36,30 +36,25 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Ali Saidi
  */
 
 /** @file
  * Implementation of RealView platform.
  */
 
+#include "dev/arm/realview.hh"
+
 #include <deque>
 #include <string>
 #include <vector>
 
-#include "config/the_isa.hh"
 #include "cpu/intr_control.hh"
 #include "dev/arm/base_gic.hh"
-#include "dev/arm/realview.hh"
-#include "dev/terminal.hh"
 #include "sim/system.hh"
 
-using namespace std;
-using namespace TheISA;
 
 RealView::RealView(const Params *p)
-    : Platform(p), system(p->system)
+    : Platform(p), system(p->system), gic(nullptr)
 {}
 
 void
@@ -86,33 +81,6 @@ void
 RealView::clearPciInt(int line)
 {
     gic->clearInt(line);
-}
-
-Addr
-RealView::pciToDma(Addr pciAddr) const
-{
-    return pciAddr;
-}
-
-
-Addr
-RealView::calcPciConfigAddr(int bus, int dev, int func)
-{
-    if (bus != 0)
-        return ULL(-1);
-    return params()->pci_cfg_base | ((func & 7) << 16) | ((dev & 0x1f) << 19);
-}
-
-Addr
-RealView::calcPciIOAddr(Addr addr)
-{
-    return addr;
-}
-
-Addr
-RealView::calcPciMemAddr(Addr addr)
-{
-    return addr;
 }
 
 RealView *

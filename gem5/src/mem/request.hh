@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 ARM Limited
+ * Copyright (c) 2012-2013,2017-2020 ARM Limited
  * All rights reserved
  *
  * The license below extends only to copyright in the software and shall
@@ -12,6 +12,7 @@
  * modified or unmodified, in source code or in binary form.
  *
  * Copyright (c) 2002-2005 The Regents of The University of Michigan
+ * Copyright (c) 2010,2015 Advanced Micro Devices, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,10 +37,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Ron Dreslinski
- *          Steve Reinhardt
- *          Ali Saidi
  */
 
 /**
@@ -54,9 +51,12 @@
 #include <cassert>
 #include <climits>
 
+#include "base/amo.hh"
 #include "base/flags.hh"
-#include "base/misc.hh"
+#include "base/logging.hh"
 #include "base/types.hh"
+#include "cpu/inst_seq.hh"
+#include "mem/htm.hh"
 #include "sim/core.hh"
 
 /**
@@ -77,137 +77,283 @@ namespace ContextSwitchTaskId {
     };
 }
 
+class Packet;
 class Request;
+class ThreadContext;
 
-typedef Request* RequestPtr;
-typedef uint16_t MasterID;
+typedef std::shared_ptr<Request> RequestPtr;
+typedef uint16_t RequestorID;
 
 class Request
 {
   public:
-    typedef uint32_t FlagsType;
+    typedef uint64_t FlagsType;
     typedef uint8_t ArchFlagsType;
     typedef ::Flags<FlagsType> Flags;
 
-    /**
-     * Architecture specific flags.
-     *
-     * These bits int the flag field are reserved for
-     * architecture-specific code. For example, SPARC uses them to
-     * represent ASIs.
-     */
-    static const FlagsType ARCH_BITS                   = 0x000000FF;
-    /** The request was an instruction fetch. */
-    static const FlagsType INST_FETCH                  = 0x00000100;
-    /** The virtual address is also the physical address. */
-    static const FlagsType PHYSICAL                    = 0x00000200;
-    /** The request is an ALPHA VPTE pal access (hw_ld). */
-    static const FlagsType VPTE                        = 0x00000400;
-    /** Use the alternate mode bits in ALPHA. */
-    static const FlagsType ALTMODE                     = 0x00000800;
-    /** The request is to an uncacheable address. */
-    static const FlagsType UNCACHEABLE                 = 0x00001000;
-    /** This request is to a memory mapped register. */
-    static const FlagsType MMAPPED_IPR                  = 0x00002000;
-    /** This request is a clear exclusive. */
-    static const FlagsType CLEAR_LL                    = 0x00004000;
-    /** This request is made in privileged mode. */
-    static const FlagsType PRIVILEGED                   = 0x00008000;
+    enum : FlagsType {
+        /**
+         * Architecture specific flags.
+         *
+         * These bits int the flag field are reserved for
+         * architecture-specific code. For example, SPARC uses them to
+         * represent ASIs.
+         */
+        ARCH_BITS                   = 0x000000FF,
+        /** The request was an instruction fetch. */
+        INST_FETCH                  = 0x00000100,
+        /** The virtual address is also the physical address. */
+        PHYSICAL                    = 0x00000200,
+        /**
+         * The request is to an uncacheable address.
+         *
+         * @note Uncacheable accesses may be reordered by CPU models. The
+         * STRICT_ORDER flag should be set if such reordering is
+         * undesirable.
+         */
+        UNCACHEABLE                 = 0x00000400,
+        /**
+         * The request is required to be strictly ordered by <i>CPU
+         * models</i> and is non-speculative.
+         *
+         * A strictly ordered request is guaranteed to never be
+         * re-ordered or executed speculatively by a CPU model. The
+         * memory system may still reorder requests in caches unless
+         * the UNCACHEABLE flag is set as well.
+         */
+        STRICT_ORDER                = 0x00000800,
+        /** This request is made in privileged mode. */
+        PRIVILEGED                  = 0x00008000,
 
-    /** The request should not cause a memory access. */
-    static const FlagsType NO_ACCESS                   = 0x00080000;
-    /** This request will lock or unlock the accessed memory. When used with
-     * a load, the access locks the particular chunk of memory. When used
-     * with a store, it unlocks. The rule is that locked accesses have to be
-     * made up of a locked load, some operation on the data, and then a locked
-     * store.
-     */
-    static const FlagsType LOCKED                      = 0x00100000;
-    /** The request is a Load locked/store conditional. */
-    static const FlagsType LLSC                        = 0x00200000;
-    /** This request is for a memory swap. */
-    static const FlagsType MEM_SWAP                    = 0x00400000;
-    static const FlagsType MEM_SWAP_COND               = 0x00800000;
+        /**
+         * This is a write that is targeted and zeroing an entire
+         * cache block.  There is no need for a read/modify/write
+         */
+        CACHE_BLOCK_ZERO            = 0x00010000,
 
-    /** The request is a prefetch. */
-    static const FlagsType PREFETCH                    = 0x01000000;
-    /** The request should be prefetched into the exclusive state. */
-    static const FlagsType PF_EXCLUSIVE                = 0x02000000;
-    /** The request should be marked as LRU. */
-    static const FlagsType EVICT_NEXT                  = 0x04000000;
+        /** The request should not cause a memory access. */
+        NO_ACCESS                   = 0x00080000,
+        /**
+         * This request will lock or unlock the accessed memory. When
+         * used with a load, the access locks the particular chunk of
+         * memory. When used with a store, it unlocks. The rule is
+         * that locked accesses have to be made up of a locked load,
+         * some operation on the data, and then a locked store.
+         */
+        LOCKED_RMW                  = 0x00100000,
+        /** The request is a Load locked/store conditional. */
+        LLSC                        = 0x00200000,
+        /** This request is for a memory swap. */
+        MEM_SWAP                    = 0x00400000,
+        MEM_SWAP_COND               = 0x00800000,
 
-    /** The request should be handled by the generic IPR code (only
-     * valid together with MMAPPED_IPR) */
-    static const FlagsType GENERIC_IPR                 = 0x08000000;
+        /** The request is a prefetch. */
+        PREFETCH                    = 0x01000000,
+        /** The request should be prefetched into the exclusive state. */
+        PF_EXCLUSIVE                = 0x02000000,
+        /** The request should be marked as LRU. */
+        EVICT_NEXT                  = 0x04000000,
+        /** The request should be marked with ACQUIRE. */
+        ACQUIRE                     = 0x00020000,
+        /** The request should be marked with RELEASE. */
+        RELEASE                     = 0x00040000,
 
-    /** These flags are *not* cleared when a Request object is reused
-       (assigned a new address). */
-    static const FlagsType STICKY_FLAGS = INST_FETCH;
+        /** The request is an atomic that returns data. */
+        ATOMIC_RETURN_OP            = 0x40000000,
+        /** The request is an atomic that does not return data. */
+        ATOMIC_NO_RETURN_OP         = 0x80000000,
 
-    /** Request Ids that are statically allocated
+        /** The request should be marked with KERNEL.
+          * Used to indicate the synchronization associated with a GPU kernel
+          * launch or completion.
+          */
+        KERNEL                      = 0x00001000,
+
+        /** The request targets the secure memory space. */
+        SECURE                      = 0x10000000,
+        /** The request is a page table walk */
+        PT_WALK                     = 0x20000000,
+
+        /** The request invalidates a memory location */
+        INVALIDATE                  = 0x0000000100000000,
+        /** The request cleans a memory location */
+        CLEAN                       = 0x0000000200000000,
+
+        /** The request targets the point of unification */
+        DST_POU                     = 0x0000001000000000,
+
+        /** The request targets the point of coherence */
+        DST_POC                     = 0x0000002000000000,
+
+        /** Bits to define the destination of a request */
+        DST_BITS                    = 0x0000003000000000,
+
+        /** hardware transactional memory **/
+
+        /** The request starts a HTM transaction */
+        HTM_START                   = 0x0000010000000000,
+
+        /** The request commits a HTM transaction */
+        HTM_COMMIT                  = 0x0000020000000000,
+
+        /** The request cancels a HTM transaction */
+        HTM_CANCEL                  = 0x0000040000000000,
+
+        /** The request aborts a HTM transaction */
+        HTM_ABORT                   = 0x0000080000000000,
+
+        // What is the different between HTM cancel and abort?
+        //
+        // HTM_CANCEL will originate from a user instruction, e.g.
+        // Arm's TCANCEL or x86's XABORT. This is an explicit request
+        // to end a transaction and restore from the last checkpoint.
+        //
+        // HTM_ABORT is an internally generated request used to synchronize
+        // a transaction's failure between the core and memory subsystem.
+        // If a transaction fails in the core, e.g. because an instruction
+        // within the transaction generates an exception, the core will prepare
+        // itself to stop fetching/executing more instructions and send an
+        // HTM_ABORT to the memory subsystem before restoring the checkpoint.
+        // Similarly, the transaction could fail in the memory subsystem and
+        // this will be communicated to the core via the Packet object.
+        // Once the core notices, it will do the same as the above and send
+        // a HTM_ABORT to the memory subsystem.
+        // A HTM_CANCEL sent to the memory subsystem will ultimately return
+        // to the core which in turn will send a HTM_ABORT.
+        //
+        // This separation is necessary to ensure the disjoint components
+        // of the system work correctly together.
+
+        /**
+         * These flags are *not* cleared when a Request object is
+         * reused (assigned a new address).
+         */
+        STICKY_FLAGS = INST_FETCH
+    };
+    static const FlagsType STORE_NO_DATA = CACHE_BLOCK_ZERO |
+        CLEAN | INVALIDATE;
+
+    static const FlagsType HTM_CMD = HTM_START | HTM_COMMIT |
+        HTM_CANCEL | HTM_ABORT;
+
+    /** Requestor Ids that are statically allocated
      * @{*/
-    /** This request id is used for writeback requests by the caches */
-    static const MasterID wbMasterId = 0;
-    /** This request id is used for functional requests that don't come from a
-     * particular device
-     */
-    static const MasterID funcMasterId = 1;
-    /** This request id is used for message signaled interrupts */
-    static const MasterID intMasterId = 2;
-    /** Invalid request id for assertion checking only. It is invalid behavior
-     * to ever send this id as part of a request.
-     * @todo C++1x replace with numeric_limits when constexpr is added  */
-    static const MasterID invldMasterId = USHRT_MAX;
+    enum : RequestorID {
+        /** This requestor id is used for writeback requests by the caches */
+        wbRequestorId = 0,
+        /**
+         * This requestor id is used for functional requests that
+         * don't come from a particular device
+         */
+        funcRequestorId = 1,
+        /** This requestor id is used for message signaled interrupts */
+        intRequestorId = 2,
+        /**
+         * Invalid requestor id for assertion checking only. It is
+         * invalid behavior to ever send this id as part of a request.
+         */
+        invldRequestorId = std::numeric_limits<RequestorID>::max()
+    };
     /** @} */
 
-    /** Invalid or unknown Pid. Possible when operating system is not present
-     *  or has not assigned a pid yet */
-    static const uint32_t invldPid = UINT_MAX;
+    typedef uint64_t CacheCoherenceFlagsType;
+    typedef ::Flags<CacheCoherenceFlagsType> CacheCoherenceFlags;
+
+    /**
+     * These bits are used to set the coherence policy
+     * for the GPU and are encoded in the GCN3 instructions.
+     * See the AMD GCN3 ISA Architecture Manual for more
+     * details.
+     *
+     * INV_L1: L1 cache invalidation
+     * WB_L2: L2 cache writeback
+     *
+     * SLC: System Level Coherent. Accesses are forced to miss in
+     *      the L2 cache and are coherent with system memory.
+     *
+     * GLC: Globally Coherent. Controls how reads and writes are
+     *      handled by the L1 cache. Global here referes to the
+     *      data being visible globally on the GPU (i.e., visible
+     *      to all WGs).
+     *
+     * For atomics, the GLC bit is used to distinguish between
+     * between atomic return/no-return operations.
+     */
+    enum : CacheCoherenceFlagsType {
+        /** mem_sync_op flags */
+        INV_L1                  = 0x00000001,
+        WB_L2                   = 0x00000020,
+        /** user-policy flags */
+        /** user-policy flags */
+        SLC_BIT                 = 0x00000080,
+        GLC_BIT                 = 0x00000100,
+    };
+
+    using LocalAccessor =
+        std::function<Cycles(ThreadContext *tc, Packet *pkt)>;
 
   private:
-    typedef uint8_t PrivateFlagsType;
+    typedef uint16_t PrivateFlagsType;
     typedef ::Flags<PrivateFlagsType> PrivateFlags;
 
-    /** Whether or not the size is valid. */
-    static const PrivateFlagsType VALID_SIZE           = 0x00000001;
-    /** Whether or not paddr is valid (has been written yet). */
-    static const PrivateFlagsType VALID_PADDR          = 0x00000002;
-    /** Whether or not the vaddr & asid are valid. */
-    static const PrivateFlagsType VALID_VADDR          = 0x00000004;
-    /** Whether or not the pc is valid. */
-    static const PrivateFlagsType VALID_PC             = 0x00000010;
-    /** Whether or not the context ID is valid. */
-    static const PrivateFlagsType VALID_CONTEXT_ID     = 0x00000020;
-    static const PrivateFlagsType VALID_THREAD_ID      = 0x00000040;
-    /** Whether or not the sc result is valid. */
-    static const PrivateFlagsType VALID_EXTRA_DATA     = 0x00000080;
-
-    /** These flags are *not* cleared when a Request object is reused
-       (assigned a new address). */
-    static const PrivateFlagsType STICKY_PRIVATE_FLAGS =
-        VALID_CONTEXT_ID | VALID_THREAD_ID;
+    enum : PrivateFlagsType {
+        /** Whether or not the size is valid. */
+        VALID_SIZE           = 0x00000001,
+        /** Whether or not paddr is valid (has been written yet). */
+        VALID_PADDR          = 0x00000002,
+        /** Whether or not the vaddr is valid. */
+        VALID_VADDR          = 0x00000004,
+        /** Whether or not the instruction sequence number is valid. */
+        VALID_INST_SEQ_NUM   = 0x00000008,
+        /** Whether or not the pc is valid. */
+        VALID_PC             = 0x00000010,
+        /** Whether or not the context ID is valid. */
+        VALID_CONTEXT_ID     = 0x00000020,
+        /** Whether or not the sc result is valid. */
+        VALID_EXTRA_DATA     = 0x00000080,
+        /** Whether or not the stream ID and substream ID is valid. */
+        VALID_STREAM_ID      = 0x00000100,
+        VALID_SUBSTREAM_ID   = 0x00000200,
+        // hardware transactional memory
+        /** Whether or not the abort cause is valid. */
+        VALID_HTM_ABORT_CAUSE = 0x00000400,
+        /** Whether or not the instruction count is valid. */
+        VALID_INST_COUNT      = 0x00000800,
+        /**
+         * These flags are *not* cleared when a Request object is reused
+         * (assigned a new address).
+         */
+        STICKY_PRIVATE_FLAGS = VALID_CONTEXT_ID
+    };
 
   private:
+
     /**
      * The physical address of the request. Valid only if validPaddr
      * is set.
      */
-    Addr _paddr;
+    Addr _paddr = 0;
 
     /**
      * The size of the request. This field must be set when vaddr or
-     * paddr is written via setVirt() or setPhys(), so it is always
-     * valid as long as one of the address fields is valid.
+     * paddr is written via setVirt() or a phys basec constructor, so it is
+     * always valid as long as one of the address fields is valid.
      */
-    int _size;
+    unsigned _size = 0;
+
+    /** Byte-enable mask for writes. */
+    std::vector<bool> _byteEnable;
 
     /** The requestor ID which is unique in the system for all ports
      * that are capable of issuing a transaction
      */
-    MasterID _masterId;
+    RequestorID _requestorId = invldRequestorId;
 
     /** Flag structure for the request. */
     Flags _flags;
+
+    /** Flags that control how downstream cache system maintains coherence*/
+    CacheCoherenceFlags _cacheCoherenceFlags;
 
     /** Private flags for field validity checking. */
     PrivateFlags privateFlags;
@@ -217,99 +363,129 @@ class Request
      * latencies. This field is set to curTick() any time paddr or vaddr
      * is written.
      */
-    Tick _time;
+    Tick _time = MaxTick;
 
-    /** The address space ID. */
-    int _asid;
+    /**
+     * The task id associated with this request
+     */
+    uint32_t _taskId = ContextSwitchTaskId::Unknown;
+
+    /**
+     * The stream ID uniquely identifies a device behind the
+     * SMMU/IOMMU Each transaction arriving at the SMMU/IOMMU is
+     * associated with exactly one stream ID.
+     */
+    uint32_t _streamId = 0;
+
+    /**
+     * The substream ID identifies an "execution context" within a
+     * device behind an SMMU/IOMMU. It's intended to map 1-to-1 to
+     * PCIe PASID (Process Address Space ID). The presence of a
+     * substream ID is optional.
+     */
+    uint32_t _substreamId = 0;
 
     /** The virtual address of the request. */
-    Addr _vaddr;
+    Addr _vaddr = MaxAddr;
 
     /**
      * Extra data for the request, such as the return value of
      * store conditional or the compare value for a CAS. */
-    uint64_t _extraData;
+    uint64_t _extraData = 0;
 
-    /** The context ID (for statistics, typically). */
-    int _contextId;
-    /** The thread ID (id within this CPU) */
-    int _threadId;
+    /** The context ID (for statistics, locks, and wakeups). */
+    ContextID _contextId = InvalidContextID;
 
     /** program counter of initiating access; for tracing/debugging */
-    Addr _pc;
+    Addr _pc = MaxAddr;
+
+    /** Sequence number of the instruction that creates the request */
+    InstSeqNum _reqInstSeqNum = 0;
+
+    /** A pointer to an atomic operation */
+    AtomicOpFunctorPtr atomicOpFunctor = nullptr;
+
+    LocalAccessor _localAccessor;
+
+    /** The instruction count at the time this request is created */
+    Counter _instCount = 0;
+
+    /** The cause for HTM transaction abort */
+    HtmFailureFaultCause _htmAbortCause = HtmFailureFaultCause::INVALID;
 
   public:
-    /** Minimal constructor.  No fields are initialized. 
-     *  (Note that _flags and privateFlags are cleared by Flags
-     *  default constructor.)
+
+    /**
+     * Minimal constructor. No fields are initialized. (Note that
+     *  _flags and privateFlags are cleared by Flags default
+     *  constructor.)
      */
-    Request()
-    {}
+    Request() {}
 
     /**
      * Constructor for physical (e.g. device) requests.  Initializes
      * just physical address, size, flags, and timestamp (to curTick()).
-     * These fields are adequate to perform a request. 
+     * These fields are adequate to perform a request.
      */
-    Request(Addr paddr, int size, Flags flags, MasterID mid)
+    Request(Addr paddr, unsigned size, Flags flags, RequestorID id) :
+        _paddr(paddr), _size(size), _requestorId(id), _time(curTick())
     {
-        setPhys(paddr, size, flags, mid);
+        _flags.set(flags);
+        privateFlags.set(VALID_PADDR|VALID_SIZE);
     }
 
-    Request(Addr paddr, int size, Flags flags, MasterID mid, Tick time)
+    Request(Addr vaddr, unsigned size, Flags flags,
+            RequestorID id, Addr pc, ContextID cid,
+            AtomicOpFunctorPtr atomic_op=nullptr)
     {
-        setPhys(paddr, size, flags, mid, time);
+        setVirt(vaddr, size, flags, id, pc, std::move(atomic_op));
+        setContext(cid);
     }
 
-    Request(Addr paddr, int size, Flags flags, MasterID mid, Tick time, Addr pc)
+    Request(const Request& other)
+        : _paddr(other._paddr), _size(other._size),
+          _byteEnable(other._byteEnable),
+          _requestorId(other._requestorId),
+          _flags(other._flags),
+          _cacheCoherenceFlags(other._cacheCoherenceFlags),
+          privateFlags(other.privateFlags),
+          _time(other._time),
+          _taskId(other._taskId), _vaddr(other._vaddr),
+          _extraData(other._extraData), _contextId(other._contextId),
+          _pc(other._pc), _reqInstSeqNum(other._reqInstSeqNum),
+          _localAccessor(other._localAccessor),
+          translateDelta(other.translateDelta),
+          accessDelta(other.accessDelta), depth(other.depth)
     {
-        setPhys(paddr, size, flags, mid, time);
-        privateFlags.set(VALID_PC);
-        _pc = pc;
-    }
-
-    Request(int asid, Addr vaddr, int size, Flags flags, MasterID mid, Addr pc,
-            int cid, ThreadID tid)
-    {
-        setVirt(asid, vaddr, size, flags, mid, pc);
-        setThreadContext(cid, tid);
+        atomicOpFunctor.reset(other.atomicOpFunctor ?
+                                other.atomicOpFunctor->clone() : nullptr);
     }
 
     ~Request() {}
 
     /**
-     * Set up CPU and thread numbers.
+     * Set up Context numbers.
      */
     void
-    setThreadContext(int context_id, ThreadID tid)
+    setContext(ContextID context_id)
     {
         _contextId = context_id;
-        _threadId = tid;
-        privateFlags.set(VALID_CONTEXT_ID|VALID_THREAD_ID);
-    }
-
-    /**
-     * Set up a physical (e.g. device) request in a previously
-     * allocated Request object.
-     */
-    void
-    setPhys(Addr paddr, int size, Flags flags, MasterID mid, Tick time)
-    {
-        assert(size >= 0);
-        _paddr = paddr;
-        _size = size;
-        _time = time;
-        _masterId = mid;
-        _flags.clear(~STICKY_FLAGS);
-        _flags.set(flags);
-        privateFlags.clear(~STICKY_PRIVATE_FLAGS);
-        privateFlags.set(VALID_PADDR|VALID_SIZE);
+        privateFlags.set(VALID_CONTEXT_ID);
     }
 
     void
-    setPhys(Addr paddr, int size, Flags flags, MasterID mid)
+    setStreamId(uint32_t sid)
     {
-        setPhys(paddr, size, flags, mid, curTick());
+        _streamId = sid;
+        privateFlags.set(VALID_STREAM_ID);
+    }
+
+    void
+    setSubStreamId(uint32_t ssid)
+    {
+        assert(privateFlags.isSet(VALID_STREAM_ID));
+        _substreamId = ssid;
+        privateFlags.set(VALID_SUBSTREAM_ID);
     }
 
     /**
@@ -317,13 +493,12 @@ class Request
      * allocated Request object.
      */
     void
-    setVirt(int asid, Addr vaddr, int size, Flags flags, MasterID mid, Addr pc)
+    setVirt(Addr vaddr, unsigned size, Flags flags, RequestorID id, Addr pc,
+            AtomicOpFunctorPtr amo_op=nullptr)
     {
-        assert(size >= 0);
-        _asid = asid;
         _vaddr = vaddr;
         _size = size;
-        _masterId = mid;
+        _requestorId = id;
         _pc = pc;
         _time = curTick();
 
@@ -331,14 +506,16 @@ class Request
         _flags.set(flags);
         privateFlags.clear(~STICKY_PRIVATE_FLAGS);
         privateFlags.set(VALID_VADDR|VALID_SIZE|VALID_PC);
+        depth = 0;
+        accessDelta = 0;
+        translateDelta = 0;
+        atomicOpFunctor = std::move(amo_op);
+        _localAccessor = nullptr;
     }
 
     /**
-     * Set just the physical address.  This usually used to record the
-     * result of a translation. However, when using virtualized CPUs
-     * setPhys() is sometimes called to finalize a physical address
-     * without a virtual address, so we can't check if the virtual
-     * address is valid.
+     * Set just the physical address. This usually used to record the
+     * result of a translation.
      */
     void
     setPaddr(Addr paddr)
@@ -351,56 +528,122 @@ class Request
      * Generate two requests as if this request had been split into two
      * pieces. The original request can't have been translated already.
      */
+    // TODO: this function is still required by TimingSimpleCPU - should be
+    // removed once TimingSimpleCPU will support arbitrarily long multi-line
+    // mem. accesses
     void splitOnVaddr(Addr split_addr, RequestPtr &req1, RequestPtr &req2)
     {
         assert(privateFlags.isSet(VALID_VADDR));
         assert(privateFlags.noneSet(VALID_PADDR));
         assert(split_addr > _vaddr && split_addr < _vaddr + _size);
-        req1 = new Request;
-        *req1 = *this;
-        req2 = new Request;
-        *req2 = *this;
+        req1 = std::make_shared<Request>(*this);
+        req2 = std::make_shared<Request>(*this);
         req1->_size = split_addr - _vaddr;
         req2->_vaddr = split_addr;
         req2->_size = _size - req1->_size;
+        if (!_byteEnable.empty()) {
+            req1->_byteEnable = std::vector<bool>(
+                _byteEnable.begin(),
+                _byteEnable.begin() + req1->_size);
+            req2->_byteEnable = std::vector<bool>(
+                _byteEnable.begin() + req1->_size,
+                _byteEnable.end());
+        }
     }
 
     /**
      * Accessor for paddr.
      */
     bool
-    hasPaddr()
+    hasPaddr() const
     {
         return privateFlags.isSet(VALID_PADDR);
     }
 
     Addr
-    getPaddr()
+    getPaddr() const
     {
         assert(privateFlags.isSet(VALID_PADDR));
         return _paddr;
     }
 
     /**
+     * Accessor for instruction count.
+     */
+    Counter getInstCount() const
+    {
+        assert(privateFlags.isSet(VALID_INST_COUNT));
+        return _instCount;
+    }
+
+    void setInstCount(Counter val)
+    {
+        privateFlags.set(VALID_INST_COUNT);
+        _instCount = val;
+    }
+
+    /**
+     * Time for the TLB/table walker to successfully translate this request.
+     */
+    Tick translateDelta = 0;
+
+    /**
+     * Access latency to complete this memory transaction not including
+     * translation time.
+     */
+    Tick accessDelta = 0;
+
+    /**
+     * Level of the cache hierachy where this request was responded to
+     * (e.g. 0 = L1; 1 = L2).
+     */
+    mutable int depth = 0;
+
+    /**
      *  Accessor for size.
      */
-    void setSize(int size)
-    {
-      _size=size;
-    }
-   
-   
     bool
-    hasSize()
+    hasSize() const
     {
         return privateFlags.isSet(VALID_SIZE);
     }
 
-    int
-    getSize()
+    unsigned
+    getSize() const
     {
         assert(privateFlags.isSet(VALID_SIZE));
         return _size;
+    }
+
+    void setSize(int size){
+      _size = size;
+    }
+
+    const std::vector<bool>&
+    getByteEnable() const
+    {
+        return _byteEnable;
+    }
+
+    void
+    setByteEnable(const std::vector<bool>& be)
+    {
+        assert(be.empty() || be.size() == _size);
+        _byteEnable = be;
+    }
+
+    /**
+     * Returns true if the memory request is masked, which means
+     * there is at least one byteEnable element which is false
+     * (byte is masked)
+     */
+    bool
+    isMasked() const
+    {
+        return std::find(
+            _byteEnable.begin(),
+            _byteEnable.end(),
+            false) != _byteEnable.end();
     }
 
     /** Accessor for time. */
@@ -411,11 +654,49 @@ class Request
         return _time;
     }
 
-    void
-    time(Tick time)
+    /** Is this request for a local memory mapped resource/register? */
+    bool isLocalAccess() { return (bool)_localAccessor; }
+    /** Set the function which will enact that access. */
+    void setLocalAccessor(LocalAccessor acc) { _localAccessor = acc; }
+    /** Perform the installed local access. */
+    Cycles
+    localAccessor(ThreadContext *tc, Packet *pkt)
     {
-        assert(privateFlags.isSet(VALID_PADDR|VALID_VADDR));
-        _time = time;
+        return _localAccessor(tc, pkt);
+    }
+
+    /**
+     * Accessor for atomic-op functor.
+     */
+    bool
+    hasAtomicOpFunctor()
+    {
+        return (bool)atomicOpFunctor;
+    }
+
+    AtomicOpFunctor *
+    getAtomicOpFunctor()
+    {
+        assert(atomicOpFunctor);
+        return atomicOpFunctor.get();
+    }
+
+    /**
+     * Accessor for hardware transactional memory abort cause.
+     */
+    HtmFailureFaultCause
+    getHtmAbortCause() const
+    {
+        assert(privateFlags.isSet(VALID_HTM_ABORT_CAUSE));
+        return _htmAbortCause;
+    }
+
+    void
+    setHtmAbortCause(HtmFailureFaultCause val)
+    {
+        assert(isHTMAbort());
+        privateFlags.set(VALID_HTM_ABORT_CAUSE);
+        _htmAbortCause = val;
     }
 
     /** Accessor for flags. */
@@ -427,9 +708,9 @@ class Request
     }
 
     /** Note that unlike other accessors, this function sets *specific
-       flags* (ORs them in); it does not assign its argument to the
-       _flags field.  Thus this method should rightly be called
-       setFlags() and not just flags(). */
+        flags* (ORs them in); it does not assign its argument to the
+        _flags field.  Thus this method should rightly be called
+        setFlags() and not just flags(). */
     void
     setFlags(Flags flags)
     {
@@ -438,45 +719,48 @@ class Request
     }
 
     void
-    setArchFlags(Flags flags)
+    setCacheCoherenceFlags(CacheCoherenceFlags extraFlags)
     {
-        assert(privateFlags.isSet(VALID_PADDR|VALID_VADDR));
-        _flags.set(flags & ARCH_BITS);
+        // TODO: do mem_sync_op requests have valid paddr/vaddr?
+        assert(privateFlags.isSet(VALID_PADDR | VALID_VADDR));
+        _cacheCoherenceFlags.set(extraFlags);
     }
 
     /** Accessor function for vaddr.*/
+    bool
+    hasVaddr() const
+    {
+        return privateFlags.isSet(VALID_VADDR);
+    }
+
     Addr
-    getVaddr()
+    getVaddr() const
     {
         assert(privateFlags.isSet(VALID_VADDR));
         return _vaddr;
     }
 
     /** Accesssor for the requestor id. */
-    MasterID
-    masterId()
+    RequestorID
+    requestorId() const
     {
-        return _masterId;
+        return _requestorId;
     }
 
-    /** Accessor function for asid.*/
-    int
-    getAsid()
+    uint32_t
+    taskId() const
     {
-        assert(privateFlags.isSet(VALID_VADDR));
-        return _asid;
+        return _taskId;
     }
 
-    /** Accessor function for asid.*/
     void
-    setAsid(int asid)
-    {
-        _asid = asid;
+    taskId(uint32_t id) {
+        _taskId = id;
     }
 
     /** Accessor function for architecture-specific flags.*/
     ArchFlagsType
-    getArchFlags()
+    getArchFlags() const
     {
         assert(privateFlags.isSet(VALID_PADDR|VALID_VADDR));
         return _flags & ARCH_BITS;
@@ -484,7 +768,7 @@ class Request
 
     /** Accessor function to check if sc result is valid. */
     bool
-    extraDataValid()
+    extraDataValid() const
     {
         return privateFlags.isSet(VALID_EXTRA_DATA);
     }
@@ -512,19 +796,38 @@ class Request
     }
 
     /** Accessor function for context ID.*/
-    int
+    ContextID
     contextId() const
     {
         assert(privateFlags.isSet(VALID_CONTEXT_ID));
         return _contextId;
     }
 
-    /** Accessor function for thread ID. */
-    int
-    threadId() const
+    uint32_t
+    streamId() const
     {
-        assert(privateFlags.isSet(VALID_THREAD_ID));
-        return _threadId;
+        assert(privateFlags.isSet(VALID_STREAM_ID));
+        return _streamId;
+    }
+
+    bool
+    hasSubstreamId() const
+    {
+        return privateFlags.isSet(VALID_SUBSTREAM_ID);
+    }
+
+    uint32_t
+    substreamId() const
+    {
+        assert(privateFlags.isSet(VALID_SUBSTREAM_ID));
+        return _substreamId;
+    }
+
+    void
+    setPC(Addr pc)
+    {
+        privateFlags.set(VALID_PC);
+        _pc = pc;
     }
 
     bool
@@ -541,18 +844,126 @@ class Request
         return _pc;
     }
 
-    /** Accessor functions for flags.  Note that these are for testing
-       only; setting flags should be done via setFlags(). */
+    /**
+     * Increment/Get the depth at which this request is responded to.
+     * This currently happens when the request misses in any cache level.
+     */
+    void incAccessDepth() const { depth++; }
+    int getAccessDepth() const { return depth; }
+
+    /**
+     * Set/Get the time taken for this request to be successfully translated.
+     */
+    void setTranslateLatency() { translateDelta = curTick() - _time; }
+    Tick getTranslateLatency() const { return translateDelta; }
+
+    /**
+     * Set/Get the time taken to complete this request's access, not including
+     *  the time to successfully translate the request.
+     */
+    void setAccessLatency() { accessDelta = curTick() - _time - translateDelta; }
+    Tick getAccessLatency() const { return accessDelta; }
+
+    /**
+     * Accessor for the sequence number of instruction that creates the
+     * request.
+     */
+    bool
+    hasInstSeqNum() const
+    {
+        return privateFlags.isSet(VALID_INST_SEQ_NUM);
+    }
+
+    InstSeqNum
+    getReqInstSeqNum() const
+    {
+        assert(privateFlags.isSet(VALID_INST_SEQ_NUM));
+        return _reqInstSeqNum;
+    }
+
+    void
+    setReqInstSeqNum(const InstSeqNum seq_num)
+    {
+        privateFlags.set(VALID_INST_SEQ_NUM);
+        _reqInstSeqNum = seq_num;
+    }
+
+    /** Accessor functions for flags. Note that these are for testing
+        only; setting flags should be done via setFlags(). */
     bool isUncacheable() const { return _flags.isSet(UNCACHEABLE); }
+    bool isStrictlyOrdered() const { return _flags.isSet(STRICT_ORDER); }
     bool isInstFetch() const { return _flags.isSet(INST_FETCH); }
-    bool isPrefetch() const { return _flags.isSet(PREFETCH); }
+    bool isPrefetch() const { return (_flags.isSet(PREFETCH) ||
+                                      _flags.isSet(PF_EXCLUSIVE)); }
+    bool isPrefetchEx() const { return _flags.isSet(PF_EXCLUSIVE); }
     bool isLLSC() const { return _flags.isSet(LLSC); }
     bool isPriv() const { return _flags.isSet(PRIVILEGED); }
-    bool isLocked() const { return _flags.isSet(LOCKED); }
+    bool isLockedRMW() const { return _flags.isSet(LOCKED_RMW); }
     bool isSwap() const { return _flags.isSet(MEM_SWAP|MEM_SWAP_COND); }
     bool isCondSwap() const { return _flags.isSet(MEM_SWAP_COND); }
-    bool isMmappedIpr() const { return _flags.isSet(MMAPPED_IPR); }
-    bool isClearLL() const { return _flags.isSet(CLEAR_LL); }
+    bool isSecure() const { return _flags.isSet(SECURE); }
+    bool isPTWalk() const { return _flags.isSet(PT_WALK); }
+    bool isRelease() const { return _flags.isSet(RELEASE); }
+    bool isKernel() const { return _flags.isSet(KERNEL); }
+    bool isAtomicReturn() const { return _flags.isSet(ATOMIC_RETURN_OP); }
+    bool isAtomicNoReturn() const { return _flags.isSet(ATOMIC_NO_RETURN_OP); }
+    // hardware transactional memory
+    bool isHTMStart() const { return _flags.isSet(HTM_START); }
+    bool isHTMCommit() const { return _flags.isSet(HTM_COMMIT); }
+    bool isHTMCancel() const { return _flags.isSet(HTM_CANCEL); }
+    bool isHTMAbort() const { return _flags.isSet(HTM_ABORT); }
+    bool
+    isHTMCmd() const
+    {
+        return (isHTMStart() || isHTMCommit() ||
+                isHTMCancel() || isHTMAbort());
+    }
+
+    bool
+    isAtomic() const
+    {
+        return _flags.isSet(ATOMIC_RETURN_OP) ||
+               _flags.isSet(ATOMIC_NO_RETURN_OP);
+    }
+
+    /**
+     * Accessor functions for the destination of a memory request. The
+     * destination flag can specify a point of reference for the
+     * operation (e.g. a cache block clean to the the point of
+     * unification). At the moment the destination is only used by the
+     * cache maintenance operations.
+     */
+    bool isToPOU() const { return _flags.isSet(DST_POU); }
+    bool isToPOC() const { return _flags.isSet(DST_POC); }
+    Flags getDest() const { return _flags & DST_BITS; }
+
+    bool isAcquire() const { return _cacheCoherenceFlags.isSet(ACQUIRE); }
+
+    /**
+     * Accessor functions for the memory space configuration flags and used by
+     * GPU ISAs such as the Heterogeneous System Architecture (HSA). Note that
+     * these are for testing only; setting extraFlags should be done via
+     * setCacheCoherenceFlags().
+     */
+    bool isSLC() const { return _cacheCoherenceFlags.isSet(SLC_BIT); }
+    bool isGLC() const { return _cacheCoherenceFlags.isSet(GLC_BIT); }
+
+    /**
+     * Accessor functions to determine whether this request is part of
+     * a cache maintenance operation. At the moment three operations
+     * are supported:
+
+     * 1) A cache clean operation updates all copies of a memory
+     * location to the point of reference,
+     * 2) A cache invalidate operation invalidates all copies of the
+     * specified block in the memory above the point of reference,
+     * 3) A clean and invalidate operation is a combination of the two
+     * operations.
+     * @{ */
+    bool isCacheClean() const { return _flags.isSet(CLEAN); }
+    bool isCacheInvalidate() const { return _flags.isSet(INVALIDATE); }
+    bool isCacheMaintenance() const { return _flags.isSet(CLEAN|INVALIDATE); }
+    /** @} */
 };
 
 #endif // __MEM_REQUEST_HH__

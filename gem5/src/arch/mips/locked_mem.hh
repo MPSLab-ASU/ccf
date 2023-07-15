@@ -36,8 +36,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Steve Reinhardt
  */
 
 #ifndef __ARCH_MIPS_LOCKED_MEM_HH__
@@ -50,7 +48,7 @@
  */
 
 #include "arch/registers.hh"
-#include "base/misc.hh"
+#include "base/logging.hh"
 #include "base/trace.hh"
 #include "debug/LLSC.hh"
 #include "mem/packet.hh"
@@ -66,9 +64,7 @@ handleLockedSnoop(XC *xc, PacketPtr pkt, Addr cacheBlockMask)
         return;
 
     Addr locked_addr = xc->readMiscReg(MISCREG_LLADDR) & cacheBlockMask;
-    Addr snoop_addr = pkt->getAddr();
-
-    assert((cacheBlockMask & snoop_addr) == snoop_addr);
+    Addr snoop_addr = pkt->getAddr() & cacheBlockMask;
 
     if (locked_addr == snoop_addr)
         xc->setMiscReg(MISCREG_LLFLAG, false);
@@ -77,18 +73,24 @@ handleLockedSnoop(XC *xc, PacketPtr pkt, Addr cacheBlockMask)
 
 template <class XC>
 inline void
-handleLockedRead(XC *xc, Request *req)
+handleLockedRead(XC *xc, const RequestPtr &req)
 {
     xc->setMiscReg(MISCREG_LLADDR, req->getPaddr() & ~0xf);
     xc->setMiscReg(MISCREG_LLFLAG, true);
-    DPRINTF(LLSC, "[tid:%i]: Load-Link Flag Set & Load-Link"
+    DPRINTF(LLSC, "[cid:%i]: Load-Link Flag Set & Load-Link"
                   " Address set to %x.\n",
-            req->threadId(), req->getPaddr() & ~0xf);
+            req->contextId(), req->getPaddr() & ~0xf);
+}
+
+template <class XC>
+inline void
+handleLockedSnoopHit(XC *xc)
+{
 }
 
 template <class XC>
 inline bool
-handleLockedWrite(XC *xc, Request *req)
+handleLockedWrite(XC *xc, const RequestPtr &req, Addr cacheBlockMask)
 {
     if (req->isUncacheable()) {
         // Funky Turbolaser mailbox access...don't update
@@ -119,13 +121,13 @@ handleLockedWrite(XC *xc, Request *req)
             }
 
             if (!lock_flag){
-                DPRINTF(LLSC, "[tid:%i]: Lock Flag Set, "
+                DPRINTF(LLSC, "[cid:%i]: Lock Flag Set, "
                               "Store Conditional Failed.\n",
-                        req->threadId());
+                        req->contextId());
             } else if ((req->getPaddr() & ~0xf) != lock_addr) {
-                DPRINTF(LLSC, "[tid:%i]: Load-Link Address Mismatch, "
+                DPRINTF(LLSC, "[cid:%i]: Load-Link Address Mismatch, "
                               "Store Conditional Failed.\n",
-                        req->threadId());
+                        req->contextId());
             }
             // store conditional failed already, so don't issue it to mem
             return false;
@@ -133,6 +135,13 @@ handleLockedWrite(XC *xc, Request *req)
     }
 
     return true;
+}
+
+template <class XC>
+inline void
+globalClearExclusive(XC *xc)
+{
+    xc->getCpuPtr()->wakeup(xc->threadId());
 }
 
 } // namespace MipsISA

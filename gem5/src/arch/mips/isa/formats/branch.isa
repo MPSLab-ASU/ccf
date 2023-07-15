@@ -25,8 +25,6 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Authors: Korey Sewell
 
 ////////////////////////////////////////////////////////////////////
 //
@@ -54,7 +52,7 @@ output header {{
         mutable Addr cachedPC;
 
         /// Cached symbol table pointer from last disassembly
-        mutable const SymbolTable *cachedSymtab;
+        mutable const Loader::SymbolTable *cachedSymtab;
 
         /// Constructor
         PCDependentDisassembly(const char *mnem, MachInst _machInst,
@@ -65,7 +63,7 @@ output header {{
         }
 
         const std::string &
-        disassemble(Addr pc, const SymbolTable *symtab) const;
+        disassemble(Addr pc, const Loader::SymbolTable *symtab) const;
     };
 
     /**
@@ -89,13 +87,14 @@ output header {{
             }
         }
 
-        MipsISA::PCState branchTarget(const MipsISA::PCState &branchPC) const;
+        MipsISA::PCState branchTarget(
+                const MipsISA::PCState &branchPC) const override;
 
         /// Explicitly import the otherwise hidden branchTarget
         using StaticInst::branchTarget;
 
-        std::string
-        generateDisassembly(Addr pc, const SymbolTable *symtab) const;
+        std::string generateDisassembly(
+                Addr pc, const Loader::SymbolTable *symtab) const override;
     };
 
     /**
@@ -119,13 +118,13 @@ output header {{
         {
         }
 
-        MipsISA::PCState branchTarget(ThreadContext *tc) const;
+        MipsISA::PCState branchTarget(ThreadContext *tc) const override;
 
         /// Explicitly import the otherwise hidden branchTarget
         using StaticInst::branchTarget;
 
-        std::string
-        generateDisassembly(Addr pc, const SymbolTable *symtab) const;
+        std::string generateDisassembly(
+                Addr pc, const Loader::SymbolTable *symtab) const override;
     };
 }};
 
@@ -152,8 +151,8 @@ output decoder {{
     }
 
     const std::string &
-    PCDependentDisassembly::disassemble(Addr pc,
-                                        const SymbolTable *symtab) const
+    PCDependentDisassembly::disassemble(
+            Addr pc, const Loader::SymbolTable *symtab) const
     {
         if (!cachedDisassembly ||
             pc != cachedPC || symtab != cachedSymtab)
@@ -171,7 +170,8 @@ output decoder {{
     }
 
     std::string
-    Branch::generateDisassembly(Addr pc, const SymbolTable *symtab) const
+    Branch::generateDisassembly(
+            Addr pc, const Loader::SymbolTable *symtab) const
     {
         std::stringstream ss;
 
@@ -193,17 +193,17 @@ output decoder {{
 
         Addr target = pc + 4 + disp;
 
-        std::string str;
-        if (symtab && symtab->findSymbol(target, str))
-            ss << str;
+        Loader::SymbolTable::const_iterator it;
+        if (symtab && (it = symtab->find(target)) != symtab->end())
+            ss << it->name;
         else
-            ccprintf(ss, "0x%x", target);
+            ccprintf(ss, "%#x", target);
 
         return ss.str();
     }
 
     std::string
-    Jump::generateDisassembly(Addr pc, const SymbolTable *symtab) const
+    Jump::generateDisassembly(Addr pc, const Loader::SymbolTable *symtab) const
     {
         std::stringstream ss;
 
@@ -213,9 +213,9 @@ output decoder {{
             Addr npc = pc + 4;
             ccprintf(ss,"0x%x",(npc & 0xF0000000) | disp);
         } else if (_numSrcRegs == 0) {
-            std::string str;
-            if (symtab && symtab->findSymbol(disp, str))
-                ss << str;
+            Loader::SymbolTable::const_iterator it;
+            if (symtab && (it = symtab->find(disp)) != symtab->end())
+                ss << it->name;
             else
                 ccprintf(ss, "0x%x", disp);
         } else if (_numSrcRegs == 1) {

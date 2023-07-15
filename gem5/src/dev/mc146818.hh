@@ -24,17 +24,15 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Ali Saidi
- *          Andrew Schultz
- *          Miguel Serrano
  */
 
 #ifndef __DEV_MC146818_HH__
 #define __DEV_MC146818_HH__
 
 #include "base/bitunion.hh"
-#include "sim/eventq_impl.hh"
+#include "base/logging.hh"
+#include "sim/core.hh"
+#include "sim/eventq.hh"
 
 /** Real-Time Clock (MC146818) */
 class MC146818 : public EventManager
@@ -51,6 +49,7 @@ class MC146818 : public EventManager
     {
         MC146818 * parent;
         Tick interval;
+        Tick offset;
 
         RTCEvent(MC146818 * _parent, Tick i);
 
@@ -68,11 +67,11 @@ class MC146818 : public EventManager
     struct RTCTickEvent : public Event
     {
         MC146818 * parent;
+        Tick offset;
 
-        RTCTickEvent(MC146818 * _parent) : parent(_parent)
-        {
-            parent->schedule(this, curTick() + SimClock::Int::s);
-        }
+        RTCTickEvent(MC146818 * _parent) :
+            parent(_parent), offset(SimClock::Int::s)
+        {}
 
         /** Event process to occur at interrupt*/
         void process();
@@ -153,6 +152,9 @@ class MC146818 : public EventManager
             bool bcd, Tick frequency);
     virtual ~MC146818();
 
+    /** Start ticking */
+    virtual void startup();
+
     /** RTC write data */
     void writeData(const uint8_t addr, const uint8_t data);
 
@@ -166,7 +168,7 @@ class MC146818 : public EventManager
       * @param base The base name of the counter object.
       * @param os The stream to serialize to.
       */
-    void serialize(const std::string &base, std::ostream &os);
+    void serialize(const std::string &base, CheckpointOut &cp) const;
 
     /**
      * Reconstruct the state of this object from a checkpoint.
@@ -174,8 +176,7 @@ class MC146818 : public EventManager
      * @param cp The checkpoint use.
      * @param section The section name of this object
      */
-    void unserialize(const std::string &base, Checkpoint *cp,
-                     const std::string &section);
+    void unserialize(const std::string &base, CheckpointIn &cp);
 };
 
 #endif // __DEV_MC146818_HH__

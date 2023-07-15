@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2012 ARM Limited
+ * Copyright (c) 2010-2012, 2014, 2019 ARM Limited
  * All rights reserved
  *
  * The license below extends only to copyright in the software and shall
@@ -36,8 +36,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Kevin Lim
  */
 
 #ifndef __CPU_O3_IEW_HH__
@@ -52,6 +50,7 @@
 #include "cpu/o3/scoreboard.hh"
 #include "cpu/timebuf.hh"
 #include "debug/IEW.hh"
+#include "sim/probe/probe.hh"
 
 struct DerivO3CPUParams;
 class FUPool;
@@ -122,6 +121,14 @@ class DefaultIEW
     /** Writeback status. */
     StageStatus wbStatus;
 
+    /** Probe points. */
+    ProbePointArg<DynInstPtr> *ppMispredict;
+    ProbePointArg<DynInstPtr> *ppDispatch;
+    /** To probe when instruction execution begins. */
+    ProbePointArg<DynInstPtr> *ppExecute;
+    /** To probe when instruction execution is complete. */
+    ProbePointArg<DynInstPtr> *ppToCommit;
+
   public:
     /** Constructs a DefaultIEW with the given parameters. */
     DefaultIEW(O3CPU *_cpu, DerivO3CPUParams *params);
@@ -132,8 +139,14 @@ class DefaultIEW
     /** Registers statistics. */
     void regStats();
 
+    /** Registers probes. */
+    void regProbePoints();
+
     /** Initializes stage; sends back the number of free IQ and LSQ entries. */
     void startupStage();
+
+    /** Clear all thread-specific states */
+    void clearStates(ThreadID tid);
 
     /** Sets main time buffer used for backwards communication. */
     void setTimeBuffer(TimeBuffer<TimeStruct> *tb_ptr);
@@ -163,18 +176,24 @@ class DefaultIEW
     void squash(ThreadID tid);
 
     /** Wakes all dependents of a completed instruction. */
-    void wakeDependents(DynInstPtr &inst);
+    void wakeDependents(const DynInstPtr &inst);
 
     /** Tells memory dependence unit that a memory instruction needs to be
      * rescheduled. It will re-execute once replayMemInst() is called.
      */
-    void rescheduleMemInst(DynInstPtr &inst);
+    void rescheduleMemInst(const DynInstPtr &inst);
 
     /** Re-executes all rescheduled memory instructions. */
-    void replayMemInst(DynInstPtr &inst);
+    void replayMemInst(const DynInstPtr &inst);
+
+    /** Moves memory instruction onto the list of cache blocked instructions */
+    void blockMemInst(const DynInstPtr &inst);
+
+    /** Notifies that the cache has become unblocked */
+    void cacheUnblocked();
 
     /** Sends an instruction to commit through the time buffer. */
-    void instToCommit(DynInstPtr &inst);
+    void instToCommit(const DynInstPtr &inst);
 
     /** Inserts unused instructions of a thread into the skid buffer. */
     void skidInsert(ThreadID tid);
@@ -211,67 +230,29 @@ class DefaultIEW
     /** Returns if the LSQ has any stores to writeback. */
     bool hasStoresToWB(ThreadID tid) { return ldstQueue.hasStoresToWB(tid); }
 
-    void incrWb(InstSeqNum &sn)
-    {
-        ++wbOutstanding;
-        if (wbOutstanding == wbMax)
-            ableToIssue = false;
-        DPRINTF(IEW, "wbOutstanding: %i [sn:%lli]\n", wbOutstanding, sn);
-        assert(wbOutstanding <= wbMax);
-#ifdef DEBUG
-        wbList.insert(sn);
-#endif
-    }
-
-    void decrWb(InstSeqNum &sn)
-    {
-        if (wbOutstanding == wbMax)
-            ableToIssue = true;
-        wbOutstanding--;
-        DPRINTF(IEW, "wbOutstanding: %i [sn:%lli]\n", wbOutstanding, sn);
-        assert(wbOutstanding >= 0);
-#ifdef DEBUG
-        assert(wbList.find(sn) != wbList.end());
-        wbList.erase(sn);
-#endif
-    }
-
-#ifdef DEBUG
-    std::set<InstSeqNum> wbList;
-
-    void dumpWb()
-    {
-        std::set<InstSeqNum>::iterator wb_it = wbList.begin();
-        while (wb_it != wbList.end()) {
-            cprintf("[sn:%lli]\n",
-                    (*wb_it));
-            wb_it++;
-        }
-    }
-#endif
-
-    bool canIssue() { return ableToIssue; }
-
-    bool ableToIssue;
-
     /** Check misprediction  */
-    void checkMisprediction(DynInstPtr &inst);
+    void checkMisprediction(const DynInstPtr &inst);
+
+    // hardware transactional memory
+    // For debugging purposes, it is useful to keep track of the most recent
+    // htmUid that has been committed (architecturally, not transactionally)
+    // to ensure that the core and the memory subsystem are observing
+    // correct ordering constraints.
+    void setLastRetiredHtmUid(ThreadID tid, uint64_t htmUid)
+    {
+        ldstQueue.setLastRetiredHtmUid(tid, htmUid);
+    }
 
   private:
     /** Sends commit proper information for a squash due to a branch
      * mispredict.
      */
-    void squashDueToBranch(DynInstPtr &inst, ThreadID tid);
+    void squashDueToBranch(const DynInstPtr &inst, ThreadID tid);
 
     /** Sends commit proper information for a squash due to a memory order
      * violation.
      */
-    void squashDueToMemOrder(DynInstPtr &inst, ThreadID tid);
-
-    /** Sends commit proper information for a squash due to memory becoming
-     * blocked (younger issued instructions must be retried).
-     */
-    void squashDueToMemBlocked(DynInstPtr &inst, ThreadID tid);
+    void squashDueToMemOrder(const DynInstPtr &inst, ThreadID tid);
 
     /** Sets Dispatch to blocked, and signals back to other stages to block. */
     void block(ThreadID tid);
@@ -305,9 +286,6 @@ class DefaultIEW
      */
     unsigned validInstsFromRename();
 
-    /** Reads the stall signals. */
-    void readStallSignals(ThreadID tid);
-
     /** Checks if any of the stall conditions are currently true. */
     bool checkStall(ThreadID tid);
 
@@ -328,7 +306,7 @@ class DefaultIEW
 
   private:
     /** Updates execution stats based on the instruction. */
-    void updateExeInstStats(DynInstPtr &inst);
+    void updateExeInstStats(const DynInstPtr &inst);
 
     /** Pointer to main time buffer used for backwards communication. */
     TimeBuffer<TimeStruct> *timeBuffer;
@@ -380,14 +358,6 @@ class DefaultIEW
      * CPU can deschedule itself if there is no activity.
      */
     bool wroteToTimeBuffer;
-
-    /** Source of possible stalls. */
-    struct Stalls {
-        bool commit;
-    };
-
-    /** Stages that are telling IEW to stall. */
-    Stalls stalls[Impl::MaxThreads];
 
     /** Debug function to print instructions that are issued this cycle. */
     void printAvailableInsts();
@@ -444,18 +414,8 @@ class DefaultIEW
      */
     unsigned wbCycle;
 
-    /** Number of instructions in flight that will writeback. */
-
-    /** Number of instructions in flight that will writeback. */
-    int wbOutstanding;
-
     /** Writeback width. */
     unsigned wbWidth;
-
-    /** Writeback width * writeback depth, where writeback depth is
-     * the number of cycles of writing back instructions that can be
-     * buffered. */
-    unsigned wbMax;
 
     /** Number of active threads. */
     ThreadID numThreads;
@@ -526,16 +486,10 @@ class DefaultIEW
     Stats::Vector producerInst;
     /** Number of instructions that wake up from producers. */
     Stats::Vector consumerInst;
-    /** Number of instructions that were delayed in writing back due
-     * to resource contention.
-     */
-    Stats::Vector wbPenalized;
     /** Number of instructions per cycle written back. */
     Stats::Formula wbRate;
     /** Average number of woken instructions per writeback. */
     Stats::Formula wbFanout;
-    /** Number of instructions per cycle delayed in writing back . */
-    Stats::Formula wbPenalizedRate;
 };
 
 #endif // __CPU_O3_IEW_HH__

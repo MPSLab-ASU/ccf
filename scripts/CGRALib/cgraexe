@@ -1,0 +1,67 @@
+#!/bin/bash
+#Get Architecture Information from the csv file and set corresponding architecture arguments
+X=0
+Y=0
+R=0
+IC=0
+CGRAclock=0
+CPUClock=0
+ccf_root=""
+
+pwd
+
+executable=$1
+shift
+
+subcommand=$1
+shift
+
+if [[ "$subcommand" == "--prog-args" ]]; then 
+    args="$@"
+    #for arg in "$@"
+    #do
+    #    args+="$arg "
+    #done
+else # [[ "$subcommand" == "" ]]; then 
+    args=""
+#else
+#    echo "If your program has arguments, add the flag --prog-args"
+#    exit 1
+fi
+
+if [ -f "CGRA_config.csv" ]; then
+    INPUTFILE="CGRA_config.csv"
+    X=$(grep -w X $INPUTFILE | cut -d, -f2)
+    Y=$(grep -w Y $INPUTFILE | cut -d, -f2)
+    R=$(grep -w R $INPUTFILE | cut -d, -f2)
+    IC=$(grep -w IC $INPUTFILE | cut -d, -f2)
+    CGRAclock=$(grep -w Cclock $INPUTFILE | cut -d, -f2)
+    CPUclock=$(grep -w CPUclock $INPUTFILE | cut -d, -f2)
+else
+    echo "Please include CGRA architecture file"
+    exit 1
+fi
+
+echo $args
+
+#if [ "$R" -le  "2" ] || [ "$R" -eq "3" ] || [ "$R" -eq "5" ] || [ "$R" -eq "6" ] || [ "$R" -eq "7" ] || [ "$R" -gt "8" ] && [ "$R" -lt "16" ] || [ "$R" -gt "16" ]; then
+#    echo -e "\e[31mRegister size of 4, 8 and 16 are only supported! Please change the CGRA_config.csv file to reflect this.\e[0m"
+#    exit 1
+#fi
+
+echo "Simulation for CGRA for $X x $Y with $R registers per PE"
+
+Ghz="GHz"
+cgraclock="$CGRAclock$Ghz"
+cpuclock="$CPUclock$Ghz"
+
+echo "CPU frequency @ $cpuclock"
+echo "CGRA frequency @ $cgraclock" 
+
+echo CGRA${X}x${Y}R${R}torus
+# CGRA Execution
+if [[ $args == "" ]]; then
+  ${ccf_root}/gem5/build/ARM/gem5.opt --debug-flags=CGRA ${ccf_root}/gem5/configs/example/se.py -n 1 --cpu-type "CGRA${X}x${Y}R${R}torus" --mem-size=32GB -c ./${executable}
+else
+  ${ccf_root}/gem5/build/ARM/gem5.opt --debug-flags=CGRA ${ccf_root}/gem5/configs/example/se.py -n 1 --cpu-type "CGRA${X}x${Y}R${R}torus" -c ./${executable} -o "${args}" 
+fi

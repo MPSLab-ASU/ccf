@@ -23,8 +23,9 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Nathan Binkert
+
+from __future__ import print_function
+from __future__ import absolute_import
 
 # Simple importer that allows python to import data from a dict of
 # code objects.  The keys are the module path, and the items are the
@@ -35,7 +36,7 @@ class CodeImporter(object):
 
     def add_module(self, filename, abspath, modpath, code):
         if modpath in self.modules:
-            raise AttributeError, "%s already found in importer" % modpath
+            raise AttributeError("%s already found in importer" % modpath)
 
         self.modules[modpath] = (filename, abspath, code)
 
@@ -67,7 +68,7 @@ class CodeImporter(object):
 
             override = os.environ.get('M5_OVERRIDE_PY_SOURCE', 'false').lower()
             if override in ('true', 'yes') and  os.path.exists(abspath):
-                src = file(abspath, 'r').read()
+                src = open(abspath, 'r').read()
                 code = compile(src, abspath, 'exec')
 
             if os.path.basename(srcfile) == '__init__.py':
@@ -77,7 +78,7 @@ class CodeImporter(object):
                 mod.__package__ = fullname.rpartition('.')[0]
             mod.__file__ = srcfile
 
-            exec code in mod.__dict__
+            exec(code, mod.__dict__)
         except Exception:
             del sys.modules[fullname]
             raise

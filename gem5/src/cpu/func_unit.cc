@@ -24,14 +24,13 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Steve Raasch
  */
+
+#include "cpu/func_unit.hh"
 
 #include <sstream>
 
-#include "base/misc.hh"
-#include "cpu/func_unit.hh"
+#include "base/logging.hh"
 
 using namespace std;
 
@@ -42,6 +41,8 @@ using namespace std;
 //
 FuncUnit::FuncUnit()
 {
+    opLatencies.fill(0);
+    pipelined.fill(false);
     capabilityList.reset();
 }
 
@@ -52,7 +53,7 @@ FuncUnit::FuncUnit(const FuncUnit &fu)
 
     for (int i = 0; i < Num_OpClasses; ++i) {
         opLatencies[i] = fu.opLatencies[i];
-        issueLatencies[i] = fu.issueLatencies[i];
+        pipelined[i] = fu.pipelined[i];
     }
 
     capabilityList = fu.capabilityList;
@@ -60,15 +61,15 @@ FuncUnit::FuncUnit(const FuncUnit &fu)
 
 
 void
-FuncUnit::addCapability(OpClass cap, unsigned oplat, unsigned issuelat)
+FuncUnit::addCapability(OpClass cap, unsigned oplat, bool pipeline)
 {
-    if (issuelat == 0 || oplat == 0)
+    if (oplat == 0)
         panic("FuncUnit:  you don't really want a zero-cycle latency do you?");
 
     capabilityList.set(cap);
 
     opLatencies[cap] = oplat;
-    issueLatencies[cap] = issuelat;
+    pipelined[cap] = pipeline;
 }
 
 bool
@@ -89,10 +90,10 @@ FuncUnit::opLatency(OpClass cap)
     return opLatencies[cap];
 }
 
-unsigned
-FuncUnit::issueLatency(OpClass capability)
+bool
+FuncUnit::isPipelined(OpClass capability)
 {
-    return issueLatencies[capability];
+    return pipelined[capability];
 }
 
 ////////////////////////////////////////////////////////////////////////////

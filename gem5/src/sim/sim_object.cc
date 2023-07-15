@@ -25,22 +25,15 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Steve Reinhardt
- *          Nathan Binkert
  */
 
-#include <cassert>
-
-#include "base/callback.hh"
-#include "base/inifile.hh"
-#include "base/match.hh"
-#include "base/misc.hh"
-#include "base/trace.hh"
-#include "base/types.hh"
-#include "debug/Checkpoint.hh"
 #include "sim/sim_object.hh"
-#include "sim/stats.hh"
+
+#include "base/logging.hh"
+#include "base/match.hh"
+#include "base/trace.hh"
+#include "debug/Checkpoint.hh"
+#include "sim/probe/probe.hh"
 
 using namespace std;
 
@@ -60,13 +53,20 @@ SimObject::SimObjectList SimObject::simObjectList;
 // SimObject constructor: used to maintain static simObjectList
 //
 SimObject::SimObject(const Params *p)
-    : EventManager(getEventQueue(p->eventq_index)), _params(p)
+    : EventManager(getEventQueue(p->eventq_index)),
+      Stats::Group(nullptr),
+      _params(p)
 {
 #ifdef DEBUG
     doDebugBreak = false;
 #endif
-
     simObjectList.push_back(this);
+    probeManager = new ProbeManager(this);
+}
+
+SimObject::~SimObject()
+{
+    delete probeManager;
 }
 
 void
@@ -75,11 +75,13 @@ SimObject::init()
 }
 
 void
-SimObject::loadState(Checkpoint *cp)
+SimObject::loadState(CheckpointIn &cp)
 {
-    if (cp->sectionExists(name())) {
+    if (cp.sectionExists(name())) {
         DPRINTF(Checkpoint, "unserializing\n");
-        unserialize(cp, name());
+        // This works despite name() returning a fully qualified name
+        // since we are at the top level.
+        unserializeSection(cp, name());
     } else {
         DPRINTF(Checkpoint, "no checkpoint section found\n");
     }
@@ -95,32 +97,48 @@ SimObject::startup()
 {
 }
 
-//
-// no default statistics, so nothing to do in base implementation
-//
+/**
+ * No probe points by default, so do nothing in base.
+ */
 void
-SimObject::regStats()
+SimObject::regProbePoints()
 {
 }
 
+/**
+ * No probe listeners by default, so do nothing in base.
+ */
 void
-SimObject::resetStats()
+SimObject::regProbeListeners()
 {
+}
+
+ProbeManager *
+SimObject::getProbeManager()
+{
+    return probeManager;
+}
+
+Port &
+SimObject::getPort(const std::string &if_name, PortID idx)
+{
+    fatal("%s does not have any port named %s\n", name(), if_name);
 }
 
 //
 // static function: serialize all SimObjects.
 //
 void
-SimObject::serializeAll(std::ostream &os)
+SimObject::serializeAll(CheckpointOut &cp)
 {
     SimObjectList::reverse_iterator ri = simObjectList.rbegin();
     SimObjectList::reverse_iterator rend = simObjectList.rend();
 
     for (; ri != rend; ++ri) {
         SimObject *obj = *ri;
-        obj->nameOut(os);
-        obj->serialize(os);
+        // This works despite name() returning a fully qualified name
+        // since we are at the top level.
+        obj->serializeSection(cp, obj->name());
    }
 }
 
@@ -148,14 +166,6 @@ debugObjectBreak(const char *objs)
     SimObject::debugObjectBreak(string(objs));
 }
 #endif
-
-unsigned int
-SimObject::drain(DrainManager *drain_manager)
-{
-    setDrainState(Drained);
-    return 0;
-}
-
 
 SimObject *
 SimObject::find(const char *name)

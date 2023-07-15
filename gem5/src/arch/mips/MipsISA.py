@@ -32,16 +32,18 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Andreas Sandberg
 
-from m5.SimObject import SimObject
 from m5.params import *
+from m5.proxy import *
 
-class MipsISA(SimObject):
+from m5.objects.BaseISA import BaseISA
+
+class MipsISA(BaseISA):
     type = 'MipsISA'
     cxx_class = 'MipsISA::ISA'
     cxx_header = "arch/mips/isa.hh"
+
+    system = Param.System(Parent.any, "System this ISA object belongs to")
 
     num_threads = Param.UInt8(1, "Maximum number this ISA can handle")
     num_vpes = Param.UInt8(1, "Maximum number of vpes this ISA can handle")

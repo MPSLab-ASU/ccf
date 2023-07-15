@@ -25,8 +25,6 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Gabe Black
 
 Import('*')
 
@@ -64,7 +62,3 @@ if env['TARGET_ISA'] == 'x86':
     SimObject('I82094AA.py')
     Source('i82094aa.cc')
     DebugFlag('I82094AA')
-
-    SimObject('X86IntPin.py')
-    Source('intdev.cc')
-    DebugFlag('IntDevice')

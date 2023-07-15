@@ -24,8 +24,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Ali Saidi
  */
 
 #ifndef __SOLARIS_HH__
@@ -113,6 +111,9 @@ class Solaris : public OperatingSystem
         char version[_SYS_NMLN];        //!< OS version.
         char machine[_SYS_NMLN];        //!< Machine type.
     } utsname;
+
+    // for *at syscalls
+    static const int TGT_AT_FDCWD   = -100;
 
 };  // class Solaris
 

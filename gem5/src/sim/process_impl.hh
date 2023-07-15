@@ -24,9 +24,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Nathan Binkert
- *          Steve Reinhardt
  */
 
 #ifndef __SIM_PROCESS_IMPL_HH__
@@ -36,20 +33,18 @@
 #include <vector>
 
 #include "mem/se_translating_port_proxy.hh"
-#include "sim/byteswap.hh"
 
 //This needs to be templated for cases where 32 bit pointers are needed.
 template<class AddrType>
 void
 copyStringArray(std::vector<std::string> &strings,
         AddrType array_ptr, AddrType data_ptr,
-        SETranslatingPortProxy& memProxy)
+        const ByteOrder bo, PortProxy& memProxy)
 {
     AddrType data_ptr_swap;
     for (std::vector<std::string>::size_type i = 0; i < strings.size(); ++i) {
-        data_ptr_swap = TheISA::htog(data_ptr);
-        memProxy.writeBlob(array_ptr, (uint8_t*)&data_ptr_swap,
-                sizeof(AddrType));
+        data_ptr_swap = htog(data_ptr, bo);
+        memProxy.writeBlob(array_ptr, &data_ptr_swap, sizeof(AddrType));
         memProxy.writeString(data_ptr, strings[i].c_str());
         array_ptr += sizeof(AddrType);
         data_ptr += strings[i].size() + 1;
@@ -57,7 +52,7 @@ copyStringArray(std::vector<std::string> &strings,
     // add NULL terminator
     data_ptr = 0;
 
-    memProxy.writeBlob(array_ptr, (uint8_t*)&data_ptr, sizeof(AddrType));
+    memProxy.writeBlob(array_ptr, &data_ptr, sizeof(AddrType));
 }
 
 #endif

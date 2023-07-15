@@ -24,8 +24,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Ron Dreslinski
  */
 
 /**
@@ -35,34 +33,32 @@
 
 #include "mem/cache/prefetch/tagged.hh"
 
-TaggedPrefetcher::TaggedPrefetcher(const Params *p)
-    : BasePrefetcher(p)
+#include "params/TaggedPrefetcher.hh"
+
+namespace Prefetcher {
+
+Tagged::Tagged(const TaggedPrefetcherParams *p)
+    : Queued(p), degree(p->degree)
 {
+
 }
 
 void
-TaggedPrefetcher::
-calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addresses,
-                  std::list<Cycles> &delays)
+Tagged::calculatePrefetch(const PrefetchInfo &pfi,
+    std::vector<AddrPriority> &addresses)
 {
-    Addr blkAddr = pkt->getAddr() & ~(Addr)(blkSize-1);
+    Addr blkAddr = blockAddress(pfi.getAddr());
 
     for (int d = 1; d <= degree; d++) {
         Addr newAddr = blkAddr + d*(blkSize);
-        if (pageStop &&  !samePage(blkAddr, newAddr)) {
-            // Spanned the page, so now stop
-            pfSpanPage += degree - d + 1;
-            return;
-        } else {
-            addresses.push_back(newAddr);
-            delays.push_back(latency);
-        }
+        addresses.push_back(AddrPriority(newAddr,0));
     }
 }
 
+} // namespace Prefetcher
 
-TaggedPrefetcher*
+Prefetcher::Tagged*
 TaggedPrefetcherParams::create()
 {
-   return new TaggedPrefetcher(this);
+   return new Prefetcher::Tagged(this);
 }

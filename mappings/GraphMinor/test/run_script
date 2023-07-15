@@ -1,0 +1,69 @@
+#!/bin/bash
+
+
+# Script to run all the test cases and find the 
+# number of failures in scheduling.
+
+cd rijndael/loop6
+chmod +x run_command
+./run_command
+echo "rijndael loop 6"
+echo "Reason 1:"
+grep -nc "failure reason: 1" debug
+echo "Reason 2:"
+grep -nc "failure reason: 2" debug
+echo "Reason 3:"
+grep -nc "Reason 3" debug
+cd ../loop7/
+chmod +x run_command
+./run_command
+echo "rijndael loop 7"
+echo "Reason 1:"
+grep -nc "failure reason: 1" debug
+echo "Reason 2:"
+grep -nc "failure reason: 2" debug
+echo "Reason 3:"
+grep -nc "Reason 3" debug
+cd ../loop8/
+chmod +x run_command
+./run_command
+echo "rijndael loop 8"
+echo "Reason 1:"
+grep -nc "failure reason: 1" debug
+echo "Reason 2:"
+grep -nc "failure reason: 2" debug
+echo "Reason 3:"
+grep -nc "Reason 3" debug
+cd ../../
+cd patricia/loop8
+chmod +x run_command
+./run_command
+echo "Patricia loop8"
+echo "Reason 1:"
+grep -nc "failure reason: 1" debug
+echo "Reason 2:"
+grep -nc "failure reason: 2" debug
+echo "Reason 3:"
+grep -nc "Reason 3" debug
+cd ../../
+cd gsm/loop36/
+chmod +x run_command
+./run_command
+echo "gsm loop 36"
+echo "Reason 1:"
+grep -nc "failure reason: 1" debug
+echo "Reason 2:"
+grep -nc "failure reason: 2" debug
+echo "Reason 3:"
+grep -nc "Reason 3" debug
+cd ../loop6/
+chmod +x run_command
+./run_command
+echo "gsm loop 6"
+echo "Reason 1:"
+grep -nc "failure reason: 1" debug
+echo "Reason 2:"
+grep -nc "failure reason: 2" debug
+echo "Reason 3:"
+grep -nc "Reason 3" debug
+cd ../../

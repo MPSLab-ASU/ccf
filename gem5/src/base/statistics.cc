@@ -1,4 +1,16 @@
 /*
+ * Copyright (c) 2019-2020 Arm Limited
+ * All rights reserved.
+ *
+ * The license below extends only to copyright in the software and shall
+ * not be construed as granting a license to any other intellectual
+ * property including but not limited to intellectual property relating
+ * to a hardware implementation of the functionality of the software
+ * licensed hereunder.  You may use the software subject to the license
+ * terms below provided that you ensure that this notice is replicated
+ * unmodified and in its entirety in all distributions of the software,
+ * modified or unmodified, in source code or in binary form.
+ *
  * Copyright (c) 2003-2005 The Regents of The University of Michigan
  * All rights reserved.
  *
@@ -24,9 +36,9 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Nathan Binkert
  */
+
+#include "base/statistics.hh"
 
 #include <fstream>
 #include <iomanip>
@@ -38,11 +50,11 @@
 #include "base/cprintf.hh"
 #include "base/debug.hh"
 #include "base/hostinfo.hh"
-#include "base/misc.hh"
-#include "base/statistics.hh"
+#include "base/logging.hh"
 #include "base/str.hh"
 #include "base/time.hh"
 #include "base/trace.hh"
+#include "sim/root.hh"
 
 using namespace std;
 
@@ -66,10 +78,18 @@ statsMap()
 }
 
 void
-InfoAccess::setInfo(Info *info)
+InfoAccess::setInfo(Group *parent, Info *info)
 {
-    if (statsMap().find(this) != statsMap().end())
-        panic("shouldn't register stat twice!");
+    panic_if(statsMap().find(this) != statsMap().end() ||
+             _info != nullptr,
+             "shouldn't register stat twice!");
+
+    // New-style stats are reachable through the hierarchy and
+    // shouldn't be added to the global lists.
+    if (parent) {
+        _info = info;
+        return;
+    }
 
     statsList().push_back(info);
 
@@ -96,17 +116,29 @@ InfoAccess::setInit()
 Info *
 InfoAccess::info()
 {
-    MapType::const_iterator i = statsMap().find(this);
-    assert(i != statsMap().end());
-    return (*i).second;
+    if (_info) {
+        // New-style stats
+        return _info;
+    } else {
+        // Legacy stats
+        MapType::const_iterator i = statsMap().find(this);
+        assert(i != statsMap().end());
+        return (*i).second;
+    }
 }
 
 const Info *
 InfoAccess::info() const
 {
-    MapType::const_iterator i = statsMap().find(this);
-    assert(i != statsMap().end());
-    return (*i).second;
+    if (_info) {
+        // New-style stats
+        return _info;
+    } else {
+        // Legacy stats
+        MapType::const_iterator i = statsMap().find(this);
+        assert(i != statsMap().end());
+        return (*i).second;
+    }
 }
 
 StorageParams::~StorageParams()
@@ -170,19 +202,25 @@ validateStatName(const string &name)
 void
 Info::setName(const string &name)
 {
+    setName(nullptr, name);
+}
+
+void
+Info::setName(const Group *parent, const string &name)
+{
     if (!validateStatName(name))
         panic("invalid stat name '%s'", name);
 
-    pair<NameMapType::iterator, bool> p =
-        nameMap().insert(make_pair(name, this));
+    // We only register the stat with the nameMap() if we are using
+    // old-style stats without a parent group. New-style stats should
+    // be unique since their names should correspond to a member
+    // variable.
+    if (!parent) {
+        auto p = nameMap().insert(make_pair(name, this));
 
-    Info *other = p.first->second;
-    bool result = p.second;
-    
-    if (!result) {
-        // using other->name instead of just name to avoid a compiler
-        // warning.  They should be the same.
-        panic("same statistic name used twice! name=%s\n", other->name);
+        if (!p.second)
+            panic("same statistic name used twice! name=%s\n",
+                  name);
     }
 
     this->name = name;
@@ -221,7 +259,10 @@ Info::baseCheck() const
 #ifdef DEBUG
         cprintf("this is stat number %d\n", id);
 #endif
-        panic("Not all stats have been initialized");
+        panic("Not all stats have been initialized.\n"
+              "You may need to add <ParentClass>::regStats() to a"
+              " new SimObject's regStats() function. Name: %s",
+              name);
         return false;
     }
 
@@ -352,22 +393,47 @@ HistStor::grow_up()
     bucket_size *= 2;
 }
 
-Formula::Formula()
+void
+HistStor::add(HistStor *hs)
+{
+    int b_size = hs->size();
+    assert(size() == b_size);
+    assert(min_bucket == hs->min_bucket);
+
+    sum += hs->sum;
+    logs += hs->logs;
+    squares += hs->squares;
+    samples += hs->samples;
+
+    while (bucket_size > hs->bucket_size)
+        hs->grow_up();
+    while (bucket_size < hs->bucket_size)
+        grow_up();
+
+    for (uint32_t i = 0; i < b_size; i++)
+        cvec[i] += hs->cvec[i];
+}
+
+Formula::Formula(Group *parent, const char *name, const char *desc)
+    : DataWrapVec<Formula, FormulaInfoProxy>(parent, name, desc)
+
 {
 }
 
-Formula::Formula(Temp r)
+
+
+Formula::Formula(Group *parent, const char *name, const char *desc,
+                 const Temp &r)
+    : DataWrapVec<Formula, FormulaInfoProxy>(parent, name, desc)
 {
-    root = r;
-    setInit();
-    assert(size());
+    *this = r;
 }
 
 const Formula &
-Formula::operator=(Temp r)
+Formula::operator=(const Temp &r)
 {
     assert(!root && "Can't change formulas");
-    root = r;
+    root = r.getNodePtr();
     setInit();
     assert(size());
     return *this;
@@ -379,7 +445,7 @@ Formula::operator+=(Temp r)
     if (root)
         root = NodePtr(new BinaryNode<std::plus<Result> >(root, r));
     else {
-        root = r;
+        root = r.getNodePtr();
         setInit();
     }
 
@@ -396,6 +462,7 @@ Formula::operator/=(Temp r)
     assert(size());
     return *this;
 }
+
 
 void
 Formula::result(VResult &vec) const
@@ -441,13 +508,35 @@ Formula::str() const
     return root ? root->str() : "";
 }
 
+Handler resetHandler = NULL;
+Handler dumpHandler = NULL;
+
+void
+registerHandlers(Handler reset_handler, Handler dump_handler)
+{
+    resetHandler = reset_handler;
+    dumpHandler = dump_handler;
+}
+
 CallbackQueue dumpQueue;
 CallbackQueue resetQueue;
 
 void
-registerResetCallback(Callback *cb)
+processResetQueue()
 {
-    resetQueue.add(cb);
+    resetQueue.process();
+}
+
+void
+processDumpQueue()
+{
+    dumpQueue.process();
+}
+
+void
+registerResetCallback(const std::function<void()> &callback)
+{
+    resetQueue.push_back(callback);
 }
 
 bool _enabled = false;
@@ -468,9 +557,38 @@ enable()
 }
 
 void
-registerDumpCallback(Callback *cb)
+dump()
 {
-    dumpQueue.add(cb);
+    if (dumpHandler)
+        dumpHandler();
+    else
+        fatal("No registered Stats::dump handler");
+}
+
+void
+reset()
+{
+    if (resetHandler)
+        resetHandler();
+    else
+        fatal("No registered Stats::reset handler");
+}
+
+const Info *
+resolve(const std::string &name)
+{
+    const auto &it = nameMap().find(name);
+    if (it != nameMap().cend()) {
+        return it->second;
+    } else {
+        return Root::root()->resolveStat(name);
+    }
+}
+
+void
+registerDumpCallback(const std::function<void()> &callback)
+{
+    dumpQueue.push_back(callback);
 }
 
 } // namespace Stats

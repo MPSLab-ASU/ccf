@@ -1,4 +1,6 @@
 # Copyright (c) 2007 The Hewlett-Packard Development Company
+# Copyright (c) 2015 Advanced Micro Devices, Inc.
+#
 # All rights reserved.
 #
 # The license below extends only to copyright in the software and shall
@@ -32,11 +34,21 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Gabe Black
 
 microcode = '''
-# FILD
+# fild common case
+def macroop FILD_M {
+    ldifp87 ufp1, seg, sib, disp
+    movfp st(-1), ufp1, spm=-1
+};
+
+# fild with RIP-relative addressing
+def macroop FILD_P {
+    rdip t7
+    ldifp87 ufp1, seg, riprel, disp
+    movfp st(-1), ufp1, spm=-1
+};
+
 # FIST
 # FISTP
 # FISTTP

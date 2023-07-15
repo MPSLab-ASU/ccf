@@ -25,29 +25,19 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Steve Reinhardt
 
 Import('*')
 
 if env['TARGET_ISA'] == 'null':
     Return()
 
-Source('kernel_stats.cc')
 Source('linux/events.cc')
 Source('linux/linux.cc')
-Source('linux/linux_syscalls.cc')
+Source('linux/helpers.cc')
 Source('linux/printk.cc')
+Source('freebsd/events.cc')
 Source('operatingsystem.cc')
 Source('system_events.cc')
 
 DebugFlag('DebugPrintf')
 DebugFlag('Printf')
-
-if env['TARGET_ISA'] == 'alpha':
-    Source('tru64/dump_mbuf.cc')
-    Source('tru64/printf.cc')
-    Source('tru64/tru64_events.cc')
-    Source('tru64/tru64_syscalls.cc')
-
-    DebugFlag('BADADDR')

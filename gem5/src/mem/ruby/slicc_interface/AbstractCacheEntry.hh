@@ -1,4 +1,16 @@
 /*
+ * Copyright (c) 2020 ARM Limited
+ * All rights reserved
+ *
+ * The license below extends only to copyright in the software and shall
+ * not be construed as granting a license to any other intellectual
+ * property including but not limited to intellectual property relating
+ * to a hardware implementation of the functionality of the software
+ * licensed hereunder.  You may use the software subject to the license
+ * terms below provided that you ensure that this notice is replicated
+ * unmodified and in its entirety in all distributions of the software,
+ * modified or unmodified, in source code or in binary form.
+ *
  * Copyright (c) 1999-2008 Mark D. Hill and David A. Wood
  * All rights reserved.
  *
@@ -35,25 +47,73 @@
 
 #include <iostream>
 
-#include "mem/protocol/AccessPermission.hh"
+#include "base/logging.hh"
+#include "mem/cache/replacement_policies/replaceable_entry.hh"
 #include "mem/ruby/common/Address.hh"
-#include "mem/ruby/common/Global.hh"
-#include "mem/ruby/slicc_interface/AbstractEntry.hh"
+#include "mem/ruby/protocol/AccessPermission.hh"
 
 class DataBlock;
 
-class AbstractCacheEntry : public AbstractEntry
+class AbstractCacheEntry : public ReplaceableEntry
 {
+  private:
+    // The last access tick for the cache entry.
+    Tick m_last_touch_tick;
+
   public:
     AbstractCacheEntry();
     virtual ~AbstractCacheEntry() = 0;
 
     // Get/Set permission of the entry
+    AccessPermission getPermission() const;
     void changePermission(AccessPermission new_perm);
 
-    Address m_Address; // Address of this block, required by CacheMemory
-    int m_locked; // Holds info whether the address is locked,
-                  // required for implementing LL/SC
+    using ReplaceableEntry::print;
+    virtual void print(std::ostream& out) const = 0;
+
+    // The methods below are those called by ruby runtime, add when it
+    // is absolutely necessary and should all be virtual function.
+    virtual DataBlock& getDataBlk()
+    { panic("getDataBlk() not implemented!"); }
+
+    int validBlocks;
+    virtual int& getNumValidBlocks()
+    {
+        return validBlocks;
+    }
+
+    // Functions for locking and unlocking the cache entry.  These are required
+    // for supporting atomic memory accesses.
+    void setLocked(int context);
+    void clearLocked();
+    bool isLocked(int context) const;
+
+    // Address of this block, required by CacheMemory
+    Addr m_Address;
+    // Holds info whether the address is locked.
+    // Required for implementing LL/SC operations.
+    int m_locked;
+
+    AccessPermission m_Permission; // Access permission for this
+                                   // block, required by CacheMemory
+
+    // Get the last access Tick.
+    Tick getLastAccess() { return m_last_touch_tick; }
+
+    // Set the last access Tick.
+    void setLastAccess(Tick tick) { m_last_touch_tick = tick; }
+
+    // hardware transactional memory
+    void setInHtmReadSet(bool val);
+    void setInHtmWriteSet(bool val);
+    bool getInHtmReadSet() const;
+    bool getInHtmWriteSet() const;
+    virtual void invalidateEntry() {}
+
+  private:
+    // hardware transactional memory
+    bool m_htmInReadSet;
+    bool m_htmInWriteSet;
 };
 
 inline std::ostream&

@@ -1,4 +1,16 @@
 /*
+ * Copyright (c) 2017, 2019 ARM Limited
+ * All rights reserved
+ *
+ * The license below extends only to copyright in the software and shall
+ * not be construed as granting a license to any other intellectual
+ * property including but not limited to intellectual property relating
+ * to a hardware implementation of the functionality of the software
+ * licensed hereunder.  You may use the software subject to the license
+ * terms below provided that you ensure that this notice is replicated
+ * unmodified and in its entirety in all distributions of the software,
+ * modified or unmodified, in source code or in binary form.
+ *
  * Copyright (c) 2001-2005 The Regents of The University of Michigan
  * All rights reserved.
  *
@@ -24,25 +36,21 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Steve Reinhardt
- *          Lisa Hsu
- *          Nathan Binkert
- *          Steve Raasch
  */
 
-#include <iomanip>
+#include "cpu/exetrace.hh"
 
-#include "arch/isa_traits.hh"
+#include <iomanip>
+#include <sstream>
+
 #include "arch/utility.hh"
 #include "base/loader/symtab.hh"
 #include "config/the_isa.hh"
 #include "cpu/base.hh"
-#include "cpu/exetrace.hh"
 #include "cpu/static_inst.hh"
 #include "cpu/thread_context.hh"
 #include "debug/ExecAll.hh"
-#include "debug/Profile.hh"
+#include "debug/FmtTicksOff.hh"
 #include "enums/OpClass.hh"
 
 using namespace std;
@@ -51,15 +59,9 @@ using namespace TheISA;
 namespace Trace {
 
 void
-ExeTracerRecord::dumpTicks(ostream &outs)
+Trace::ExeTracerRecord::traceInst(const StaticInstPtr &inst, bool ran)
 {
-    ccprintf(outs, "%7d: ", when);
-}
-
-void
-Trace::ExeTracerRecord::traceInst(StaticInstPtr inst, bool ran)
-{
-    ostream &outs = Trace::output();
+    std::stringstream outs;
 
     if (!Debug::ExecUser || !Debug::ExecKernel) {
         bool in_user_mode = TheISA::inUserMode(thread);
@@ -67,91 +69,111 @@ Trace::ExeTracerRecord::traceInst(StaticInstPtr inst, bool ran)
         if (!in_user_mode && !Debug::ExecKernel) return;
     }
 
-    if (Debug::ExecTicks)
-        dumpTicks(outs);
-
-     if(!Debug::ExecTraceOnCore) outs << thread->getCpuPtr()->name() << " ";
-
-    if (Debug::ExecSpeculative)
-        outs << (misspeculating ? "-" : "+") << " ";
-
     if (Debug::ExecAsid)
         outs << "A" << dec << TheISA::getExecutingAsid(thread) << " ";
 
     if (Debug::ExecThread)
         outs << "T" << thread->threadId() << " : ";
 
-    std::string sym_str;
-    Addr sym_addr;
     Addr cur_pc = pc.instAddr();
- 
-    if((Debug::ExecTraceOnCore) && debugSymbolTable->findNearestSymbol(cur_pc, sym_str, sym_addr))
-    {
-	if (cur_pc == sym_addr) 
-	if ((sym_str.find("tracedLoopBegin") != std::string::npos) ||
-		 (sym_str.find("tracedLoopEnd") != std::string::npos)) 
-	{
-            dumpTicks(outs);
-            outs << "@" << sym_str;
-	    outs << endl;
-        }
-    }
-    else if (debugSymbolTable && Debug::ExecSymbol &&
-            (!FullSystem || !inUserMode(thread)) &&
-            debugSymbolTable->findNearestSymbol(cur_pc, sym_str, sym_addr)) {
-        if (cur_pc != sym_addr)
-            sym_str += csprintf("+%d",cur_pc - sym_addr);
-        outs << "@" << sym_str;
-    }
-    else {
-        outs << "0x" << hex << cur_pc;
+    Loader::SymbolTable::const_iterator it;
+    if (Debug::ExecSymbol && (!FullSystem || !inUserMode(thread)) &&
+            (it = Loader::debugSymbolTable.findNearest(cur_pc)) !=
+                Loader::debugSymbolTable.end()) {
+        Addr delta = cur_pc - it->address;
+        if (delta)
+            ccprintf(outs, "@%s+%d", it->name, delta);
+        else
+            ccprintf(outs, "@%s", it->name);
+    } else {
+        ccprintf(outs, "%#x", cur_pc);
     }
 
-    if(!Debug::ExecTraceOnCore)
-    {
-        if (inst->isMicroop()) {
-            outs << "." << setw(2) << dec << pc.microPC();
-        } else {
-            outs << "   ";
-           }
+    if (inst->isMicroop()) {
+        ccprintf(outs, ".%2d", pc.microPC());
+    } else {
+        ccprintf(outs, "   ");
+    }
+
+    ccprintf(outs, " : ");
+
+    //
+    //  Print decoded instruction
+    //
+
+    outs << setw(26) << left;
+    outs << inst->disassemble(cur_pc, &Loader::debugSymbolTable);
+
+    if (ran) {
         outs << " : ";
- 
-        //
-        //  Print decoded instruction
-        //
 
-        outs << setw(26) << left;
-        outs << inst->disassemble(cur_pc, debugSymbolTable);
-
-        if (ran) {
-            outs << " : ";
-
-            if (Debug::ExecOpClass) {
-                outs << Enums::OpClassStrings[inst->opClass()] << " : ";
-            }
-
-            if (Debug::ExecResult && predicate == false) {
-                outs << "Predicated False";
-            }
-
-            if (Debug::ExecResult && data_status != DataInvalid) {
-                ccprintf(outs, " D=%#018x", data.as_int);
-            }
-
-            if (Debug::ExecEffAddr && addr_valid)
-                outs << " A=0x" << hex << addr;
-
-            if (Debug::ExecFetchSeq && fetch_seq_valid)
-                outs << "  FetchSeq=" << dec << fetch_seq;
-
-            if (Debug::ExecCPSeq && cp_seq_valid)
-                outs << "  CPSeq=" << dec << cp_seq;
+        if (Debug::ExecOpClass) {
+            outs << Enums::OpClassStrings[inst->opClass()] << " : ";
         }
-        //
-        //  End of line...
-        //
-        outs << endl;
+
+        if (Debug::ExecResult && !predicate) {
+            outs << "Predicated False";
+        }
+
+        if (Debug::ExecResult && data_status != DataInvalid) {
+            switch (data_status) {
+              case DataVec:
+                {
+                    ccprintf(outs, " D=0x[");
+                    auto dv = data.as_vec->as<uint32_t>();
+                    for (int i = TheISA::VecRegSizeBytes / 4 - 1; i >= 0;
+                         i--) {
+                        ccprintf(outs, "%08x", dv[i]);
+                        if (i != 0) {
+                            ccprintf(outs, "_");
+                        }
+                    }
+                    ccprintf(outs, "]");
+                }
+                break;
+              case DataVecPred:
+                {
+                    ccprintf(outs, " D=0b[");
+                    auto pv = data.as_pred->as<uint8_t>();
+                    for (int i = TheISA::VecPredRegSizeBits - 1; i >= 0; i--) {
+                        ccprintf(outs, pv[i] ? "1" : "0");
+                        if (i != 0 && i % 4 == 0) {
+                            ccprintf(outs, "_");
+                        }
+                    }
+                    ccprintf(outs, "]");
+                }
+                break;
+              default:
+                ccprintf(outs, " D=%#018x", data.as_int);
+                break;
+            }
+        }
+
+        if (Debug::ExecEffAddr && getMemValid())
+            outs << " A=0x" << hex << addr;
+
+        if (Debug::ExecFetchSeq && fetch_seq_valid)
+            outs << "  FetchSeq=" << dec << fetch_seq;
+
+        if (Debug::ExecCPSeq && cp_seq_valid)
+            outs << "  CPSeq=" << dec << cp_seq;
+
+        if (Debug::ExecFlags) {
+            outs << "  flags=(";
+            inst->printFlags(outs, "|");
+            outs << ")";
+        }
     }
+
+    //
+    //  End of line...
+    //
+    outs << endl;
+
+    Trace::getDebugLogger()->dprintf_flag(
+        when, thread->getCpuPtr()->name(), "ExecEnable", "%s",
+        outs.str().c_str());
 }
 
 void

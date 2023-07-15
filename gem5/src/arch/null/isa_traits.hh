@@ -33,8 +33,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Andreas Hansson
  */
 
 #ifndef __ARCH_NULL_ISA_TRAITS_HH__
@@ -42,18 +40,10 @@
 
 #include "base/types.hh"
 
-namespace LittleEndianGuest {}
-
 namespace NullISA
 {
-    using namespace LittleEndianGuest;
-
     const Addr PageShift = 12;
     const Addr PageBytes = ULL(1) << PageShift;
-
-    const int LogVMPageSize = 12;       // 4K bytes
-    const int VMPageSize = (1 << LogVMPageSize);
-
 }
 
 #endif //__ARCH_NULL_ISA_TRAITS_HH__

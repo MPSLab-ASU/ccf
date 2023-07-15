@@ -33,17 +33,17 @@ class StallAndWaitStatementAST(StatementAST):
         super(StatementAST, self).__init__(slicc)
         self.in_port = in_port
         self.address = address
-        
+
     def __repr__(self):
-        return "[StallAndWaitStatementAst: %r]" % self.variable
+        return "[StallAndWaitStatementAst: %r]" % self.in_port
 
     def generate(self, code, return_type):
         self.in_port.assertType("InPort")
-        self.address.assertType("Address")
+        self.address.assertType("Addr")
 
         in_port_code = self.in_port.var.code
         address_code = self.address.var.code
         code('''
         stallBuffer(&($in_port_code), $address_code);
-        $in_port_code.stallMessage($address_code);
+        $in_port_code.stallMessage($address_code, clockEdge());
         ''')

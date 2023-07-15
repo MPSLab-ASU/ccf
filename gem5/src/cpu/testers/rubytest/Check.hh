@@ -33,10 +33,9 @@
 #include <iostream>
 
 #include "cpu/testers/rubytest/RubyTester.hh"
-#include "mem/protocol/RubyAccessMode.hh"
-#include "mem/protocol/TesterStatus.hh"
 #include "mem/ruby/common/Address.hh"
-#include "mem/ruby/common/Global.hh"
+#include "mem/ruby/protocol/RubyAccessMode.hh"
+#include "mem/ruby/protocol/TesterStatus.hh"
 
 class SubBlock;
 
@@ -46,13 +45,13 @@ const int CHECK_SIZE = (1 << CHECK_SIZE_BITS);
 class Check
 {
   public:
-    Check(const Address& address, const Address& pc, int _num_writers,
+    Check(Addr address, Addr pc, int _num_writers,
           int _num_readers, RubyTester* _tester);
 
     void initiate(); // Does Action or Check or nether
-    void performCallback(NodeID proc, SubBlock* data, Time curTime);
-    const Address& getAddress() { return m_address; }
-    void changeAddress(const Address& address);
+    void performCallback(NodeID proc, SubBlock* data, Cycles curTime);
+    Addr getAddress() const { return m_address; }
+    void changeAddress(Addr address);
 
     void print(std::ostream& out) const;
 
@@ -71,8 +70,8 @@ class Check
     uint8_t m_value;
     int m_store_count;
     NodeID m_initiatingNode;
-    Address m_address;
-    Address m_pc;
+    Addr m_address;
+    Addr m_pc;
     RubyAccessMode m_access_mode;
     int m_num_writers;
     int m_num_readers;

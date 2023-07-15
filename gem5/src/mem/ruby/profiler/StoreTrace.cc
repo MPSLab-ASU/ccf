@@ -27,20 +27,21 @@
  */
 
 #include "mem/ruby/profiler/StoreTrace.hh"
+
 #include "sim/core.hh"
 
 using namespace std;
 
 bool StoreTrace::s_init = false; // Total number of store lifetimes of
                                  // all lines
-int64 StoreTrace::s_total_samples = 0; // Total number of store
+int64_t StoreTrace::s_total_samples = 0; // Total number of store
                                        // lifetimes of all lines
 Histogram* StoreTrace::s_store_count_ptr = NULL;
 Histogram* StoreTrace::s_store_first_to_stolen_ptr = NULL;
 Histogram* StoreTrace::s_store_last_to_stolen_ptr = NULL;
 Histogram* StoreTrace::s_store_first_to_last_ptr = NULL;
 
-StoreTrace::StoreTrace(const Address& addr)
+StoreTrace::StoreTrace(Addr addr)
     : m_store_count(-1), m_store_first_to_stolen(-1),
       m_store_last_to_stolen(-1), m_store_first_to_last(-1)
 {
@@ -127,7 +128,7 @@ void
 StoreTrace::downgrade(NodeID node)
 {
     if (node == m_last_writer) {
-        Time current = curTick();
+        Tick current = curTick();
         assert(m_stores_this_interval != 0);
         assert(m_last_store != 0);
         assert(m_first_store != 0);

@@ -24,16 +24,16 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Nathan Binkert
  */
+
+#include "base/cprintf.hh"
 
 #include <cassert>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
 
-#include "base/cprintf.hh"
+#include "base/compiler.hh"
 
 using namespace std;
 
@@ -45,6 +45,7 @@ Print::Print(std::ostream &stream, const std::string &format)
     saved_flags = stream.flags();
     saved_fill = stream.fill();
     saved_precision = stream.precision();
+    saved_width = stream.width();
 }
 
 Print::Print(std::ostream &stream, const char *format)
@@ -53,6 +54,7 @@ Print::Print(std::ostream &stream, const char *format)
     saved_flags = stream.flags();
     saved_fill = stream.fill();
     saved_precision = stream.precision();
+    saved_width = stream.width();
 }
 
 Print::~Print()
@@ -138,6 +140,7 @@ Print::process_flag()
 
           case 'X':
             fmt.uppercase = true;
+            M5_FALLTHROUGH;
           case 'x':
             fmt.base = Format::hex;
             fmt.format = Format::integer;
@@ -159,6 +162,7 @@ Print::process_flag()
 
           case 'G':
             fmt.uppercase = true;
+            M5_FALLTHROUGH;
           case 'g':
             fmt.format = Format::floating;
             fmt.float_format = Format::best;
@@ -167,6 +171,7 @@ Print::process_flag()
 
           case 'E':
             fmt.uppercase = true;
+            M5_FALLTHROUGH;
           case 'e':
             fmt.format = Format::floating;
             fmt.float_format = Format::scientific;
@@ -213,6 +218,7 @@ Print::process_flag()
                 fmt.fill_zero = true;
                 break;
             }
+            M5_FALLTHROUGH;
           case '1':
           case '2':
           case '3':
@@ -304,6 +310,7 @@ Print::end_args()
     stream.flags(saved_flags);
     stream.fill(saved_fill);
     stream.precision(saved_precision);
+    stream.width(saved_width);
 }
 
 } // namespace cp

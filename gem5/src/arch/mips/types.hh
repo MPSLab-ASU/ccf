@@ -24,8 +24,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Korey Sewell
  */
 
 #ifndef __ARCH_MIPS_TYPES_HH__
@@ -41,8 +39,6 @@ typedef uint32_t MachInst;
 typedef uint64_t ExtMachInst;
 
 typedef GenericISA::DelaySlotPCState<MachInst> PCState;
-
-typedef uint64_t LargestRead;
 
 //used in FP convert & round function
 enum ConvertType{

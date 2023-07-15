@@ -25,9 +25,6 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Steve Reinhardt
-#          Gabe Black
 
 Import('*')
 
@@ -39,4 +36,4 @@ if env['TARGET_ISA'] == 'mips':
     Source('malta.cc')
     Source('malta_cchip.cc')
     Source('malta_io.cc')
-    Source('malta_pchip.cc')
+

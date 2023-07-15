@@ -24,8 +24,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Nathan Binkert
  */
 
 #include <iostream>
@@ -33,8 +31,7 @@
 #include <vector>
 
 #include "base/loader/object_file.hh"
-#include "base/loader/symtab.hh"
-#include "base/misc.hh"
+#include "base/logging.hh"
 #include "base/str.hh"
 
 using namespace std;
@@ -45,34 +42,29 @@ main(int argc, char *argv[])
     if (argc != 2 && argc != 3)
         panic("usage: %s <filename> <symbol>\n", argv[0]);
 
-    ObjectFile *obj = createObjectFile(argv[1]);
+    auto *obj = Loader::createObjectFile(argv[1]);
     if (!obj)
         panic("file not found\n");
 
-    SymbolTable symtab;
-    obj->loadGlobalSymbols(&symtab);
-    obj->loadLocalSymbols(&symtab);
-
     if (argc == 2) {
-        SymbolTable::ATable::const_iterator i = symtab.getAddrTable().begin();
-        SymbolTable::ATable::const_iterator end = symtab.getAddrTable().end();
-        while (i != end) {
-            cprintf("%#x %s\n", i->first, i->second);
-            ++i;
-        }
+        for (const Loader::Symbol &symbol: obj->symtab())
+            cprintf("%#x %s\n", symbol.address, symbol.name);
     } else {
         string symbol = argv[2];
         Addr address;
 
         if (symbol[0] == '0' && symbol[1] == 'x') {
+            Loader::SymbolTable::const_iterator it;
             if (to_number(symbol, address) &&
-                symtab.findSymbol(address, symbol))
-                cprintf("address = %#x, symbol = %s\n", address, symbol);
-            else
+                (it = obj->symtab().find(address)) != obj->symtab().end()) {
+                cprintf("address = %#x, symbol = %s\n", address, it->name);
+            } else {
                 cprintf("address = %#x was not found\n", address);
+            }
         } else {
-            if (symtab.findAddress(symbol, address))
-                cprintf("symbol = %s address = %#x\n", symbol, address);
+            auto it = obj->symtab().find(symbol);
+            if (it != obj->symtab().end())
+                cprintf("symbol = %s address = %#x\n", symbol, it->address);
             else
                 cprintf("symbol = %s was not found\n", symbol);
         }

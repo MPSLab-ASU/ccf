@@ -1,4 +1,6 @@
 /*
+ * Copyright 2015-2020 LabWare
+ * Copyright 2014 Google, Inc.
  * Copyright (c) 2010 ARM Limited
  * All rights reserved
  *
@@ -36,10 +38,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Nathan Binkert
- *          William Wang
- *          Deyuan Guo
  */
 
 /*
@@ -130,14 +128,15 @@
  * "Stub" to allow remote cpu to debug over a serial line using gdb.
  */
 
+#include "arch/mips/remote_gdb.hh"
+
 #include <sys/signal.h>
 #include <unistd.h>
 
 #include <string>
 
 #include "arch/mips/decoder.hh"
-#include "arch/mips/remote_gdb.hh"
-#include "arch/mips/vtophys.hh"
+#include "blobs/gdb_xml_mips.hh"
 #include "cpu/thread_state.hh"
 #include "debug/GDBAcc.hh"
 #include "debug/GDBMisc.hh"
@@ -147,8 +146,8 @@
 using namespace std;
 using namespace MipsISA;
 
-RemoteGDB::RemoteGDB(System *_system, ThreadContext *tc)
-    : BaseRemoteGDB(_system, tc, GdbNumRegs)
+RemoteGDB::RemoteGDB(System *_system, ThreadContext *tc, int _port)
+    : BaseRemoteGDB(_system, tc, _port), regCache(this)
 {
 }
 
@@ -158,142 +157,65 @@ RemoteGDB::RemoteGDB(System *_system, ThreadContext *tc)
 bool
 RemoteGDB::acc(Addr va, size_t len)
 {
-    TlbEntry entry;
-    //Check to make sure the first byte is mapped into the processes address
-    //space.
-    if (FullSystem)
-        panic("acc not implemented for MIPS FS!");
-    else
-        return context->getProcessPtr()->pTable->lookup(va, entry);
+    // Check to make sure the first byte is mapped into the processes address
+    // space.
+    panic_if(FullSystem, "acc not implemented for MIPS FS!");
+    return context()->getProcessPtr()->pTable->lookup(va) != nullptr;
 }
 
-/*
- * Translate the kernel debugger register format into the GDB register
- * format.
- */
 void
-RemoteGDB::getregs()
+RemoteGDB::MipsGdbRegCache::getRegs(ThreadContext *context)
 {
     DPRINTF(GDBAcc, "getregs in remotegdb \n");
-    memset(gdbregs.regs, 0, gdbregs.bytes());
 
-    // MIPS registers are 32 bits wide, gdb registers are 64 bits wide
-    // two MIPS registers are packed into one gdb register (little endian)
-
-    // INTREG: R0~R31
-    for (int i = 0; i < GdbIntArchRegs; i++) {
-        gdbregs.regs[i] = pack(
-                context->readIntReg(i * 2),
-                context->readIntReg(i * 2 + 1));
-    }
-    // SR, LO, HI, BADVADDR, CAUSE, PC
-    gdbregs.regs[GdbIntArchRegs + 0] = pack(
-                context->readMiscRegNoEffect(MISCREG_STATUS),
-                context->readIntReg(INTREG_LO));
-    gdbregs.regs[GdbIntArchRegs + 1] = pack(
-                context->readIntReg(INTREG_HI),
-                context->readMiscRegNoEffect(MISCREG_BADVADDR));
-    gdbregs.regs[GdbIntArchRegs + 2] = pack(
-                context->readMiscRegNoEffect(MISCREG_CAUSE),
-                context->pcState().pc());
-    // FLOATREG: F0~F31
-    for (int i = 0; i < GdbFloatArchRegs; i++) {
-        gdbregs.regs[GdbIntRegs + i] = pack(
-                context->readFloatRegBits(i * 2),
-                context->readFloatRegBits(i * 2 + 1));
-    }
-    // FCR, FIR
-    gdbregs.regs[GdbIntRegs + GdbFloatArchRegs + 0] = pack(
-                context->readFloatRegBits(FLOATREG_FCCR),
-                context->readFloatRegBits(FLOATREG_FIR));
+    for (int i = 0; i < 32; i++) r.gpr[i] = context->readIntReg(i);
+    r.sr = context->readMiscRegNoEffect(MISCREG_STATUS);
+    r.lo = context->readIntReg(INTREG_LO);
+    r.hi = context->readIntReg(INTREG_HI);
+    r.badvaddr = context->readMiscRegNoEffect(MISCREG_BADVADDR);
+    r.cause = context->readMiscRegNoEffect(MISCREG_CAUSE);
+    r.pc = context->pcState().pc();
+    for (int i = 0; i < 32; i++) r.fpr[i] = context->readFloatReg(i);
+    r.fsr = context->readFloatReg(FLOATREG_FCCR);
+    r.fir = context->readFloatReg(FLOATREG_FIR);
 }
 
-/*
- * Translate the GDB register format into the kernel debugger register
- * format.
- */
 void
-RemoteGDB::setregs()
+RemoteGDB::MipsGdbRegCache::setRegs(ThreadContext *context) const
 {
     DPRINTF(GDBAcc, "setregs in remotegdb \n");
 
-    // MIPS registers are 32 bits wide, gdb registers are 64 bits wide
-    // two MIPS registers are packed into one gdb register (little endian)
-
-    // INTREG: R0~R31
-    for (int i = 0; i < GdbIntArchRegs; i++) {
-        if (i) context->setIntReg(i * 2,
-                unpackLo(gdbregs.regs[i]));
-        context->setIntReg(i * 2 + 1,
-                unpackHi(gdbregs.regs[i]));
-    }
-    // SR, LO, HI, BADVADDR, CAUSE, PC
-    context->setMiscRegNoEffect(MISCREG_STATUS,
-                unpackLo(gdbregs.regs[GdbIntArchRegs + 0]));
-    context->setIntReg(INTREG_LO,
-                unpackHi(gdbregs.regs[GdbIntArchRegs + 0]));
-    context->setIntReg(INTREG_HI,
-                unpackLo(gdbregs.regs[GdbIntArchRegs + 1]));
-    context->setMiscRegNoEffect(MISCREG_BADVADDR,
-                unpackHi(gdbregs.regs[GdbIntArchRegs + 1]));
-    context->setMiscRegNoEffect(MISCREG_CAUSE,
-                unpackLo(gdbregs.regs[GdbIntArchRegs + 2]));
-    context->pcState(
-                unpackHi(gdbregs.regs[GdbIntArchRegs + 2]));
-    // FLOATREG: F0~F31
-    for (int i = 0; i < GdbFloatArchRegs; i++) {
-        context->setFloatRegBits(i * 2,
-                unpackLo(gdbregs.regs[GdbIntRegs + i]));
-        context->setFloatRegBits(i * 2 + 1,
-                unpackHi(gdbregs.regs[GdbIntRegs + i]));
-    }
-    // FCR, FIR
-    context->setFloatRegBits(FLOATREG_FCCR,
-                unpackLo(gdbregs.regs[GdbIntRegs + GdbFloatArchRegs + 0]));
-    context->setFloatRegBits(FLOATREG_FIR,
-                unpackHi(gdbregs.regs[GdbIntRegs + GdbFloatArchRegs + 0]));
+    for (int i = 1; i < 32; i++) context->setIntReg(i, r.gpr[i]);
+    context->setMiscRegNoEffect(MISCREG_STATUS, r.sr);
+    context->setIntReg(INTREG_LO, r.lo);
+    context->setIntReg(INTREG_HI, r.hi);
+    context->setMiscRegNoEffect(MISCREG_BADVADDR, r.badvaddr);
+    context->setMiscRegNoEffect(MISCREG_CAUSE, r.cause);
+    context->pcState(r.pc);
+    for (int i = 0; i < 32; i++) context->setFloatReg(i, r.fpr[i]);
+    context->setFloatReg(FLOATREG_FCCR, r.fsr);
+    context->setFloatReg(FLOATREG_FIR, r.fir);
 }
 
-void
-RemoteGDB::clearSingleStep()
+BaseGdbRegCache*
+RemoteGDB::gdbRegs()
 {
-    DPRINTF(GDBMisc, "clearSingleStep bt_addr=%#x nt_addr=%#x\n",
-            takenBkpt, notTakenBkpt);
-
-    if (takenBkpt != 0)
-        clearTempBreakpoint(takenBkpt);
-
-    if (notTakenBkpt != 0)
-        clearTempBreakpoint(notTakenBkpt);
+    return &regCache;
 }
 
-void
-RemoteGDB::setSingleStep()
+bool
+RemoteGDB::getXferFeaturesRead(const std::string &annex, std::string &output)
 {
-    PCState pc = context->pcState();
-    PCState bpc;
-    bool set_bt = false;
-
-    // User was stopped at pc, e.g. the instruction at pc was not
-    // executed.
-    MachInst inst = read<MachInst>(pc.pc());
-    StaticInstPtr si = context->getDecoderPtr()->decode(inst, pc.pc());
-    if (si->hasBranchTarget(pc, context, bpc)) {
-        // Don't bother setting a breakpoint on the taken branch if it
-        // is the same as the next npc
-        if (bpc.npc() != pc.nnpc())
-            set_bt = true;
-    }
-
-    DPRINTF(GDBMisc, "setSingleStep bt_addr=%#x nt_addr=%#x\n",
-            takenBkpt, notTakenBkpt);
-
-    notTakenBkpt = pc.nnpc();
-    setTempBreakpoint(notTakenBkpt);
-
-    if (set_bt) {
-        takenBkpt = bpc.npc();
-        setTempBreakpoint(takenBkpt);
-    }
+#define GDB_XML(x, s) \
+        { x, std::string(reinterpret_cast<const char *>(Blobs::s), \
+        Blobs::s ## _len) }
+    static const std::map<std::string, std::string> annexMap {
+        GDB_XML("target.xml", gdb_xml_mips),
+    };
+#undef GDB_XML
+    auto it = annexMap.find(annex);
+    if (it == annexMap.end())
+        return false;
+    output = it->second;
+    return true;
 }
-

@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2014 Advanced Micro Devices, Inc.
  * Copyright (c) 2007 The Hewlett-Packard Development Company
  * All rights reserved.
  *
@@ -33,8 +34,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Gabe Black
  */
 
 #ifndef __ARCH_X86_PAGETABLE_HH__
@@ -42,13 +41,17 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
 
+#include "arch/x86/isa_traits.hh"
 #include "base/bitunion.hh"
-#include "base/misc.hh"
 #include "base/types.hh"
 #include "base/trie.hh"
+#include "debug/MMU.hh"
+#include "mem/port_proxy.hh"
 
 class Checkpoint;
+class ThreadContext;
 
 namespace X86ISA
 {
@@ -59,21 +62,7 @@ typedef Trie<Addr, X86ISA::TlbEntry> TlbEntryTrie;
 
 namespace X86ISA
 {
-    BitUnion64(VAddr)
-        Bitfield<20, 12> longl1;
-        Bitfield<29, 21> longl2;
-        Bitfield<38, 30> longl3;
-        Bitfield<47, 39> longl4;
-
-        Bitfield<20, 12> pael1;
-        Bitfield<29, 21> pael2;
-        Bitfield<31, 30> pael3;
-
-        Bitfield<21, 12> norml1;
-        Bitfield<31, 22> norml2;
-    EndBitUnion(VAddr)
-
-    struct TlbEntry
+    struct TlbEntry : public Serializable
     {
         // The base of the physical page.
         Addr paddr;
@@ -104,8 +93,9 @@ namespace X86ISA
 
         TlbEntryTrie::Handle trieHandle;
 
-        TlbEntry(Addr asn, Addr _vaddr, Addr _paddr);
-        TlbEntry() {}
+        TlbEntry(Addr asn, Addr _vaddr, Addr _paddr,
+                 bool uncacheable, bool read_only);
+        TlbEntry();
 
         void
         updateVaddr(Addr new_vaddr)
@@ -124,8 +114,90 @@ namespace X86ISA
             return (1 << logBytes);
         }
 
-        void serialize(std::ostream &os);
-        void unserialize(Checkpoint *cp, const std::string &section);
+        void serialize(CheckpointOut &cp) const override;
+        void unserialize(CheckpointIn &cp) override;
+    };
+
+
+    BitUnion64(VAddr)
+        Bitfield<20, 12> longl1;
+        Bitfield<29, 21> longl2;
+        Bitfield<38, 30> longl3;
+        Bitfield<47, 39> longl4;
+
+        Bitfield<20, 12> pael1;
+        Bitfield<29, 21> pael2;
+        Bitfield<31, 30> pael3;
+
+        Bitfield<21, 12> norml1;
+        Bitfield<31, 22> norml2;
+    EndBitUnion(VAddr)
+
+    // Unfortunately, the placement of the base field in a page table entry is
+    // very erratic and would make a mess here. It might be moved here at some
+    // point in the future.
+    BitUnion64(PageTableEntry)
+        Bitfield<63> nx;
+        Bitfield<51, 12> base;
+        Bitfield<11, 9> avl;
+        Bitfield<8> g;
+        Bitfield<7> ps;
+        Bitfield<6> d;
+        Bitfield<5> a;
+        Bitfield<4> pcd;
+        Bitfield<3> pwt;
+        Bitfield<2> u;
+        Bitfield<1> w;
+        Bitfield<0> p;
+    EndBitUnion(PageTableEntry)
+
+    template <int first, int last>
+    class LongModePTE
+    {
+      public:
+        Addr paddr() { return pte.base << PageShift; }
+        void paddr(Addr addr) { pte.base = addr >> PageShift; }
+
+        bool present() { return pte.p; }
+        void present(bool p) { pte.p = p ? 1 : 0; }
+
+        bool uncacheable() { return pte.pcd; }
+        void uncacheable(bool u) { pte.pcd = u ? 1 : 0; }
+
+        bool readonly() { return !pte.w; }
+        void readonly(bool r) { pte.w = r ? 0 : 1; }
+
+        void
+        read(PortProxy &p, Addr table, Addr vaddr)
+        {
+            entryAddr = table;
+            entryAddr += bits(vaddr, first, last) * sizeof(PageTableEntry);
+            pte = p.read<PageTableEntry>(entryAddr);
+        }
+
+        void
+        reset(Addr _paddr, bool _present=true,
+              bool _uncacheable=false, bool _readonly=false)
+        {
+            pte = 0;
+            pte.u = 1;
+            paddr(_paddr);
+            present(_present);
+            uncacheable(_uncacheable);
+            readonly(_readonly);
+        };
+
+        void write(PortProxy &p) { p.write(entryAddr, pte); }
+
+        static int
+        tableSize()
+        {
+            return 1 << ((first - last) + 4 - PageShift);
+        }
+
+      protected:
+        PageTableEntry pte;
+        Addr entryAddr;
     };
 }
 

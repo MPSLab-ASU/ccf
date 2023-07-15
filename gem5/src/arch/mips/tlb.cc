@@ -25,13 +25,9 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Nathan Binkert
- *          Steve Reinhardt
- *          Jaidev Patwardhan
- *          Zhengxing Li
- *          Deyuan Guo
  */
+
+#include "arch/mips/tlb.hh"
 
 #include <string>
 #include <vector>
@@ -39,7 +35,6 @@
 #include "arch/mips/faults.hh"
 #include "arch/mips/pagetable.hh"
 #include "arch/mips/pra_constants.hh"
-#include "arch/mips/tlb.hh"
 #include "arch/mips/utility.hh"
 #include "base/inifile.hh"
 #include "base/str.hh"
@@ -59,21 +54,6 @@ using namespace MipsISA;
 //  MIPS TLB
 //
 
-static inline mode_type
-getOperatingMode(MiscReg Stat)
-{
-    if ((Stat & 0x10000006) != 0 || (Stat & 0x18) ==0) {
-        return mode_kernel;
-    } else if ((Stat & 0x18) == 0x8) {
-        return mode_supervisor;
-    } else if ((Stat & 0x18) == 0x10) {
-        return mode_user;
-    } else {
-        return mode_number;
-    }
-}
-
-
 TLB::TLB(const Params *p)
     : BaseTLB(p), size(p->size), nlu(0)
 {
@@ -84,8 +64,7 @@ TLB::TLB(const Params *p)
 
 TLB::~TLB()
 {
-    if (table)
-        delete [] table;
+    delete [] table;
 }
 
 // look up an entry in the TLB
@@ -156,14 +135,14 @@ TLB::probeEntry(Addr vpn, uint8_t asn) const
 }
 
 inline Fault
-TLB::checkCacheability(RequestPtr &req)
+TLB::checkCacheability(const RequestPtr &req)
 {
     Addr VAddrUncacheable = 0xA0000000;
     // In MIPS, cacheability is controlled by certain bits of the virtual
     // address or by the TLB entry
     if ((req->getVaddr() & VAddrUncacheable) == VAddrUncacheable) {
         // mark request as uncacheable
-        req->setFlags(Request::UNCACHEABLE);
+        req->setFlags(Request::UNCACHEABLE | Request::STRICT_ORDER);
     }
     return NoFault;
 }
@@ -184,7 +163,7 @@ TLB::insertAt(PTE &pte, unsigned Index, int _smallPages)
                  (pte.D0 << 2) | (pte.V0 <<1) | pte.G),
                 ((pte.PFN1 <<6) | (pte.C1 << 3) |
                  (pte.D1 << 2) | (pte.V1 <<1) | pte.G));
-        if (table[Index].V0 == true || table[Index].V1 == true) {
+        if (table[Index].V0 || table[Index].V1) {
             // Previous entry is valid
             PageTable::iterator i = lookupTable.find(table[Index].VPN);
             lookupTable.erase(i);
@@ -212,127 +191,41 @@ TLB::flushAll()
 }
 
 void
-TLB::serialize(ostream &os)
+TLB::serialize(CheckpointOut &cp) const
 {
     SERIALIZE_SCALAR(size);
     SERIALIZE_SCALAR(nlu);
 
     for (int i = 0; i < size; i++) {
-        nameOut(os, csprintf("%s.PTE%d", name(), i));
-        table[i].serialize(os);
+        ScopedCheckpointSection sec(cp, csprintf("PTE%d", i));
+        table[i].serialize(cp);
     }
 }
 
 void
-TLB::unserialize(Checkpoint *cp, const string &section)
+TLB::unserialize(CheckpointIn &cp)
 {
     UNSERIALIZE_SCALAR(size);
     UNSERIALIZE_SCALAR(nlu);
 
     for (int i = 0; i < size; i++) {
-        table[i].unserialize(cp, csprintf("%s.PTE%d", section, i));
+        ScopedCheckpointSection sec(cp, csprintf("PTE%d", i));
+        table[i].unserialize(cp);
         if (table[i].V0 || table[i].V1) {
             lookupTable.insert(make_pair(table[i].VPN, i));
         }
     }
 }
 
-void
-TLB::regStats()
-{
-    read_hits
-        .name(name() + ".read_hits")
-        .desc("DTB read hits")
-        ;
-
-    read_misses
-        .name(name() + ".read_misses")
-        .desc("DTB read misses")
-        ;
-
-
-    read_accesses
-        .name(name() + ".read_accesses")
-        .desc("DTB read accesses")
-        ;
-
-    write_hits
-        .name(name() + ".write_hits")
-        .desc("DTB write hits")
-        ;
-
-    write_misses
-        .name(name() + ".write_misses")
-        .desc("DTB write misses")
-        ;
-
-
-    write_accesses
-        .name(name() + ".write_accesses")
-        .desc("DTB write accesses")
-        ;
-
-    hits
-        .name(name() + ".hits")
-        .desc("DTB hits")
-        ;
-
-    misses
-        .name(name() + ".misses")
-        .desc("DTB misses")
-        ;
-
-    accesses
-        .name(name() + ".accesses")
-        .desc("DTB accesses")
-        ;
-
-    hits = read_hits + write_hits;
-    misses = read_misses + write_misses;
-    accesses = read_accesses + write_accesses;
-}
-
 Fault
-TLB::translateInst(RequestPtr req, ThreadContext *tc)
+TLB::translateAtomic(const RequestPtr &req, ThreadContext *tc, Mode mode)
 {
-    if (FullSystem)
-        panic("translateInst not implemented in MIPS.\n");
-
-    Process * p = tc->getProcessPtr();
-
-    Fault fault = p->pTable->translate(req);
-    if (fault != NoFault)
-        return fault;
-
-    return NoFault;
-}
-
-Fault
-TLB::translateData(RequestPtr req, ThreadContext *tc, bool write)
-{
-    if (FullSystem)
-        panic("translateData not implemented in MIPS.\n");
-
-    Process * p = tc->getProcessPtr();
-
-    Fault fault = p->pTable->translate(req);
-    if (fault != NoFault)
-        return fault;
-
-    return NoFault;
-}
-
-Fault
-TLB::translateAtomic(RequestPtr req, ThreadContext *tc, Mode mode)
-{
-    if (mode == Execute)
-        return translateInst(req, tc);
-    else
-        return translateData(req, tc, mode == Write);
+    panic_if(FullSystem, "translateAtomic not implemented in full system.");
+    return tc->getProcessPtr()->pTable->translate(req);
 }
 
 void
-TLB::translateTiming(RequestPtr req, ThreadContext *tc,
+TLB::translateTiming(const RequestPtr &req, ThreadContext *tc,
         Translation *translation, Mode mode)
 {
     assert(translation);
@@ -340,14 +233,15 @@ TLB::translateTiming(RequestPtr req, ThreadContext *tc,
 }
 
 Fault
-TLB::translateFunctional(RequestPtr req, ThreadContext *tc, Mode mode)
+TLB::translateFunctional(const RequestPtr &req, ThreadContext *tc, Mode mode)
 {
-    panic("Not implemented\n");
-    return NoFault;
+    panic_if(FullSystem, "translateAtomic not implemented in full system.");
+    return tc->getProcessPtr()->pTable->translate(req);
 }
 
 Fault
-TLB::finalizePhysical(RequestPtr req, ThreadContext *tc, Mode mode) const
+TLB::finalizePhysical(const RequestPtr &req,
+                      ThreadContext *tc, Mode mode) const
 {
     return NoFault;
 }

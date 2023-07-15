@@ -24,30 +24,27 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Kevin Lim
  */
 
-#include "arch/kernel_stats.hh"
+#include "cpu/thread_state.hh"
+
 #include "base/output.hh"
 #include "cpu/base.hh"
-#include "cpu/profile.hh"
-#include "cpu/quiesce_event.hh"
-#include "cpu/thread_state.hh"
-#include "mem/fs_translating_port_proxy.hh"
 #include "mem/port.hh"
 #include "mem/port_proxy.hh"
 #include "mem/se_translating_port_proxy.hh"
+#include "mem/translating_port_proxy.hh"
 #include "sim/full_system.hh"
 #include "sim/serialize.hh"
 #include "sim/system.hh"
 
 ThreadState::ThreadState(BaseCPU *cpu, ThreadID _tid, Process *_process)
-    : numInst(0), numOp(0), numLoad(0), _status(ThreadContext::Halted),
-      baseCpu(cpu), _threadId(_tid), lastActivate(0), lastSuspend(0),
-      profile(NULL), profileNode(NULL), profilePC(0), quiesceEvent(NULL),
-      kernelStats(NULL), process(_process), physProxy(NULL), virtProxy(NULL),
-      proxy(NULL), funcExeInst(0), storeCondFailures(0)
+    : numInst(0), numOp(0), threadStats(cpu, _tid),
+      numLoad(0), startNumLoad(0),
+      _status(ThreadContext::Halted), baseCpu(cpu),
+      _contextId(0), _threadId(_tid), lastActivate(0), lastSuspend(0),
+      process(_process), physProxy(NULL), virtProxy(NULL),
+      funcExeInst(0), storeCondFailures(0)
 {
 }
 
@@ -57,12 +54,10 @@ ThreadState::~ThreadState()
         delete physProxy;
     if (virtProxy != NULL)
         delete virtProxy;
-    if (proxy != NULL)
-        delete proxy;
 }
 
 void
-ThreadState::serialize(std::ostream &os)
+ThreadState::serialize(CheckpointOut &cp) const
 {
     SERIALIZE_ENUM(_status);
     // thread_num and cpu_id are deterministic from the config
@@ -70,17 +65,10 @@ ThreadState::serialize(std::ostream &os)
 
     if (!FullSystem)
         return;
-
-    Tick quiesceEndTick = 0;
-    if (quiesceEvent->scheduled())
-        quiesceEndTick = quiesceEvent->when();
-    SERIALIZE_SCALAR(quiesceEndTick);
-    if (kernelStats)
-        kernelStats->serialize(os);
 }
 
 void
-ThreadState::unserialize(Checkpoint *cp, const std::string &section)
+ThreadState::unserialize(CheckpointIn &cp)
 {
 
     UNSERIALIZE_ENUM(_status);
@@ -89,13 +77,6 @@ ThreadState::unserialize(Checkpoint *cp, const std::string &section)
 
     if (!FullSystem)
         return;
-
-    Tick quiesceEndTick;
-    UNSERIALIZE_SCALAR(quiesceEndTick);
-    if (quiesceEndTick)
-        baseCpu->schedule(quiesceEvent, quiesceEndTick);
-    if (kernelStats)
-        kernelStats->unserialize(cp, section);
 }
 
 void
@@ -109,17 +90,16 @@ ThreadState::initMemProxies(ThreadContext *tc)
         assert(physProxy == NULL);
         // This cannot be done in the constructor as the thread state
         // itself is created in the base cpu constructor and the
-        // getDataPort is a virtual function
-        physProxy = new PortProxy(baseCpu->getDataPort(),
+        // getSendFunctional is a virtual function
+        physProxy = new PortProxy(baseCpu->getSendFunctional(),
                                   baseCpu->cacheLineSize());
 
         assert(virtProxy == NULL);
-        virtProxy = new FSTranslatingPortProxy(tc);
+        virtProxy = new TranslatingPortProxy(tc);
     } else {
-        assert(proxy == NULL);
-        proxy = new SETranslatingPortProxy(baseCpu->getDataPort(),
-                                           process,
-                                           SETranslatingPortProxy::NextPage);
+        assert(virtProxy == NULL);
+        virtProxy = new SETranslatingPortProxy(
+                tc, SETranslatingPortProxy::NextPage);
     }
 }
 
@@ -131,32 +111,19 @@ ThreadState::getPhysProxy()
     return *physProxy;
 }
 
-FSTranslatingPortProxy &
+PortProxy &
 ThreadState::getVirtProxy()
 {
-    assert(FullSystem);
     assert(virtProxy != NULL);
     return *virtProxy;
 }
 
-SETranslatingPortProxy &
-ThreadState::getMemProxy()
+ThreadState::ThreadStateStats::ThreadStateStats(BaseCPU *cpu,
+                                                const ThreadID& tid)
+      : Stats::Group(cpu, csprintf("thread_%i", tid).c_str()),
+      ADD_STAT(numInsts, "Number of Instructions committed"),
+      ADD_STAT(numOps, "Number of Ops committed"),
+      ADD_STAT(numMemRefs, "Number of Memory References")
 {
-    assert(!FullSystem);
-    assert(proxy != NULL);
-    return *proxy;
-}
 
-void
-ThreadState::profileClear()
-{
-    if (profile)
-        profile->clear();
-}
-
-void
-ThreadState::profileSample()
-{
-    if (profile)
-        profile->sample(profileNode, profilePC);
 }

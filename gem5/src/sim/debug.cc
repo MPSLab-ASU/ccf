@@ -24,22 +24,21 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Nathan Binkert
- *          Steve Reinhardt
  */
 
-#include <Python.h>
+#include "sim/debug.hh"
 
 #include <string>
 #include <vector>
 
 #include "base/debug.hh"
-#include "sim/debug.hh"
-#include "sim/eventq_impl.hh"
+#include "cpu/pc_event.hh"
+#include "sim/eventq.hh"
 #include "sim/global_event.hh"
+#include "sim/kernel_workload.hh"
 #include "sim/sim_events.hh"
 #include "sim/sim_exit.hh"
+#include "sim/system.hh"
 
 using namespace std;
 
@@ -89,6 +88,12 @@ schedBreak(Tick when)
     warn("need to stop all queues");
 }
 
+void
+schedRelBreak(Tick delta)
+{
+    schedBreak(curTick() + delta);
+}
+
 ///
 /// Function to cause the simulator to take a checkpoint from the debugger
 ///
@@ -106,22 +111,6 @@ eventqDump()
     for (uint32_t i = 0; i < numMainEventQueues; ++i) {
         mainEventQueue[i]->dump();
     }
-}
-
-void
-py_interact()
-{
-    PyObject *globals;
-    PyObject *locals;
-
-    globals = PyEval_GetGlobals();
-    Py_INCREF(globals);
-    locals = PyDict_New();
-    PyRun_String("import code", Py_file_input, globals, locals);
-    PyRun_String("code.interact(local=globals())", Py_file_input,
-                 globals, locals);
-    Py_DECREF(globals);
-    Py_DECREF(locals);
 }
 
 int remote_gdb_base_port = 7000;

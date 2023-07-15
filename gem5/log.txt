@@ -1,0 +1,1974 @@
+scons: Reading SConscript files ...
+Warning: Your compiler doesn't support incremental linking and lto at the same
+         time, so lto is being disabled. To force lto on anyway, use the
+         --force-lto option. That will disable partial linking.
+Info: Using Python config: python3-config
+Checking for C header file Python.h... (cached) yes
+Checking for C library python3.8... (cached) yes
+Checking for C library crypt... (cached) yes
+Checking for C library pthread... (cached) yes
+Checking for C library dl... (cached) yes
+Checking for C library util... (cached) yes
+Checking for C library m... (cached) yes
+Checking for accept(0,0,0) in C++ library None... (cached) yes
+Checking for zlibVersion() in C++ library z... (cached) yes
+Checking for GOOGLE_PROTOBUF_VERIFY_VERSION in C++ library protobuf... (cached) yes
+Checking for C header file valgrind/valgrind.h... (cached) no
+Checking for clock_nanosleep(0,0,NULL,NULL) in C library None... (cached) yes
+Checking for timer_create(CLOCK_MONOTONIC, NULL, NULL) in C library None... (cached) no
+Checking for timer_create(CLOCK_MONOTONIC, NULL, NULL) in C library rt... (cached) yes
+Checking for C library tcmalloc... (cached) yes
+Checking for char temp; backtrace_symbols_fd((void*)&temp, 0, 0) in C library None... (cached) yes
+Checking for C header file fenv.h... (cached) yes
+Checking for C header file png.h... (cached) no
+Warning: Header file <png.h> not found.
+         This host has no libpng library.
+         Disabling support for PNG framebuffers.
+Checking for C header file linux/kvm.h... (cached) yes
+Checking for C header file linux/if_tun.h... (cached) yes
+Checking size of struct kvm_xsave ... (cached) yes
+Checking for member exclude_host in struct perf_event_attr...(cached) yes
+Checking for hdf5-serial using pkg-config...Package hdf5-serial was not found in the pkg-config search path.
+Perhaps you should add the directory containing `hdf5-serial.pc'
+to the PKG_CONFIG_PATH environment variable
+No package 'hdf5-serial' found
+ no
+Checking for hdf5 using pkg-config...Package hdf5 was not found in the pkg-config search path.
+Perhaps you should add the directory containing `hdf5.pc'
+to the PKG_CONFIG_PATH environment variable
+No package 'hdf5' found
+ no
+Checking for H5Fcreate("", 0, 0, 0) in C library hdf5... (cached) no
+Warning: Couldn't find any HDF5 C++ libraries. Disabling
+         HDF5 support.
+Checking whether __i386__ is declared... (cached) no
+Checking whether __x86_64__ is declared... (cached) yes
+Building in /home/local/ASUAD/quoclon1/CCF_INS/ins3/gem5/build/ARM
+Using saved variables file /home/local/ASUAD/quoclon1/CCF_INS/ins3/gem5/build/variables/ARM
+scons: done reading SConscript files.
+scons: Building targets ...
+ [     CXX] ARM/cpu/atomiccgra/atomiccgra.cc -> .o
+ [    LINK]  -> ARM/dev/lib.o.partial
+ [    LINK]  -> ARM/learning_gem5/part2/lib.o.partial
+ [    LINK]  -> ARM/dev/virtio/lib.o.partial
+In file included from build/ARM/cpu/atomiccgra/atomiccgra.cc:58:
+build/ARM/cpu/atomiccgra/atomiccgra.hh: In constructor 'AtomicCGRA::AtomicCGRADPort::AtomicCGRADPort(const string&, BaseCGRA*, std::string)':
+build/ARM/cpu/atomiccgra/atomiccgra.hh:260:19: warning: 'AtomicCGRA::AtomicCGRADPort::cpu' will be initialized after [-Wreorder]
+  260 |         BaseCGRA *cpu;
+      |                   ^~~
+build/ARM/cpu/atomiccgra/atomiccgra.hh:258:16: warning:   'BaseCGRA::Status AtomicCGRA::AtomicCGRADPort::_status' [-Wreorder]
+  258 |         Status _status;
+      |                ^~~~~~~
+build/ARM/cpu/atomiccgra/atomiccgra.hh:249:7: warning:   when initialized here [-Wreorder]
+  249 |       AtomicCGRADPort(const std::string &_name, BaseCGRA* _cpu, std::string index) // index = row number
+      |       ^~~~~~~~~~~~~~~
+build/ARM/cpu/atomiccgra/atomiccgra.hh: In constructor 'AtomicCGRA::AtomicCGRA(AtomicCGRAParams*)':
+build/ARM/cpu/atomiccgra/atomiccgra.hh:297:67: warning: 'AtomicCGRA::ppCommit' will be initialized after [-Wreorder]
+  297 |     ProbePointArg<std::pair<SimpleThread*, const StaticInstPtr>> *ppCommit;
+      |                                                                   ^~~~~~~~
+build/ARM/cpu/atomiccgra/atomiccgra.hh:272:9: warning:   'int AtomicCGRA::CGRA_XDim' [-Wreorder]
+  272 |     int CGRA_XDim;
+      |         ^~~~~~~~~
+build/ARM/cpu/atomiccgra/atomiccgra.cc:86:1: warning:   when initialized here [-Wreorder]
+   86 | AtomicCGRA::AtomicCGRA(AtomicCGRAParams *p)
+      | ^~~~~~~~~~
+build/ARM/cpu/atomiccgra/atomiccgra.cc: In member function 'virtual void AtomicCGRA::suspendContext(ThreadID)':
+build/ARM/cpu/atomiccgra/atomiccgra.cc:355:19: warning: unused variable 'thread' [-Wunused-variable]
+  355 |     SimpleThread* thread = t_info.thread;
+      |                   ^~~~~~
+build/ARM/cpu/atomiccgra/atomiccgra.cc: In member function 'Fault AtomicCGRA::readMem(Addr, uint8_t*, unsigned int, Request::Flags, const std::vector<bool>&, int)':
+build/ARM/cpu/atomiccgra/atomiccgra.cc:641:10: warning: suggest parentheses around assignment used as truth value [-Wparentheses]
+  641 |  if(addr = 632388) size_left = 0;
+      |     ~~~~~^~~~~~~~
+build/ARM/cpu/atomiccgra/atomiccgra.cc: In member function 'void AtomicCGRA::CGRA_Execution(SimpleExecContext&)':
+build/ARM/cpu/atomiccgra/atomiccgra.cc:1080:35: warning: format '%d' expects argument of type 'int', but argument 3 has type '__gnu_cxx::__alloc_traits<std::allocator<long unsigned int>, long unsigned int>::value_type' {aka 'long unsigned int'} [-Wformat=]
+ 1080 |       printf("Row: %d - address: %d - data: %d\n", i, MemAddress[i], MemData[i]);
+      |                                  ~^
+      |                                   |
+      |                                   int
+      |                                  %ld
+build/ARM/cpu/atomiccgra/atomiccgra.cc:1082:23: warning: value computed is not used [-Wunused-value]
+ 1082 |       MemBusStatus[i] == CGRA_MEMORY_RESET;
+build/ARM/cpu/atomiccgra/atomiccgra.cc:1129:23: warning: value computed is not used [-Wunused-value]
+ 1129 |       MemBusStatus[i] == CGRA_MEMORY_RESET;
+build/ARM/cpu/atomiccgra/atomiccgra.cc:1131:21: warning: value computed is not used [-Wunused-value]
+ 1131 |     MemBusStatus[i] == CGRA_MEMORY_RESET;
+ [    LINK]  -> ARM/cpu/o3/lib.o.partial
+ [    LINK]  -> ARM/dev/storage/lib.o.partial
+ [VER TAGS]  -> ARM/sim/tags.cc
+ [     CXX] ARM/base/remote_gdb.cc -> .o
+ [     CXX] ARM/base/loader/memory_image.cc -> .o
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh: In instantiation of 'void cp::_format_integer(std::ostream&, const T&, cp::Format&) [with T = Stats::Scalar; std::ostream = std::basic_ostream<char>]':
+build/ARM/base/cprintf_formats.hh:303:18:   required from 'void cp::format_integer(std::ostream&, const T&, cp::Format&) [with T = Stats::Scalar; std::ostream = std::basic_ostream<char>]'
+build/ARM/base/cprintf.hh:104:27:   required from 'void cp::Print::add_arg(const T&) [with T = Stats::Scalar]'
+build/ARM/base/cprintf.hh:136:5:   required from 'void ccprintf(cp::Print&, const T&, const Args& ...) [with T = Stats::Scalar; Args = {}]'
+build/ARM/base/cprintf.hh:147:13:   required from 'void ccprintf(std::ostream&, const char*, const Args& ...) [with Args = {Stats::Scalar}; std::ostream = std::basic_ostream<char>]'
+build/ARM/base/trace.hh:71:17:   required from 'void Trace::Logger::dprintf_flag(Tick, const string&, const string&, const char*, const Args& ...) [with Args = {Stats::Scalar}; Tick = long unsigned int; std::string = std::__cxx11::basic_string<char>]'
+build/ARM/cpu/atomiccgra/atomiccgra.cc:987:5:   required from here
+build/ARM/base/cprintf_formats.hh:139:9: error: no match for 'operator<<' (operand types are 'std::ostream' {aka 'std::basic_ostream<char>'} and 'const Stats::Scalar')
+  139 |     out << data;
+      |     ~~~~^~~~~~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:108:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(std::basic_ostream<_CharT, _Traits>::__ostream_type& (*)(std::basic_ostream<_CharT, _Traits>::__ostream_type&)) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  108 |       operator<<(__ostream_type& (*__pf)(__ostream_type&))
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:108:36: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'std::basic_ostream<char>::__ostream_type& (*)(std::basic_ostream<char>::__ostream_type&)' {aka 'std::basic_ostream<char>& (*)(std::basic_ostream<char>&)'}
+  108 |       operator<<(__ostream_type& (*__pf)(__ostream_type&))
+      |                  ~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~
+/usr/include/c++/9/ostream:117:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(std::basic_ostream<_CharT, _Traits>::__ios_type& (*)(std::basic_ostream<_CharT, _Traits>::__ios_type&)) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>; std::basic_ostream<_CharT, _Traits>::__ios_type = std::basic_ios<char>]'
+  117 |       operator<<(__ios_type& (*__pf)(__ios_type&))
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:117:32: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'std::basic_ostream<char>::__ios_type& (*)(std::basic_ostream<char>::__ios_type&)' {aka 'std::basic_ios<char>& (*)(std::basic_ios<char>&)'}
+  117 |       operator<<(__ios_type& (*__pf)(__ios_type&))
+      |                  ~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~
+/usr/include/c++/9/ostream:127:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(std::ios_base& (*)(std::ios_base&)) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  127 |       operator<<(ios_base& (*__pf) (ios_base&))
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:127:30: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'std::ios_base& (*)(std::ios_base&)'
+  127 |       operator<<(ios_base& (*__pf) (ios_base&))
+      |                  ~~~~~~~~~~~~^~~~~~~~~~~~~~~~~
+/usr/include/c++/9/ostream:166:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(long int) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  166 |       operator<<(long __n)
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:166:23: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'long int'
+  166 |       operator<<(long __n)
+      |                  ~~~~~^~~
+/usr/include/c++/9/ostream:170:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(long unsigned int) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  170 |       operator<<(unsigned long __n)
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:170:32: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'long unsigned int'
+  170 |       operator<<(unsigned long __n)
+      |                  ~~~~~~~~~~~~~~^~~
+/usr/include/c++/9/ostream:174:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(bool) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  174 |       operator<<(bool __n)
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:174:23: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'bool'
+  174 |       operator<<(bool __n)
+      |                  ~~~~~^~~
+In file included from /usr/include/c++/9/ostream:702,
+                 from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/bits/ostream.tcc:91:5: note: candidate: 'std::basic_ostream<_CharT, _Traits>& std::basic_ostream<_CharT, _Traits>::operator<<(short int) [with _CharT = char; _Traits = std::char_traits<char>]'
+   91 |     basic_ostream<_CharT, _Traits>::
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/c++/9/bits/ostream.tcc:92:22: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'short int'
+   92 |     operator<<(short __n)
+      |                ~~~~~~^~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:181:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(short unsigned int) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  181 |       operator<<(unsigned short __n)
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:181:33: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'short unsigned int'
+  181 |       operator<<(unsigned short __n)
+      |                  ~~~~~~~~~~~~~~~^~~
+In file included from /usr/include/c++/9/ostream:702,
+                 from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/bits/ostream.tcc:105:5: note: candidate: 'std::basic_ostream<_CharT, _Traits>& std::basic_ostream<_CharT, _Traits>::operator<<(int) [with _CharT = char; _Traits = std::char_traits<char>]'
+  105 |     basic_ostream<_CharT, _Traits>::
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/c++/9/bits/ostream.tcc:106:20: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'int'
+  106 |     operator<<(int __n)
+      |                ~~~~^~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:192:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(unsigned int) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  192 |       operator<<(unsigned int __n)
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:192:31: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'unsigned int'
+  192 |       operator<<(unsigned int __n)
+      |                  ~~~~~~~~~~~~~^~~
+/usr/include/c++/9/ostream:201:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(long long int) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  201 |       operator<<(long long __n)
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:201:28: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'long long int'
+  201 |       operator<<(long long __n)
+      |                  ~~~~~~~~~~^~~
+/usr/include/c++/9/ostream:205:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(long long unsigned int) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  205 |       operator<<(unsigned long long __n)
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:205:37: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'long long unsigned int'
+  205 |       operator<<(unsigned long long __n)
+      |                  ~~~~~~~~~~~~~~~~~~~^~~
+/usr/include/c++/9/ostream:220:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(double) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  220 |       operator<<(double __f)
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:220:25: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'double'
+  220 |       operator<<(double __f)
+      |                  ~~~~~~~^~~
+/usr/include/c++/9/ostream:224:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(float) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  224 |       operator<<(float __f)
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:224:24: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'float'
+  224 |       operator<<(float __f)
+      |                  ~~~~~~^~~
+/usr/include/c++/9/ostream:232:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(long double) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  232 |       operator<<(long double __f)
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:232:30: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'long double'
+  232 |       operator<<(long double __f)
+      |                  ~~~~~~~~~~~~^~~
+/usr/include/c++/9/ostream:245:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(const void*) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  245 |       operator<<(const void* __p)
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:245:30: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'const void*'
+  245 |       operator<<(const void* __p)
+      |                  ~~~~~~~~~~~~^~~
+In file included from /usr/include/c++/9/ostream:702,
+                 from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/bits/ostream.tcc:119:5: note: candidate: 'std::basic_ostream<_CharT, _Traits>& std::basic_ostream<_CharT, _Traits>::operator<<(std::basic_ostream<_CharT, _Traits>::__streambuf_type*) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__streambuf_type = std::basic_streambuf<char>]'
+  119 |     basic_ostream<_CharT, _Traits>::
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/c++/9/bits/ostream.tcc:120:34: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'std::basic_ostream<char>::__streambuf_type*' {aka 'std::basic_streambuf<char>*'}
+  120 |     operator<<(__streambuf_type* __sbin)
+      |                ~~~~~~~~~~~~~~~~~~^~~~~~
+In file included from /usr/include/c++/9/string:55,
+                 from /usr/include/c++/9/bits/locale_classes.h:40,
+                 from /usr/include/c++/9/bits/ios_base.h:41,
+                 from /usr/include/c++/9/ios:42,
+                 from /usr/include/c++/9/ostream:38,
+                 from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/bits/basic_string.h:6416:5: note: candidate: 'template<class _CharT, class _Traits, class _Alloc> std::basic_ostream<_CharT, _Traits>& std::operator<<(std::basic_ostream<_CharT, _Traits>&, const std::__cxx11::basic_string<_CharT, _Traits, _Alloc>&)'
+ 6416 |     operator<<(basic_ostream<_CharT, _Traits>& __os,
+      |     ^~~~~~~~
+/usr/include/c++/9/bits/basic_string.h:6416:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:139:9: note:   'const Stats::Scalar' is not derived from 'const std::__cxx11::basic_string<_CharT, _Traits, _Alloc>'
+  139 |     out << data;
+      |     ~~~~^~~~~~~
+In file included from /usr/include/c++/9/bits/ios_base.h:46,
+                 from /usr/include/c++/9/ios:42,
+                 from /usr/include/c++/9/ostream:38,
+                 from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/system_error:217:5: note: candidate: 'template<class _CharT, class _Traits> std::basic_ostream<_CharT, _Traits>& std::operator<<(std::basic_ostream<_CharT, _Traits>&, const std::error_code&)'
+  217 |     operator<<(basic_ostream<_CharT, _Traits>& __os, const error_code& __e)
+      |     ^~~~~~~~
+/usr/include/c++/9/system_error:217:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:139:9: note:   cannot convert 'data' (type 'const Stats::Scalar') to type 'const std::error_code&'
+  139 |     out << data;
+      |     ~~~~^~~~~~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:506:5: note: candidate: 'template<class _CharT, class _Traits> std::basic_ostream<_CharT, _Traits>& std::operator<<(std::basic_ostream<_CharT, _Traits>&, _CharT)'
+  506 |     operator<<(basic_ostream<_CharT, _Traits>& __out, _CharT __c)
+      |     ^~~~~~~~
+/usr/include/c++/9/ostream:506:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:139:9: note:   deduced conflicting types for parameter '_CharT' ('char' and 'Stats::Scalar')
+  139 |     out << data;
+      |     ~~~~^~~~~~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:511:5: note: candidate: 'template<class _CharT, class _Traits> std::basic_ostream<_CharT, _Traits>& std::operator<<(std::basic_ostream<_CharT, _Traits>&, char)'
+  511 |     operator<<(basic_ostream<_CharT, _Traits>& __out, char __c)
+      |     ^~~~~~~~
+/usr/include/c++/9/ostream:511:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:139:9: note:   cannot convert 'data' (type 'const Stats::Scalar') to type 'char'
+  139 |     out << data;
+      |     ~~~~^~~~~~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:517:5: note: candidate: 'template<class _Traits> std::basic_ostream<char, _Traits>& std::operator<<(std::basic_ostream<char, _Traits>&, char)'
+  517 |     operator<<(basic_ostream<char, _Traits>& __out, char __c)
+      |     ^~~~~~~~
+/usr/include/c++/9/ostream:517:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:139:9: note:   cannot convert 'data' (type 'const Stats::Scalar') to type 'char'
+  139 |     out << data;
+      |     ~~~~^~~~~~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:523:5: note: candidate: 'template<class _Traits> std::basic_ostream<char, _Traits>& std::operator<<(std::basic_ostream<char, _Traits>&, signed char)'
+  523 |     operator<<(basic_ostream<char, _Traits>& __out, signed char __c)
+      |     ^~~~~~~~
+/usr/include/c++/9/ostream:523:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:139:9: note:   cannot convert 'data' (type 'const Stats::Scalar') to type 'signed char'
+  139 |     out << data;
+      |     ~~~~^~~~~~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:528:5: note: candidate: 'template<class _Traits> std::basic_ostream<char, _Traits>& std::operator<<(std::basic_ostream<char, _Traits>&, unsigned char)'
+  528 |     operator<<(basic_ostream<char, _Traits>& __out, unsigned char __c)
+      |     ^~~~~~~~
+/usr/include/c++/9/ostream:528:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:139:9: note:   cannot convert 'data' (type 'const Stats::Scalar') to type 'unsigned char'
+  139 |     out << data;
+      |     ~~~~^~~~~~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:548:5: note: candidate: 'template<class _CharT, class _Traits> std::basic_ostream<_CharT, _Traits>& std::operator<<(std::basic_ostream<_CharT, _Traits>&, const _CharT*)'
+  548 |     operator<<(basic_ostream<_CharT, _Traits>& __out, const _CharT* __s)
+      |     ^~~~~~~~
+/usr/include/c++/9/ostream:548:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:139:9: note:   mismatched types 'const _CharT*' and 'Stats::Scalar'
+  139 |     out << data;
+      |     ~~~~^~~~~~~
+In file included from /usr/include/c++/9/ostream:702,
+                 from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/bits/ostream.tcc:321:5: note: candidate: 'template<class _CharT, class _Traits> std::basic_ostream<_CharT, _Traits>& std::operator<<(std::basic_ostream<_CharT, _Traits>&, const char*)'
+  321 |     operator<<(basic_ostream<_CharT, _Traits>& __out, const char* __s)
+      |     ^~~~~~~~
+/usr/include/c++/9/bits/ostream.tcc:321:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:139:9: note:   cannot convert 'data' (type 'const Stats::Scalar') to type 'const char*'
+  139 |     out << data;
+      |     ~~~~^~~~~~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:565:5: note: candidate: 'template<class _Traits> std::basic_ostream<char, _Traits>& std::operator<<(std::basic_ostream<char, _Traits>&, const char*)'
+  565 |     operator<<(basic_ostream<char, _Traits>& __out, const char* __s)
+      |     ^~~~~~~~
+/usr/include/c++/9/ostream:565:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:139:9: note:   cannot convert 'data' (type 'const Stats::Scalar') to type 'const char*'
+  139 |     out << data;
+      |     ~~~~^~~~~~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:578:5: note: candidate: 'template<class _Traits> std::basic_ostream<char, _Traits>& std::operator<<(std::basic_ostream<char, _Traits>&, const signed char*)'
+  578 |     operator<<(basic_ostream<char, _Traits>& __out, const signed char* __s)
+      |     ^~~~~~~~
+/usr/include/c++/9/ostream:578:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:139:9: note:   cannot convert 'data' (type 'const Stats::Scalar') to type 'const signed char*'
+  139 |     out << data;
+      |     ~~~~^~~~~~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:583:5: note: candidate: 'template<class _Traits> std::basic_ostream<char, _Traits>& std::operator<<(std::basic_ostream<char, _Traits>&, const unsigned char*)'
+  583 |     operator<<(basic_ostream<char, _Traits>& __out, const unsigned char* __s)
+      |     ^~~~~~~~
+/usr/include/c++/9/ostream:583:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:139:9: note:   cannot convert 'data' (type 'const Stats::Scalar') to type 'const unsigned char*'
+  139 |     out << data;
+      |     ~~~~^~~~~~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:691:5: note: candidate: 'template<class _Ostream, class _Tp> typename std::enable_if<std::__and_<std::__not_<std::is_lvalue_reference<_Tp> >, std::__is_convertible_to_basic_ostream<_Ostream>, std::__is_insertable<typename std::__is_convertible_to_basic_ostream<_Tp>::__ostream_type, const _Tp&, void> >::value, typename std::__is_convertible_to_basic_ostream<_Tp>::__ostream_type>::type std::operator<<(_Ostream&&, const _Tp&)'
+  691 |     operator<<(_Ostream&& __os, const _Tp& __x)
+      |     ^~~~~~~~
+/usr/include/c++/9/ostream:691:5: note:   template argument deduction/substitution failed:
+/usr/include/c++/9/ostream: In substitution of 'template<class _Ostream, class _Tp> typename std::enable_if<std::__and_<std::__not_<std::is_lvalue_reference<_Tp> >, std::__is_convertible_to_basic_ostream<_Ostream>, std::__is_insertable<typename std::__is_convertible_to_basic_ostream<_Tp>::__ostream_type, const _Tp&, void> >::value, typename std::__is_convertible_to_basic_ostream<_Tp>::__ostream_type>::type std::operator<<(_Ostream&&, const _Tp&) [with _Ostream = std::basic_ostream<char>&; _Tp = Stats::Scalar]':
+build/ARM/base/cprintf_formats.hh:139:9:   required from 'void cp::_format_integer(std::ostream&, const T&, cp::Format&) [with T = Stats::Scalar; std::ostream = std::basic_ostream<char>]'
+build/ARM/base/cprintf_formats.hh:303:18:   required from 'void cp::format_integer(std::ostream&, const T&, cp::Format&) [with T = Stats::Scalar; std::ostream = std::basic_ostream<char>]'
+build/ARM/base/cprintf.hh:104:27:   required from 'void cp::Print::add_arg(const T&) [with T = Stats::Scalar]'
+build/ARM/base/cprintf.hh:136:5:   required from 'void ccprintf(cp::Print&, const T&, const Args& ...) [with T = Stats::Scalar; Args = {}]'
+build/ARM/base/cprintf.hh:147:13:   required from 'void ccprintf(std::ostream&, const char*, const Args& ...) [with Args = {Stats::Scalar}; std::ostream = std::basic_ostream<char>]'
+build/ARM/base/trace.hh:71:17:   required from 'void Trace::Logger::dprintf_flag(Tick, const string&, const string&, const char*, const Args& ...) [with Args = {Stats::Scalar}; Tick = long unsigned int; std::string = std::__cxx11::basic_string<char>]'
+build/ARM/cpu/atomiccgra/atomiccgra.cc:987:5:   required from here
+/usr/include/c++/9/ostream:691:5: error: no type named 'type' in 'struct std::enable_if<false, std::basic_ostream<char>&>'
+In file included from build/ARM/arch/arm/miscregs.hh:44,
+                 from build/ARM/arch/arm/locked_mem.hh:51,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh: In instantiation of 'void cp::_format_integer(std::ostream&, const T&, cp::Format&) [with T = Stats::Scalar; std::ostream = std::basic_ostream<char>]':
+build/ARM/base/cprintf_formats.hh:303:18:   required from 'void cp::format_integer(std::ostream&, const T&, cp::Format&) [with T = Stats::Scalar; std::ostream = std::basic_ostream<char>]'
+build/ARM/base/cprintf.hh:104:27:   required from 'void cp::Print::add_arg(const T&) [with T = Stats::Scalar]'
+build/ARM/base/cprintf.hh:136:5:   required from 'void ccprintf(cp::Print&, const T&, const Args& ...) [with T = Stats::Scalar; Args = {}]'
+build/ARM/base/cprintf.hh:147:13:   required from 'void ccprintf(std::ostream&, const char*, const Args& ...) [with Args = {Stats::Scalar}; std::ostream = std::basic_ostream<char>]'
+build/ARM/base/trace.hh:71:17:   required from 'void Trace::Logger::dprintf_flag(Tick, const string&, const string&, const char*, const Args& ...) [with Args = {Stats::Scalar}; Tick = long unsigned int; std::string = std::__cxx11::basic_string<char>]'
+build/ARM/cpu/atomiccgra/atomiccgra.cc:987:5:   required from here
+/usr/include/c++/9/bitset:1538:5: note: candidate: 'template<class _CharT, class _Traits, long unsigned int _Nb> std::basic_ostream<_CharT, _Traits>& std::operator<<(std::basic_ostream<_CharT, _Traits>&, const std::bitset<_Nb>&)'
+ 1538 |     operator<<(std::basic_ostream<_CharT, _Traits>& __os,
+      |     ^~~~~~~~
+/usr/include/c++/9/bitset:1538:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:139:9: note:   'const Stats::Scalar' is not derived from 'const std::bitset<_Nb>'
+  139 |     out << data;
+      |     ~~~~^~~~~~~
+In file included from /usr/include/c++/9/memory:81,
+                 from build/ARM/base/compiler.hh:44,
+                 from build/ARM/arch/arm/miscregs.hh:48,
+                 from build/ARM/arch/arm/locked_mem.hh:51,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+/usr/include/c++/9/bits/shared_ptr.h:66:5: note: candidate: 'template<class _Ch, class _Tr, class _Tp, __gnu_cxx::_Lock_policy _Lp> std::basic_ostream<_CharT, _Traits>& std::operator<<(std::basic_ostream<_CharT, _Traits>&, const std::__shared_ptr<_Tp, _Lp>&)'
+   66 |     operator<<(std::basic_ostream<_Ch, _Tr>& __os,
+      |     ^~~~~~~~
+/usr/include/c++/9/bits/shared_ptr.h:66:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:139:9: note:   'const Stats::Scalar' is not derived from 'const std::__shared_ptr<_Tp, _Lp>'
+  139 |     out << data;
+      |     ~~~~^~~~~~~
+In file included from build/ARM/arch/arm/miscregs_types.hh:44,
+                 from build/ARM/arch/arm/miscregs.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:51,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/bitunion.hh:502:1: note: candidate: 'template<class T> std::ostream& operator<<(std::ostream&, BitUnionType<T>&)'
+  502 | operator << (std::ostream &os, const BitUnionType<T> &bu)
+      | ^~~~~~~~
+build/ARM/base/bitunion.hh:502:1: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:139:9: note:   'const Stats::Scalar' is not derived from 'BitUnionType<T>'
+  139 |     out << data;
+      |     ~~~~^~~~~~~
+In file included from build/ARM/arch/generic/vec_pred_reg.hh:43,
+                 from build/ARM/arch/arm/registers.hh:49,
+                 from build/ARM/arch/registers.hh:1,
+                 from build/ARM/cpu/static_inst.hh:49,
+                 from build/ARM/arch/arm/utility.hh:51,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/arch/generic/vec_reg.hh:498:1: note: candidate: 'template<LaneSize LS> std::ostream& operator<<(std::ostream&, const LaneData<LS>&)'
+  498 | operator<<(std::ostream& os, const LaneData<LS>& d)
+      | ^~~~~~~~
+build/ARM/arch/generic/vec_reg.hh:498:1: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:139:9: note:   'const Stats::Scalar' is not derived from 'const LaneData<LS>'
+  139 |     out << data;
+      |     ~~~~^~~~~~~
+In file included from build/ARM/sim/sim_object.hh:56,
+                 from build/ARM/arch/generic/isa.hh:43,
+                 from build/ARM/cpu/thread_context.hh:49,
+                 from build/ARM/cpu/static_inst.hh:58,
+                 from build/ARM/arch/arm/utility.hh:51,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/sim/port.hh:151:1: note: candidate: 'std::ostream& operator<<(std::ostream&, const Port&)'
+  151 | operator << (std::ostream &os, const Port &port)
+      | ^~~~~~~~
+build/ARM/sim/port.hh:151:44: note:   no known conversion for argument 2 from 'const Stats::Scalar' to 'const Port&'
+  151 | operator << (std::ostream &os, const Port &port)
+      |                                ~~~~~~~~~~~~^~~~
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh: In instantiation of 'void cp::_format_string(std::ostream&, const T&, cp::Format&) [with T = Stats::Scalar; std::ostream = std::basic_ostream<char>]':
+build/ARM/base/cprintf_formats.hh:342:17:   required from 'void cp::format_string(std::ostream&, const T&, cp::Format&) [with T = Stats::Scalar; std::ostream = std::basic_ostream<char>]'
+build/ARM/base/cprintf.hh:112:26:   required from 'void cp::Print::add_arg(const T&) [with T = Stats::Scalar]'
+build/ARM/base/cprintf.hh:136:5:   required from 'void ccprintf(cp::Print&, const T&, const Args& ...) [with T = Stats::Scalar; Args = {}]'
+build/ARM/base/cprintf.hh:147:13:   required from 'void ccprintf(std::ostream&, const char*, const Args& ...) [with Args = {Stats::Scalar}; std::ostream = std::basic_ostream<char>]'
+build/ARM/base/trace.hh:71:17:   required from 'void Trace::Logger::dprintf_flag(Tick, const string&, const string&, const char*, const Args& ...) [with Args = {Stats::Scalar}; Tick = long unsigned int; std::string = std::__cxx11::basic_string<char>]'
+build/ARM/cpu/atomiccgra/atomiccgra.cc:987:5:   required from here
+build/ARM/base/cprintf_formats.hh:212:13: error: no match for 'operator<<' (operand types are 'std::stringstream' {aka 'std::__cxx11::basic_stringstream<char>'} and 'const Stats::Scalar')
+  212 |         foo << data;
+      |         ~~~~^~~~~~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:108:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(std::basic_ostream<_CharT, _Traits>::__ostream_type& (*)(std::basic_ostream<_CharT, _Traits>::__ostream_type&)) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  108 |       operator<<(__ostream_type& (*__pf)(__ostream_type&))
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:108:36: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'std::basic_ostream<char>::__ostream_type& (*)(std::basic_ostream<char>::__ostream_type&)' {aka 'std::basic_ostream<char>& (*)(std::basic_ostream<char>&)'}
+  108 |       operator<<(__ostream_type& (*__pf)(__ostream_type&))
+      |                  ~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~
+/usr/include/c++/9/ostream:117:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(std::basic_ostream<_CharT, _Traits>::__ios_type& (*)(std::basic_ostream<_CharT, _Traits>::__ios_type&)) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>; std::basic_ostream<_CharT, _Traits>::__ios_type = std::basic_ios<char>]'
+  117 |       operator<<(__ios_type& (*__pf)(__ios_type&))
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:117:32: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'std::basic_ostream<char>::__ios_type& (*)(std::basic_ostream<char>::__ios_type&)' {aka 'std::basic_ios<char>& (*)(std::basic_ios<char>&)'}
+  117 |       operator<<(__ios_type& (*__pf)(__ios_type&))
+      |                  ~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~
+/usr/include/c++/9/ostream:127:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(std::ios_base& (*)(std::ios_base&)) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  127 |       operator<<(ios_base& (*__pf) (ios_base&))
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:127:30: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'std::ios_base& (*)(std::ios_base&)'
+  127 |       operator<<(ios_base& (*__pf) (ios_base&))
+      |                  ~~~~~~~~~~~~^~~~~~~~~~~~~~~~~
+/usr/include/c++/9/ostream:166:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(long int) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  166 |       operator<<(long __n)
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:166:23: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'long int'
+  166 |       operator<<(long __n)
+      |                  ~~~~~^~~
+/usr/include/c++/9/ostream:170:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(long unsigned int) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  170 |       operator<<(unsigned long __n)
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:170:32: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'long unsigned int'
+  170 |       operator<<(unsigned long __n)
+      |                  ~~~~~~~~~~~~~~^~~
+/usr/include/c++/9/ostream:174:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(bool) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  174 |       operator<<(bool __n)
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:174:23: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'bool'
+  174 |       operator<<(bool __n)
+      |                  ~~~~~^~~
+In file included from /usr/include/c++/9/ostream:702,
+                 from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/bits/ostream.tcc:91:5: note: candidate: 'std::basic_ostream<_CharT, _Traits>& std::basic_ostream<_CharT, _Traits>::operator<<(short int) [with _CharT = char; _Traits = std::char_traits<char>]'
+   91 |     basic_ostream<_CharT, _Traits>::
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/c++/9/bits/ostream.tcc:92:22: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'short int'
+   92 |     operator<<(short __n)
+      |                ~~~~~~^~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:181:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(short unsigned int) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  181 |       operator<<(unsigned short __n)
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:181:33: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'short unsigned int'
+  181 |       operator<<(unsigned short __n)
+      |                  ~~~~~~~~~~~~~~~^~~
+In file included from /usr/include/c++/9/ostream:702,
+                 from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/bits/ostream.tcc:105:5: note: candidate: 'std::basic_ostream<_CharT, _Traits>& std::basic_ostream<_CharT, _Traits>::operator<<(int) [with _CharT = char; _Traits = std::char_traits<char>]'
+  105 |     basic_ostream<_CharT, _Traits>::
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/c++/9/bits/ostream.tcc:106:20: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'int'
+  106 |     operator<<(int __n)
+      |                ~~~~^~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:192:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(unsigned int) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  192 |       operator<<(unsigned int __n)
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:192:31: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'unsigned int'
+  192 |       operator<<(unsigned int __n)
+      |                  ~~~~~~~~~~~~~^~~
+/usr/include/c++/9/ostream:201:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(long long int) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  201 |       operator<<(long long __n)
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:201:28: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'long long int'
+  201 |       operator<<(long long __n)
+      |                  ~~~~~~~~~~^~~
+/usr/include/c++/9/ostream:205:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(long long unsigned int) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  205 |       operator<<(unsigned long long __n)
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:205:37: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'long long unsigned int'
+  205 |       operator<<(unsigned long long __n)
+      |                  ~~~~~~~~~~~~~~~~~~~^~~
+/usr/include/c++/9/ostream:220:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(double) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  220 |       operator<<(double __f)
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:220:25: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'double'
+  220 |       operator<<(double __f)
+      |                  ~~~~~~~^~~
+/usr/include/c++/9/ostream:224:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(float) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  224 |       operator<<(float __f)
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:224:24: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'float'
+  224 |       operator<<(float __f)
+      |                  ~~~~~~^~~
+/usr/include/c++/9/ostream:232:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(long double) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  232 |       operator<<(long double __f)
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:232:30: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'long double'
+  232 |       operator<<(long double __f)
+      |                  ~~~~~~~~~~~~^~~
+/usr/include/c++/9/ostream:245:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(const void*) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  245 |       operator<<(const void* __p)
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:245:30: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'const void*'
+  245 |       operator<<(const void* __p)
+      |                  ~~~~~~~~~~~~^~~
+In file included from /usr/include/c++/9/ostream:702,
+                 from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/bits/ostream.tcc:119:5: note: candidate: 'std::basic_ostream<_CharT, _Traits>& std::basic_ostream<_CharT, _Traits>::operator<<(std::basic_ostream<_CharT, _Traits>::__streambuf_type*) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__streambuf_type = std::basic_streambuf<char>]'
+  119 |     basic_ostream<_CharT, _Traits>::
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/c++/9/bits/ostream.tcc:120:34: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'std::basic_ostream<char>::__streambuf_type*' {aka 'std::basic_streambuf<char>*'}
+  120 |     operator<<(__streambuf_type* __sbin)
+      |                ~~~~~~~~~~~~~~~~~~^~~~~~
+In file included from /usr/include/c++/9/string:55,
+                 from /usr/include/c++/9/bits/locale_classes.h:40,
+                 from /usr/include/c++/9/bits/ios_base.h:41,
+                 from /usr/include/c++/9/ios:42,
+                 from /usr/include/c++/9/ostream:38,
+                 from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/bits/basic_string.h:6416:5: note: candidate: 'template<class _CharT, class _Traits, class _Alloc> std::basic_ostream<_CharT, _Traits>& std::operator<<(std::basic_ostream<_CharT, _Traits>&, const std::__cxx11::basic_string<_CharT, _Traits, _Alloc>&)'
+ 6416 |     operator<<(basic_ostream<_CharT, _Traits>& __os,
+      |     ^~~~~~~~
+/usr/include/c++/9/bits/basic_string.h:6416:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:212:13: note:   'const Stats::Scalar' is not derived from 'const std::__cxx11::basic_string<_CharT, _Traits, _Alloc>'
+  212 |         foo << data;
+      |         ~~~~^~~~~~~
+In file included from /usr/include/c++/9/bits/ios_base.h:46,
+                 from /usr/include/c++/9/ios:42,
+                 from /usr/include/c++/9/ostream:38,
+                 from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/system_error:217:5: note: candidate: 'template<class _CharT, class _Traits> std::basic_ostream<_CharT, _Traits>& std::operator<<(std::basic_ostream<_CharT, _Traits>&, const std::error_code&)'
+  217 |     operator<<(basic_ostream<_CharT, _Traits>& __os, const error_code& __e)
+      |     ^~~~~~~~
+/usr/include/c++/9/system_error:217:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:212:13: note:   cannot convert 'data' (type 'const Stats::Scalar') to type 'const std::error_code&'
+  212 |         foo << data;
+      |         ~~~~^~~~~~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:506:5: note: candidate: 'template<class _CharT, class _Traits> std::basic_ostream<_CharT, _Traits>& std::operator<<(std::basic_ostream<_CharT, _Traits>&, _CharT)'
+  506 |     operator<<(basic_ostream<_CharT, _Traits>& __out, _CharT __c)
+      |     ^~~~~~~~
+/usr/include/c++/9/ostream:506:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:212:13: note:   deduced conflicting types for parameter '_CharT' ('char' and 'Stats::Scalar')
+  212 |         foo << data;
+      |         ~~~~^~~~~~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:511:5: note: candidate: 'template<class _CharT, class _Traits> std::basic_ostream<_CharT, _Traits>& std::operator<<(std::basic_ostream<_CharT, _Traits>&, char)'
+  511 |     operator<<(basic_ostream<_CharT, _Traits>& __out, char __c)
+      |     ^~~~~~~~
+/usr/include/c++/9/ostream:511:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:212:13: note:   cannot convert 'data' (type 'const Stats::Scalar') to type 'char'
+  212 |         foo << data;
+      |         ~~~~^~~~~~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:517:5: note: candidate: 'template<class _Traits> std::basic_ostream<char, _Traits>& std::operator<<(std::basic_ostream<char, _Traits>&, char)'
+  517 |     operator<<(basic_ostream<char, _Traits>& __out, char __c)
+      |     ^~~~~~~~
+/usr/include/c++/9/ostream:517:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:212:13: note:   cannot convert 'data' (type 'const Stats::Scalar') to type 'char'
+  212 |         foo << data;
+      |         ~~~~^~~~~~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:523:5: note: candidate: 'template<class _Traits> std::basic_ostream<char, _Traits>& std::operator<<(std::basic_ostream<char, _Traits>&, signed char)'
+  523 |     operator<<(basic_ostream<char, _Traits>& __out, signed char __c)
+      |     ^~~~~~~~
+/usr/include/c++/9/ostream:523:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:212:13: note:   cannot convert 'data' (type 'const Stats::Scalar') to type 'signed char'
+  212 |         foo << data;
+      |         ~~~~^~~~~~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:528:5: note: candidate: 'template<class _Traits> std::basic_ostream<char, _Traits>& std::operator<<(std::basic_ostream<char, _Traits>&, unsigned char)'
+  528 |     operator<<(basic_ostream<char, _Traits>& __out, unsigned char __c)
+      |     ^~~~~~~~
+/usr/include/c++/9/ostream:528:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:212:13: note:   cannot convert 'data' (type 'const Stats::Scalar') to type 'unsigned char'
+  212 |         foo << data;
+      |         ~~~~^~~~~~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:548:5: note: candidate: 'template<class _CharT, class _Traits> std::basic_ostream<_CharT, _Traits>& std::operator<<(std::basic_ostream<_CharT, _Traits>&, const _CharT*)'
+  548 |     operator<<(basic_ostream<_CharT, _Traits>& __out, const _CharT* __s)
+      |     ^~~~~~~~
+/usr/include/c++/9/ostream:548:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:212:13: note:   mismatched types 'const _CharT*' and 'Stats::Scalar'
+  212 |         foo << data;
+      |         ~~~~^~~~~~~
+In file included from /usr/include/c++/9/ostream:702,
+                 from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/bits/ostream.tcc:321:5: note: candidate: 'template<class _CharT, class _Traits> std::basic_ostream<_CharT, _Traits>& std::operator<<(std::basic_ostream<_CharT, _Traits>&, const char*)'
+  321 |     operator<<(basic_ostream<_CharT, _Traits>& __out, const char* __s)
+      |     ^~~~~~~~
+/usr/include/c++/9/bits/ostream.tcc:321:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:212:13: note:   cannot convert 'data' (type 'const Stats::Scalar') to type 'const char*'
+  212 |         foo << data;
+      |         ~~~~^~~~~~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:565:5: note: candidate: 'template<class _Traits> std::basic_ostream<char, _Traits>& std::operator<<(std::basic_ostream<char, _Traits>&, const char*)'
+  565 |     operator<<(basic_ostream<char, _Traits>& __out, const char* __s)
+      |     ^~~~~~~~
+/usr/include/c++/9/ostream:565:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:212:13: note:   cannot convert 'data' (type 'const Stats::Scalar') to type 'const char*'
+  212 |         foo << data;
+      |         ~~~~^~~~~~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:578:5: note: candidate: 'template<class _Traits> std::basic_ostream<char, _Traits>& std::operator<<(std::basic_ostream<char, _Traits>&, const signed char*)'
+  578 |     operator<<(basic_ostream<char, _Traits>& __out, const signed char* __s)
+      |     ^~~~~~~~
+/usr/include/c++/9/ostream:578:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:212:13: note:   cannot convert 'data' (type 'const Stats::Scalar') to type 'const signed char*'
+  212 |         foo << data;
+      |         ~~~~^~~~~~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:583:5: note: candidate: 'template<class _Traits> std::basic_ostream<char, _Traits>& std::operator<<(std::basic_ostream<char, _Traits>&, const unsigned char*)'
+  583 |     operator<<(basic_ostream<char, _Traits>& __out, const unsigned char* __s)
+      |     ^~~~~~~~
+/usr/include/c++/9/ostream:583:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:212:13: note:   cannot convert 'data' (type 'const Stats::Scalar') to type 'const unsigned char*'
+  212 |         foo << data;
+      |         ~~~~^~~~~~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:691:5: note: candidate: 'template<class _Ostream, class _Tp> typename std::enable_if<std::__and_<std::__not_<std::is_lvalue_reference<_Tp> >, std::__is_convertible_to_basic_ostream<_Ostream>, std::__is_insertable<typename std::__is_convertible_to_basic_ostream<_Tp>::__ostream_type, const _Tp&, void> >::value, typename std::__is_convertible_to_basic_ostream<_Tp>::__ostream_type>::type std::operator<<(_Ostream&&, const _Tp&)'
+  691 |     operator<<(_Ostream&& __os, const _Tp& __x)
+      |     ^~~~~~~~
+/usr/include/c++/9/ostream:691:5: note:   template argument deduction/substitution failed:
+/usr/include/c++/9/ostream: In substitution of 'template<class _Ostream, class _Tp> typename std::enable_if<std::__and_<std::__not_<std::is_lvalue_reference<_Tp> >, std::__is_convertible_to_basic_ostream<_Ostream>, std::__is_insertable<typename std::__is_convertible_to_basic_ostream<_Tp>::__ostream_type, const _Tp&, void> >::value, typename std::__is_convertible_to_basic_ostream<_Tp>::__ostream_type>::type std::operator<<(_Ostream&&, const _Tp&) [with _Ostream = std::__cxx11::basic_stringstream<char>&; _Tp = Stats::Scalar]':
+build/ARM/base/cprintf_formats.hh:212:13:   required from 'void cp::_format_string(std::ostream&, const T&, cp::Format&) [with T = Stats::Scalar; std::ostream = std::basic_ostream<char>]'
+build/ARM/base/cprintf_formats.hh:342:17:   required from 'void cp::format_string(std::ostream&, const T&, cp::Format&) [with T = Stats::Scalar; std::ostream = std::basic_ostream<char>]'
+build/ARM/base/cprintf.hh:112:26:   required from 'void cp::Print::add_arg(const T&) [with T = Stats::Scalar]'
+build/ARM/base/cprintf.hh:136:5:   required from 'void ccprintf(cp::Print&, const T&, const Args& ...) [with T = Stats::Scalar; Args = {}]'
+build/ARM/base/cprintf.hh:147:13:   required from 'void ccprintf(std::ostream&, const char*, const Args& ...) [with Args = {Stats::Scalar}; std::ostream = std::basic_ostream<char>]'
+build/ARM/base/trace.hh:71:17:   required from 'void Trace::Logger::dprintf_flag(Tick, const string&, const string&, const char*, const Args& ...) [with Args = {Stats::Scalar}; Tick = long unsigned int; std::string = std::__cxx11::basic_string<char>]'
+build/ARM/cpu/atomiccgra/atomiccgra.cc:987:5:   required from here
+/usr/include/c++/9/ostream:691:5: error: no type named 'type' in 'struct std::enable_if<false, std::basic_ostream<char>&>'
+In file included from build/ARM/arch/arm/miscregs.hh:44,
+                 from build/ARM/arch/arm/locked_mem.hh:51,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh: In instantiation of 'void cp::_format_string(std::ostream&, const T&, cp::Format&) [with T = Stats::Scalar; std::ostream = std::basic_ostream<char>]':
+build/ARM/base/cprintf_formats.hh:342:17:   required from 'void cp::format_string(std::ostream&, const T&, cp::Format&) [with T = Stats::Scalar; std::ostream = std::basic_ostream<char>]'
+build/ARM/base/cprintf.hh:112:26:   required from 'void cp::Print::add_arg(const T&) [with T = Stats::Scalar]'
+build/ARM/base/cprintf.hh:136:5:   required from 'void ccprintf(cp::Print&, const T&, const Args& ...) [with T = Stats::Scalar; Args = {}]'
+build/ARM/base/cprintf.hh:147:13:   required from 'void ccprintf(std::ostream&, const char*, const Args& ...) [with Args = {Stats::Scalar}; std::ostream = std::basic_ostream<char>]'
+build/ARM/base/trace.hh:71:17:   required from 'void Trace::Logger::dprintf_flag(Tick, const string&, const string&, const char*, const Args& ...) [with Args = {Stats::Scalar}; Tick = long unsigned int; std::string = std::__cxx11::basic_string<char>]'
+build/ARM/cpu/atomiccgra/atomiccgra.cc:987:5:   required from here
+/usr/include/c++/9/bitset:1538:5: note: candidate: 'template<class _CharT, class _Traits, long unsigned int _Nb> std::basic_ostream<_CharT, _Traits>& std::operator<<(std::basic_ostream<_CharT, _Traits>&, const std::bitset<_Nb>&)'
+ 1538 |     operator<<(std::basic_ostream<_CharT, _Traits>& __os,
+      |     ^~~~~~~~
+/usr/include/c++/9/bitset:1538:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:212:13: note:   'const Stats::Scalar' is not derived from 'const std::bitset<_Nb>'
+  212 |         foo << data;
+      |         ~~~~^~~~~~~
+In file included from /usr/include/c++/9/memory:81,
+                 from build/ARM/base/compiler.hh:44,
+                 from build/ARM/arch/arm/miscregs.hh:48,
+                 from build/ARM/arch/arm/locked_mem.hh:51,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+/usr/include/c++/9/bits/shared_ptr.h:66:5: note: candidate: 'template<class _Ch, class _Tr, class _Tp, __gnu_cxx::_Lock_policy _Lp> std::basic_ostream<_CharT, _Traits>& std::operator<<(std::basic_ostream<_CharT, _Traits>&, const std::__shared_ptr<_Tp, _Lp>&)'
+   66 |     operator<<(std::basic_ostream<_Ch, _Tr>& __os,
+      |     ^~~~~~~~
+/usr/include/c++/9/bits/shared_ptr.h:66:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:212:13: note:   'const Stats::Scalar' is not derived from 'const std::__shared_ptr<_Tp, _Lp>'
+  212 |         foo << data;
+      |         ~~~~^~~~~~~
+In file included from build/ARM/arch/arm/miscregs_types.hh:44,
+                 from build/ARM/arch/arm/miscregs.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:51,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/bitunion.hh:502:1: note: candidate: 'template<class T> std::ostream& operator<<(std::ostream&, BitUnionType<T>&)'
+  502 | operator << (std::ostream &os, const BitUnionType<T> &bu)
+      | ^~~~~~~~
+build/ARM/base/bitunion.hh:502:1: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:212:13: note:   'const Stats::Scalar' is not derived from 'BitUnionType<T>'
+  212 |         foo << data;
+      |         ~~~~^~~~~~~
+In file included from build/ARM/arch/generic/vec_pred_reg.hh:43,
+                 from build/ARM/arch/arm/registers.hh:49,
+                 from build/ARM/arch/registers.hh:1,
+                 from build/ARM/cpu/static_inst.hh:49,
+                 from build/ARM/arch/arm/utility.hh:51,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/arch/generic/vec_reg.hh:498:1: note: candidate: 'template<LaneSize LS> std::ostream& operator<<(std::ostream&, const LaneData<LS>&)'
+  498 | operator<<(std::ostream& os, const LaneData<LS>& d)
+      | ^~~~~~~~
+build/ARM/arch/generic/vec_reg.hh:498:1: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:212:13: note:   'const Stats::Scalar' is not derived from 'const LaneData<LS>'
+  212 |         foo << data;
+      |         ~~~~^~~~~~~
+In file included from build/ARM/sim/sim_object.hh:56,
+                 from build/ARM/arch/generic/isa.hh:43,
+                 from build/ARM/cpu/thread_context.hh:49,
+                 from build/ARM/cpu/static_inst.hh:58,
+                 from build/ARM/arch/arm/utility.hh:51,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/sim/port.hh:151:1: note: candidate: 'std::ostream& operator<<(std::ostream&, const Port&)'
+  151 | operator << (std::ostream &os, const Port &port)
+      | ^~~~~~~~
+build/ARM/sim/port.hh:151:44: note:   no known conversion for argument 2 from 'const Stats::Scalar' to 'const Port&'
+  151 | operator << (std::ostream &os, const Port &port)
+      |                                ~~~~~~~~~~~~^~~~
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:227:17: error: no match for 'operator<<' (operand types are 'std::ostream' {aka 'std::basic_ostream<char>'} and 'const Stats::Scalar')
+  227 |             out << data;
+      |             ~~~~^~~~~~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:108:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(std::basic_ostream<_CharT, _Traits>::__ostream_type& (*)(std::basic_ostream<_CharT, _Traits>::__ostream_type&)) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  108 |       operator<<(__ostream_type& (*__pf)(__ostream_type&))
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:108:36: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'std::basic_ostream<char>::__ostream_type& (*)(std::basic_ostream<char>::__ostream_type&)' {aka 'std::basic_ostream<char>& (*)(std::basic_ostream<char>&)'}
+  108 |       operator<<(__ostream_type& (*__pf)(__ostream_type&))
+      |                  ~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~
+/usr/include/c++/9/ostream:117:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(std::basic_ostream<_CharT, _Traits>::__ios_type& (*)(std::basic_ostream<_CharT, _Traits>::__ios_type&)) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>; std::basic_ostream<_CharT, _Traits>::__ios_type = std::basic_ios<char>]'
+  117 |       operator<<(__ios_type& (*__pf)(__ios_type&))
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:117:32: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'std::basic_ostream<char>::__ios_type& (*)(std::basic_ostream<char>::__ios_type&)' {aka 'std::basic_ios<char>& (*)(std::basic_ios<char>&)'}
+  117 |       operator<<(__ios_type& (*__pf)(__ios_type&))
+      |                  ~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~
+/usr/include/c++/9/ostream:127:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(std::ios_base& (*)(std::ios_base&)) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  127 |       operator<<(ios_base& (*__pf) (ios_base&))
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:127:30: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'std::ios_base& (*)(std::ios_base&)'
+  127 |       operator<<(ios_base& (*__pf) (ios_base&))
+      |                  ~~~~~~~~~~~~^~~~~~~~~~~~~~~~~
+/usr/include/c++/9/ostream:166:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(long int) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  166 |       operator<<(long __n)
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:166:23: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'long int'
+  166 |       operator<<(long __n)
+      |                  ~~~~~^~~
+/usr/include/c++/9/ostream:170:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(long unsigned int) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  170 |       operator<<(unsigned long __n)
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:170:32: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'long unsigned int'
+  170 |       operator<<(unsigned long __n)
+      |                  ~~~~~~~~~~~~~~^~~
+/usr/include/c++/9/ostream:174:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(bool) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  174 |       operator<<(bool __n)
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:174:23: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'bool'
+  174 |       operator<<(bool __n)
+      |                  ~~~~~^~~
+In file included from /usr/include/c++/9/ostream:702,
+                 from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/bits/ostream.tcc:91:5: note: candidate: 'std::basic_ostream<_CharT, _Traits>& std::basic_ostream<_CharT, _Traits>::operator<<(short int) [with _CharT = char; _Traits = std::char_traits<char>]'
+   91 |     basic_ostream<_CharT, _Traits>::
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/c++/9/bits/ostream.tcc:92:22: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'short int'
+   92 |     operator<<(short __n)
+      |                ~~~~~~^~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:181:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(short unsigned int) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  181 |       operator<<(unsigned short __n)
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:181:33: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'short unsigned int'
+  181 |       operator<<(unsigned short __n)
+      |                  ~~~~~~~~~~~~~~~^~~
+In file included from /usr/include/c++/9/ostream:702,
+                 from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/bits/ostream.tcc:105:5: note: candidate: 'std::basic_ostream<_CharT, _Traits>& std::basic_ostream<_CharT, _Traits>::operator<<(int) [with _CharT = char; _Traits = std::char_traits<char>]'
+  105 |     basic_ostream<_CharT, _Traits>::
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/c++/9/bits/ostream.tcc:106:20: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'int'
+  106 |     operator<<(int __n)
+      |                ~~~~^~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:192:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(unsigned int) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  192 |       operator<<(unsigned int __n)
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:192:31: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'unsigned int'
+  192 |       operator<<(unsigned int __n)
+      |                  ~~~~~~~~~~~~~^~~
+/usr/include/c++/9/ostream:201:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(long long int) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  201 |       operator<<(long long __n)
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:201:28: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'long long int'
+  201 |       operator<<(long long __n)
+      |                  ~~~~~~~~~~^~~
+/usr/include/c++/9/ostream:205:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(long long unsigned int) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  205 |       operator<<(unsigned long long __n)
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:205:37: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'long long unsigned int'
+  205 |       operator<<(unsigned long long __n)
+      |                  ~~~~~~~~~~~~~~~~~~~^~~
+/usr/include/c++/9/ostream:220:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(double) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  220 |       operator<<(double __f)
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:220:25: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'double'
+  220 |       operator<<(double __f)
+      |                  ~~~~~~~^~~
+/usr/include/c++/9/ostream:224:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(float) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  224 |       operator<<(float __f)
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:224:24: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'float'
+  224 |       operator<<(float __f)
+      |                  ~~~~~~^~~
+/usr/include/c++/9/ostream:232:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(long double) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  232 |       operator<<(long double __f)
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:232:30: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'long double'
+  232 |       operator<<(long double __f)
+      |                  ~~~~~~~~~~~~^~~
+/usr/include/c++/9/ostream:245:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(const void*) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  245 |       operator<<(const void* __p)
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:245:30: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'const void*'
+  245 |       operator<<(const void* __p)
+      |                  ~~~~~~~~~~~~^~~
+In file included from /usr/include/c++/9/ostream:702,
+                 from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/bits/ostream.tcc:119:5: note: candidate: 'std::basic_ostream<_CharT, _Traits>& std::basic_ostream<_CharT, _Traits>::operator<<(std::basic_ostream<_CharT, _Traits>::__streambuf_type*) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__streambuf_type = std::basic_streambuf<char>]'
+  119 |     basic_ostream<_CharT, _Traits>::
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/c++/9/bits/ostream.tcc:120:34: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'std::basic_ostream<char>::__streambuf_type*' {aka 'std::basic_streambuf<char>*'}
+  120 |     operator<<(__streambuf_type* __sbin)
+      |                ~~~~~~~~~~~~~~~~~~^~~~~~
+In file included from /usr/include/c++/9/string:55,
+                 from /usr/include/c++/9/bits/locale_classes.h:40,
+                 from /usr/include/c++/9/bits/ios_base.h:41,
+                 from /usr/include/c++/9/ios:42,
+                 from /usr/include/c++/9/ostream:38,
+                 from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/bits/basic_string.h:6416:5: note: candidate: 'template<class _CharT, class _Traits, class _Alloc> std::basic_ostream<_CharT, _Traits>& std::operator<<(std::basic_ostream<_CharT, _Traits>&, const std::__cxx11::basic_string<_CharT, _Traits, _Alloc>&)'
+ 6416 |     operator<<(basic_ostream<_CharT, _Traits>& __os,
+      |     ^~~~~~~~
+/usr/include/c++/9/bits/basic_string.h:6416:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:227:17: note:   'const Stats::Scalar' is not derived from 'const std::__cxx11::basic_string<_CharT, _Traits, _Alloc>'
+  227 |             out << data;
+      |             ~~~~^~~~~~~
+In file included from /usr/include/c++/9/bits/ios_base.h:46,
+                 from /usr/include/c++/9/ios:42,
+                 from /usr/include/c++/9/ostream:38,
+                 from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/system_error:217:5: note: candidate: 'template<class _CharT, class _Traits> std::basic_ostream<_CharT, _Traits>& std::operator<<(std::basic_ostream<_CharT, _Traits>&, const std::error_code&)'
+  217 |     operator<<(basic_ostream<_CharT, _Traits>& __os, const error_code& __e)
+      |     ^~~~~~~~
+/usr/include/c++/9/system_error:217:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:227:17: note:   cannot convert 'data' (type 'const Stats::Scalar') to type 'const std::error_code&'
+  227 |             out << data;
+      |             ~~~~^~~~~~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:506:5: note: candidate: 'template<class _CharT, class _Traits> std::basic_ostream<_CharT, _Traits>& std::operator<<(std::basic_ostream<_CharT, _Traits>&, _CharT)'
+  506 |     operator<<(basic_ostream<_CharT, _Traits>& __out, _CharT __c)
+      |     ^~~~~~~~
+/usr/include/c++/9/ostream:506:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:227:17: note:   deduced conflicting types for parameter '_CharT' ('char' and 'Stats::Scalar')
+  227 |             out << data;
+      |             ~~~~^~~~~~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:511:5: note: candidate: 'template<class _CharT, class _Traits> std::basic_ostream<_CharT, _Traits>& std::operator<<(std::basic_ostream<_CharT, _Traits>&, char)'
+  511 |     operator<<(basic_ostream<_CharT, _Traits>& __out, char __c)
+      |     ^~~~~~~~
+/usr/include/c++/9/ostream:511:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:227:17: note:   cannot convert 'data' (type 'const Stats::Scalar') to type 'char'
+  227 |             out << data;
+      |             ~~~~^~~~~~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:517:5: note: candidate: 'template<class _Traits> std::basic_ostream<char, _Traits>& std::operator<<(std::basic_ostream<char, _Traits>&, char)'
+  517 |     operator<<(basic_ostream<char, _Traits>& __out, char __c)
+      |     ^~~~~~~~
+/usr/include/c++/9/ostream:517:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:227:17: note:   cannot convert 'data' (type 'const Stats::Scalar') to type 'char'
+  227 |             out << data;
+      |             ~~~~^~~~~~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:523:5: note: candidate: 'template<class _Traits> std::basic_ostream<char, _Traits>& std::operator<<(std::basic_ostream<char, _Traits>&, signed char)'
+  523 |     operator<<(basic_ostream<char, _Traits>& __out, signed char __c)
+      |     ^~~~~~~~
+/usr/include/c++/9/ostream:523:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:227:17: note:   cannot convert 'data' (type 'const Stats::Scalar') to type 'signed char'
+  227 |             out << data;
+      |             ~~~~^~~~~~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:528:5: note: candidate: 'template<class _Traits> std::basic_ostream<char, _Traits>& std::operator<<(std::basic_ostream<char, _Traits>&, unsigned char)'
+  528 |     operator<<(basic_ostream<char, _Traits>& __out, unsigned char __c)
+      |     ^~~~~~~~
+/usr/include/c++/9/ostream:528:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:227:17: note:   cannot convert 'data' (type 'const Stats::Scalar') to type 'unsigned char'
+  227 |             out << data;
+      |             ~~~~^~~~~~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:548:5: note: candidate: 'template<class _CharT, class _Traits> std::basic_ostream<_CharT, _Traits>& std::operator<<(std::basic_ostream<_CharT, _Traits>&, const _CharT*)'
+  548 |     operator<<(basic_ostream<_CharT, _Traits>& __out, const _CharT* __s)
+      |     ^~~~~~~~
+/usr/include/c++/9/ostream:548:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:227:17: note:   mismatched types 'const _CharT*' and 'Stats::Scalar'
+  227 |             out << data;
+      |             ~~~~^~~~~~~
+In file included from /usr/include/c++/9/ostream:702,
+                 from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/bits/ostream.tcc:321:5: note: candidate: 'template<class _CharT, class _Traits> std::basic_ostream<_CharT, _Traits>& std::operator<<(std::basic_ostream<_CharT, _Traits>&, const char*)'
+  321 |     operator<<(basic_ostream<_CharT, _Traits>& __out, const char* __s)
+      |     ^~~~~~~~
+/usr/include/c++/9/bits/ostream.tcc:321:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:227:17: note:   cannot convert 'data' (type 'const Stats::Scalar') to type 'const char*'
+  227 |             out << data;
+      |             ~~~~^~~~~~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:565:5: note: candidate: 'template<class _Traits> std::basic_ostream<char, _Traits>& std::operator<<(std::basic_ostream<char, _Traits>&, const char*)'
+  565 |     operator<<(basic_ostream<char, _Traits>& __out, const char* __s)
+      |     ^~~~~~~~
+/usr/include/c++/9/ostream:565:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:227:17: note:   cannot convert 'data' (type 'const Stats::Scalar') to type 'const char*'
+  227 |             out << data;
+      |             ~~~~^~~~~~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:578:5: note: candidate: 'template<class _Traits> std::basic_ostream<char, _Traits>& std::operator<<(std::basic_ostream<char, _Traits>&, const signed char*)'
+  578 |     operator<<(basic_ostream<char, _Traits>& __out, const signed char* __s)
+      |     ^~~~~~~~
+/usr/include/c++/9/ostream:578:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:227:17: note:   cannot convert 'data' (type 'const Stats::Scalar') to type 'const signed char*'
+  227 |             out << data;
+      |             ~~~~^~~~~~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:583:5: note: candidate: 'template<class _Traits> std::basic_ostream<char, _Traits>& std::operator<<(std::basic_ostream<char, _Traits>&, const unsigned char*)'
+  583 |     operator<<(basic_ostream<char, _Traits>& __out, const unsigned char* __s)
+      |     ^~~~~~~~
+/usr/include/c++/9/ostream:583:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:227:17: note:   cannot convert 'data' (type 'const Stats::Scalar') to type 'const unsigned char*'
+  227 |             out << data;
+      |             ~~~~^~~~~~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:691:5: note: candidate: 'template<class _Ostream, class _Tp> typename std::enable_if<std::__and_<std::__not_<std::is_lvalue_reference<_Tp> >, std::__is_convertible_to_basic_ostream<_Ostream>, std::__is_insertable<typename std::__is_convertible_to_basic_ostream<_Tp>::__ostream_type, const _Tp&, void> >::value, typename std::__is_convertible_to_basic_ostream<_Tp>::__ostream_type>::type std::operator<<(_Ostream&&, const _Tp&)'
+  691 |     operator<<(_Ostream&& __os, const _Tp& __x)
+      |     ^~~~~~~~
+/usr/include/c++/9/ostream:691:5: note:   template argument deduction/substitution failed:
+/usr/include/c++/9/ostream: In substitution of 'template<class _Ostream, class _Tp> typename std::enable_if<std::__and_<std::__not_<std::is_lvalue_reference<_Tp> >, std::__is_convertible_to_basic_ostream<_Ostream>, std::__is_insertable<typename std::__is_convertible_to_basic_ostream<_Tp>::__ostream_type, const _Tp&, void> >::value, typename std::__is_convertible_to_basic_ostream<_Tp>::__ostream_type>::type std::operator<<(_Ostream&&, const _Tp&) [with _Ostream = std::basic_ostream<char>&; _Tp = Stats::Scalar]':
+build/ARM/base/cprintf_formats.hh:227:17:   required from 'void cp::_format_string(std::ostream&, const T&, cp::Format&) [with T = Stats::Scalar; std::ostream = std::basic_ostream<char>]'
+build/ARM/base/cprintf_formats.hh:342:17:   required from 'void cp::format_string(std::ostream&, const T&, cp::Format&) [with T = Stats::Scalar; std::ostream = std::basic_ostream<char>]'
+build/ARM/base/cprintf.hh:112:26:   required from 'void cp::Print::add_arg(const T&) [with T = Stats::Scalar]'
+build/ARM/base/cprintf.hh:136:5:   required from 'void ccprintf(cp::Print&, const T&, const Args& ...) [with T = Stats::Scalar; Args = {}]'
+build/ARM/base/cprintf.hh:147:13:   required from 'void ccprintf(std::ostream&, const char*, const Args& ...) [with Args = {Stats::Scalar}; std::ostream = std::basic_ostream<char>]'
+build/ARM/base/trace.hh:71:17:   required from 'void Trace::Logger::dprintf_flag(Tick, const string&, const string&, const char*, const Args& ...) [with Args = {Stats::Scalar}; Tick = long unsigned int; std::string = std::__cxx11::basic_string<char>]'
+build/ARM/cpu/atomiccgra/atomiccgra.cc:987:5:   required from here
+/usr/include/c++/9/ostream:691:5: error: no type named 'type' in 'struct std::enable_if<false, std::basic_ostream<char>&>'
+In file included from build/ARM/arch/arm/miscregs.hh:44,
+                 from build/ARM/arch/arm/locked_mem.hh:51,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh: In instantiation of 'void cp::_format_string(std::ostream&, const T&, cp::Format&) [with T = Stats::Scalar; std::ostream = std::basic_ostream<char>]':
+build/ARM/base/cprintf_formats.hh:342:17:   required from 'void cp::format_string(std::ostream&, const T&, cp::Format&) [with T = Stats::Scalar; std::ostream = std::basic_ostream<char>]'
+build/ARM/base/cprintf.hh:112:26:   required from 'void cp::Print::add_arg(const T&) [with T = Stats::Scalar]'
+build/ARM/base/cprintf.hh:136:5:   required from 'void ccprintf(cp::Print&, const T&, const Args& ...) [with T = Stats::Scalar; Args = {}]'
+build/ARM/base/cprintf.hh:147:13:   required from 'void ccprintf(std::ostream&, const char*, const Args& ...) [with Args = {Stats::Scalar}; std::ostream = std::basic_ostream<char>]'
+build/ARM/base/trace.hh:71:17:   required from 'void Trace::Logger::dprintf_flag(Tick, const string&, const string&, const char*, const Args& ...) [with Args = {Stats::Scalar}; Tick = long unsigned int; std::string = std::__cxx11::basic_string<char>]'
+build/ARM/cpu/atomiccgra/atomiccgra.cc:987:5:   required from here
+/usr/include/c++/9/bitset:1538:5: note: candidate: 'template<class _CharT, class _Traits, long unsigned int _Nb> std::basic_ostream<_CharT, _Traits>& std::operator<<(std::basic_ostream<_CharT, _Traits>&, const std::bitset<_Nb>&)'
+ 1538 |     operator<<(std::basic_ostream<_CharT, _Traits>& __os,
+      |     ^~~~~~~~
+/usr/include/c++/9/bitset:1538:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:227:17: note:   'const Stats::Scalar' is not derived from 'const std::bitset<_Nb>'
+  227 |             out << data;
+      |             ~~~~^~~~~~~
+In file included from /usr/include/c++/9/memory:81,
+                 from build/ARM/base/compiler.hh:44,
+                 from build/ARM/arch/arm/miscregs.hh:48,
+                 from build/ARM/arch/arm/locked_mem.hh:51,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+/usr/include/c++/9/bits/shared_ptr.h:66:5: note: candidate: 'template<class _Ch, class _Tr, class _Tp, __gnu_cxx::_Lock_policy _Lp> std::basic_ostream<_CharT, _Traits>& std::operator<<(std::basic_ostream<_CharT, _Traits>&, const std::__shared_ptr<_Tp, _Lp>&)'
+   66 |     operator<<(std::basic_ostream<_Ch, _Tr>& __os,
+      |     ^~~~~~~~
+/usr/include/c++/9/bits/shared_ptr.h:66:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:227:17: note:   'const Stats::Scalar' is not derived from 'const std::__shared_ptr<_Tp, _Lp>'
+  227 |             out << data;
+      |             ~~~~^~~~~~~
+In file included from build/ARM/arch/arm/miscregs_types.hh:44,
+                 from build/ARM/arch/arm/miscregs.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:51,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/bitunion.hh:502:1: note: candidate: 'template<class T> std::ostream& operator<<(std::ostream&, BitUnionType<T>&)'
+  502 | operator << (std::ostream &os, const BitUnionType<T> &bu)
+      | ^~~~~~~~
+build/ARM/base/bitunion.hh:502:1: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:227:17: note:   'const Stats::Scalar' is not derived from 'BitUnionType<T>'
+  227 |             out << data;
+      |             ~~~~^~~~~~~
+In file included from build/ARM/arch/generic/vec_pred_reg.hh:43,
+                 from build/ARM/arch/arm/registers.hh:49,
+                 from build/ARM/arch/registers.hh:1,
+                 from build/ARM/cpu/static_inst.hh:49,
+                 from build/ARM/arch/arm/utility.hh:51,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/arch/generic/vec_reg.hh:498:1: note: candidate: 'template<LaneSize LS> std::ostream& operator<<(std::ostream&, const LaneData<LS>&)'
+  498 | operator<<(std::ostream& os, const LaneData<LS>& d)
+      | ^~~~~~~~
+build/ARM/arch/generic/vec_reg.hh:498:1: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:227:17: note:   'const Stats::Scalar' is not derived from 'const LaneData<LS>'
+  227 |             out << data;
+      |             ~~~~^~~~~~~
+In file included from build/ARM/sim/sim_object.hh:56,
+                 from build/ARM/arch/generic/isa.hh:43,
+                 from build/ARM/cpu/thread_context.hh:49,
+                 from build/ARM/cpu/static_inst.hh:58,
+                 from build/ARM/arch/arm/utility.hh:51,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/sim/port.hh:151:1: note: candidate: 'std::ostream& operator<<(std::ostream&, const Port&)'
+  151 | operator << (std::ostream &os, const Port &port)
+      | ^~~~~~~~
+build/ARM/sim/port.hh:151:44: note:   no known conversion for argument 2 from 'const Stats::Scalar' to 'const Port&'
+  151 | operator << (std::ostream &os, const Port &port)
+      |                                ~~~~~~~~~~~~^~~~
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:229:13: error: no match for 'operator<<' (operand types are 'std::ostream' {aka 'std::basic_ostream<char>'} and 'const Stats::Scalar')
+  229 |         out << data;
+      |         ~~~~^~~~~~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:108:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(std::basic_ostream<_CharT, _Traits>::__ostream_type& (*)(std::basic_ostream<_CharT, _Traits>::__ostream_type&)) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  108 |       operator<<(__ostream_type& (*__pf)(__ostream_type&))
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:108:36: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'std::basic_ostream<char>::__ostream_type& (*)(std::basic_ostream<char>::__ostream_type&)' {aka 'std::basic_ostream<char>& (*)(std::basic_ostream<char>&)'}
+  108 |       operator<<(__ostream_type& (*__pf)(__ostream_type&))
+      |                  ~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~
+/usr/include/c++/9/ostream:117:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(std::basic_ostream<_CharT, _Traits>::__ios_type& (*)(std::basic_ostream<_CharT, _Traits>::__ios_type&)) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>; std::basic_ostream<_CharT, _Traits>::__ios_type = std::basic_ios<char>]'
+  117 |       operator<<(__ios_type& (*__pf)(__ios_type&))
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:117:32: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'std::basic_ostream<char>::__ios_type& (*)(std::basic_ostream<char>::__ios_type&)' {aka 'std::basic_ios<char>& (*)(std::basic_ios<char>&)'}
+  117 |       operator<<(__ios_type& (*__pf)(__ios_type&))
+      |                  ~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~
+/usr/include/c++/9/ostream:127:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(std::ios_base& (*)(std::ios_base&)) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  127 |       operator<<(ios_base& (*__pf) (ios_base&))
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:127:30: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'std::ios_base& (*)(std::ios_base&)'
+  127 |       operator<<(ios_base& (*__pf) (ios_base&))
+      |                  ~~~~~~~~~~~~^~~~~~~~~~~~~~~~~
+/usr/include/c++/9/ostream:166:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(long int) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  166 |       operator<<(long __n)
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:166:23: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'long int'
+  166 |       operator<<(long __n)
+      |                  ~~~~~^~~
+/usr/include/c++/9/ostream:170:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(long unsigned int) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  170 |       operator<<(unsigned long __n)
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:170:32: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'long unsigned int'
+  170 |       operator<<(unsigned long __n)
+      |                  ~~~~~~~~~~~~~~^~~
+/usr/include/c++/9/ostream:174:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(bool) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  174 |       operator<<(bool __n)
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:174:23: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'bool'
+  174 |       operator<<(bool __n)
+      |                  ~~~~~^~~
+In file included from /usr/include/c++/9/ostream:702,
+                 from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/bits/ostream.tcc:91:5: note: candidate: 'std::basic_ostream<_CharT, _Traits>& std::basic_ostream<_CharT, _Traits>::operator<<(short int) [with _CharT = char; _Traits = std::char_traits<char>]'
+   91 |     basic_ostream<_CharT, _Traits>::
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/c++/9/bits/ostream.tcc:92:22: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'short int'
+   92 |     operator<<(short __n)
+      |                ~~~~~~^~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:181:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(short unsigned int) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  181 |       operator<<(unsigned short __n)
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:181:33: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'short unsigned int'
+  181 |       operator<<(unsigned short __n)
+      |                  ~~~~~~~~~~~~~~~^~~
+In file included from /usr/include/c++/9/ostream:702,
+                 from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/bits/ostream.tcc:105:5: note: candidate: 'std::basic_ostream<_CharT, _Traits>& std::basic_ostream<_CharT, _Traits>::operator<<(int) [with _CharT = char; _Traits = std::char_traits<char>]'
+  105 |     basic_ostream<_CharT, _Traits>::
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/c++/9/bits/ostream.tcc:106:20: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'int'
+  106 |     operator<<(int __n)
+      |                ~~~~^~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:192:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(unsigned int) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  192 |       operator<<(unsigned int __n)
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:192:31: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'unsigned int'
+  192 |       operator<<(unsigned int __n)
+      |                  ~~~~~~~~~~~~~^~~
+/usr/include/c++/9/ostream:201:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(long long int) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  201 |       operator<<(long long __n)
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:201:28: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'long long int'
+  201 |       operator<<(long long __n)
+      |                  ~~~~~~~~~~^~~
+/usr/include/c++/9/ostream:205:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(long long unsigned int) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  205 |       operator<<(unsigned long long __n)
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:205:37: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'long long unsigned int'
+  205 |       operator<<(unsigned long long __n)
+      |                  ~~~~~~~~~~~~~~~~~~~^~~
+/usr/include/c++/9/ostream:220:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(double) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  220 |       operator<<(double __f)
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:220:25: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'double'
+  220 |       operator<<(double __f)
+      |                  ~~~~~~~^~~
+/usr/include/c++/9/ostream:224:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(float) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  224 |       operator<<(float __f)
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:224:24: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'float'
+  224 |       operator<<(float __f)
+      |                  ~~~~~~^~~
+/usr/include/c++/9/ostream:232:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(long double) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  232 |       operator<<(long double __f)
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:232:30: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'long double'
+  232 |       operator<<(long double __f)
+      |                  ~~~~~~~~~~~~^~~
+/usr/include/c++/9/ostream:245:7: note: candidate: 'std::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(const void*) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>]'
+  245 |       operator<<(const void* __p)
+      |       ^~~~~~~~
+/usr/include/c++/9/ostream:245:30: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'const void*'
+  245 |       operator<<(const void* __p)
+      |                  ~~~~~~~~~~~~^~~
+In file included from /usr/include/c++/9/ostream:702,
+                 from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/bits/ostream.tcc:119:5: note: candidate: 'std::basic_ostream<_CharT, _Traits>& std::basic_ostream<_CharT, _Traits>::operator<<(std::basic_ostream<_CharT, _Traits>::__streambuf_type*) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__streambuf_type = std::basic_streambuf<char>]'
+  119 |     basic_ostream<_CharT, _Traits>::
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/c++/9/bits/ostream.tcc:120:34: note:   no known conversion for argument 1 from 'const Stats::Scalar' to 'std::basic_ostream<char>::__streambuf_type*' {aka 'std::basic_streambuf<char>*'}
+  120 |     operator<<(__streambuf_type* __sbin)
+      |                ~~~~~~~~~~~~~~~~~~^~~~~~
+In file included from /usr/include/c++/9/string:55,
+                 from /usr/include/c++/9/bits/locale_classes.h:40,
+                 from /usr/include/c++/9/bits/ios_base.h:41,
+                 from /usr/include/c++/9/ios:42,
+                 from /usr/include/c++/9/ostream:38,
+                 from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/bits/basic_string.h:6416:5: note: candidate: 'template<class _CharT, class _Traits, class _Alloc> std::basic_ostream<_CharT, _Traits>& std::operator<<(std::basic_ostream<_CharT, _Traits>&, const std::__cxx11::basic_string<_CharT, _Traits, _Alloc>&)'
+ 6416 |     operator<<(basic_ostream<_CharT, _Traits>& __os,
+      |     ^~~~~~~~
+/usr/include/c++/9/bits/basic_string.h:6416:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:229:13: note:   'const Stats::Scalar' is not derived from 'const std::__cxx11::basic_string<_CharT, _Traits, _Alloc>'
+  229 |         out << data;
+      |         ~~~~^~~~~~~
+In file included from /usr/include/c++/9/bits/ios_base.h:46,
+                 from /usr/include/c++/9/ios:42,
+                 from /usr/include/c++/9/ostream:38,
+                 from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/system_error:217:5: note: candidate: 'template<class _CharT, class _Traits> std::basic_ostream<_CharT, _Traits>& std::operator<<(std::basic_ostream<_CharT, _Traits>&, const std::error_code&)'
+  217 |     operator<<(basic_ostream<_CharT, _Traits>& __os, const error_code& __e)
+      |     ^~~~~~~~
+/usr/include/c++/9/system_error:217:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:229:13: note:   cannot convert 'data' (type 'const Stats::Scalar') to type 'const std::error_code&'
+  229 |         out << data;
+      |         ~~~~^~~~~~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:506:5: note: candidate: 'template<class _CharT, class _Traits> std::basic_ostream<_CharT, _Traits>& std::operator<<(std::basic_ostream<_CharT, _Traits>&, _CharT)'
+  506 |     operator<<(basic_ostream<_CharT, _Traits>& __out, _CharT __c)
+      |     ^~~~~~~~
+/usr/include/c++/9/ostream:506:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:229:13: note:   deduced conflicting types for parameter '_CharT' ('char' and 'Stats::Scalar')
+  229 |         out << data;
+      |         ~~~~^~~~~~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:511:5: note: candidate: 'template<class _CharT, class _Traits> std::basic_ostream<_CharT, _Traits>& std::operator<<(std::basic_ostream<_CharT, _Traits>&, char)'
+  511 |     operator<<(basic_ostream<_CharT, _Traits>& __out, char __c)
+      |     ^~~~~~~~
+/usr/include/c++/9/ostream:511:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:229:13: note:   cannot convert 'data' (type 'const Stats::Scalar') to type 'char'
+  229 |         out << data;
+      |         ~~~~^~~~~~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:517:5: note: candidate: 'template<class _Traits> std::basic_ostream<char, _Traits>& std::operator<<(std::basic_ostream<char, _Traits>&, char)'
+  517 |     operator<<(basic_ostream<char, _Traits>& __out, char __c)
+      |     ^~~~~~~~
+/usr/include/c++/9/ostream:517:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:229:13: note:   cannot convert 'data' (type 'const Stats::Scalar') to type 'char'
+  229 |         out << data;
+      |         ~~~~^~~~~~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:523:5: note: candidate: 'template<class _Traits> std::basic_ostream<char, _Traits>& std::operator<<(std::basic_ostream<char, _Traits>&, signed char)'
+  523 |     operator<<(basic_ostream<char, _Traits>& __out, signed char __c)
+      |     ^~~~~~~~
+/usr/include/c++/9/ostream:523:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:229:13: note:   cannot convert 'data' (type 'const Stats::Scalar') to type 'signed char'
+  229 |         out << data;
+      |         ~~~~^~~~~~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:528:5: note: candidate: 'template<class _Traits> std::basic_ostream<char, _Traits>& std::operator<<(std::basic_ostream<char, _Traits>&, unsigned char)'
+  528 |     operator<<(basic_ostream<char, _Traits>& __out, unsigned char __c)
+      |     ^~~~~~~~
+/usr/include/c++/9/ostream:528:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:229:13: note:   cannot convert 'data' (type 'const Stats::Scalar') to type 'unsigned char'
+  229 |         out << data;
+      |         ~~~~^~~~~~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:548:5: note: candidate: 'template<class _CharT, class _Traits> std::basic_ostream<_CharT, _Traits>& std::operator<<(std::basic_ostream<_CharT, _Traits>&, const _CharT*)'
+  548 |     operator<<(basic_ostream<_CharT, _Traits>& __out, const _CharT* __s)
+      |     ^~~~~~~~
+/usr/include/c++/9/ostream:548:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:229:13: note:   mismatched types 'const _CharT*' and 'Stats::Scalar'
+  229 |         out << data;
+      |         ~~~~^~~~~~~
+In file included from /usr/include/c++/9/ostream:702,
+                 from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/bits/ostream.tcc:321:5: note: candidate: 'template<class _CharT, class _Traits> std::basic_ostream<_CharT, _Traits>& std::operator<<(std::basic_ostream<_CharT, _Traits>&, const char*)'
+  321 |     operator<<(basic_ostream<_CharT, _Traits>& __out, const char* __s)
+      |     ^~~~~~~~
+/usr/include/c++/9/bits/ostream.tcc:321:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:229:13: note:   cannot convert 'data' (type 'const Stats::Scalar') to type 'const char*'
+  229 |         out << data;
+      |         ~~~~^~~~~~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:565:5: note: candidate: 'template<class _Traits> std::basic_ostream<char, _Traits>& std::operator<<(std::basic_ostream<char, _Traits>&, const char*)'
+  565 |     operator<<(basic_ostream<char, _Traits>& __out, const char* __s)
+      |     ^~~~~~~~
+/usr/include/c++/9/ostream:565:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:229:13: note:   cannot convert 'data' (type 'const Stats::Scalar') to type 'const char*'
+  229 |         out << data;
+      |         ~~~~^~~~~~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:578:5: note: candidate: 'template<class _Traits> std::basic_ostream<char, _Traits>& std::operator<<(std::basic_ostream<char, _Traits>&, const signed char*)'
+  578 |     operator<<(basic_ostream<char, _Traits>& __out, const signed char* __s)
+      |     ^~~~~~~~
+/usr/include/c++/9/ostream:578:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:229:13: note:   cannot convert 'data' (type 'const Stats::Scalar') to type 'const signed char*'
+  229 |         out << data;
+      |         ~~~~^~~~~~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:583:5: note: candidate: 'template<class _Traits> std::basic_ostream<char, _Traits>& std::operator<<(std::basic_ostream<char, _Traits>&, const unsigned char*)'
+  583 |     operator<<(basic_ostream<char, _Traits>& __out, const unsigned char* __s)
+      |     ^~~~~~~~
+/usr/include/c++/9/ostream:583:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:229:13: note:   cannot convert 'data' (type 'const Stats::Scalar') to type 'const unsigned char*'
+  229 |         out << data;
+      |         ~~~~^~~~~~~
+In file included from /usr/include/c++/9/iostream:39,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:43:
+/usr/include/c++/9/ostream:691:5: note: candidate: 'template<class _Ostream, class _Tp> typename std::enable_if<std::__and_<std::__not_<std::is_lvalue_reference<_Tp> >, std::__is_convertible_to_basic_ostream<_Ostream>, std::__is_insertable<typename std::__is_convertible_to_basic_ostream<_Tp>::__ostream_type, const _Tp&, void> >::value, typename std::__is_convertible_to_basic_ostream<_Tp>::__ostream_type>::type std::operator<<(_Ostream&&, const _Tp&)'
+  691 |     operator<<(_Ostream&& __os, const _Tp& __x)
+      |     ^~~~~~~~
+/usr/include/c++/9/ostream:691:5: note:   template argument deduction/substitution failed:
+/usr/include/c++/9/ostream: In substitution of 'template<class _Ostream, class _Tp> typename std::enable_if<std::__and_<std::__not_<std::is_lvalue_reference<_Tp> >, std::__is_convertible_to_basic_ostream<_Ostream>, std::__is_insertable<typename std::__is_convertible_to_basic_ostream<_Tp>::__ostream_type, const _Tp&, void> >::value, typename std::__is_convertible_to_basic_ostream<_Tp>::__ostream_type>::type std::operator<<(_Ostream&&, const _Tp&) [with _Ostream = std::basic_ostream<char>&; _Tp = Stats::Scalar]':
+build/ARM/base/cprintf_formats.hh:229:13:   required from 'void cp::_format_string(std::ostream&, const T&, cp::Format&) [with T = Stats::Scalar; std::ostream = std::basic_ostream<char>]'
+build/ARM/base/cprintf_formats.hh:342:17:   required from 'void cp::format_string(std::ostream&, const T&, cp::Format&) [with T = Stats::Scalar; std::ostream = std::basic_ostream<char>]'
+build/ARM/base/cprintf.hh:112:26:   required from 'void cp::Print::add_arg(const T&) [with T = Stats::Scalar]'
+build/ARM/base/cprintf.hh:136:5:   required from 'void ccprintf(cp::Print&, const T&, const Args& ...) [with T = Stats::Scalar; Args = {}]'
+build/ARM/base/cprintf.hh:147:13:   required from 'void ccprintf(std::ostream&, const char*, const Args& ...) [with Args = {Stats::Scalar}; std::ostream = std::basic_ostream<char>]'
+build/ARM/base/trace.hh:71:17:   required from 'void Trace::Logger::dprintf_flag(Tick, const string&, const string&, const char*, const Args& ...) [with Args = {Stats::Scalar}; Tick = long unsigned int; std::string = std::__cxx11::basic_string<char>]'
+build/ARM/cpu/atomiccgra/atomiccgra.cc:987:5:   required from here
+/usr/include/c++/9/ostream:691:5: error: no type named 'type' in 'struct std::enable_if<false, std::basic_ostream<char>&>'
+In file included from build/ARM/arch/arm/miscregs.hh:44,
+                 from build/ARM/arch/arm/locked_mem.hh:51,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh: In instantiation of 'void cp::_format_string(std::ostream&, const T&, cp::Format&) [with T = Stats::Scalar; std::ostream = std::basic_ostream<char>]':
+build/ARM/base/cprintf_formats.hh:342:17:   required from 'void cp::format_string(std::ostream&, const T&, cp::Format&) [with T = Stats::Scalar; std::ostream = std::basic_ostream<char>]'
+build/ARM/base/cprintf.hh:112:26:   required from 'void cp::Print::add_arg(const T&) [with T = Stats::Scalar]'
+build/ARM/base/cprintf.hh:136:5:   required from 'void ccprintf(cp::Print&, const T&, const Args& ...) [with T = Stats::Scalar; Args = {}]'
+build/ARM/base/cprintf.hh:147:13:   required from 'void ccprintf(std::ostream&, const char*, const Args& ...) [with Args = {Stats::Scalar}; std::ostream = std::basic_ostream<char>]'
+build/ARM/base/trace.hh:71:17:   required from 'void Trace::Logger::dprintf_flag(Tick, const string&, const string&, const char*, const Args& ...) [with Args = {Stats::Scalar}; Tick = long unsigned int; std::string = std::__cxx11::basic_string<char>]'
+build/ARM/cpu/atomiccgra/atomiccgra.cc:987:5:   required from here
+/usr/include/c++/9/bitset:1538:5: note: candidate: 'template<class _CharT, class _Traits, long unsigned int _Nb> std::basic_ostream<_CharT, _Traits>& std::operator<<(std::basic_ostream<_CharT, _Traits>&, const std::bitset<_Nb>&)'
+ 1538 |     operator<<(std::basic_ostream<_CharT, _Traits>& __os,
+      |     ^~~~~~~~
+/usr/include/c++/9/bitset:1538:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:229:13: note:   'const Stats::Scalar' is not derived from 'const std::bitset<_Nb>'
+  229 |         out << data;
+      |         ~~~~^~~~~~~
+In file included from /usr/include/c++/9/memory:81,
+                 from build/ARM/base/compiler.hh:44,
+                 from build/ARM/arch/arm/miscregs.hh:48,
+                 from build/ARM/arch/arm/locked_mem.hh:51,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+/usr/include/c++/9/bits/shared_ptr.h:66:5: note: candidate: 'template<class _Ch, class _Tr, class _Tp, __gnu_cxx::_Lock_policy _Lp> std::basic_ostream<_CharT, _Traits>& std::operator<<(std::basic_ostream<_CharT, _Traits>&, const std::__shared_ptr<_Tp, _Lp>&)'
+   66 |     operator<<(std::basic_ostream<_Ch, _Tr>& __os,
+      |     ^~~~~~~~
+/usr/include/c++/9/bits/shared_ptr.h:66:5: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:229:13: note:   'const Stats::Scalar' is not derived from 'const std::__shared_ptr<_Tp, _Lp>'
+  229 |         out << data;
+      |         ~~~~^~~~~~~
+In file included from build/ARM/arch/arm/miscregs_types.hh:44,
+                 from build/ARM/arch/arm/miscregs.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:51,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/bitunion.hh:502:1: note: candidate: 'template<class T> std::ostream& operator<<(std::ostream&, BitUnionType<T>&)'
+  502 | operator << (std::ostream &os, const BitUnionType<T> &bu)
+      | ^~~~~~~~
+build/ARM/base/bitunion.hh:502:1: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:229:13: note:   'const Stats::Scalar' is not derived from 'BitUnionType<T>'
+  229 |         out << data;
+      |         ~~~~^~~~~~~
+In file included from build/ARM/arch/generic/vec_pred_reg.hh:43,
+                 from build/ARM/arch/arm/registers.hh:49,
+                 from build/ARM/arch/registers.hh:1,
+                 from build/ARM/cpu/static_inst.hh:49,
+                 from build/ARM/arch/arm/utility.hh:51,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/arch/generic/vec_reg.hh:498:1: note: candidate: 'template<LaneSize LS> std::ostream& operator<<(std::ostream&, const LaneData<LS>&)'
+  498 | operator<<(std::ostream& os, const LaneData<LS>& d)
+      | ^~~~~~~~
+build/ARM/arch/generic/vec_reg.hh:498:1: note:   template argument deduction/substitution failed:
+In file included from build/ARM/base/cprintf.hh:38,
+                 from build/ARM/base/trace.hh:37,
+                 from build/ARM/arch/generic/types.hh:47,
+                 from build/ARM/arch/arm/types.hh:44,
+                 from build/ARM/arch/arm/utility.hh:47,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/base/cprintf_formats.hh:229:13: note:   'const Stats::Scalar' is not derived from 'const LaneData<LS>'
+  229 |         out << data;
+      |         ~~~~^~~~~~~
+In file included from build/ARM/sim/sim_object.hh:56,
+                 from build/ARM/arch/generic/isa.hh:43,
+                 from build/ARM/cpu/thread_context.hh:49,
+                 from build/ARM/cpu/static_inst.hh:58,
+                 from build/ARM/arch/arm/utility.hh:51,
+                 from build/ARM/arch/arm/locked_mem.hh:53,
+                 from build/ARM/arch/locked_mem.hh:1,
+                 from build/ARM/cpu/atomiccgra/atomiccgra.cc:46:
+build/ARM/sim/port.hh:151:1: note: candidate: 'std::ostream& operator<<(std::ostream&, const Port&)'
+  151 | operator << (std::ostream &os, const Port &port)
+      | ^~~~~~~~
+build/ARM/sim/port.hh:151:44: note:   no known conversion for argument 2 from 'const Stats::Scalar' to 'const Port&'
+  151 | operator << (std::ostream &os, const Port &port)
+      |                                ~~~~~~~~~~~~^~~~
+ [    LINK]  -> ARM/mem/ruby/system/lib.o.partial
+ [     CXX] ARM/mem/ruby/protocol/DMA_Controller.cc -> .o
+ [     CXX] ARM/mem/ruby/protocol/DMA_Wakeup.cc -> .o
+ [     CXX] ARM/mem/ruby/protocol/Directory_Controller.cc -> .o
+ [     CXX] ARM/mem/ruby/protocol/Directory_Wakeup.cc -> .o
+ [     CXX] ARM/mem/ruby/protocol/L1Cache_Controller.cc -> .o
+ [     CXX] ARM/mem/ruby/protocol/L1Cache_Wakeup.cc -> .o
+ [     CXX] ARM/mem/ruby/protocol/L2Cache_Controller.cc -> .o
+ [     CXX] ARM/mem/ruby/protocol/L2Cache_Wakeup.cc -> .o
+ [     CXX] ARM/mem/ruby/slicc_interface/AbstractController.cc -> .o
+ [     CXX] ARM/mem/ruby/slicc_interface/RubyRequest.cc -> .o
+scons: *** [build/ARM/cpu/atomiccgra/atomiccgra.o] Error 1
+scons: building terminated because of errors.
+*** Summary of Warnings ***
+Warning: Your compiler doesn't support incremental linking and lto at the same
+         time, so lto is being disabled. To force lto on anyway, use the
+         --force-lto option. That will disable partial linking.
+Warning: Header file <png.h> not found.
+         This host has no libpng library.
+         Disabling support for PNG framebuffers.

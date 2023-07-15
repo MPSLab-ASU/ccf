@@ -1,4 +1,6 @@
 /*
+ * Copyright 2015 LabWare
+ * Copyright 2014 Google, Inc.
  * Copyright (c) 2007 The Hewlett-Packard Development Company
  * All rights reserved.
  *
@@ -33,12 +35,12 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Gabe Black
  */
 
 #ifndef __ARCH_X86_REMOTEGDB_HH__
 #define __ARCH_X86_REMOTEGDB_HH__
+
+#include <algorithm>
 
 #include "arch/x86/types.hh"
 #include "base/remote_gdb.hh"
@@ -48,29 +50,99 @@ class ThreadContext;
 
 namespace X86ISA
 {
-    class RemoteGDB : public BaseRemoteGDB
+class RemoteGDB : public BaseRemoteGDB
+{
+  protected:
+    bool acc(Addr addr, size_t len);
+    bool checkBpLen(size_t len) { return len == 1; }
+    class X86GdbRegCache : public BaseGdbRegCache
     {
-      protected:
-        enum RegisterContants
-        {
-            NumGDBRegs
-            //XXX fill this in
-        };
-
+      using BaseGdbRegCache::BaseGdbRegCache;
+      private:
+        struct {
+          uint32_t eax;
+          uint32_t ecx;
+          uint32_t edx;
+          uint32_t ebx;
+          uint32_t esp;
+          uint32_t ebp;
+          uint32_t esi;
+          uint32_t edi;
+          uint32_t eip;
+          uint32_t eflags;
+          uint32_t cs;
+          uint32_t ss;
+          uint32_t ds;
+          uint32_t es;
+          uint32_t fs;
+          uint32_t gs;
+        } r;
       public:
-        RemoteGDB(System *system, ThreadContext *context);
-
-        bool acc(Addr addr, size_t len);
-
-      protected:
-        void getregs();
-        void setregs();
-
-        void clearSingleStep();
-        void setSingleStep();
-
-        Addr nextBkpt;
+        char *data() const { return (char *)&r; }
+        size_t size() const { return sizeof(r); }
+        void getRegs(ThreadContext*);
+        void setRegs(ThreadContext*) const;
+        const std::string
+        name() const
+        {
+            return gdb->name() + ".X86GdbRegCache";
+        }
     };
-}
+
+    class AMD64GdbRegCache : public BaseGdbRegCache
+    {
+      using BaseGdbRegCache::BaseGdbRegCache;
+      private:
+        struct M5_ATTR_PACKED {
+          uint64_t rax;
+          uint64_t rbx;
+          uint64_t rcx;
+          uint64_t rdx;
+          uint64_t rsi;
+          uint64_t rdi;
+          uint64_t rbp;
+          uint64_t rsp;
+          uint64_t r8;
+          uint64_t r9;
+          uint64_t r10;
+          uint64_t r11;
+          uint64_t r12;
+          uint64_t r13;
+          uint64_t r14;
+          uint64_t r15;
+          uint64_t rip;
+          uint32_t eflags;
+          uint32_t cs;
+          uint32_t ss;
+          uint32_t ds;
+          uint32_t es;
+          uint32_t fs;
+          uint32_t gs;
+          /*
+           * We do not model st[], FPU status regs, xmm[] etc.
+           * While it's not ok to have G-packets larger than what gdb
+           * knows about, it is ok to have smaller ones.
+           */
+        } r;
+      public:
+        char *data() const { return (char *)&r; }
+        size_t size() const { return sizeof(r); }
+        void getRegs(ThreadContext*);
+        void setRegs(ThreadContext*) const;
+        const std::string
+        name() const
+        {
+            return gdb->name() + ".AMD64GdbRegCache";
+        }
+    };
+
+    X86GdbRegCache regCache32;
+    AMD64GdbRegCache regCache64;
+
+  public:
+    RemoteGDB(System *system, ThreadContext *context, int _port);
+    BaseGdbRegCache *gdbRegs();
+};
+} // namespace X86ISA
 
 #endif // __ARCH_X86_REMOTEGDB_HH__

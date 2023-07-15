@@ -36,9 +36,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Ron Dreslinski
- *          Andreas Hansson
  */
 
 /**
@@ -49,48 +46,19 @@
 #ifndef __MEM_MEM_OBJECT_HH__
 #define __MEM_MEM_OBJECT_HH__
 
-#include "mem/port.hh"
 #include "params/MemObject.hh"
 #include "sim/clocked_object.hh"
 
 /**
- * The MemObject class extends the ClockedObject with accessor functions
- * to get its master and slave ports.
+ * The MemObject class extends the ClockedObject for historical reasons.
  */
 class MemObject : public ClockedObject
 {
   public:
-    typedef MemObjectParams Params;
-    const Params *params() const
-    { return dynamic_cast<const Params *>(_params); }
-
-    MemObject(const Params *params);
-
-    /**
-     * Get a master port with a given name and index. This is used at
-     * binding time and returns a reference to a protocol-agnostic
-     * base master port.
-     *
-     * @param if_name Port name
-     * @param idx Index in the case of a VectorPort
-     *
-     * @return A reference to the given port
-     */
-    virtual BaseMasterPort& getMasterPort(const std::string& if_name,
-                                          PortID idx = InvalidPortID);
-
-    /**
-     * Get a slave port with a given name and index. This is used at
-     * binding time and returns a reference to a protocol-agnostic
-     * base master port.
-     *
-     * @param if_name Port name
-     * @param idx Index in the case of a VectorPort
-     *
-     * @return A reference to the given port
-     */
-    virtual BaseSlavePort& getSlavePort(const std::string& if_name,
-                                        PortID idx = InvalidPortID);
+    M5_DEPRECATED_MSG(
+            "MemObject is deprecated. Use ClockedObject or SimObject instead")
+        MemObject(const MemObjectParams *params) : ClockedObject(params)
+    {}
 };
 
 #endif //__MEM_MEM_OBJECT_HH__

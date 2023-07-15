@@ -1,3 +1,15 @@
+# Copyright (c) 2016, 2020 ARM Limited
+# All rights reserved.
+#
+# The license below extends only to copyright in the software and shall
+# not be construed as granting a license to any other intellectual
+# property including but not limited to intellectual property relating
+# to a hardware implementation of the functionality of the software
+# licensed hereunder.  You may use the software subject to the license
+# terms below provided that you ensure that this notice is replicated
+# unmodified and in its entirety in all distributions of the software,
+# modified or unmodified, in source code or in binary form.
+#
 # Copyright (c) 2008-2009 The Hewlett-Packard Development Company
 # Copyright (c) 2004-2006 The Regents of The University of Michigan
 # All rights reserved.
@@ -24,48 +36,49 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Nathan Binkert
+
+from __future__ import print_function
 
 import os
 import re
 import sys
 
-import convert
-import jobfile
+from six import string_types
+from six.moves import zip_longest
 
-from attrdict import attrdict, multiattrdict, optiondict
-from code_formatter import code_formatter
-from multidict import multidict
-from orderdict import orderdict
-from smartdict import SmartDict
-from sorteddict import SortedDict
-from region import neg_inf, pos_inf, Region, Regions
+from . import convert
+from . import jobfile
+
+from .attrdict import attrdict, multiattrdict, optiondict
+from .code_formatter import code_formatter
+from .multidict import multidict
+from .smartdict import SmartDict
+from .sorteddict import SortedDict
 
 # panic() should be called when something happens that should never
 # ever happen regardless of what the user does (i.e., an acutal m5
 # bug).
 def panic(fmt, *args):
-    print >>sys.stderr, 'panic:', fmt % args
+    print('panic:', fmt % args, file=sys.stderr)
     sys.exit(1)
 
 # fatal() should be called when the simulation cannot continue due to
 # some condition that is the user's fault (bad configuration, invalid
 # arguments, etc.) and not a simulator bug.
 def fatal(fmt, *args):
-    print >>sys.stderr, 'fatal:', fmt % args
+    print('fatal:', fmt % args, file=sys.stderr)
     sys.exit(1)
 
 # warn() should be called when the user should be warned about some condition
 # that may or may not be the user's fault, but that they should be made aware
 # of as it may affect the simulation or results.
 def warn(fmt, *args):
-    print >>sys.stderr, 'warn:', fmt % args
+    print('warn:', fmt % args, file=sys.stderr)
 
 # inform() should be called when the user should be informed about some
 # condition that they may be interested in.
 def inform(fmt, *args):
-    print >>sys.stdout, 'info:', fmt % args
+    print('info:', fmt % args, file=sys.stdout)
 
 class Singleton(type):
     def __call__(cls, *args, **kwargs):
@@ -112,20 +125,21 @@ def compareVersions(v1, v2):
     def make_version_list(v):
         if isinstance(v, (list,tuple)):
             return v
-        elif isinstance(v, str):
-            return map(lambda x: int(re.match('\d+', x).group()), v.split('.'))
+        elif isinstance(v, string_types):
+            return list(map(lambda x: int(re.match('\d+', x).group()),
+                            v.split('.')))
         else:
-            raise TypeError
+            raise TypeError()
 
     v1 = make_version_list(v1)
     v2 = make_version_list(v2)
+
     # Compare corresponding elements of lists
-    for n1,n2 in zip(v1, v2):
+    # The shorter list is filled with 0 till the lists have the same length
+    for n1,n2 in zip_longest(v1, v2, fillvalue=0):
         if n1 < n2: return -1
         if n1 > n2: return  1
-    # all corresponding values are equal... see if one has extra values
-    if len(v1) < len(v2): return -1
-    if len(v1) > len(v2): return  1
+
     return 0
 
 def crossproduct(items):
@@ -155,18 +169,25 @@ def printList(items, indent=4):
     line = ' ' * indent
     for i,item in enumerate(items):
         if len(line) + len(item) > 76:
-            print line
+            print(line)
             line = ' ' * indent
 
         if i < len(items) - 1:
             line += '%s, ' % item
         else:
             line += item
-            print line
+            print(line)
 
-def readCommand(cmd, **kwargs):
-    """run the command cmd, read the results and return them
-    this is sorta like `cmd` in shell"""
+def readCommandWithReturn(cmd, **kwargs):
+    """
+    run the command cmd, read the results and return them
+    this is sorta like `cmd` in shell
+
+    :param cmd: command to run with Popen
+    :type cmd: string, list
+    :returns: pair consisting on Popen retcode and the command stdout
+    :rtype: (int, string)
+    """
     from subprocess import Popen, PIPE, STDOUT
 
     if isinstance(cmd, str):
@@ -174,25 +195,43 @@ def readCommand(cmd, **kwargs):
 
     no_exception = 'exception' in kwargs
     exception = kwargs.pop('exception', None)
-    
+
     kwargs.setdefault('shell', False)
     kwargs.setdefault('stdout', PIPE)
     kwargs.setdefault('stderr', STDOUT)
     kwargs.setdefault('close_fds', True)
     try:
         subp = Popen(cmd, **kwargs)
-    except Exception, e:
+    except Exception as e:
         if no_exception:
-            return exception
+            return -1, exception
         raise
 
-    return subp.communicate()[0]
+    output = subp.communicate()[0].decode('utf-8')
+    return subp.returncode, output
+
+def readCommand(cmd, **kwargs):
+    """
+    run the command cmd, read the results and return them
+    this is sorta like `cmd` in shell
+
+    :param cmd: command to run with Popen
+    :type cmd: string, list
+    :returns: command stdout
+    :rtype: string
+    """
+    return readCommandWithReturn(cmd, **kwargs)[1]
 
 def makeDir(path):
     """Make a directory if it doesn't exist.  If the path does exist,
     ensure that it is a directory"""
     if os.path.exists(path):
         if not os.path.isdir(path):
-            raise AttributeError, "%s exists but is not directory" % path
+            raise AttributeError("%s exists but is not directory" % path)
     else:
         os.mkdir(path)
+
+def isInteractive():
+    """Check if the simulator is run interactively or in a batch environment"""
+
+    return sys.__stdin__.isatty()

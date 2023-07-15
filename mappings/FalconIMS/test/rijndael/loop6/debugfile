@@ -1,0 +1,2329 @@
+Mapping has started
+Operating mode:3
+inserting loads for largeConstants:	65	8	0
+inserting loads for largeConstants:	70	13	0
+inserting loads for largeConstants:	75	17	0
+inserting loads for largeConstants:	78	21	0
+inserting loads for largeConstants:	81	25	0
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+Starting II: 8	rec_MII: 6
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+71
+1. src is: 45-9	target is: 53-21
+1. Edge points to NULL!
+73
+Redoing ASAP and ALAP
+73
+1. src is: 101-8	target is: 53-23
+1. Edge points to NULL!
+75
+Redoing ASAP and ALAP
+75
+1. src is: 39-15	target is: 49-24
+1. Edge points to NULL!
+77
+77
+77
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+71
+74
+Redoing ASAP and ALAP
+74
+1. src is: 45-4	target is: 53-24
+1. Edge points to NULL!
+76
+Redoing ASAP and ALAP
+76
+76
+76
+76
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+71
+1. src is: 45-6	target is: 53-20
+1. Edge points to NULL!
+73
+Redoing ASAP and ALAP
+73
+1. src is: 101-4	target is: 49-22
+1. Edge points to NULL!
+75
+Redoing ASAP and ALAP
+75
+75
+75
+75
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+71
+74
+Redoing ASAP and ALAP
+74
+75
+75
+75
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+71
+73
+Redoing ASAP and ALAP
+73
+1. src is: 45-9	target is: 53-21
+1. Edge points to NULL!
+75
+Redoing ASAP and ALAP
+75
+1. src is: 1-0	target is: 48-24
+1. Edge points to NULL!
+77
+Feasible II is 8	Schedule Len is 36
+
+II after scheduling is: 8
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+Left Nodes Are: 0	
+Left Nodes Are: 1	
+K : 4
+distance: 5
+ adding nodes between: 1-->51
+Left Nodes Are: 2	
+K : 6
+distance: 7
+ adding nodes between: 2-->54
+K : 6
+distance: 7
+ adding nodes between: 2-->24
+Left Nodes Are: 5	
+K : 12
+distance: 13
+ adding nodes between: 5-->50
+Left Nodes Are: 8	
+Left Nodes Are: 13	
+Left Nodes Are: 15	
+K : 1
+distance: 2
+ adding nodes between: 15-->29
+Left Nodes Are: 17	
+K : 1
+distance: 2
+ adding nodes between: 17-->18
+Left Nodes Are: 18	
+Left Nodes Are: 19	
+K : 2
+distance: 3
+ adding nodes between: 19-->30
+Left Nodes Are: 21	
+K : 3
+distance: 4
+ adding nodes between: 21-->22
+Left Nodes Are: 22	
+Left Nodes Are: 23	
+K : 1
+distance: 2
+ adding nodes between: 23-->31
+Left Nodes Are: 24	
+K : 0
+distance: 1
+ adding nodes between: 24-->2
+Left Nodes Are: 25	
+Left Nodes Are: 27	
+K : 2
+distance: 3
+ adding nodes between: 27-->101
+Left Nodes Are: 29	
+Left Nodes Are: 30	
+Left Nodes Are: 31	
+Left Nodes Are: 32	
+K : 2
+distance: 3
+ adding nodes between: 32-->35
+K : 2
+distance: 3
+ adding nodes between: 32-->0
+Left Nodes Are: 33	
+K : 5
+distance: 6
+ adding nodes between: 33-->1
+K : 14
+distance: 15
+ adding nodes between: 33-->34
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+71
+74
+Redoing ASAP and ALAP
+74
+1. src is: 45-7	target is: 53-25
+1. Edge points to NULL!
+76
+Redoing ASAP and ALAP
+76
+1. src is: 104-4	target is: 53-21
+1. Edge points to NULL!
+1. src is: 1-0	target is: 48-18
+1. Edge points to NULL!
+79
+Redoing ASAP and ALAP
+79
+1. src is: 102-9	target is: 0-9
+1. Edge points to NULL!
+79
+79
+1. src is: 107-1	target is: 48-24
+1. Edge points to NULL!
+81
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+71
+1. src is: 45-9	target is: 53-24
+1. Edge points to NULL!
+73
+Redoing ASAP and ALAP
+73
+75
+Redoing ASAP and ALAP
+75
+77
+Redoing ASAP and ALAP
+77
+80
+Feasible II is 9	Schedule Len is 36
+
+II after scheduling is: 9
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+Left Nodes Are: 0	
+Left Nodes Are: 1	
+K : 3
+distance: 4
+ adding nodes between: 1-->51
+K : 6
+distance: 7
+ adding nodes between: 1-->47
+Left Nodes Are: 2	
+K : 6
+distance: 7
+ adding nodes between: 2-->24
+Left Nodes Are: 5	
+K : 12
+distance: 13
+ adding nodes between: 5-->50
+Left Nodes Are: 8	
+Left Nodes Are: 13	
+Left Nodes Are: 15	
+K : 1
+distance: 2
+ adding nodes between: 15-->29
+Left Nodes Are: 16	
+K : 1
+distance: 2
+ adding nodes between: 16-->17
+Left Nodes Are: 17	
+K : 1
+distance: 2
+ adding nodes between: 17-->18
+Left Nodes Are: 18	
+Left Nodes Are: 19	
+K : 1
+distance: 2
+ adding nodes between: 19-->30
+Left Nodes Are: 20	
+K : 1
+distance: 2
+ adding nodes between: 20-->21
+Left Nodes Are: 21	
+K : 2
+distance: 3
+ adding nodes between: 21-->22
+Left Nodes Are: 22	
+Left Nodes Are: 23	
+K : 1
+distance: 2
+ adding nodes between: 23-->31
+Left Nodes Are: 24	
+K : 1
+distance: 2
+ adding nodes between: 24-->2
+Left Nodes Are: 25	
+Left Nodes Are: 27	
+K : 1
+distance: 2
+ adding nodes between: 27-->103
+Left Nodes Are: 29	
+Left Nodes Are: 30	
+Left Nodes Are: 31	
+Left Nodes Are: 32	
+K : 3
+distance: 4
+ adding nodes between: 32-->0
+K : 4
+distance: 5
+ adding nodes between: 32-->35
+Left Nodes Are: 33	
+K : 2
+distance: 3
+ adding nodes between: 33-->105
+K : 13
+distance: 14
+ adding nodes between: 33-->34
+Left Nodes Are: 34	
+Left Nodes Are: 35	
+Left Nodes Are: 36	
+K : 6
+distance: 7
+ adding nodes between: 36-->37
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+71
+72
+Redoing ASAP and ALAP
+72
+75
+Redoing ASAP and ALAP
+75
+78
+Feasible II is 10	Schedule Len is 36
+
+II after scheduling is: 10
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+Left Nodes Are: 0	
+Left Nodes Are: 1	
+K : 1
+distance: 2
+ adding nodes between: 1-->40
+K : 5
+distance: 6
+ adding nodes between: 1-->51
+Left Nodes Are: 2	
+K : 1
+distance: 2
+ adding nodes between: 2-->24
+Left Nodes Are: 5	
+K : 12
+distance: 13
+ adding nodes between: 5-->50
+Left Nodes Are: 8	
+Left Nodes Are: 13	
+Left Nodes Are: 15	
+K : 1
+distance: 2
+ adding nodes between: 15-->29
+Left Nodes Are: 17	
+K : 1
+distance: 2
+ adding nodes between: 17-->18
+Left Nodes Are: 18	
+Left Nodes Are: 19	
+K : 2
+distance: 3
+ adding nodes between: 19-->30
+Left Nodes Are: 20	
+K : 1
+distance: 2
+ adding nodes between: 20-->21
+Left Nodes Are: 21	
+K : 2
+distance: 3
+ adding nodes between: 21-->22
+Left Nodes Are: 22	
+Left Nodes Are: 23	
+K : 1
+distance: 2
+ adding nodes between: 23-->31
+Left Nodes Are: 24	
+K : 7
+distance: 8
+ adding nodes between: 24-->2
+Left Nodes Are: 25	
+Left Nodes Are: 29	
+Left Nodes Are: 30	
+Left Nodes Are: 31	
+Left Nodes Are: 32	
+K : 2
+distance: 3
+ adding nodes between: 32-->35
+K : 4
+distance: 5
+ adding nodes between: 32-->0
+Left Nodes Are: 33	
+K : 2
+distance: 3
+ adding nodes between: 33-->103
+K : 8
+distance: 9
+ adding nodes between: 33-->34
+Left Nodes Are: 34	
+Left Nodes Are: 35	
+Left Nodes Are: 36	
+K : 8
+distance: 9
+ adding nodes between: 36-->37
+Left Nodes Are: 37	
+Left Nodes Are: 38	
+K : 2
+distance: 3
+ adding nodes between: 38-->39
+Left Nodes Are: 39	
+K : 3
+distance: 4
+ adding nodes between: 39-->42
+Left Nodes Are: 40	
+K : 16
+distance: 17
+ adding nodes between: 40-->41
+Left Nodes Are: 41	
+Left Nodes Are: 42	
+Left Nodes Are: 43	
+K : 2
+distance: 3
+ adding nodes between: 43-->44
+Left Nodes Are: 44	
+Left Nodes Are: 45	
+K : 10
+distance: 11
+ adding nodes between: 45-->46
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+71
+1. src is: 45-3	target is: 53-25
+1. Edge points to NULL!
+73
+Redoing ASAP and ALAP
+73
+74
+Redoing ASAP and ALAP
+74
+75
+75
+75
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+71
+1. src is: 45-5	target is: 53-27
+1. Edge points to NULL!
+73
+Redoing ASAP and ALAP
+73
+75
+Redoing ASAP and ALAP
+75
+78
+Feasible II is 11	Schedule Len is 38
+
+II after scheduling is: 11
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+Left Nodes Are: 0	
+Left Nodes Are: 1	
+K : 1
+distance: 2
+ adding nodes between: 1-->43
+K : 4
+distance: 5
+ adding nodes between: 1-->47
+Left Nodes Are: 2	
+K : 2
+distance: 3
+ adding nodes between: 2-->54
+K : 9
+distance: 10
+ adding nodes between: 2-->24
+Left Nodes Are: 5	
+K : 17
+distance: 18
+ adding nodes between: 5-->50
+Left Nodes Are: 8	
+Left Nodes Are: 13	
+Left Nodes Are: 15	
+K : 1
+distance: 2
+ adding nodes between: 15-->29
+Left Nodes Are: 17	
+Left Nodes Are: 19	
+K : 3
+distance: 4
+ adding nodes between: 19-->30
+Left Nodes Are: 20	
+K : 1
+distance: 2
+ adding nodes between: 20-->21
+Left Nodes Are: 21	
+K : 2
+distance: 3
+ adding nodes between: 21-->22
+Left Nodes Are: 22	
+Left Nodes Are: 23	
+K : 1
+distance: 2
+ adding nodes between: 23-->31
+Left Nodes Are: 24	
+K : 0
+distance: 1
+ adding nodes between: 24-->2
+Left Nodes Are: 25	
+K : 2
+distance: 3
+ adding nodes between: 25-->26
+Left Nodes Are: 26	
+Left Nodes Are: 27	
+K : 1
+distance: 2
+ adding nodes between: 27-->103
+Left Nodes Are: 29	
+Left Nodes Are: 30	
+Left Nodes Are: 31	
+Left Nodes Are: 32	
+K : 3
+distance: 4
+ adding nodes between: 32-->35
+K : 5
+distance: 6
+ adding nodes between: 32-->0
+Left Nodes Are: 33	
+K : 7
+distance: 8
+ adding nodes between: 33-->1
+K : 14
+distance: 15
+ adding nodes between: 33-->34
+Left Nodes Are: 34	
+Left Nodes Are: 35	
+Left Nodes Are: 36	
+K : 1
+distance: 2
+ adding nodes between: 36-->37
+Left Nodes Are: 37	
+Left Nodes Are: 38	
+K : 4
+distance: 5
+ adding nodes between: 38-->39
+Left Nodes Are: 39	
+K : 3
+distance: 4
+ adding nodes between: 39-->42
+Left Nodes Are: 40	
+K : 14
+distance: 15
+ adding nodes between: 40-->41
+Left Nodes Are: 41	
+Left Nodes Are: 42	
+Left Nodes Are: 43	
+K : 2
+distance: 3
+ adding nodes between: 43-->44
+Left Nodes Are: 44	
+Left Nodes Are: 45	
+K : 6
+distance: 7
+ adding nodes between: 45-->101
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+71
+72
+Redoing ASAP and ALAP
+72
+1. src is: 45-7	target is: 53-26
+1. Edge points to NULL!
+74
+Redoing ASAP and ALAP
+74
+1. src is: 102-9	target is: 53-25
+1. Edge points to NULL!
+78
+Feasible II is 12	Schedule Len is 36
+
+II after scheduling is: 12
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+Left Nodes Are: 0	
+Left Nodes Are: 1	
+K : 1
+distance: 2
+ adding nodes between: 1-->43
+K : 2
+distance: 3
+ adding nodes between: 1-->47
+Left Nodes Are: 2	
+K : 6
+distance: 7
+ adding nodes between: 2-->24
+K : 7
+distance: 8
+ adding nodes between: 2-->54
+Left Nodes Are: 5	
+K : 13
+distance: 14
+ adding nodes between: 5-->50
+Left Nodes Are: 8	
+Left Nodes Are: 13	
+Left Nodes Are: 15	
+K : 1
+distance: 2
+ adding nodes between: 15-->29
+Left Nodes Are: 17	
+K : 1
+distance: 2
+ adding nodes between: 17-->18
+Left Nodes Are: 18	
+Left Nodes Are: 19	
+K : 2
+distance: 3
+ adding nodes between: 19-->30
+Left Nodes Are: 21	
+Left Nodes Are: 23	
+K : 4
+distance: 5
+ adding nodes between: 23-->31
+Left Nodes Are: 24	
+K : 4
+distance: 5
+ adding nodes between: 24-->2
+Left Nodes Are: 25	
+Left Nodes Are: 27	
+K : 1
+distance: 2
+ adding nodes between: 27-->100
+Left Nodes Are: 29	
+Left Nodes Are: 30	
+Left Nodes Are: 31	
+Left Nodes Are: 32	
+K : 4
+distance: 5
+ adding nodes between: 32-->35
+K : 6
+distance: 7
+ adding nodes between: 32-->0
+Left Nodes Are: 33	
+K : 2
+distance: 3
+ adding nodes between: 33-->1
+K : 9
+distance: 10
+ adding nodes between: 33-->34
+Left Nodes Are: 34	
+Left Nodes Are: 35	
+Left Nodes Are: 36	
+K : 2
+distance: 3
+ adding nodes between: 36-->37
+Left Nodes Are: 37	
+Left Nodes Are: 38	
+K : 3
+distance: 4
+ adding nodes between: 38-->39
+Left Nodes Are: 39	
+K : 7
+distance: 8
+ adding nodes between: 39-->42
+Left Nodes Are: 40	
+K : 14
+distance: 15
+ adding nodes between: 40-->41
+Left Nodes Are: 41	
+Left Nodes Are: 42	
+Left Nodes Are: 43	
+K : 3
+distance: 4
+ adding nodes between: 43-->44
+Left Nodes Are: 44	
+Left Nodes Are: 45	
+K : 1
+distance: 2
+ adding nodes between: 45-->102
+Left Nodes Are: 46	
+K : 1
+distance: 2
+ adding nodes between: 46-->50
+Left Nodes Are: 47	
+K : 19
+distance: 20
+ adding nodes between: 47-->48
+Left Nodes Are: 48	
+Left Nodes Are: 49	
+Left Nodes Are: 50	
+K : 6
+distance: 7
+ adding nodes between: 50-->53
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+71
+1. src is: 45-14	target is: 53-23
+1. Edge points to NULL!
+73
+Redoing ASAP and ALAP
+73
+75
+Redoing ASAP and ALAP
+75
+1. src is: 101-10	target is: 49-27
+1. Edge points to NULL!
+78
+Feasible II is 13	Schedule Len is 38
+
+II after scheduling is: 13
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+Left Nodes Are: 0	
+Left Nodes Are: 1	
+K : 2
+distance: 3
+ adding nodes between: 1-->43
+K : 6
+distance: 7
+ adding nodes between: 1-->47
+Left Nodes Are: 2	
+K : 4
+distance: 5
+ adding nodes between: 2-->24
+K : 11
+distance: 12
+ adding nodes between: 2-->54
+Left Nodes Are: 5	
+K : 13
+distance: 14
+ adding nodes between: 5-->50
+Left Nodes Are: 8	
+Left Nodes Are: 13	
+Left Nodes Are: 15	
+K : 1
+distance: 2
+ adding nodes between: 15-->29
+Left Nodes Are: 17	
+Left Nodes Are: 19	
+K : 3
+distance: 4
+ adding nodes between: 19-->30
+Left Nodes Are: 21	
+K : 3
+distance: 4
+ adding nodes between: 21-->22
+Left Nodes Are: 22	
+Left Nodes Are: 23	
+K : 1
+distance: 2
+ adding nodes between: 23-->31
+Left Nodes Are: 24	
+K : 7
+distance: 8
+ adding nodes between: 24-->2
+Left Nodes Are: 25	
+K : 1
+distance: 2
+ adding nodes between: 25-->26
+Left Nodes Are: 26	
+Left Nodes Are: 27	
+K : 1
+distance: 2
+ adding nodes between: 27-->103
+Left Nodes Are: 29	
+Left Nodes Are: 30	
+Left Nodes Are: 31	
+Left Nodes Are: 32	
+K : 7
+distance: 8
+ adding nodes between: 32-->0
+K : 11
+distance: 12
+ adding nodes between: 32-->35
+Left Nodes Are: 33	
+K : 10
+distance: 11
+ adding nodes between: 33-->1
+K : 23
+distance: 24
+ adding nodes between: 33-->34
+Left Nodes Are: 34	
+Left Nodes Are: 35	
+Left Nodes Are: 36	
+K : 2
+distance: 3
+ adding nodes between: 36-->37
+Left Nodes Are: 37	
+Left Nodes Are: 38	
+K : 6
+distance: 7
+ adding nodes between: 38-->39
+Left Nodes Are: 39	
+K : 9
+distance: 10
+ adding nodes between: 39-->42
+Left Nodes Are: 40	
+K : 12
+distance: 13
+ adding nodes between: 40-->41
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+71
+72
+Redoing ASAP and ALAP
+72
+1. src is: 45-14	target is: 53-25
+1. Edge points to NULL!
+73
+Redoing ASAP and ALAP
+73
+1. src is: 101-10	target is: 53-25
+1. Edge points to NULL!
+78
+Feasible II is 14	Schedule Len is 36
+
+II after scheduling is: 14
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+Left Nodes Are: 0	
+Left Nodes Are: 1	
+K : 8
+distance: 9
+ adding nodes between: 1-->40
+K : 10
+distance: 11
+ adding nodes between: 1-->51
+Left Nodes Are: 2	
+K : 6
+distance: 7
+ adding nodes between: 2-->54
+K : 7
+distance: 8
+ adding nodes between: 2-->24
+Left Nodes Are: 5	
+K : 14
+distance: 15
+ adding nodes between: 5-->50
+Left Nodes Are: 8	
+Left Nodes Are: 13	
+Left Nodes Are: 15	
+K : 1
+distance: 2
+ adding nodes between: 15-->29
+Left Nodes Are: 16	
+K : 1
+distance: 2
+ adding nodes between: 16-->17
+Left Nodes Are: 17	
+K : 1
+distance: 2
+ adding nodes between: 17-->18
+Left Nodes Are: 18	
+Left Nodes Are: 19	
+K : 1
+distance: 2
+ adding nodes between: 19-->30
+Left Nodes Are: 21	
+Left Nodes Are: 23	
+K : 4
+distance: 5
+ adding nodes between: 23-->31
+Left Nodes Are: 24	
+K : 5
+distance: 6
+ adding nodes between: 24-->2
+Left Nodes Are: 25	
+Left Nodes Are: 27	
+K : 1
+distance: 2
+ adding nodes between: 27-->100
+Left Nodes Are: 29	
+Left Nodes Are: 30	
+Left Nodes Are: 31	
+Left Nodes Are: 32	
+K : 5
+distance: 6
+ adding nodes between: 32-->35
+K : 8
+distance: 9
+ adding nodes between: 32-->0
+Left Nodes Are: 33	
+K : 10
+distance: 11
+ adding nodes between: 33-->1
+K : 16
+distance: 17
+ adding nodes between: 33-->34
+Left Nodes Are: 34	
+Left Nodes Are: 35	
+Left Nodes Are: 36	
+K : 1
+distance: 2
+ adding nodes between: 36-->37
+Left Nodes Are: 37	
+Left Nodes Are: 38	
+K : 7
+distance: 8
+ adding nodes between: 38-->39
+Left Nodes Are: 39	
+K : 3
+distance: 4
+ adding nodes between: 39-->42
+Left Nodes Are: 40	
+K : 9
+distance: 10
+ adding nodes between: 40-->41
+Left Nodes Are: 41	
+Left Nodes Are: 42	
+Left Nodes Are: 45	
+K : 6
+distance: 7
+ adding nodes between: 45-->101
+Left Nodes Are: 46	
+K : 2
+distance: 3
+ adding nodes between: 46-->50
+Left Nodes Are: 47	
+K : 16
+distance: 17
+ adding nodes between: 47-->48
+Left Nodes Are: 48	
+Left Nodes Are: 49	
+Left Nodes Are: 50	
+K : 5
+distance: 6
+ adding nodes between: 50-->53
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+71
+1. src is: 45-8	target is: 53-24
+1. Edge points to NULL!
+73
+Redoing ASAP and ALAP
+73
+73
+73
+74
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+71
+1. src is: 45-4	target is: 53-27
+1. Edge points to NULL!
+73
+Redoing ASAP and ALAP
+73
+1. src is: 39-17	target is: 49-29
+1. Edge points to NULL!
+1. src is: 32-14	target is: 49-29
+1. Edge points to NULL!
+1. src is: 32-14	target is: 100-24
+1. Edge points to NULL!
+1. src is: 2-0	target is: 26-8
+1. Edge points to NULL!
+1. src is: 38-13	target is: 49-29
+1. Edge points to NULL!
+1. src is: 38-13	target is: 100-24
+1. Edge points to NULL!
+78
+Redoing ASAP and ALAP
+78
+1. src is: 101-10	target is: 49-27
+1. Edge points to NULL!
+80
+Redoing ASAP and ALAP
+80
+1. src is: 45-3	target is: 46-17
+1. Edge points to NULL!
+81
+Redoing ASAP and ALAP
+81
+1. src is: 46-17	target is: 53-29
+1. Edge points to NULL!
+1. src is: 107-14	target is: 49-26
+1. Edge points to NULL!
+1. src is: 45-4	target is: 107-14
+1. Edge points to NULL!
+84
+Redoing ASAP and ALAP
+84
+1. src is: 110-18	target is: 53-30
+1. Edge points to NULL!
+1. src is: 111-10	target is: 49-31
+1. Edge points to NULL!
+1. src is: 106-12	target is: 42-31
+1. Edge points to NULL!
+89
+Feasible II is 15	Schedule Len is 42
+
+II after scheduling is: 15
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+Left Nodes Are: 0	
+Left Nodes Are: 1	
+K : 5
+distance: 6
+ adding nodes between: 1-->51
+K : 5
+distance: 6
+ adding nodes between: 1-->40
+Left Nodes Are: 2	
+K : 10
+distance: 11
+ adding nodes between: 2-->54
+K : 12
+distance: 13
+ adding nodes between: 2-->24
+Left Nodes Are: 5	
+K : 20
+distance: 21
+ adding nodes between: 5-->50
+Left Nodes Are: 8	
+Left Nodes Are: 13	
+Left Nodes Are: 15	
+K : 1
+distance: 2
+ adding nodes between: 15-->29
+Left Nodes Are: 17	
+K : 1
+distance: 2
+ adding nodes between: 17-->18
+Left Nodes Are: 18	
+Left Nodes Are: 19	
+K : 2
+distance: 3
+ adding nodes between: 19-->30
+Left Nodes Are: 21	
+K : 2
+distance: 3
+ adding nodes between: 21-->22
+Left Nodes Are: 22	
+Left Nodes Are: 23	
+K : 2
+distance: 3
+ adding nodes between: 23-->31
+Left Nodes Are: 24	
+K : 1
+distance: 2
+ adding nodes between: 24-->2
+Left Nodes Are: 25	
+K : 1
+distance: 2
+ adding nodes between: 25-->26
+Left Nodes Are: 26	
+Left Nodes Are: 27	
+K : 1
+distance: 2
+ adding nodes between: 27-->108
+Left Nodes Are: 29	
+Left Nodes Are: 30	
+Left Nodes Are: 31	
+Left Nodes Are: 32	
+K : 8
+distance: 9
+ adding nodes between: 32-->35
+K : 9
+distance: 10
+ adding nodes between: 32-->0
+Left Nodes Are: 33	
+K : 8
+distance: 9
+ adding nodes between: 33-->1
+K : 16
+distance: 17
+ adding nodes between: 33-->34
+Left Nodes Are: 34	
+Left Nodes Are: 35	
+Left Nodes Are: 36	
+K : 1
+distance: 2
+ adding nodes between: 36-->37
+Left Nodes Are: 37	
+Left Nodes Are: 38	
+K : 6
+distance: 7
+ adding nodes between: 38-->106
+Left Nodes Are: 39	
+K : 2
+distance: 3
+ adding nodes between: 39-->103
+Left Nodes Are: 40	
+K : 24
+distance: 25
+ adding nodes between: 40-->41
+Left Nodes Are: 41	
+Left Nodes Are: 42	
+Left Nodes Are: 46	
+K : 7
+distance: 8
+ adding nodes between: 46-->100
+Left Nodes Are: 47	
+K : 23
+distance: 24
+ adding nodes between: 47-->48
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+71
+72
+Redoing ASAP and ALAP
+72
+1. src is: 45-12	target is: 53-30
+1. Edge points to NULL!
+74
+Redoing ASAP and ALAP
+74
+75
+75
+75
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+71
+1. src is: 45-11	target is: 53-30
+1. Edge points to NULL!
+73
+Redoing ASAP and ALAP
+73
+74
+Redoing ASAP and ALAP
+74
+1. src is: 2-0	target is: 26-9
+1. Edge points to NULL!
+1. src is: 101-6	target is: 49-28
+1. Edge points to NULL!
+80
+Feasible II is 16	Schedule Len is 36
+
+II after scheduling is: 16
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+Left Nodes Are: 0	
+Left Nodes Are: 1	
+K : 13
+distance: 14
+ adding nodes between: 1-->51
+K : 14
+distance: 15
+ adding nodes between: 1-->47
+Left Nodes Are: 2	
+K : 9
+distance: 10
+ adding nodes between: 2-->54
+K : 11
+distance: 12
+ adding nodes between: 2-->24
+Left Nodes Are: 5	
+K : 13
+distance: 14
+ adding nodes between: 5-->50
+Left Nodes Are: 8	
+Left Nodes Are: 13	
+Left Nodes Are: 15	
+K : 1
+distance: 2
+ adding nodes between: 15-->29
+Left Nodes Are: 16	
+K : 1
+distance: 2
+ adding nodes between: 16-->17
+Left Nodes Are: 17	
+K : 1
+distance: 2
+ adding nodes between: 17-->18
+Left Nodes Are: 18	
+Left Nodes Are: 19	
+K : 1
+distance: 2
+ adding nodes between: 19-->30
+Left Nodes Are: 20	
+K : 1
+distance: 2
+ adding nodes between: 20-->21
+Left Nodes Are: 21	
+K : 2
+distance: 3
+ adding nodes between: 21-->22
+Left Nodes Are: 22	
+Left Nodes Are: 23	
+K : 1
+distance: 2
+ adding nodes between: 23-->31
+Left Nodes Are: 24	
+K : 3
+distance: 4
+ adding nodes between: 24-->2
+Left Nodes Are: 25	
+K : 2
+distance: 3
+ adding nodes between: 25-->26
+Left Nodes Are: 26	
+Left Nodes Are: 27	
+K : 1
+distance: 2
+ adding nodes between: 27-->102
+Left Nodes Are: 29	
+Left Nodes Are: 30	
+Left Nodes Are: 31	
+Left Nodes Are: 32	
+K : 10
+distance: 11
+ adding nodes between: 32-->0
+K : 12
+distance: 13
+ adding nodes between: 32-->35
+Left Nodes Are: 33	
+K : 8
+distance: 9
+ adding nodes between: 33-->1
+K : 19
+distance: 20
+ adding nodes between: 33-->34
+Left Nodes Are: 34	
+Left Nodes Are: 35	
+Left Nodes Are: 36	
+K : 1
+distance: 2
+ adding nodes between: 36-->37
+Left Nodes Are: 37	
+Left Nodes Are: 38	
+K : 6
+distance: 7
+ adding nodes between: 38-->39
+Left Nodes Are: 39	
+K : 12
+distance: 13
+ adding nodes between: 39-->42
+Left Nodes Are: 40	
+K : 23
+distance: 24
+ adding nodes between: 40-->41
+Left Nodes Are: 41	
+Left Nodes Are: 42	
+Left Nodes Are: 45	
+K : 2
+distance: 3
+ adding nodes between: 45-->101
+Left Nodes Are: 46	
+K : 7
+distance: 8
+ adding nodes between: 46-->100
+Left Nodes Are: 47	
+K : 12
+distance: 13
+ adding nodes between: 47-->48
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+71
+1. src is: 45-12	target is: 53-29
+1. Edge points to NULL!
+73
+Redoing ASAP and ALAP
+73
+1. src is: 39-16	target is: 49-26
+1. Edge points to NULL!
+1. src is: 32-14	target is: 49-26
+1. Edge points to NULL!
+1. src is: 32-14	target is: 100-20
+1. Edge points to NULL!
+1. src is: 27-11	target is: 49-26
+1. Edge points to NULL!
+1. src is: 27-11	target is: 100-20
+1. Edge points to NULL!
+1. src is: 27-11	target is: 46-18
+1. Edge points to NULL!
+77
+Redoing ASAP and ALAP
+77
+1. src is: 46-16	target is: 53-28
+1. Edge points to NULL!
+1. src is: 38-5	target is: 42-31
+1. Edge points to NULL!
+79
+Redoing ASAP and ALAP
+79
+1. src is: 106-21	target is: 53-27
+1. Edge points to NULL!
+1. src is: 45-5	target is: 106-21
+1. Edge points to NULL!
+82
+Redoing ASAP and ALAP
+82
+1. src is: 105-9	target is: 35-27
+1. Edge points to NULL!
+1. src is: 107-8	target is: 42-24
+1. Edge points to NULL!
+1. src is: 45-4	target is: 46-16
+1. Edge points to NULL!
+85
+Redoing ASAP and ALAP
+85
+1. src is: 108-18	target is: 53-27
+1. Edge points to NULL!
+1. src is: 46-16	target is: 49-30
+1. Edge points to NULL!
+1. src is: 111-10	target is: 35-19
+1. Edge points to NULL!
+1. src is: 112-6	target is: 42-26
+1. Edge points to NULL!
+1. src is: 113-9	target is: 46-16
+1. Edge points to NULL!
+91
+Feasible II is 17	Schedule Len is 42
+
+II after scheduling is: 17
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+Left Nodes Are: 0	
+Left Nodes Are: 1	
+K : 8
+distance: 9
+ adding nodes between: 1-->47
+K : 14
+distance: 15
+ adding nodes between: 1-->51
+Left Nodes Are: 2	
+K : 7
+distance: 8
+ adding nodes between: 2-->54
+K : 13
+distance: 14
+ adding nodes between: 2-->24
+Left Nodes Are: 5	
+K : 18
+distance: 19
+ adding nodes between: 5-->50
+Left Nodes Are: 8	
+Left Nodes Are: 13	
+Left Nodes Are: 15	
+K : 1
+distance: 2
+ adding nodes between: 15-->29
+Left Nodes Are: 17	
+K : 1
+distance: 2
+ adding nodes between: 17-->18
+Left Nodes Are: 18	
+Left Nodes Are: 19	
+K : 2
+distance: 3
+ adding nodes between: 19-->30
+Left Nodes Are: 20	
+K : 1
+distance: 2
+ adding nodes between: 20-->21
+Left Nodes Are: 21	
+K : 2
+distance: 3
+ adding nodes between: 21-->22
+Left Nodes Are: 22	
+Left Nodes Are: 23	
+K : 1
+distance: 2
+ adding nodes between: 23-->31
+Left Nodes Are: 24	
+K : 2
+distance: 3
+ adding nodes between: 24-->2
+Left Nodes Are: 25	
+K : 1
+distance: 2
+ adding nodes between: 25-->26
+Left Nodes Are: 26	
+Left Nodes Are: 27	
+K : 1
+distance: 2
+ adding nodes between: 27-->105
+Left Nodes Are: 29	
+Left Nodes Are: 30	
+Left Nodes Are: 31	
+Left Nodes Are: 32	
+K : 2
+distance: 3
+ adding nodes between: 32-->104
+K : 11
+distance: 12
+ adding nodes between: 32-->0
+Left Nodes Are: 33	
+K : 13
+distance: 14
+ adding nodes between: 33-->1
+K : 15
+distance: 16
+ adding nodes between: 33-->34
+Left Nodes Are: 34	
+Left Nodes Are: 35	
+Left Nodes Are: 39	
+K : 2
+distance: 3
+ adding nodes between: 39-->103
+Left Nodes Are: 40	
+K : 23
+distance: 24
+ adding nodes between: 40-->41
+Left Nodes Are: 41	
+Left Nodes Are: 42	
+Left Nodes Are: 45	
+K : 5
+distance: 6
+ adding nodes between: 45-->113
+Left Nodes Are: 46	
+Left Nodes Are: 47	
+K : 20
+distance: 21
+ adding nodes between: 47-->48
+Left Nodes Are: 48	
+Left Nodes Are: 49	
+Left Nodes Are: 50	
+K : 3
+distance: 4
+ adding nodes between: 50-->53
+Left Nodes Are: 51	
+K : 11
+distance: 12
+ adding nodes between: 51-->52
+Left Nodes Are: 52	
+Left Nodes Are: 53	
+Left Nodes Are: 54	
+Left Nodes Are: 66	
+K : 4
+distance: 5
+ adding nodes between: 66-->8
+Left Nodes Are: 71	
+K : 3
+distance: 4
+ adding nodes between: 71-->13
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+71
+1. src is: 45-14	target is: 53-27
+1. Edge points to NULL!
+73
+Redoing ASAP and ALAP
+73
+75
+Redoing ASAP and ALAP
+75
+75
+75
+1. src is: 46-17	target is: 53-35
+1. Edge points to NULL!
+76
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+71
+72
+Redoing ASAP and ALAP
+72
+1. src is: 45-13	target is: 53-20
+1. Edge points to NULL!
+74
+Redoing ASAP and ALAP
+74
+75
+75
+75
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+71
+1. src is: 45-9	target is: 53-31
+1. Edge points to NULL!
+73
+Redoing ASAP and ALAP
+73
+74
+Redoing ASAP and ALAP
+74
+1. src is: 39-15	target is: 49-27
+1. Edge points to NULL!
+76
+76
+1. src is: 46-17	target is: 53-28
+1. Edge points to NULL!
+77
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+71
+1. src is: 45-15	target is: 53-25
+1. Edge points to NULL!
+73
+Redoing ASAP and ALAP
+73
+1. src is: 39-16	target is: 49-22
+1. Edge points to NULL!
+1. src is: 32-14	target is: 49-22
+1. Edge points to NULL!
+1. src is: 32-14	target is: 100-20
+1. Edge points to NULL!
+1. src is: 38-12	target is: 49-22
+1. Edge points to NULL!
+1. src is: 38-12	target is: 100-20
+1. Edge points to NULL!
+77
+Redoing ASAP and ALAP
+77
+1. src is: 101-13	target is: 49-27
+1. Edge points to NULL!
+79
+Redoing ASAP and ALAP
+79
+1. src is: 106-10	target is: 49-27
+1. Edge points to NULL!
+1. src is: 105-11	target is: 42-26
+1. Edge points to NULL!
+84
+Feasible II is 18	Schedule Len is 40
+
+II after scheduling is: 18
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+Left Nodes Are: 0	
+Left Nodes Are: 1	
+K : 1
+distance: 2
+ adding nodes between: 1-->40
+K : 16
+distance: 17
+ adding nodes between: 1-->51
+Left Nodes Are: 2	
+K : 7
+distance: 8
+ adding nodes between: 2-->54
+K : 7
+distance: 8
+ adding nodes between: 2-->24
+Left Nodes Are: 5	
+K : 14
+distance: 15
+ adding nodes between: 5-->50
+Left Nodes Are: 8	
+Left Nodes Are: 13	
+Left Nodes Are: 15	
+K : 1
+distance: 2
+ adding nodes between: 15-->29
+Left Nodes Are: 17	
+Left Nodes Are: 19	
+K : 3
+distance: 4
+ adding nodes between: 19-->30
+Left Nodes Are: 21	
+Left Nodes Are: 23	
+K : 4
+distance: 5
+ adding nodes between: 23-->31
+Left Nodes Are: 24	
+K : 9
+distance: 10
+ adding nodes between: 24-->2
+Left Nodes Are: 25	
+Left Nodes Are: 29	
+Left Nodes Are: 30	
+Left Nodes Are: 31	
+Left Nodes Are: 32	
+K : 6
+distance: 7
+ adding nodes between: 32-->35
+K : 12
+distance: 13
+ adding nodes between: 32-->0
+Left Nodes Are: 33	
+K : 10
+distance: 11
+ adding nodes between: 33-->1
+K : 13
+distance: 14
+ adding nodes between: 33-->34
+Left Nodes Are: 34	
+Left Nodes Are: 35	
+Left Nodes Are: 36	
+K : 1
+distance: 2
+ adding nodes between: 36-->37
+Left Nodes Are: 37	
+Left Nodes Are: 38	
+K : 4
+distance: 5
+ adding nodes between: 38-->105
+Left Nodes Are: 39	
+K : 6
+distance: 7
+ adding nodes between: 39-->103
+Left Nodes Are: 40	
+K : 23
+distance: 24
+ adding nodes between: 40-->41
+Left Nodes Are: 41	
+Left Nodes Are: 42	
+Left Nodes Are: 45	
+K : 1
+distance: 2
+ adding nodes between: 45-->101
+Left Nodes Are: 46	
+K : 2
+distance: 3
+ adding nodes between: 46-->100
+Left Nodes Are: 47	
+K : 13
+distance: 14
+ adding nodes between: 47-->48
+Left Nodes Are: 48	
+Left Nodes Are: 49	
+Left Nodes Are: 50	
+K : 1
+distance: 2
+ adding nodes between: 50-->53
+Left Nodes Are: 51	
+K : 3
+distance: 4
+ adding nodes between: 51-->52
+Left Nodes Are: 52	
+Left Nodes Are: 53	
+Left Nodes Are: 54	
+Left Nodes Are: 66	
+K : 3
+distance: 4
+ adding nodes between: 66-->8
+Left Nodes Are: 71	
+K : 3
+distance: 4
+ adding nodes between: 71-->13
+Left Nodes Are: 76	
+K : 5
+distance: 6
+ adding nodes between: 76-->17
+Left Nodes Are: 79	
+K : 1
+distance: 2
+ adding nodes between: 79-->21
+Left Nodes Are: 82	
+K : 1
+distance: 2
+ adding nodes between: 82-->25
+Left Nodes Are: 89	
+K : 5
+distance: 6
+ adding nodes between: 89-->33
+Left Nodes Are: 91	
+K : 4
+distance: 5
+ adding nodes between: 91-->8
+Left Nodes Are: 93	
+K : 1
+distance: 2
+ adding nodes between: 93-->13
+Left Nodes Are: 95	
+K : 2
+distance: 3
+ adding nodes between: 95-->17
+Left Nodes Are: 97	
+K : 1
+distance: 2
+ adding nodes between: 97-->21
+Left Nodes Are: 100	
+K : 6
+distance: 7
+ adding nodes between: 100-->49
+Left Nodes Are: 101	
+K : 4
+distance: 5
+ adding nodes between: 101-->106
+Left Nodes Are: 103	
+K : 2
+distance: 3
+ adding nodes between: 103-->42
+Left Nodes Are: 105	
+Left Nodes Are: 106	
+Left Nodes Are: 108	
+K : 5
+distance: 6
+ adding nodes between: 108-->46
+Left Nodes Are: 109	
+K : 6
+distance: 7
+ adding nodes between: 109-->32
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+71
+1. src is: 45-15	target is: 53-35
+1. Edge points to NULL!
+73
+Redoing ASAP and ALAP
+73
+1. src is: 39-19	target is: 49-32
+1. Edge points to NULL!
+1. src is: 32-14	target is: 49-32
+1. Edge points to NULL!
+1. src is: 32-14	target is: 100-27
+1. Edge points to NULL!
+1. src is: 27-12	target is: 49-32
+1. Edge points to NULL!
+1. src is: 27-12	target is: 100-27
+1. Edge points to NULL!
+1. src is: 27-12	target is: 46-21
+1. Edge points to NULL!
+77
+Redoing ASAP and ALAP
+77
+1. src is: 38-8	target is: 42-23
+1. Edge points to NULL!
+78
+Redoing ASAP and ALAP
+78
+1. src is: 46-17	target is: 53-28
+1. Edge points to NULL!
+1. src is: 101-6	target is: 49-28
+1. Edge points to NULL!
+1. src is: 39-15	target is: 49-28
+1. Edge points to NULL!
+1. src is: 106-6	target is: 42-19
+1. Edge points to NULL!
+1. src is: 105-12	target is: 35-29
+1. Edge points to NULL!
+84
+Feasible II is 19	Schedule Len is 38
+
+II after scheduling is: 19
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+Left Nodes Are: 0	
+Left Nodes Are: 1	
+K : 6
+distance: 7
+ adding nodes between: 1-->51
+Left Nodes Are: 2	
+K : 9
+distance: 10
+ adding nodes between: 2-->24
+K : 13
+distance: 14
+ adding nodes between: 2-->54
+Left Nodes Are: 5	
+K : 18
+distance: 19
+ adding nodes between: 5-->50
+Left Nodes Are: 8	
+Left Nodes Are: 13	
+Left Nodes Are: 15	
+K : 1
+distance: 2
+ adding nodes between: 15-->29
+Left Nodes Are: 17	
+Left Nodes Are: 19	
+K : 3
+distance: 4
+ adding nodes between: 19-->30
+Left Nodes Are: 21	
+Left Nodes Are: 23	
+K : 4
+distance: 5
+ adding nodes between: 23-->31
+Left Nodes Are: 24	
+K : 8
+distance: 9
+ adding nodes between: 24-->2
+Left Nodes Are: 25	
+K : 3
+distance: 4
+ adding nodes between: 25-->26
+Left Nodes Are: 26	
+Left Nodes Are: 27	
+K : 3
+distance: 4
+ adding nodes between: 27-->105
+Left Nodes Are: 29	
+Left Nodes Are: 30	
+Left Nodes Are: 31	
+Left Nodes Are: 32	
+K : 11
+distance: 12
+ adding nodes between: 32-->104
+K : 13
+distance: 14
+ adding nodes between: 32-->0
+Left Nodes Are: 33	
+K : 6
+distance: 7
+ adding nodes between: 33-->1
+K : 16
+distance: 17
+ adding nodes between: 33-->34
+Left Nodes Are: 34	
+Left Nodes Are: 35	
+Left Nodes Are: 38	
+K : 1
+distance: 2
+ adding nodes between: 38-->106
+Left Nodes Are: 39	
+K : 1
+distance: 2
+ adding nodes between: 39-->103
+Left Nodes Are: 40	
+K : 17
+distance: 18
+ adding nodes between: 40-->41
+Left Nodes Are: 41	
+Left Nodes Are: 42	
+Left Nodes Are: 43	
+K : 1
+distance: 2
+ adding nodes between: 43-->44
+Left Nodes Are: 44	
+Left Nodes Are: 45	
+K : 1
+distance: 2
+ adding nodes between: 45-->101
+Left Nodes Are: 46	
+K : 1
+distance: 2
+ adding nodes between: 46-->100
+Left Nodes Are: 47	
+K : 15
+distance: 16
+ adding nodes between: 47-->48
+Left Nodes Are: 48	
+Left Nodes Are: 49	
+Left Nodes Are: 50	
+K : 4
+distance: 5
+ adding nodes between: 50-->53
+Left Nodes Are: 51	
+K : 20
+distance: 21
+ adding nodes between: 51-->52
+Left Nodes Are: 52	
+Left Nodes Are: 53	
+Left Nodes Are: 54	
+Left Nodes Are: 66	
+K : 3
+distance: 4
+ adding nodes between: 66-->8
+Left Nodes Are: 71	
+K : 3
+distance: 4
+ adding nodes between: 71-->13
+Left Nodes Are: 76	
+K : 2
+distance: 3
+ adding nodes between: 76-->17
+Left Nodes Are: 79	
+K : 4
+distance: 5
+ adding nodes between: 79-->21
+Left Nodes Are: 82	
+K : 1
+distance: 2
+ adding nodes between: 82-->25
+Left Nodes Are: 89	
+K : 10
+distance: 11
+ adding nodes between: 89-->33
+Left Nodes Are: 91	
+K : 3
+distance: 4
+ adding nodes between: 91-->8
+Left Nodes Are: 93	
+K : 1
+distance: 2
+ adding nodes between: 93-->13
+Left Nodes Are: 95	
+K : 2
+distance: 3
+ adding nodes between: 95-->17
+Left Nodes Are: 97	
+K : 2
+distance: 3
+ adding nodes between: 97-->21
+Left Nodes Are: 100	
+K : 8
+distance: 9
+ adding nodes between: 100-->49
+Left Nodes Are: 101	
+Left Nodes Are: 102	
+K : 3
+distance: 4
+ adding nodes between: 102-->50
+Left Nodes Are: 103	
+K : 1
+distance: 2
+ adding nodes between: 103-->42
+Left Nodes Are: 104	
+K : 2
+distance: 3
+ adding nodes between: 104-->35
+Left Nodes Are: 105	
+Left Nodes Are: 106	
+Left Nodes Are: 108	
+K : 9
+distance: 10
+ adding nodes between: 108-->46
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+71
+1. src is: 45-14	target is: 53-22
+1. Edge points to NULL!
+73
+Redoing ASAP and ALAP
+73
+75
+Redoing ASAP and ALAP
+75
+1. src is: 46-18	target is: 53-33
+1. Edge points to NULL!
+1. src is: 39-16	target is: 49-27
+1. Edge points to NULL!
+1. src is: 101-13	target is: 49-27
+1. Edge points to NULL!
+82
+Feasible II is 20	Schedule Len is 38
+
+II after scheduling is: 20
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+Left Nodes Are: 0	
+Left Nodes Are: 1	
+K : 1
+distance: 2
+ adding nodes between: 1-->43
+K : 9
+distance: 10
+ adding nodes between: 1-->47
+Left Nodes Are: 2	
+K : 3
+distance: 4
+ adding nodes between: 2-->24
+K : 15
+distance: 16
+ adding nodes between: 2-->54
+Left Nodes Are: 5	
+K : 22
+distance: 23
+ adding nodes between: 5-->50
+Left Nodes Are: 8	
+Left Nodes Are: 13	
+Left Nodes Are: 15	
+K : 1
+distance: 2
+ adding nodes between: 15-->29
+Left Nodes Are: 17	
+K : 2
+distance: 3
+ adding nodes between: 17-->18
+Left Nodes Are: 18	
+Left Nodes Are: 19	
+K : 1
+distance: 2
+ adding nodes between: 19-->30
+Left Nodes Are: 21	
+K : 1
+distance: 2
+ adding nodes between: 21-->22
+Left Nodes Are: 22	
+Left Nodes Are: 23	
+K : 3
+distance: 4
+ adding nodes between: 23-->31
+Left Nodes Are: 24	
+K : 15
+distance: 16
+ adding nodes between: 24-->2
+Left Nodes Are: 25	
+K : 1
+distance: 2
+ adding nodes between: 25-->26
+Left Nodes Are: 26	
+Left Nodes Are: 27	
+K : 5
+distance: 6
+ adding nodes between: 27-->103
+Left Nodes Are: 29	
+Left Nodes Are: 30	
+Left Nodes Are: 31	
+Left Nodes Are: 32	
+K : 6
+distance: 7
+ adding nodes between: 32-->35
+K : 14
+distance: 15
+ adding nodes between: 32-->0
+Left Nodes Are: 33	
+K : 6
+distance: 7
+ adding nodes between: 33-->1
+K : 7
+distance: 8
+ adding nodes between: 33-->34
+Left Nodes Are: 34	
+Left Nodes Are: 35	
+Left Nodes Are: 36	
+K : 1
+distance: 2
+ adding nodes between: 36-->37
+Left Nodes Are: 37	
+Left Nodes Are: 38	
+K : 7
+distance: 8
+ adding nodes between: 38-->39
+Left Nodes Are: 39	
+K : 12
+distance: 13
+ adding nodes between: 39-->42
+Left Nodes Are: 40	
+K : 13
+distance: 14
+ adding nodes between: 40-->41
+Left Nodes Are: 41	
+Left Nodes Are: 42	
+Left Nodes Are: 43	
+K : 3
+distance: 4
+ adding nodes between: 43-->44
+Left Nodes Are: 44	
+Left Nodes Are: 45	
+K : 5
+distance: 6
+ adding nodes between: 45-->101
+Left Nodes Are: 46	
+K : 1
+distance: 2
+ adding nodes between: 46-->100
+Left Nodes Are: 47	
+K : 16
+distance: 17
+ adding nodes between: 47-->48
+Left Nodes Are: 48	
+Left Nodes Are: 49	
+Left Nodes Are: 50	
+K : 5
+distance: 6
+ adding nodes between: 50-->53
+Left Nodes Are: 51	
+K : 17
+distance: 18
+ adding nodes between: 51-->52
+Left Nodes Are: 52	
+Left Nodes Are: 53	
+Left Nodes Are: 54	
+Left Nodes Are: 66	
+K : 3
+distance: 4
+ adding nodes between: 66-->8
+Left Nodes Are: 71	
+K : 1
+distance: 2
+ adding nodes between: 71-->13
+Left Nodes Are: 76	
+K : 3
+distance: 4
+ adding nodes between: 76-->17
+Left Nodes Are: 79	
+K : 5
+distance: 6
+ adding nodes between: 79-->21
+Left Nodes Are: 82	
+K : 1
+distance: 2
+ adding nodes between: 82-->25
+Left Nodes Are: 89	
+K : 11
+distance: 12
+ adding nodes between: 89-->33
+Left Nodes Are: 91	
+K : 3
+distance: 4
+ adding nodes between: 91-->8
+Left Nodes Are: 93	
+K : 5
+distance: 6
+ adding nodes between: 93-->13
+Left Nodes Are: 95	
+K : 4
+distance: 5
+ adding nodes between: 95-->17
+Left Nodes Are: 97	
+K : 3
+distance: 4
+ adding nodes between: 97-->21
+Left Nodes Are: 100	
+K : 6
+distance: 7
+ adding nodes between: 100-->49
+Left Nodes Are: 101	
+Left Nodes Are: 102	
+K : 4
+distance: 5
+ adding nodes between: 102-->50
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+71
+72
+Redoing ASAP and ALAP
+72
+1. src is: 45-9	target is: 53-34
+1. Edge points to NULL!
+74
+Redoing ASAP and ALAP
+74
+1. src is: 39-15	target is: 49-31
+1. Edge points to NULL!
+1. src is: 38-11	target is: 49-31
+1. Edge points to NULL!
+1. src is: 38-11	target is: 101-27
+1. Edge points to NULL!
+78
+Redoing ASAP and ALAP
+78
+1. src is: 102-13	target is: 49-33
+1. Edge points to NULL!
+1. src is: 106-12	target is: 42-22
+1. Edge points to NULL!
+83
+Feasible II is 21	Schedule Len is 38
+
+II after scheduling is: 21
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+latency cannot be less than 1
+Left Nodes Are: 0	
+Left Nodes Are: 1	
+K : 4
+distance: 5
+ adding nodes between: 1-->40
+K : 8
+distance: 9
+ adding nodes between: 1-->51
+Left Nodes Are: 2	
+K : 1
+distance: 2
+ adding nodes between: 2-->24
+K : 19
+distance: 20
+ adding nodes between: 2-->54
+Left Nodes Are: 5	
+K : 13
+distance: 14
+ adding nodes between: 5-->50
+Left Nodes Are: 8	
+Left Nodes Are: 13	
+Left Nodes Are: 15	
+K : 1
+distance: 2
+ adding nodes between: 15-->29
+Left Nodes Are: 17	
+Left Nodes Are: 19	
+K : 3
+distance: 4
+ adding nodes between: 19-->30
+Left Nodes Are: 21	
+Left Nodes Are: 23	
+K : 4
+distance: 5
+ adding nodes between: 23-->31
+Left Nodes Are: 24	
+K : 18
+distance: 19
+ adding nodes between: 24-->2
+Left Nodes Are: 25	
+Left Nodes Are: 29	
+Left Nodes Are: 30	
+Left Nodes Are: 31	
+Left Nodes Are: 32	
+K : 9
+distance: 10
+ adding nodes between: 32-->35
+K : 15
+distance: 16
+ adding nodes between: 32-->0
+Left Nodes Are: 33	
+K : 6
+distance: 7
+ adding nodes between: 33-->1
+K : 9
+distance: 10
+ adding nodes between: 33-->34
+Left Nodes Are: 34	
+Left Nodes Are: 35	
+Left Nodes Are: 36	
+K : 1
+distance: 2
+ adding nodes between: 36-->37
+Left Nodes Are: 37	
+Left Nodes Are: 38	
+K : 5
+distance: 6
+ adding nodes between: 38-->106
+Left Nodes Are: 39	
+K : 3
+distance: 4
+ adding nodes between: 39-->104
+Left Nodes Are: 40	
+K : 16
+distance: 17
+ adding nodes between: 40-->41
+Left Nodes Are: 41	
+Left Nodes Are: 42	
+Left Nodes Are: 43	
+K : 1
+distance: 2
+ adding nodes between: 43-->44
+Left Nodes Are: 44	
+Left Nodes Are: 45	
+K : 8
+distance: 9
+ adding nodes between: 45-->102
+Left Nodes Are: 46	
+K : 9
+distance: 10
+ adding nodes between: 46-->101
+Left Nodes Are: 47	
+K : 26
+distance: 27
+ adding nodes between: 47-->48
+Left Nodes Are: 48	
+Left Nodes Are: 49	
+Left Nodes Are: 50	
+K : 1
+distance: 2
+ adding nodes between: 50-->53
+Left Nodes Are: 51	
+K : 10
+distance: 11
+ adding nodes between: 51-->52
+Left Nodes Are: 52	
+Left Nodes Are: 53	
+Left Nodes Are: 54	
+Left Nodes Are: 66	
+K : 2
+distance: 3
+ adding nodes between: 66-->8
+Left Nodes Are: 71	
+K : 3
+distance: 4
+ adding nodes between: 71-->13
+Left Nodes Are: 76	
+K : 3
+distance: 4
+ adding nodes between: 76-->17
+Left Nodes Are: 79	
+K : 5
+distance: 6
+ adding nodes between: 79-->21
+Left Nodes Are: 82	
+K : 1
+distance: 2
+ adding nodes between: 82-->25
+Left Nodes Are: 89	
+K : 12
+distance: 13
+ adding nodes between: 89-->33
+Left Nodes Are: 91	
+K : 3
+distance: 4
+ adding nodes between: 91-->8
+Left Nodes Are: 93	
+K : 3
+distance: 4
+ adding nodes between: 93-->13
+Left Nodes Are: 95	
+K : 3
+distance: 4
+ adding nodes between: 95-->17
+Left Nodes Are: 97	
+K : 2
+distance: 3
+ adding nodes between: 97-->21
+Left Nodes Are: 101	
+K : 6
+distance: 7
+ adding nodes between: 101-->49
+Left Nodes Are: 102	
+Left Nodes Are: 104	
+K : 2
+distance: 3
+ adding nodes between: 104-->42
+Left Nodes Are: 106	
+Left Nodes Are: 107	
+K : 1
+distance: 2
+ adding nodes between: 107-->46
+Left Nodes Are: 108	
+K : 5
+distance: 6
+ adding nodes between: 108-->32
+Left Nodes Are: 109	
+K : 1
+distance: 2
+ adding nodes between: 109-->39
+Left Nodes Are: 111	
+K : 4
+distance: 5
+ adding nodes between: 111-->47

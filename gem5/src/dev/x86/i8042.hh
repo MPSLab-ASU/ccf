@@ -24,137 +24,20 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Gabe Black
  */
 
 #ifndef __DEV_X86_I8042_HH__
 #define __DEV_X86_I8042_HH__
 
-#include <queue>
+#include <deque>
 
-#include "dev/x86/intdev.hh"
+#include "dev/intpin.hh"
 #include "dev/io_device.hh"
+#include "dev/ps2/device.hh"
 #include "params/I8042.hh"
 
 namespace X86ISA
 {
-
-class IntPin;
-
-class PS2Device
-{
-  protected:
-    std::queue<uint8_t> outBuffer;
-
-    static const uint16_t NoCommand = (uint16_t)(-1);
-
-    uint16_t lastCommand;
-    void bufferData(const uint8_t *data, int size);
-    void ack();
-    void nack();
-
-  public:
-    virtual ~PS2Device()
-    {};
-
-    PS2Device() : lastCommand(NoCommand)
-    {}
-
-    bool hasData()
-    {
-        return !outBuffer.empty();
-    }
-
-    uint8_t getData()
-    {
-        uint8_t data = outBuffer.front();
-        outBuffer.pop();
-        return data;
-    }
-
-    virtual bool processData(uint8_t data) = 0;
-};
-
-class PS2Mouse : public PS2Device
-{
-  protected:
-    static const uint8_t ID[];
-
-    enum Command
-    {
-        Scale1to1 = 0xE6,
-        Scale2to1 = 0xE7,
-        SetResolution = 0xE8,
-        GetStatus = 0xE9,
-        ReadData = 0xEB,
-        ResetWrapMode = 0xEC,
-        WrapMode = 0xEE,
-        RemoteMode = 0xF0,
-        ReadID = 0xF2,
-        SampleRate = 0xF3,
-        EnableReporting = 0xF4,
-        DisableReporting = 0xF5,
-        DefaultsAndDisable = 0xF6,
-        Resend = 0xFE,
-        Reset = 0xFF
-    };
-
-    BitUnion8(Status)
-        Bitfield<6> remote;
-        Bitfield<5> enabled;
-        Bitfield<4> twoToOne;
-        Bitfield<2> leftButton;
-        Bitfield<0> rightButton;
-    EndBitUnion(Status)
-
-    Status status;
-    uint8_t resolution;
-    uint8_t sampleRate;
-  public:
-    PS2Mouse() : PS2Device(), status(0), resolution(4), sampleRate(100)
-    {}
-
-    bool processData(uint8_t data);
-
-    void serialize(const std::string &base, std::ostream &os);
-    void unserialize(const std::string &base, Checkpoint *cp,
-            const std::string &section);
-};
-
-class PS2Keyboard : public PS2Device
-{
-  protected:
-    static const uint8_t ID[];
-
-    enum Command
-    {
-        LEDWrite = 0xED,
-        DiagnosticEcho = 0xEE,
-        AlternateScanCodes = 0xF0,
-        ReadID = 0xF2,
-        TypematicInfo = 0xF3,
-        Enable = 0xF4,
-        Disable = 0xF5,
-        DefaultsAndDisable = 0xF6,
-        AllKeysToTypematic = 0xF7,
-        AllKeysToMakeRelease = 0xF8,
-        AllKeysToMake = 0xF9,
-        AllKeysToTypematicMakeRelease = 0xFA,
-        KeyToTypematic = 0xFB,
-        KeyToMakeRelease = 0xFC,
-        KeyToMakeOnly = 0xFD,
-        Resend = 0xFE,
-        Reset = 0xFF
-    };
-
-  public:
-    bool processData(uint8_t data);
-
-    void serialize(const std::string &base, std::ostream &os);
-    void unserialize(const std::string &base, Checkpoint *cp,
-            const std::string &section);
-};
 
 class I8042 : public BasicPioDevice
 {
@@ -223,11 +106,11 @@ class I8042 : public BasicPioDevice
     static const uint16_t NoCommand = (uint16_t)(-1);
     uint16_t lastCommand;
 
-    IntSourcePin *mouseIntPin;
-    IntSourcePin *keyboardIntPin;
+    std::vector<IntSourcePin<I8042> *> mouseIntPin;
+    std::vector<IntSourcePin<I8042> *> keyboardIntPin;
 
-    PS2Mouse mouse;
-    PS2Keyboard keyboard;
+    PS2Device *mouse;
+    PS2Device *keyboard;
 
     void writeData(uint8_t newData, bool mouse = false);
     uint8_t readDataOut();
@@ -243,14 +126,25 @@ class I8042 : public BasicPioDevice
 
     I8042(Params *p);
 
-    AddrRangeList getAddrRanges() const;
+    Port &
+    getPort(const std::string &if_name, PortID idx=InvalidPortID) override
+    {
+        if (if_name == "mouse_int_pin")
+            return *mouseIntPin.at(idx);
+        else if (if_name == "keyboard_int_pin")
+            return *keyboardIntPin.at(idx);
+        else
+            return BasicPioDevice::getPort(if_name, idx);
+    }
 
-    Tick read(PacketPtr pkt);
+    AddrRangeList getAddrRanges() const override;
 
-    Tick write(PacketPtr pkt);
+    Tick read(PacketPtr pkt) override;
 
-    virtual void serialize(std::ostream &os);
-    virtual void unserialize(Checkpoint *cp, const std::string &section);
+    Tick write(PacketPtr pkt) override;
+
+    void serialize(CheckpointOut &cp) const override;
+    void unserialize(CheckpointIn &cp) override;
 };
 
 } // namespace X86ISA

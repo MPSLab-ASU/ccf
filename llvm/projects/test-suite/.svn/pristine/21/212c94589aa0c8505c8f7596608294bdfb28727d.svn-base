@@ -1,5 +1,0 @@
-set(PROG ControlLoops-dbl)
-list(APPEND LDFLAGS -lm)
-list(APPEND CFLAGS -std=gnu99)
-set(RUN_OPTIONS 1640 14)
-llvm_multisource()

@@ -1,5 +1,0 @@
-add_subdirectory(espresso)
-add_subdirectory(gs)
-if(NOT "${ARCH}" STREQUAL "Alpha")
-  add_subdirectory(cfrac)
-endif()

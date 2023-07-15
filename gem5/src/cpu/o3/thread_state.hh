@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 ARM Limited
+ * Copyright (c) 2012, 2019 ARM Limited
  * All rights reserved
  *
  * The license below extends only to copyright in the software and shall
@@ -36,26 +36,22 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Kevin Lim
  */
 
 #ifndef __CPU_O3_THREAD_STATE_HH__
 #define __CPU_O3_THREAD_STATE_HH__
 
 #include "base/callback.hh"
+#include "base/compiler.hh"
 #include "base/output.hh"
 #include "cpu/thread_context.hh"
 #include "cpu/thread_state.hh"
 #include "sim/full_system.hh"
 #include "sim/sim_exit.hh"
 
-class EndQuiesceEvent;
 class Event;
 class FunctionalMemory;
-class FunctionProfile;
 class Process;
-class ProfileNode;
 
 /**
  * Class that has various thread state, such as the status, the
@@ -72,7 +68,15 @@ struct O3ThreadState : public ThreadState {
   private:
     /** Pointer to the CPU. */
     O3CPU *cpu;
+
   public:
+    PCEventQueue pcEventQueue;
+    /**
+     * An instruction-based event queue. Used for scheduling events based on
+     * number of instructions committed.
+     */
+    EventQueue comInstEventQueue;
+
     /* This variable controls if writes to a thread context should cause a all
      * dynamic/speculative state to be thrown away. Nominally this is the
      * desired behavior because the external thread context write has updated
@@ -88,47 +92,34 @@ struct O3ThreadState : public ThreadState {
      */
     bool trapPending;
 
+    /** Pointer to the hardware transactional memory checkpoint. */
+    std::unique_ptr<BaseHTMCheckpoint> htmCheckpoint;
+
     O3ThreadState(O3CPU *_cpu, int _thread_num, Process *_process)
-        : ThreadState(_cpu, _thread_num, _process),
-          cpu(_cpu), noSquashFromTC(false), trapPending(false)
+        : ThreadState(_cpu, _thread_num, _process), cpu(_cpu),
+          comInstEventQueue("instruction-based event queue"),
+          noSquashFromTC(false), trapPending(false), tc(nullptr)
     {
-        if (!FullSystem)
-            return;
-
-        if (cpu->params()->profile) {
-            profile = new FunctionProfile(
-                    cpu->params()->system->kernelSymtab);
-            Callback *cb =
-                new MakeCallback<O3ThreadState,
-                &O3ThreadState::dumpFuncProfile>(this);
-            registerExitCallback(cb);
-        }
-
-        // let's fill with a dummy node for now so we don't get a segfault
-        // on the first cycle when there's no node available.
-        static ProfileNode dummyNode;
-        profileNode = &dummyNode;
-        profilePC = 3;
     }
 
-    void serialize(std::ostream &os)
+    void serialize(CheckpointOut &cp) const override
     {
-        ThreadState::serialize(os);
+        ThreadState::serialize(cp);
         // Use the ThreadContext serialization helper to serialize the
         // TC.
-        ::serialize(*tc, os);
+        ::serialize(*tc, cp);
     }
 
-    void unserialize(Checkpoint *cp, const std::string &section)
+    void unserialize(CheckpointIn &cp) override
     {
         // Prevent squashing - we don't have any instructions in
         // flight that we need to squash since we just instantiated a
         // clean system.
         noSquashFromTC = true;
-        ThreadState::unserialize(cp, section);
+        ThreadState::unserialize(cp);
         // Use the ThreadContext serialization helper to unserialize
         // the TC.
-        ::unserialize(*tc, cp, section);
+        ::unserialize(*tc, cp);
         noSquashFromTC = false;
     }
 
@@ -139,13 +130,7 @@ struct O3ThreadState : public ThreadState {
     ThreadContext *getTC() { return tc; }
 
     /** Handles the syscall. */
-    void syscall(int64_t callnum) { process->syscall(callnum, tc); }
-
-    void dumpFuncProfile()
-    {
-        std::ostream *os = simout.create(csprintf("profile.%s.dat", cpu->name()));
-        profile->dump(tc, *os);
-    }
+    void syscall() { process->syscall(tc); }
 };
 
 #endif // __CPU_O3_THREAD_STATE_HH__

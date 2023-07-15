@@ -24,11 +24,9 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Ali Saidi
- *          Andrew Schultz
- *          Miguel Serrano
  */
+
+#include "dev/mc146818.hh"
 
 #include <sys/time.h>
 
@@ -39,7 +37,6 @@
 #include "base/time.hh"
 #include "base/trace.hh"
 #include "debug/MC146818.hh"
-#include "dev/mc146818.hh"
 #include "dev/rtcreg.h"
 
 using namespace std;
@@ -120,6 +117,18 @@ MC146818::rega_dv_disabled(const RtcRegA &reg)
 {
     return reg.dv == RTCA_DV_DISABLED0 ||
         reg.dv == RTCA_DV_DISABLED1;
+}
+
+void
+MC146818::startup()
+{
+    assert(!event.scheduled());
+    assert(!tickEvent.scheduled());
+
+    if (stat_regB.pie)
+        schedule(event, curTick() + event.offset);
+    if (!rega_dv_disabled(stat_regA))
+        schedule(tickEvent, curTick() + tickEvent.offset);
 }
 
 void
@@ -253,17 +262,17 @@ MC146818::tickClock()
 }
 
 void
-MC146818::serialize(const string &base, ostream &os)
+MC146818::serialize(const string &base, CheckpointOut &cp) const
 {
     uint8_t regA_serial(stat_regA);
     uint8_t regB_serial(stat_regB);
 
-    arrayParamOut(os, base + ".clock_data", clock_data, sizeof(clock_data));
-    paramOut(os, base + ".stat_regA", (uint8_t)regA_serial);
-    paramOut(os, base + ".stat_regB", (uint8_t)regB_serial);
+    arrayParamOut(cp, base + ".clock_data", clock_data, sizeof(clock_data));
+    paramOut(cp, base + ".stat_regA", (uint8_t)regA_serial);
+    paramOut(cp, base + ".stat_regB", (uint8_t)regB_serial);
 
     //
-    // save the timer tick and rtc clock tick values to correctly reschedule 
+    // save the timer tick and rtc clock tick values to correctly reschedule
     // them during unserialize
     //
     Tick rtcTimerInterruptTickOffset = event.when() - curTick();
@@ -273,17 +282,16 @@ MC146818::serialize(const string &base, ostream &os)
 }
 
 void
-MC146818::unserialize(const string &base, Checkpoint *cp,
-                      const string &section)
+MC146818::unserialize(const string &base, CheckpointIn &cp)
 {
     uint8_t tmp8;
 
-    arrayParamIn(cp, section, base + ".clock_data", clock_data,
+    arrayParamIn(cp, base + ".clock_data", clock_data,
                  sizeof(clock_data));
 
-    paramIn(cp, section, base + ".stat_regA", tmp8);
+    paramIn(cp, base + ".stat_regA", tmp8);
     stat_regA = tmp8;
-    paramIn(cp, section, base + ".stat_regB", tmp8);
+    paramIn(cp, base + ".stat_regB", tmp8);
     stat_regB = tmp8;
 
     //
@@ -291,17 +299,16 @@ MC146818::unserialize(const string &base, Checkpoint *cp,
     //
     Tick rtcTimerInterruptTickOffset;
     UNSERIALIZE_SCALAR(rtcTimerInterruptTickOffset);
-    reschedule(event, curTick() + rtcTimerInterruptTickOffset);
+    event.offset = rtcTimerInterruptTickOffset;
     Tick rtcClockTickOffset;
     UNSERIALIZE_SCALAR(rtcClockTickOffset);
-    reschedule(tickEvent, curTick() + rtcClockTickOffset);
+    tickEvent.offset = rtcClockTickOffset;
 }
 
 MC146818::RTCEvent::RTCEvent(MC146818 * _parent, Tick i)
-    : parent(_parent), interval(i)
+    : parent(_parent), interval(i), offset(i)
 {
     DPRINTF(MC146818, "RTC Event Initilizing\n");
-    parent->schedule(this, curTick() + interval);
 }
 
 void

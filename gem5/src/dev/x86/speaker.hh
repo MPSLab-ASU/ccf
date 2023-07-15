@@ -24,8 +24,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Gabe Black
  */
 
 #ifndef __DEV_X86_SPEAKER_HH__
@@ -69,13 +67,12 @@ class Speaker : public BasicPioDevice
     {
     }
 
-    Tick read(PacketPtr pkt);
+    Tick read(PacketPtr pkt) override;
 
-    Tick write(PacketPtr pkt);
+    Tick write(PacketPtr pkt) override;
 
-    virtual void serialize(std::ostream &os);
-    virtual void unserialize(Checkpoint *cp, const std::string &section);
-
+    void serialize(CheckpointOut &cp) const override;
+    void unserialize(CheckpointIn &cp) override;
 };
 
 } // namespace X86ISA

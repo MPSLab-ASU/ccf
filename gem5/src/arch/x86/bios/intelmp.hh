@@ -33,8 +33,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Gabe Black
  */
 
 #ifndef __ARCH_X86_BIOS_INTELMP_HH__
@@ -241,8 +239,8 @@ class IntAssignment : public BaseConfigEntry
         sourceBusID(_sourceBusID), sourceBusIRQ(_sourceBusIRQ),
         destApicID(_destApicID), destApicIntIn(_destApicIntIn)
     {
-        replaceBits(flags, 0, 1, polarity);
-        replaceBits(flags, 2, 3, trigger);
+        replaceBits(flags, 1, 0, polarity);
+        replaceBits(flags, 3, 2, trigger);
     }
 };
 

@@ -1,0 +1,967 @@
+2021-01-29  Tom de Vries  <tdevries@suse.de>
+
+	PR breakpoints/26063
+	* infrun.c (process_event_stop_test): Reset
+	ecs->event_thread->current_line to 0 if is-stmt=n and frame has
+	changed.
+
+2021-01-28  Andrew Burgess  <andrew.burgess@embecosm.com>
+
+	* thread.c (thr_try_catch_cmd): Replace swith_to_thread with an
+	assert.  Extend the header comment.
+
+2021-01-28  Andrew Burgess  <andrew.burgess@embecosm.com>
+
+	* Makefile.in (SUBDIR_TUI_SRCS): Add tui/tui-location.c.
+	(HFILES_NO_SRCDIR): Add tui/tui-location.h.
+	* tui/tui-data.h (TUI_STATUS_WIN): Define.
+	(tui_locator_win_info_ptr): Delete declaration.
+	* tui/tui-disasm.c: Add 'tui/tui-location.h' include.
+	(tui_disasm_window::set_contents): Fetch state from tui_location
+	global.
+	(tui_get_begin_asm_address): Likewise.
+	* tui/tui-layout.c (tui_apply_current_layout): Remove special case
+	for locator window.
+	(get_locator_window): Delete.
+	(initialize_known_windows): Treat locator window just like all the
+	rest.
+	* tui/tui-source.c: Add 'tui/tui-location.h' include.
+	(tui_source_window::set_contents): Fetch state from tui_location
+	global.
+	(tui_source_window::showing_source_p): Likewise.
+	* tui/tui-stack.c: Add 'tui/tui-location.h' include.
+	(_locator): Delete.
+	(tui_locator_win_info_ptr): Delete.
+	(tui_locator_window::make_status_line): Fetch state from
+	tui_location global.
+	(tui_locator_window::rerender): Remove check of 'handle',
+	reindent function body.
+	(tui_locator_window::set_locator_fullname): Delete.
+	(tui_locator_window::set_locator_info): Delete.
+	(tui_update_locator_fullname): Delete.
+	(tui_show_frame_info): Likewise.
+	(tui_show_locator_content): Access window through TUI_STATUS_WIN.
+	* tui/tui-stack.h (tui_locator_window::set_locator_info): Moved to
+	tui/tui-location.h and renamed to
+	tui_location_tracker::set_location.
+	(tui_locator_window::set_locator_fullname): Moved to
+	tui/tui-location.h and renamed to
+	tui_location_tracker::set_fullname.
+	(tui_locator_window::full_name): Delete.
+	(tui_locator_window::proc_name): Delete.
+	(tui_locator_window::line_no): Delete.
+	(tui_locator_window::addr): Delete.
+	(tui_locator_window::gdbarch): Delete.
+	(tui_update_locator_fullname): Delete declaration.
+	* tui/tui-wingeneral.c (tui_refresh_all): Removed special handling
+	for locator window.
+	* tui/tui-winsource.c: Add 'tui/tui-location.h' include.
+	(tui_display_main): Call function on tui_location directly.
+	* tui/tui.h (enum tui_win_type): Add STATUS_WIN.
+	* tui/tui-location.c: New file.
+	* tui/tui-location.h: New file.
+
+2021-01-28  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* gdbtypes.h (get_type_arch): Rename to...
+	(struct type) <arch>: ... this, update all users.
+
+2021-01-28  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* gdbtypes.h (struct type) <arch>: Rename to...
+	<arch_owner>: ... this, update all users.
+	<objfile>: Rename to...
+	<objfile_owner>: ... this, update all users.
+
+2021-01-28  Andrew Burgess  <andrew.burgess@embecosm.com>
+
+	* gdbcmd.h (execute_command_to_string): Update comment.
+	* top.c (execute_command_to_string): Update header comment.
+
+2021-01-28  Tom de Vries  <tdevries@suse.de>
+
+	PR breakpoints/27205
+	* breakpoint.c (create_longjmp_master_breakpoint_probe)
+	(create_longjmp_master_breakpoint_names): New function, factored out
+	of ...
+	(create_longjmp_master_breakpoint): ... here.  Only try to install
+	longjmp_names breakpoints in libc.so/libc.so.debug if installing probe
+	breakpoint in libc.so failed.
+
+2021-01-27  Lancelot SIX  <lsix@lancelotsix.com>
+
+	PR gdb/27133
+	* cli/cli-interp.c (cli_interp_base::set_logging): Ensure the
+	unique_ptr is released when the wrapped pointer is kept for later
+	use.
+
+2021-01-27  Matthew Malcomson  <matthew.malcomson@arm.com>
+
+	* aarch64-tdep.c (aarch64_displaced_step_others): Account for
+	BLR and BR instructions.
+	* arch/aarch64-insn.h (enum aarch64_opcodes): Add BR opcode.
+	(enum aarch64_masks): New.
+
+2021-01-26  Tom Tromey  <tromey@adacore.com>
+
+	* windows-nat.c (DEBUG_EXEC, DEBUG_EVENTS, DEBUG_MEM)
+	(DEBUG_EXCEPT): Use debug_prefixed_printf_cond.
+	(windows_init_thread_list, windows_nat::handle_load_dll)
+	(windows_nat::handle_unload_dll, windows_nat_target::resume)
+	(windows_nat_target::resume)
+	(windows_nat_target::get_windows_debug_event)
+	(windows_nat_target::interrupt, windows_xfer_memory)
+	(windows_nat_target::close): Update.
+	* nat/windows-nat.c (DEBUG_EVENTS): Use
+	debug_prefixed_printf_cond.
+	(matching_pending_stop, fetch_pending_stop)
+	(continue_last_debug_event): Update.
+
+2020-12-17  Mihails Strasuns  <mihails.strasuns@intel.com>
+
+	* linux-tdep.c (linux_make_mappings_corefile_notes): Start using
+	elfcore_write_file_note.
+
+2021-01-26  Shahab Vahedi  <shahab@synopsys.com>
+
+	* arc-tdep.c (arc_add_reggroups): New function.
+	(arc_gdbarch_init): Call arc_add_reggroups.
+
+2021-01-26  Anton Kolesov  <anton.kolesov@synopsys.com>
+
+	* arc-tdep.c (arc_skip_prologue): Log "pc" address.
+
+2021-01-25  Bernd Edlinger  <bernd.edlinger@hotmail.de>
+	    Simon Marchi  <simon.marchi@polymtl.ca>
+	    Tom de Vries  <tdevries@suse.de>
+
+	* dwarf2/read.c (partial_die_info::read): Use as_unsigned () for
+	DW_AT_ranges.
+
+2021-01-25  Tom Tromey  <tromey@adacore.com>
+
+	* dwarf2/read.c (get_mpz): New function.
+	(get_dwarf2_rational_constant): Use it.
+
+2021-01-25  Tom Tromey  <tromey@adacore.com>
+
+	* ada-lang.c (resolve_subexp): Handle array context.
+
+2021-01-23  Tom Tromey  <tom@tromey.com>
+
+	PR compile/25575
+	* compile/compile-loc2c.c (note_register): New function.
+	(pushf_register_address, pushf_register): Use it.
+
+2021-01-23  Tom Tromey  <tom@tromey.com>
+
+	* symtab.h (struct symbol_computed_ops) <generate_c_location>:
+	Change type of "registers_used".
+	* dwarf2/loc.h (dwarf2_compile_property_to_c): Update.
+	* dwarf2/loc.c (dwarf2_compile_property_to_c)
+	(locexpr_generate_c_location, loclist_generate_c_location): Change
+	type of "registers_used".
+	* compile/compile.h (compile_dwarf_expr_to_c)
+	(compile_dwarf_bounds_to_c): Update.
+	* compile/compile-loc2c.c (pushf_register_address)
+	(pushf_register, do_compile_dwarf_expr_to_c)
+	(compile_dwarf_expr_to_c, compile_dwarf_bounds_to_c): Change type
+	of "registers_used".
+	* compile/compile-c.h (generate_c_for_variable_locations):
+	Update.
+	* compile/compile-c-symbols.c (generate_vla_size)
+	(generate_c_for_for_one_variable): Change type of
+	"registers_used".
+	(generate_c_for_variable_locations): Return std::vector.
+	* compile/compile-c-support.c (generate_register_struct): Change
+	type of "registers_used".
+	(compute): Update.
+
+2021-01-23  Tom Tromey  <tom@tromey.com>
+
+	* compile/compile-internal.h (class compile_instance)
+	<set_arguments>: Change return type.
+	* compile/compile.c (compile_to_object): Remove call to reset.
+	(compile_instance::set_arguments): Change return type.
+
+2021-01-23  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* gdbtypes.c (copy_type_recursive): Use get_type_arch.
+	* gdbtypes.h (struct type) <set_owner>: Add asserts.
+
+2021-01-23  Lancelot SIX  <lsix@lancelotsix.com>
+
+	* Makefile.in (SELFTESTS_SRCS): Add
+	unittests/gdb_tilde_expand-selftests.c.
+	* unittests/gdb_tilde_expand-selftests.c: New file.
+
+2021-01-22  Andrew Burgess  <andrew.burgess@embecosm.com>
+
+	PR cli/25956
+	* NEWS: Mention new command.
+	* cli/cli-style.c: Add 'cli/cli-setshow.h' include.
+	(version_style): Define.
+	(cli_style_option::cli_style_option): Add intensity parameter, and
+	use as appropriate.
+	(_initialize_cli_style): Register version style set/show commands.
+	* cli/cli-style.h (cli_style_option): Add intensity parameter.
+	(version_style): Declare.
+	* top.c (print_gdb_version): Use version_stype, and styled_string
+	to print the GDB version string.
+
+2021-01-22  Andrew Burgess  <andrew.burgess@embecosm.com>
+
+	* utils.c (emit_style_escape): Only emit an escape sequence if the
+	requested style is different than the current applied style.
+	(fputs_maybe_filtered): Adjust the juggling of the wrap_style, and
+	current applied_style.
+	(fputs_styled): Remove is_default check.
+	(fputs_styled_unfiltered): Likewise.
+	(vfprintf_styled_no_gdbfmt): Likewise.
+
+2021-01-22  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* remote.h (remote_debug_printf): New.
+	(remote_debug_printf_nofunc): New.
+	(REMOTE_SCOPED_DEBUG_ENTER_EXIT): New.
+	* remote.c: Use above macros throughout file.
+
+2021-01-22  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* remote.h (remote_debug): Change to bool.
+	* remote.c (remote_debug): Change to bool.
+	(_initialize_remote): Adjust.
+
+2021-01-22  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* target.h (remote_debug): Move to...
+	* remote.h (remote_debug): ... here.
+	* top.c (remote_debug): Move to...
+	* remote.c (remote_debug): ... here.
+	* remote-sim.c: Include remote.h.
+
+2021-01-22  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* cli/cli-cmds.c (show_remote_debug): Remove.
+	(show_remote_timeout): Remove.
+	(_initialize_cli_cmds): Don't register commands.
+	* remote.c (show_remote_debug): Move here.
+	(show_remote_timeout): Move here.
+	(_initialize_remote): Register commands.
+
+2021-01-22  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* gdbtypes.h (TYPE_OBJFILE): Remove, change all users to use the
+	type::objfile method instead.
+
+2021-01-22  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* gdbtypes.h (TYPE_OBJFILE_OWNED): Remove, update all users to
+	use the type::is_objfile_owned method.
+
+2021-01-22  Simon Marchi  <simon.marchi@efficios.com>
+
+	* gdbtypes.h (TYPE_OBJFILE_OWNED): Adjust.
+	(TYPE_OWNER): Remove.
+	(TYPE_OBJFILE): Adjust.
+	(struct main_type) <flag_objfile_owned>: Rename to...
+	<m_flag_objfile_owned>: ... this.
+	<owner>: Rename to...
+	<m_owner>: ... this.
+	(struct type) <is_objfile_owned, set_owner, objfile, arch>: New
+	methods.
+	(TYPE_ALLOC): Adjust.
+	* gdbtypes.c (alloc_type): Adjust.
+	(alloc_type_arch): Adjust.
+	(alloc_type_copy): Adjust.
+	(get_type_arch): Adjust.
+	(smash_type): Adjust.
+	(lookup_array_range_type): Adjust.
+	(recursive_dump_type): Adjust.
+	(copy_type_recursive): Adjust.
+	* compile/compile-c-types.c (convert_func): Adjust.
+	(convert_type_basic): Adjust.
+	* compile/compile-cplus-types.c (compile_cplus_convert_func):
+	Adjust.
+	* language.c
+	(language_arch_info::type_and_symbol::alloc_type_symbol):
+	Adjust.
+
+2021-01-21  Luis Machado  <luis.machado@linaro.org>
+
+	* coffread.c (enter_linenos): Passing string to complaint.
+	* valops.c (value_assign): Make array view.
+
+2021-01-21  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* auto-load.h (debug_auto_load): Move here.
+	(auto_load_debug_printf): New.
+	* auto-load.c: Use auto_load_debug_printf.
+	(debug_auto_load): Move to header.
+	* linux-thread-db.c (try_thread_db_load): Use
+	auto_load_debug_printf.
+	* main.c (captured_main_1): Likewise.
+
+2021-01-21  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* f-valprint.c (f77_array_offset_tbl): Remove.
+
+2021-01-21  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* gdb_bfd.c (bfd_cache_debug_printf): New, use throughout file.
+
+2021-01-21  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* ser-tcp.c (wait_for_connect): Use interruptible_select instead
+	of gdb_select.
+
+2021-01-21  Hannes Domani  <ssbssa@yahoo.de>
+
+	PR python/19151
+	* python/py-breakpoint.c (bppy_get_location): Handle
+	bp_hardware_breakpoint.
+	(bppy_init): Likewise.
+	(gdbpy_breakpoint_created): Likewise.
+
+2021-01-21  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* arm-tdep.c (arm_debug_printf): Add and use throughout file.
+
+2021-01-20  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* gdb_bfd.c (debug_bfd_cache): Change type to bool.
+	(_initialize_gdb_bfd): Adjust.
+
+2021-01-20  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	PR gdb/26828
+	* dwarf2/read.c (maybe_queue_comp_unit): Add assertion.
+
+2021-01-20  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* dwarf2/read.c (follow_die_offset): Add logging.
+	(dwarf2_per_objfile::age_comp_units): Add logging.
+
+2021-01-20  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* aarch64-linux-tdep.c (aarch64_linux_record_tdep): Make static.
+	* aarch64-tdep.c (tdesc_aarch64_list, aarch64_prologue_unwind,
+	aarch64_stub_unwind, aarch64_normal_base, ): Make static.
+	* arm-linux-tdep.c (arm_prologue_unwind): Make static.
+	* arm-tdep.c (struct frame_unwind): Make static.
+	* auto-load.c (auto_load_safe_path_vec): Make static.
+	* csky-tdep.c (csky_stub_unwind): Make static.
+	* gdbarch.c (gdbarch_data_registry): Make static.
+	* gnu-v2-abi.c (gnu_v2_abi_ops): Make static.
+	* i386-netbsd-tdep.c (i386nbsd_mc_reg_offset): Make static.
+	* i386-tdep.c (i386_frame_setup_skip_insns,
+	i386_tramp_chain_in_reg_insns, i386_tramp_chain_on_stack_insns):
+	Make static.
+	* infrun.c (observer_mode): Make static.
+	* linux-nat.c (sigchld_action): Make static.
+	* linux-thread-db.c (thread_db_list): Make static.
+	* maint-test-options.c (maintenance_test_options_list):
+	* mep-tdep.c (mep_csr_registers): Make static.
+	* mi/mi-cmds.c (struct mi_cmd_stats): Remove struct type name.
+	(stats): Make static.
+	* nat/linux-osdata.c (struct osdata_type): Make static.
+	* ppc-netbsd-tdep.c (ppcnbsd_reg_offsets): Make static.
+	* progspace.c (last_program_space_num): Make static.
+	* python/py-param.c (struct parm_constant): Remove struct type
+	name.
+	(parm_constants): Make static.
+	* python/py-record-btrace.c (btpy_list_methods): Make static.
+	* python/py-record.c (recpy_gap_type): Make static.
+	* record.c (record_goto_cmdlist): Make static.
+	* regcache.c (regcache_descr_handle): Make static.
+	* registry.h (DEFINE_REGISTRY): Make definition static.
+	* symmisc.c (std_in, std_out, std_err): Make static.
+	* top.c (previous_saved_command_line): Make static.
+	* tracepoint.c (trace_user, trace_notes, trace_stop_notes): Make
+	static.
+	* unittests/command-def-selftests.c (nr_duplicates,
+	nr_invalid_prefixcmd, lists): Make static.
+	* unittests/observable-selftests.c (test_notification): Make
+	static.
+	* unittests/optional/assignment/1.cc (counter): Make static.
+	* unittests/optional/assignment/2.cc (counter): Make static.
+	* unittests/optional/assignment/3.cc (counter): Make static.
+	* unittests/optional/assignment/4.cc (counter): Make static.
+	* unittests/optional/assignment/5.cc (counter): Make static.
+	* unittests/optional/assignment/6.cc (counter): Make static.
+
+2021-01-20  Joel Sherrill  <joel@rtems.org>
+
+	PR gdb/27219
+	* remote.c (struct remote_thread_info) <resume_state>: Rename
+	to...
+	<get_resume_state>: ... this.
+	(remote_target::resume): Adjust.
+	(remote_target::commit_resume): Adjust.
+	(remote_target::select_thread_for_ambiguous_stop_reply): Adjust.
+
+2021-01-20  Sergio Durigan Junior  <sergiodj@sergiodj.net>
+	    Tom Tromey <tom@tromey.com>
+
+	* stap-probe.c (stap_parse_single_operand): Handle '!'
+	operator.
+	(stap_parse_argument_conditionally): Likewise.
+	Skip spaces after processing open-parenthesis sub-expression.
+	(stap_parse_argument_1): Skip spaces after call to
+	stap_parse_argument_conditionally.
+	Handle case when right-side expression is a parenthesized
+	sub-expression.
+	Skip spaces after call to stap_parse_argument_1.
+
+2021-01-19  Lancelot SIX  <lsix@lancelotsix.com>
+
+	* top.h (switch_thru_all_uis): Use DISABLE_COPY_AND_ASSIGN.
+
+2021-01-19  Luis Machado  <luis.machado@linaro.org>
+
+	* trad-frame.h (trad_frame_saved_reg) <set_value_bytes>: Allocate
+	memory and save data.
+	(trad_frame_set_value, trad_frame_set_realreg, trad_frame_set_addr)
+	(trad_frame_set_unknown, trad_frame_set_value_bytes)
+	(trad_frame_value_p, trad_frame_addr_p, trad_frame_realreg_p)
+	(trad_frame_value_bytes_p): Remove.
+	(trad_frame_reset_saved_regs): Adjust documentation.
+	* trad-frame.c (trad_frame_alloc_saved_regs): Initialize via a
+	constructor and reset the state of the registers.
+	(trad_frame_value_p, trad_frame_addr_p, trad_frame_realreg_p)
+	(trad_frame_value_bytes_p, trad_frame_set_value)
+	(trad_frame_set_realreg, trad_frame_set_addr)
+	(trad_frame_set_unknown, trad_frame_set_value_bytes): Remove.
+	(trad_frame_set_reg_realreg): Update to call member function.
+	(trad_frame_set_reg_addr, trad_frame_set_reg_value_bytes): Likewise.
+	(trad_frame_get_prev_register): Likewise.
+
+	* aarch64-tdep.c (aarch64_analyze_prologue)
+	(aarch64_analyze_prologue_test, aarch64_make_prologue_cache_1)
+	(aarch64_prologue_prev_register): Update to use member functions.
+	* alpha-mdebug-tdep.c (alpha_mdebug_frame_unwind_cache): Likewise.
+	* alpha-tdep.c (alpha_heuristic_frame_unwind_cache): Likewise.
+	* arc-tdep.c (arc_print_frame_cache, arc_make_frame_cache): Likewise.
+	* arm-tdep.c (arm_make_prologue_cache, arm_exidx_fill_cache)
+	(arm_make_epilogue_frame_cache): Likewise.
+	* avr-tdep.c (avr_frame_unwind_cache)
+	(avr_frame_prev_register): Likewise.
+	* cris-tdep.c (cris_scan_prologue): Likewise.
+	* csky-tdep.c (csky_frame_unwind_cache): Likewise.
+	* frv-tdep.c (frv_analyze_prologue): Likewise.
+	* hppa-tdep.c (hppa_frame_cache, hppa_fallback_frame_cache): Likewise.
+	* lm32-tdep.c (lm32_frame_cache): Likewise.
+	* m32r-tdep.c (m32r_frame_unwind_cache): Likewise.
+	* m68hc11-tdep.c (m68hc11_frame_unwind_cache): Likewise.
+	* mips-tdep.c (set_reg_offset, mips_insn16_frame_cache)
+	(mips_micro_frame_cache, mips_insn32_frame_cache): Likewise.
+	(reset_saved_regs): Adjust to set realreg.
+	* riscv-tdep.c (riscv_scan_prologue, riscv_frame_cache): Adjust to
+	call member functions.
+	* rs6000-tdep.c (rs6000_frame_cache, rs6000_epilogue_frame_cache)
+	* s390-tdep.c (s390_prologue_frame_unwind_cache)
+	(s390_backchain_frame_unwind_cache): Likewise.
+	* score-tdep.c (score7_analyze_prologue)
+	(score3_analyze_prologue, score_make_prologue_cache): Likewise.
+	* sparc-netbsd-tdep.c (sparc32nbsd_sigcontext_saved_regs): Likewise.
+	* sparc-sol2-tdep.c (sparc32_sol2_sigtramp_frame_cache): Likewise.
+	* sparc64-netbsd-tdep.c (sparc64nbsd_sigcontext_saved_regs): Likewise.
+	* sparc64-sol2-tdep.c (sparc64_sol2_sigtramp_frame_cache): Likewise.
+	* tilegx-tdep.c (tilegx_analyze_prologue)
+	(tilegx_frame_cache): Likewise.
+	* v850-tdep.c (v850_frame_cache): Likewise.
+	* vax-tdep.c (vax_frame_cache): Likewise.
+
+2021-01-19  Luis Machado  <luis.machado@linaro.org>
+
+	* frame.h (get_frame_register_bytes): Pass a gdb::array_view instead
+	of buffer + length.
+	(put_frame_register_bytes): Likewise.
+	Adjust documentation.
+	(get_frame_memory): Pass a gdb::array_view instead of buffer + length.
+	(safe_frame_unwind_memory): Likewise.
+	* frame.c (get_frame_register_bytes, put_frame_register_bytes)
+	(get_frame_memory, safe_frame_unwind_memory): Adjust to use
+	gdb::array_view.
+	* amd64-fbsd-tdep.c (amd64fbsd_sigtramp_p): Likewise.
+	* amd64-linux-tdep.c (amd64_linux_sigtramp_start): Likewise.
+	* amd64-obsd-tdep.c (amd64obsd_sigtramp_p): Likewise.
+	* arc-linux-tdep.c (arc_linux_is_sigtramp): Likewise.
+	* cris-tdep.c (cris_sigtramp_start, cris_rt_sigtramp_start): Likewise.
+	* dwarf2/loc.c (rw_pieced_value): Likewise.
+	* hppa-tdep.c (hppa_frame_cache): Likewise.
+	* i386-fbsd-tdep.c (i386fbsd_sigtramp_p): Likewise.
+	* i386-gnu-tdep.c (i386_gnu_sigtramp_start): Likewise.
+	* i386-linux-tdep.c (i386_linux_sigtramp_start)
+	(i386_linux_rt_sigtramp_start): Likewise.
+	* i386-obsd-tdep.c (i386obsd_sigtramp_p): Likewise.
+	* i386-tdep.c (i386_register_to_value): Likewise.
+	* i387-tdep.c (i387_register_to_value): Likewise.
+	* ia64-tdep.c (ia64_register_to_value): Likewise.
+	* m32r-linux-tdep.c (m32r_linux_sigtramp_start)
+	(m32r_linux_rt_sigtramp_start): Likewise.
+	* m68k-linux-tdep.c (m68k_linux_pc_in_sigtramp): Likewise.
+	* m68k-tdep.c (m68k_register_to_value): Likewise.
+	* mips-tdep.c (mips_register_to_value)
+	(mips_value_to_register): Likewise.
+	* ppc-fbsd-tdep.c (ppcfbsd_sigtramp_frame_sniffer)
+	(ppcfbsd_sigtramp_frame_cache): Likewise.
+	* ppc-obsd-tdep.c (ppcobsd_sigtramp_frame_sniffer)
+	(ppcobsd_sigtramp_frame_cache): Likewise.
+	* rs6000-tdep.c (rs6000_in_function_epilogue_frame_p)
+	(rs6000_register_to_value): Likewise.
+	* tilegx-tdep.c (tilegx_analyze_prologue): Likewise.
+	* tramp-frame.c (tramp_frame_start): Likewise.
+	* valops.c (value_assign): Likewise.
+
+2021-01-19  Luis Machado  <luis.machado@linaro.org>
+
+	* aarch64-linux-tdep.c (aarch64_linux_restore_vreg): Pass in an
+	array_view.
+	* trad-frame.c (trad_frame_set_value_bytes): Use gdb::array_view
+	instead of buffer and size.
+	(trad_frame_set_reg_value_bytes): Likewise.
+	* trad-frame.h (trad_frame_set_reg_value_bytes): Likewise.
+	(trad_frame_set_value_bytes): Likewise.
+
+2021-01-18  Mike Frysinger  <vapier@gentoo.org>
+
+	* copyright.py (NOT_FSF_LIST): Delete sim/testsuite/sim/bfin/s21.s.
+
+2021-01-18  Andrew Burgess  <andrew.burgess@embecosm.com>
+
+	* riscv-fbsd-tdep.c (riscv_fbsd_supply_gregset): Delete.
+	(riscv_fbsd_gregset): Use riscv_supply_regset.
+	(riscv_fbsd_fpregset): Likewise.
+	* riscv-linux-tdep.c (riscv_linux_gregset): Likewise.
+	(riscv_linux_fregset): Likewise.
+	* riscv-tdep.c (riscv_supply_regset): Define new function.
+	* riscv-tdep.h (riscv_supply_regset): Declare new function.
+
+2021-01-18  Tom de Vries  <tdevries@suse.de>
+
+	PR tdep/27172
+	* nat/amd64-linux-siginfo.c (cpt_si_lower, cpt_si_upper, SEGV_BNDERR):
+	New macro.
+	(compat_siginfo_from_siginfo): Copy cpt_si_lower and cpt_si_upper
+	for SEGV_BNDERR.
+
+2021-01-18  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* remote.c (class remote_target) <remote_hostio_send_command,
+	remote_hostio_parse_result>: Constify parameter.
+	(remote_hostio_parse_result): Likewise.
+	(remote_target::remote_hostio_send_command): Adjust.
+	(remote_target::remote_hostio_pread_vFile): Adjust.
+	(remote_target::fileio_readlink): Adjust.
+	(remote_target::fileio_fstat): Adjust.
+
+2021-01-18  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* remote.c (remote_target::start_remote): Move wait_status to
+	narrower scope.
+
+2021-01-18  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* remote.c (class remote_target):
+	<add_current_inferior_and_thread>: Constify parameter.
+	(stop_reply_extract_thread): Likewise.
+	(remote_target::get_current_thread): Likewise.
+	(remote_target::add_current_inferior_and_thread): Likewise.
+
+2021-01-18  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* remote.c (class remote_target)
+	<remote_unpack_thread_info_response,
+	parse_threadlist_response>: Constify parameter and/or return
+	value and or local variable.
+	(stub_unpack_int): Likewise.
+	(unpack_nibble): Likewise.
+	(unpack_byte): Likewise.
+	(unpack_int): Likewise.
+	(unpack_string): Likewise.
+	(unpack_threadid): Likewise.
+	(remote_target::remote_unpack_thread_info_response): Likewise.
+	(remote_target::parse_threadlist_response): Likewise.
+
+2021-01-15  Andrew Burgess  <andrew.burgess@embecosm.com>
+
+	* tui/tui.c (tui_is_window_visible): Compare to nullptr, not 0.
+
+2021-01-14  Lancelot Six  <lsix@lancelotsix.com>
+
+	* MAINTAINERS (Write After Approval): Add myself.
+
+2021-01-14  Bernd Edlinger  <bernd.edlinger@hotmail.de>
+
+	* trad-frame.c (trad_frame_alloc_saved_regs): Avoid compile-error
+	because is_trivially_default_constructible was first implemented with
+	gcc-5.
+
+2021-01-14  Tom de Vries  <tdevries@suse.de>
+
+	PR breakpoints/27151
+	* objfiles.h (in_plt_section): Handle .plt.sec.
+
+2021-01-13  Andrew Burgess  <andrew.burgess@embecosm.com>
+
+	PR gdb/26819
+	* remote.c
+	(remote_target::select_thread_for_ambiguous_stop_reply): New
+	member function.
+	(remote_target::process_stop_reply): Call
+	select_thread_for_ambiguous_stop_reply.
+
+2021-01-13  Simon Marchi  <simon.marchi@efficios.com>
+
+	* record-btrace.c (class record_btrace_target): Remove.
+	(record_btrace_target::commit_resume): Remove.
+	* record-full.c (class record_full_target): Remove.
+	(record_full_target::commit_resume): Remove.
+
+2021-01-13  Simon Marchi  <simon.marchi@efficios.com>
+
+	* remote.c (enum class resume_state): New.
+	(struct resumed_pending_vcont_info): New.
+	(struct remote_thread_info) <resume_state, set_not_resumed,
+	set_resumed_pending_vcont, resumed_pending_vcont_info,
+	set_resumed, m_resume_state, m_resumed_pending_vcont_info>:
+	New.
+	<last_resume_step, last_resume_sig, vcont_resumed>: Remove.
+	(remote_target::remote_add_thread): Adjust.
+	(remote_target::process_initial_stop_replies): Adjust.
+	(remote_target::resume): Adjust.
+	(remote_target::commit_resume): Rely on state in
+	remote_thread_info and not on tp->executing.
+	(remote_target::process_stop_reply): Adjust.
+
+2021-01-13  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* arc-tdep.h (arc_debug_printf): New.
+	* arc-tdep.c: Use arc_debug_printf.
+	* arc-linux-nat.c (arc_linux_nat_debug_printf): Add and use.
+	* arc-linux-tdep.c (arc_linux_debug_printf): Add and use.
+	* arc-newlib-tdep.c (arc_newlib_debug_printf): Add and use.
+
+2021-01-13  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* arc-tdep.h (arc_debug): Change type to bool.
+	* arc-tdep.c (arc_debug): Change type to bool.
+	(arc_analyze_prologue): Adjust.
+	(_initialize_arc_tdep): Use add_setshow_boolean_cmd.
+	* arc-linux-nat.c (ps_get_thread_area): Adjust.
+
+2021-01-13  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* auto-load.c (auto_load_objfile_script_1): Use bool.
+	(execute_script_contents): Use bool.
+
+2021-01-13  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* auto-load.h (auto_load_gdb_scripts_enabled): Return bool, move
+	comment here.
+	* auto-load.c (auto_load_gdb_scripts_enabled): Return bool, move
+	comment to header.
+	* extension-priv.h (struct extension_language_script_ops)
+	<auto_load_enabled>: Return bool.
+	* extension.h (ext_lang_auto_load_enabled): Return bool, move
+	comment here.
+	* extension.c (ext_lang_auto_load_enabled): Return bool, move
+	comment to header.
+	* guile/guile-header.h (gdbscm_auto_load_enabled): Return bool,
+	move comment here.
+	* guile/scm-auto-load.c (gdbscm_auto_load_enabled): Return bool,
+	move comment to header.
+	* python/python-header.h (gdbpy_auto_load_enabled): Return bool,
+	move comment here.
+	* python/py-auto-load.c (gdbpy_auto_load_enabled): Return bool,
+	move comment to header.
+
+2021-01-13  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* auto-load.h (file_is_auto_load_safe): Change return type to
+	bool, move comment here.
+	* auto-load.c (file_is_auto_load_safe): Change return type and
+	advice_printed to bool.  Move comment to  header.
+
+2021-01-13  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* jit.c (jit_debug_printf): New, use throughout file.
+
+2021-01-12  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* infrun.c (normal_stop): Fix indentation.
+
+2021-01-12  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* top.h (readnow_symbol_files, readnever_symbol_files): Move
+	declarations to ...
+	* symfile.h: ... here.
+	* symfile.c: Update doc.
+
+2021-01-12  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* target.h (baud_rate, serial_parity): Move declarations...
+	* serial.h: ... here.
+	* main.c: Include serial.h.
+	* serial.c (baud_rate, serial_parity): Update doc.
+
+2021-01-12  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* top.c (pre_init_ui_hook): Remove.
+
+2021-01-12  Srinath Parvathaneni  <srinath.parvathaneni@arm.com>
+
+	* aarch64-tdep.c (aarch64_vnh_type): Add "bf" field in h registers.
+	(aarch64_vnv_type): Add "bf" type in h field of v registers.
+	* features/aarch64-fpu.c (create_feature_aarch64_fpu): Regenerated.
+	* features/aarch64-fpu.xml: Add bfloat16 type.
+
+2021-01-12  Andrew Burgess  <andrew.burgess@embecosm.com>
+
+	* expprint.c (dump_subexp_body_standard): Handle OP_BOOL.
+
+2021-01-12  Andrew Burgess  <andrew.burgess@embecosm.com>
+
+	* f-exp.y (dot_ops): Rename to...
+	(fortran_operators): ...this.  Add a header comment.  Add symbol
+	based operators.
+	(yylex): Update to use fortran_operators not dot_ops.  Remove
+	special handling for '**', this is now included in
+	fortran_operators.
+
+2021-01-11  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* arch/aarch64-insn.h (aarch64_debug_printf): New.
+	* arch/aarch64-insn.c: Use aarch64_debug_printf.
+	* aarch64-tdep.c: Use aarch64_debug_printf.
+
+2021-01-11  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* solib-aix.c (solib_aix_debug_printf): New, use throughout
+	file.
+
+2021-01-11  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* jit.c (jit_debug): Change type to bool.
+	(_initialize_jit): Adjust.
+
+2021-01-09  Tom Tromey  <tom@tromey.com>
+
+	PR compile/23672
+	* compile/compile.c (compile_to_object): Avoid crash when
+	osabi_triplet_regexp returns NULL.
+
+2021-01-09  Tom Tromey  <tom@tromey.com>
+
+	* tracepoint.h (class collection_list) <append_exp>: Take a
+	std::string.
+	* tracepoint.c (collection_list::append_exp): Take a std::string.
+	(encode_actions_1): Update.
+
+2021-01-08  Tom Tromey  <tromey@adacore.com>
+
+	* parse.c (parse_expression): Add void_context_p parameter.  Use
+	parse_exp_in_context.
+	* printcmd.c (print_command_1): Change voidprint to bool.  Pass to
+	parse_expression.
+	(print_command, call_command): Update.
+	* expression.h (parse_expression): Add void_context_p parameter.
+
+2021-01-08  Andrew Burgess  <andrew.burgess@embecosm.com>
+
+	* value.c (set_value_component_location): Adjust the VALUE_LVAL
+	for internalvar components that have a dynamic location.
+
+2021-01-08  Tom de Vries  <tdevries@suse.de>
+
+	PR gdb/26881
+	* breakpoint.c (create_exception_master_breakpoint_probe)
+	(create_exception_master_breakpoint_hook): Factor out
+	of ...
+	(create_exception_master_breakpoint): ... here.  Only try to install
+	the master exception breakpoint in objfile.debug using the
+	_Unwind_DebugHook method, if the install using probes in objfile
+	failed.
+
+2021-01-08  Andrew Burgess  <andrew.burgess@embecosm.com>
+
+	* f-lang.c (fortran_value_subarray): Call value_from_component.
+
+2021-01-07  Mike Frysinger  <vapier@gentoo.org>
+
+	* remote-sim.c: Include memory-map.h.
+	(gdbsim_target): Define memory_map override.
+	(gdbsim_target::memory_map): Define.
+
+2021-01-07  Tom Tromey  <tromey@adacore.com>
+
+	* ada-lang.c (do_full_match): Conditionally skip "_ada_" prefix.
+
+2021-01-07  Tom Tromey  <tromey@adacore.com>
+
+	* ada-lang.c (add_component_interval): Start loop using vector's
+	updated size.
+
+2021-01-06  Tom Tromey  <tromey@adacore.com>
+
+	* ada-lang.c (ada_evaluate_subexp) <BINOP_ADD, BINOP_SUB>:
+	Do not cast result.
+	* valarith.c (fixed_point_binop): Handle multiplication
+	and division specially.
+	* valops.c (value_to_gdb_mpq): New function.
+	(value_cast_to_fixed_point): Use it.
+
+2021-01-05  Hannes Domani  <ssbssa@yahoo.de>
+
+	* tui/tui-winsource.c (tui_source_window_base::refresh_window):
+	Call wnoutrefresh instead of tui_win_info::refresh_window.
+
+2021-01-05  Hannes Domani  <ssbssa@yahoo.de>
+
+	* tui/tui-source.c (tui_source_window::show_line_number):
+	Redraw second space after line number.
+
+2021-01-05  Hannes Domani  <ssbssa@yahoo.de>
+
+	PR tui/26927
+	* tui/tui-winsource.c (tui_source_window_base::refresh_window):
+	Fix source pad size in prefresh.
+	(tui_source_window_base::show_source_content): Grow source pad
+	if necessary.
+
+2021-01-04  Mike Frysinger  <vapier@gentoo.org>
+
+	* bfin-tdep.c (bfin_push_dummy_call): Use align_up.
+	(bfin_frame_align): Use align_down.
+
+2021-01-04  Tom de Vries  <tdevries@suse.de>
+
+	* buildsym.c (buildsym_compunit::record_line): Filter out end-of-seq
+	terminators that do not terminate anything.
+
+2021-01-04  Simon Marchi  <simon.marchi@efficios.com>
+
+	* debug.c (debug_print_depth): New.
+	* infrun.h (INFRUN_SCOPED_DEBUG_START_END): New.
+	(INFRUN_SCOPED_DEBUG_ENTER_EXIT): New.
+	* infrun.c (start_step_over): Use
+	INFRUN_SCOPED_DEBUG_ENTER_EXIT.
+	(proceed): Use INFRUN_SCOPED_DEBUG_ENTER_EXIT and
+	INFRUN_SCOPED_DEBUG_START_END.
+	(fetch_inferior_event): Use INFRUN_SCOPED_DEBUG_ENTER_EXIT.
+
+2021-01-04  Simon Marchi  <simon.marchi@efficios.com>
+
+	* infrun.c (print_target_wait_results): Use infrun_debug_printf.
+
+2021-01-04  Simon Marchi  <simon.marchi@efficios.com>
+
+	* utils.c (vfprintf_unfiltered): Print timestamp only when
+	previous debug output ended with a newline.
+
+2021-01-04  Luis Machado  <luis.machado@linaro.org>
+
+	Update all users of trad_frame_saved_reg to use the new member
+	functions.
+
+	Remote all struct keywords from declarations of trad_frame_saved_reg
+	types, except on forward declarations.
+
+	* aarch64-tdep.c: Update.
+	* alpha-mdebug-tdep.c: Update.
+	* alpha-tdep.c: Update.
+	* arc-tdep.c: Update.
+	* arm-tdep.c: Update.
+	* avr-tdep.c: Update.
+	* cris-tdep.c: Update.
+	* csky-tdep.c: Update.
+	* frv-tdep.c: Update.
+	* hppa-linux-tdep.c: Update.
+	* hppa-tdep.c: Update.
+	* hppa-tdep.h: Update.
+	* lm32-tdep.c: Update.
+	* m32r-linux-tdep.c: Update.
+	* m32r-tdep.c: Update.
+	* m68hc11-tdep.c: Update.
+	* mips-tdep.c: Update.
+	* moxie-tdep.c: Update.
+	* riscv-tdep.c: Update.
+	* rs6000-tdep.c: Update.
+	* s390-linux-tdep.c: Update.
+	* s390-tdep.c: Update.
+	* score-tdep.c: Update.
+	* sparc-netbsd-tdep.c: Update.
+	* sparc-sol2-tdep.c: Update.
+	* sparc64-fbsd-tdep.c: Update.
+	* sparc64-netbsd-tdep.c: Update.
+	* sparc64-obsd-tdep.c: Update.
+	* sparc64-sol2-tdep.c: Update.
+	* tilegx-tdep.c: Update.
+	* v850-tdep.c: Update.
+	* vax-tdep.c: Update.
+
+	* frame-unwind.c (frame_unwind_got_bytes): Make parameter const.
+	* frame-unwind.h (frame_unwind_got_bytes): Likewise.
+
+	* trad-frame.c: Update.
+	Remove TF_REG_* enum.
+	(trad_frame_alloc_saved_regs): Add a static assertion to check for
+	a trivially-constructible struct.
+	(trad_frame_reset_saved_regs): Adjust to use member function.
+	(trad_frame_value_p): Likewise.
+	(trad_frame_addr_p): Likewise.
+	(trad_frame_realreg_p): Likewise.
+	(trad_frame_value_bytes_p): Likewise.
+	(trad_frame_set_value): Likewise.
+	(trad_frame_set_realreg): Likewise.
+	(trad_frame_set_addr): Likewise.
+	(trad_frame_set_unknown): Likewise.
+	(trad_frame_set_value_bytes): Likewise.
+	(trad_frame_get_prev_register): Likewise.
+	* trad-frame.h: Update.
+	(trad_frame_saved_reg_kind): New enum.
+	(struct trad_frame_saved_reg) <addr, realreg, data>: Remove.
+	<m_kind, m_reg>: New member fields.
+	<set_value, set_realreg, set_addr, set_unknown, set_value_bytes>
+	<kind, value, realreg, addr, value_bytes, is_value, is_realreg>
+	<is_addr, is_unknown, is_value_bytes>: New member functions.
+
+2021-01-02  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* target-float.c: Fix typos.
+
+2021-01-02  Hannes Domani  <ssbssa@yahoo.de>
+
+	* gdb-gdb.py.in: Fix main_type.flds_bnds.bounds pretty printer.
+
+2021-01-01  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdbarch.sh: Update copyright year range.
+
+2021-01-01  Joel Brobecker  <brobecker@adacore.com>
+
+	Update copyright year range in copyright header of all GDB files.
+
+2021-01-01  Joel Brobecker  <brobecker@adacore.com>
+
+	* copyright.py (get_update_list): Add "gdbserver" and "gdbsupport"
+	to the list of directories to update.
+
+2021-01-01  Joel Brobecker  <brobecker@adacore.com>
+
+	* top.c (print_gdb_version): Update copyright year.
+
+2021-01-01  Joel Brobecker  <brobecker@adacore.com>
+
+	* config/djgpp/fnchange.lst: Add entry for gdb/ChangeLog-2020.
+
+For older changes see ChangeLog-2020.
+
+Local Variables:
+mode: change-log
+left-margin: 8
+fill-column: 74
+version-control: never
+coding: utf-8
+End:

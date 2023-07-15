@@ -25,9 +25,6 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Authors: Korey Sewell
-//          Jaidev Patwardhan
 
 def operand_types {{
     'sb' : 'int8_t',
@@ -51,9 +48,8 @@ def operands {{
     #Immediate Value operand
     'IntImm': ('IntReg', 'uw', 'INTIMM', 'IsInteger', 3),
 
-    #Operands used for Link or Syscall Insts
+    #Operands used for Link Insts
     'R31': ('IntReg', 'uw','31','IsInteger', 4),
-    'R2':  ('IntReg', 'uw','2', 'IsInteger', 5),
 
     #Special Integer Reg operands
     'LO0':  ('IntReg', 'uw','INTREG_LO', 'IsInteger', 6),

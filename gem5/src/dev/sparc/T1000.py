@@ -23,15 +23,14 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Gabe Black
 
 from m5.params import *
 from m5.proxy import *
-from Device import BasicPioDevice, PioDevice, IsaFake, BadAddr
-from Platform import Platform
-from Terminal import Terminal
-from Uart import Uart8250
+
+from m5.objects.Device import BasicPioDevice, PioDevice, IsaFake, BadAddr
+from m5.objects.Platform import Platform
+from m5.objects.Terminal import Terminal
+from m5.objects.Uart import Uart8250
 
 
 class MmDisk(BasicPioDevice):
@@ -113,27 +112,27 @@ class T1000(Platform):
     iob = Iob()
     # Attach I/O devices that are on chip
     def attachOnChipIO(self, bus):
-        self.iob.pio = bus.master
-        self.htod.pio = bus.master
+        self.iob.pio = bus.mem_side_ports
+        self.htod.pio = bus.mem_side_ports
 
 
     # Attach I/O devices to specified bus object.  Can't do this
     # earlier, since the bus object itself is typically defined at the
     # System level.
     def attachIO(self, bus):
-        self.hvuart.terminal = self.hterm
-        self.puart0.terminal = self.pterm
-        self.fake_clk.pio = bus.master
-        self.fake_membnks.pio = bus.master
-        self.fake_l2_1.pio = bus.master
-        self.fake_l2_2.pio = bus.master
-        self.fake_l2_3.pio = bus.master
-        self.fake_l2_4.pio = bus.master
-        self.fake_l2esr_1.pio = bus.master
-        self.fake_l2esr_2.pio = bus.master
-        self.fake_l2esr_3.pio = bus.master
-        self.fake_l2esr_4.pio = bus.master
-        self.fake_ssi.pio = bus.master
-        self.fake_jbi.pio = bus.master
-        self.puart0.pio = bus.master
-        self.hvuart.pio = bus.master
+        self.hvuart.device = self.hterm
+        self.puart0.device = self.pterm
+        self.fake_clk.pio = bus.mem_side_ports
+        self.fake_membnks.pio = bus.mem_side_ports
+        self.fake_l2_1.pio = bus.mem_side_ports
+        self.fake_l2_2.pio = bus.mem_side_ports
+        self.fake_l2_3.pio = bus.mem_side_ports
+        self.fake_l2_4.pio = bus.mem_side_ports
+        self.fake_l2esr_1.pio = bus.mem_side_ports
+        self.fake_l2esr_2.pio = bus.mem_side_ports
+        self.fake_l2esr_3.pio = bus.mem_side_ports
+        self.fake_l2esr_4.pio = bus.mem_side_ports
+        self.fake_ssi.pio = bus.mem_side_ports
+        self.fake_jbi.pio = bus.mem_side_ports
+        self.puart0.pio = bus.mem_side_ports
+        self.hvuart.pio = bus.mem_side_ports

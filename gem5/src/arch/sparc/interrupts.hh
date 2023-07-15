@@ -24,14 +24,12 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Ali Saidi
- *          Lisa Hsu
  */
 
 #ifndef __ARCH_SPARC_INTERRUPT_HH__
 #define __ARCH_SPARC_INTERRUPT_HH__
 
+#include "arch/generic/interrupts.hh"
 #include "arch/sparc/faults.hh"
 #include "arch/sparc/isa_traits.hh"
 #include "arch/sparc/registers.hh"
@@ -43,21 +41,25 @@
 namespace SparcISA
 {
 
-class Interrupts : public SimObject
+enum InterruptTypes
+{
+    IT_TRAP_LEVEL_ZERO,
+    IT_HINTP,
+    IT_INT_VEC,
+    IT_CPU_MONDO,
+    IT_DEV_MONDO,
+    IT_RES_ERROR,
+    IT_SOFT_INT,
+    NumInterruptTypes
+};
+
+class Interrupts : public BaseInterrupts
 {
   private:
-    BaseCPU * cpu;
-
     uint64_t interrupts[NumInterruptTypes];
     uint64_t intStatus;
 
   public:
-
-    void
-    setCPU(BaseCPU * _cpu)
-    {
-        cpu = _cpu;
-    }
 
     typedef SparcInterruptsParams Params;
 
@@ -67,7 +69,7 @@ class Interrupts : public SimObject
         return dynamic_cast<const Params *>(_params);
     }
 
-    Interrupts(Params * p) : SimObject(p), cpu(NULL)
+    Interrupts(Params * p) : BaseInterrupts(p)
     {
         clearAll();
     }
@@ -87,7 +89,7 @@ class Interrupts : public SimObject
     }
 
     void
-    post(int int_num, int index)
+    post(int int_num, int index) override
     {
         DPRINTF(Interrupt, "Interrupt %d:%d posted\n", int_num, index);
         assert(int_num >= 0 && int_num < NumInterruptTypes);
@@ -98,7 +100,7 @@ class Interrupts : public SimObject
     }
 
     void
-    clear(int int_num, int index)
+    clear(int int_num, int index) override
     {
         DPRINTF(Interrupt, "Interrupt %d:%d cleared\n", int_num, index);
         assert(int_num >= 0 && int_num < NumInterruptTypes);
@@ -110,7 +112,7 @@ class Interrupts : public SimObject
     }
 
     void
-    clearAll()
+    clearAll() override
     {
         for (int i = 0; i < NumInterruptTypes; ++i) {
             interrupts[i] = 0;
@@ -119,14 +121,11 @@ class Interrupts : public SimObject
     }
 
     bool
-    checkInterrupts(ThreadContext *tc) const
+    checkInterrupts() const override
     {
-        return intStatus;
-    }
+        if (!intStatus)
+            return false;
 
-    Fault
-    getInterrupt(ThreadContext *tc)
-    {
         HPSTATE hpstate = tc->readMiscRegNoEffect(MISCREG_HPSTATE);
         PSTATE pstate = tc->readMiscRegNoEffect(MISCREG_PSTATE);
 
@@ -139,49 +138,104 @@ class Interrupts : public SimObject
             if (pstate.ie) {
                 if (interrupts[IT_HINTP]) {
                     // This will be cleaned by a HINTP write
-                    return new HstickMatch;
+                    return true;
                 }
                 if (interrupts[IT_INT_VEC]) {
                     // this will be cleared by an ASI read (or write)
-                    return new InterruptVector;
+                    return true;
                 }
             }
         } else {
             if (interrupts[IT_TRAP_LEVEL_ZERO]) {
                     // this is cleared by deasserting HPSTATE::tlz
-                    return new TrapLevelZero;
+                return true;
             }
             // HStick matches always happen in priv mode (ie doesn't matter)
             if (interrupts[IT_HINTP]) {
-                return new HstickMatch;
+                return true;
             }
             if (interrupts[IT_INT_VEC]) {
                 // this will be cleared by an ASI read (or write)
-                return new InterruptVector;
+                return true;
             }
             if (pstate.ie) {
                 if (interrupts[IT_CPU_MONDO]) {
-                    return new CpuMondo;
+                    return true;
                 }
                 if (interrupts[IT_DEV_MONDO]) {
-                    return new DevMondo;
+                    return true;
                 }
                 if (interrupts[IT_SOFT_INT]) {
-                    int level = InterruptLevel(interrupts[IT_SOFT_INT]);
-                    return new InterruptLevelN(level);
+                    return true;
                 }
 
                 if (interrupts[IT_RES_ERROR]) {
-                    return new ResumableError;
+                    return true;
+                }
+            } // !hpriv && pstate.ie
+        }  // !hpriv
+
+        return false;
+    }
+
+    Fault
+    getInterrupt() override
+    {
+        assert(checkInterrupts());
+
+        HPSTATE hpstate = tc->readMiscRegNoEffect(MISCREG_HPSTATE);
+        PSTATE pstate = tc->readMiscRegNoEffect(MISCREG_PSTATE);
+
+        // THESE ARE IN ORDER OF PRIORITY
+        // since there are early returns, and the highest
+        // priority interrupts should get serviced,
+        // it is v. important that new interrupts are inserted
+        // in the right order of processing
+        if (hpstate.hpriv) {
+            if (pstate.ie) {
+                if (interrupts[IT_HINTP]) {
+                    // This will be cleaned by a HINTP write
+                    return std::make_shared<HstickMatch>();
+                }
+                if (interrupts[IT_INT_VEC]) {
+                    // this will be cleared by an ASI read (or write)
+                    return std::make_shared<InterruptVector>();
+                }
+            }
+        } else {
+            if (interrupts[IT_TRAP_LEVEL_ZERO]) {
+                    // this is cleared by deasserting HPSTATE::tlz
+                return std::make_shared<TrapLevelZero>();
+            }
+            // HStick matches always happen in priv mode (ie doesn't matter)
+            if (interrupts[IT_HINTP]) {
+                return std::make_shared<HstickMatch>();
+            }
+            if (interrupts[IT_INT_VEC]) {
+                // this will be cleared by an ASI read (or write)
+                return std::make_shared<InterruptVector>();
+            }
+            if (pstate.ie) {
+                if (interrupts[IT_CPU_MONDO]) {
+                    return std::make_shared<CpuMondo>();
+                }
+                if (interrupts[IT_DEV_MONDO]) {
+                    return std::make_shared<DevMondo>();
+                }
+                if (interrupts[IT_SOFT_INT]) {
+                    int level = InterruptLevel(interrupts[IT_SOFT_INT]);
+                    return std::make_shared<InterruptLevelN>(level);
+                }
+
+                if (interrupts[IT_RES_ERROR]) {
+                    return std::make_shared<ResumableError>();
                 }
             } // !hpriv && pstate.ie
         }  // !hpriv
         return NoFault;
     }
 
-    void
-    updateIntrInfo(ThreadContext *tc)
-    {}
+    void updateIntrInfo() override {}
 
     uint64_t
     get_vec(int int_num)
@@ -191,14 +245,14 @@ class Interrupts : public SimObject
     }
 
     void
-    serialize(std::ostream &os)
+    serialize(CheckpointOut &cp) const override
     {
         SERIALIZE_ARRAY(interrupts,NumInterruptTypes);
         SERIALIZE_SCALAR(intStatus);
     }
 
     void
-    unserialize(Checkpoint *cp, const std::string &section)
+    unserialize(CheckpointIn &cp) override
     {
         UNSERIALIZE_ARRAY(interrupts,NumInterruptTypes);
         UNSERIALIZE_SCALAR(intStatus);

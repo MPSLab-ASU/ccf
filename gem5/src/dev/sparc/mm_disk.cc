@@ -24,8 +24,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Ali Saidi
  */
 
 /** @file
@@ -33,11 +31,12 @@
  * in legion. Any access is translated to an offset in the disk image.
  */
 
+#include "dev/sparc/mm_disk.hh"
+
 #include <cstring>
 
 #include "base/trace.hh"
 #include "debug/IdeDisk.hh"
-#include "dev/sparc/mm_disk.hh"
 #include "dev/platform.hh"
 #include "mem/packet_access.hh"
 #include "mem/port.hh"
@@ -82,23 +81,23 @@ MmDisk::read(PacketPtr pkt)
     }
     switch (pkt->getSize()) {
       case sizeof(uint8_t):
-        pkt->set(diskData[accessAddr % SectorSize]);
-        DPRINTF(IdeDisk, "reading byte %#x value= %#x\n", accessAddr, diskData[accessAddr %
-                SectorSize]);
+        pkt->setRaw(diskData[accessAddr % SectorSize]);
+        DPRINTF(IdeDisk, "reading byte %#x value= %#x\n",
+                accessAddr, diskData[accessAddr % SectorSize]);
         break;
       case sizeof(uint16_t):
         memcpy(&d16, diskData + (accessAddr % SectorSize), 2);
-        pkt->set(htobe(d16));
+        pkt->setRaw(d16);
         DPRINTF(IdeDisk, "reading word %#x value= %#x\n", accessAddr, d16);
         break;
       case sizeof(uint32_t):
         memcpy(&d32, diskData + (accessAddr % SectorSize), 4);
-        pkt->set(htobe(d32));
+        pkt->setRaw(d32);
         DPRINTF(IdeDisk, "reading dword %#x value= %#x\n", accessAddr, d32);
         break;
       case sizeof(uint64_t):
         memcpy(&d64, diskData + (accessAddr % SectorSize), 8);
-        pkt->set(htobe(d64));
+        pkt->setRaw(d64);
         DPRINTF(IdeDisk, "reading qword %#x value= %#x\n", accessAddr, d64);
         break;
       default:
@@ -142,22 +141,22 @@ MmDisk::write(PacketPtr pkt)
 
     switch (pkt->getSize()) {
       case sizeof(uint8_t):
-        diskData[accessAddr % SectorSize] = htobe(pkt->get<uint8_t>());
-        DPRINTF(IdeDisk, "writing byte %#x value= %#x\n", accessAddr, diskData[accessAddr %
-                SectorSize]);
+        diskData[accessAddr % SectorSize] = htobe(pkt->getRaw<uint8_t>());
+        DPRINTF(IdeDisk, "writing byte %#x value= %#x\n",
+                accessAddr, diskData[accessAddr % SectorSize]);
         break;
       case sizeof(uint16_t):
-        d16 = htobe(pkt->get<uint16_t>());
+        d16 = pkt->getRaw<uint16_t>();
         memcpy(diskData + (accessAddr % SectorSize), &d16, 2);
         DPRINTF(IdeDisk, "writing word %#x value= %#x\n", accessAddr, d16);
         break;
       case sizeof(uint32_t):
-        d32 = htobe(pkt->get<uint32_t>());
+        d32 = pkt->getRaw<uint32_t>();
         memcpy(diskData + (accessAddr % SectorSize), &d32, 4);
         DPRINTF(IdeDisk, "writing dword %#x value= %#x\n", accessAddr, d32);
         break;
       case sizeof(uint64_t):
-        d64 = htobe(pkt->get<uint64_t>());
+        d64 = pkt->getRaw<uint64_t>();
         memcpy(diskData + (accessAddr % SectorSize), &d64, 8);
         DPRINTF(IdeDisk, "writing qword %#x value= %#x\n", accessAddr, d64);
         break;
@@ -170,7 +169,7 @@ MmDisk::write(PacketPtr pkt)
 }
 
 void
-MmDisk::serialize(std::ostream &os)
+MmDisk::serialize(CheckpointOut &cp) const
 {
     // just write any dirty changes to the cow layer it will take care of
     // serialization
@@ -181,6 +180,7 @@ MmDisk::serialize(std::ostream &os)
             image->write(diskData, curSector);
         assert(bytes_read == SectorSize);
     }
+    ClockedObject::serialize(cp);
 }
 
 MmDisk *

@@ -32,8 +32,6 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Authors: Gabe Black
 
 //////////////////////////////////////////////////////////////////////////
 //
@@ -42,7 +40,7 @@
 //////////////////////////////////////////////////////////////////////////
 
 def template MicroLimmOpExecute {{
-        Fault %(class_name)s::execute(%(CPU_exec_context)s *xc,
+        Fault %(class_name)s::execute(ExecContext *xc,
                 Trace::InstRecord *traceData) const
         {
             %(op_decl)s;
@@ -63,7 +61,7 @@ def template MicroLimmOpDeclare {{
         RegIndex foldOBit;
 
         std::string generateDisassembly(Addr pc,
-            const SymbolTable *symtab) const;
+            const Loader::SymbolTable *symtab) const override;
 
       public:
         %(class_name)s(ExtMachInst _machInst,
@@ -71,13 +69,14 @@ def template MicroLimmOpDeclare {{
                 uint64_t setFlags, InstRegIndex _dest,
                 uint64_t _imm, uint8_t _dataSize);
 
-        %(BasicExecDeclare)s
+        Fault execute(ExecContext *, Trace::InstRecord *) const override;
     };
 }};
 
 def template MicroLimmOpDisassembly {{
-    std::string %(class_name)s::generateDisassembly(Addr pc,
-            const SymbolTable *symtab) const
+    std::string
+    %(class_name)s::generateDisassembly(
+            Addr pc, const Loader::SymbolTable *symtab) const
     {
         std::stringstream response;
 
@@ -90,12 +89,12 @@ def template MicroLimmOpDisassembly {{
 }};
 
 def template MicroLimmOpConstructor {{
-    inline %(class_name)s::%(class_name)s(
+    %(class_name)s::%(class_name)s(
             ExtMachInst machInst, const char * instMnem, uint64_t setFlags,
             InstRegIndex _dest, uint64_t _imm, uint8_t _dataSize) :
         %(base_class)s(machInst, "%(mnemonic)s", instMnem,
                 setFlags, %(op_class)s),
-                dest(_dest.idx), imm(_imm), dataSize(_dataSize)
+                dest(_dest.index()), imm(_imm), dataSize(_dataSize)
     {
         foldOBit = (dataSize == 1 && !machInst.rex.present) ? 1 << 6 : 0;
         %(constructor)s;
@@ -103,6 +102,10 @@ def template MicroLimmOpConstructor {{
 }};
 
 let {{
+    import six
+    if six.PY3:
+        long = int
+
     class LimmOp(X86Microop):
         def __init__(self, dest, imm, dataSize="env.dataSize"):
             self.className = "Limm"
@@ -141,7 +144,7 @@ let {{
             if isinstance(imm, (int, long)):
                 imm = "ULL(%d)" % imm
             elif isinstance(imm, float):
-                imm = "getDoubleBits(%.16f)" % imm
+                imm = "floatToBits64(%.16f)" % imm
             self.imm = imm
             self.dataSize = dataSize
 

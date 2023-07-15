@@ -1,4 +1,16 @@
 /*
+ * Copyright (c) 2013, 2019 ARM Limited
+ * All rights reserved
+ *
+ * The license below extends only to copyright in the software and shall
+ * not be construed as granting a license to any other intellectual
+ * property including but not limited to intellectual property relating
+ * to a hardware implementation of the functionality of the software
+ * licensed hereunder.  You may use the software subject to the license
+ * terms below provided that you ensure that this notice is replicated
+ * unmodified and in its entirety in all distributions of the software,
+ * modified or unmodified, in source code or in binary form.
+ *
  * Copyright (c) 2003-2005 The Regents of The University of Michigan
  * All rights reserved.
  *
@@ -24,64 +36,100 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Steve Reinhardt
  */
 
-#ifndef __ELF_OBJECT_HH__
-#define __ELF_OBJECT_HH__
+#ifndef __BASE_LOADER_ELF_OBJECT_HH__
+#define __BASE_LOADER_ELF_OBJECT_HH__
 
 #include <set>
 #include <vector>
 
 #include "base/loader/object_file.hh"
+#include "gelf.h"
+
+namespace Loader
+{
+
+class ElfObjectFormat : public ObjectFileFormat
+{
+  public:
+    ObjectFile *load(ImageFileDataPtr data) override;
+};
 
 class ElfObject : public ObjectFile
 {
   protected:
+    Elf *elf;
+    GElf_Ehdr ehdr;
 
-    //The global definition of a "Section" is closest to elf's segments.
-    typedef ObjectFile::Section Segment;
+    void determineArch();
+    void determineOpSys();
+    void handleLoadableSegment(GElf_Phdr phdr, int seg_num);
 
-    //These values are provided to a linux process by the kernel, so we
-    //need to keep them around.
-    Addr _programHeaderTable;
-    uint16_t _programHeaderSize;
-    uint16_t _programHeaderCount;
+    // These values are provided to a linux process by the kernel, so we
+    // need to keep them around.
+    Addr _programHeaderTable = 0;
+    uint16_t _programHeaderSize = 0;
+    uint16_t _programHeaderCount = 0;
     std::set<std::string> sectionNames;
 
-    /// Helper functions for loadGlobalSymbols() and loadLocalSymbols().
-    bool loadSomeSymbols(SymbolTable *symtab, int binding, Addr mask);
+    ElfObject *interpreter = nullptr;
 
-    ElfObject(const std::string &_filename, int _fd,
-              size_t _len, uint8_t *_data,
-              Arch _arch, OpSys _opSys);
+    // An interpreter load bias is the location in the process address space
+    // where the interpreter is chosen to reside. Typically, this is carved
+    // out of the top of the mmap reserve section.
+    Addr ldBias = 0;
+
+    // The interpreter is typically a relocatable shared library and will
+    // have a default value of zero which means that it does not care where
+    // it is placed. However, the loader can be compiled and linked so that
+    // it does care and needs a specific entry point.
+    bool relocate = true;
+
+    // The ldMin and ldMax fields are required to know how large of an
+    // area is required to map the interpreter.
+    Addr ldMin = MaxAddr;
+    Addr ldMax = MaxAddr;
+
+    /// Helper functions for loadGlobalSymbols() and loadLocalSymbols().
+    bool loadSomeSymbols(SymbolTable *symtab, int binding, Addr mask,
+                         Addr base, Addr offset);
 
     void getSections();
     bool sectionExists(std::string sec);
 
-    std::vector<Segment> extraSegments;
+    MemoryImage image;
 
   public:
-    virtual ~ElfObject() {}
+    ElfObject(ImageFileDataPtr ifd);
+    ~ElfObject();
 
-    bool loadSections(PortProxy& memProxy,
-            Addr addrMask = std::numeric_limits<Addr>::max());
-    virtual bool loadGlobalSymbols(SymbolTable *symtab, Addr addrMask =
-            std::numeric_limits<Addr>::max());
-    virtual bool loadLocalSymbols(SymbolTable *symtab, Addr addrMask =
-            std::numeric_limits<Addr>::max());
-    virtual bool loadWeakSymbols(SymbolTable *symtab, Addr addrMask =
-            std::numeric_limits<Addr>::max());
+    MemoryImage buildImage() const override { return image; }
 
-    virtual bool isDynamic() { return sectionExists(".interp"); }
-    virtual bool hasTLS() { return sectionExists(".tbss"); }
+    ObjectFile *getInterpreter() const override { return interpreter; }
+    std::string getInterpPath(const GElf_Phdr &phdr) const;
 
-    static ObjectFile *tryFile(const std::string &fname, int fd,
-                               size_t len, uint8_t *data);
+    Addr bias() const override { return ldBias; }
+    bool relocatable() const override { return relocate; }
+    Addr mapSize() const override { return ldMax - ldMin; }
+    void updateBias(Addr bias_addr) override;
+
+    bool hasTLS() override { return sectionExists(".tbss"); }
+
     Addr programHeaderTable() {return _programHeaderTable;}
     uint16_t programHeaderSize() {return _programHeaderSize;}
     uint16_t programHeaderCount() {return _programHeaderCount;}
 };
 
-#endif // __ELF_OBJECT_HH__
+/**
+ * This is the interface for setting up a base path for the
+ * elf interpreter. This is needed when loading a
+ * cross-compiled (guest ISA != host ISA) dynamically
+ * linked application.
+ * @param dirname base path for the interpreter
+ */
+void setInterpDir(const std::string &dirname);
+
+} // namespace Loader
+
+#endif // __BASE_LOADER_ELF_OBJECT_HH__

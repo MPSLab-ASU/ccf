@@ -1,6 +1,6 @@
 // -*- mode:c++ -*-
 
-// Copyright (c) 2010 ARM Limited
+// Copyright (c) 2010, 2014 ARM Limited
 // All rights reserved
 //
 // The license below extends only to copyright in the software and shall
@@ -34,8 +34,6 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Authors: Gabe Black
 
 def template BranchImmDeclare {{
 class %(class_name)s : public %(base_class)s
@@ -43,12 +41,12 @@ class %(class_name)s : public %(base_class)s
     public:
         // Constructor
         %(class_name)s(ExtMachInst machInst, int32_t _imm);
-        %(BasicExecDeclare)s
+        Fault execute(ExecContext *, Trace::InstRecord *) const override;
 };
 }};
 
 def template BranchImmConstructor {{
-    inline %(class_name)s::%(class_name)s(ExtMachInst machInst,
+    %(class_name)s::%(class_name)s(ExtMachInst machInst,
                                           int32_t _imm)
         : %(base_class)s("%(mnemonic)s", machInst, %(op_class)s, _imm)
     {
@@ -72,8 +70,9 @@ class %(class_name)s : public %(base_class)s
         // Constructor
         %(class_name)s(ExtMachInst machInst, int32_t _imm,
                        ConditionCode _condCode);
-        %(BasicExecDeclare)s
-        ArmISA::PCState branchTarget(const ArmISA::PCState &branchPC) const;
+        Fault execute(ExecContext *, Trace::InstRecord *) const override;
+        ArmISA::PCState branchTarget(
+                const ArmISA::PCState &branchPC) const override;
 
         /// Explicitly import the otherwise hidden branchTarget
         using StaticInst::branchTarget;
@@ -81,7 +80,7 @@ class %(class_name)s : public %(base_class)s
 }};
 
 def template BranchImmCondConstructor {{
-    inline %(class_name)s::%(class_name)s(ExtMachInst machInst,
+    %(class_name)s::%(class_name)s(ExtMachInst machInst,
                                           int32_t _imm,
                                           ConditionCode _condCode)
         : %(base_class)s("%(mnemonic)s", machInst, %(op_class)s,
@@ -105,12 +104,12 @@ class %(class_name)s : public %(base_class)s
     public:
         // Constructor
         %(class_name)s(ExtMachInst machInst, IntRegIndex _op1);
-        %(BasicExecDeclare)s
+        Fault execute(ExecContext *, Trace::InstRecord *) const override;
 };
 }};
 
 def template BranchRegConstructor {{
-    inline %(class_name)s::%(class_name)s(ExtMachInst machInst,
+    %(class_name)s::%(class_name)s(ExtMachInst machInst,
                                           IntRegIndex _op1)
         : %(base_class)s("%(mnemonic)s", machInst, %(op_class)s, _op1)
     {
@@ -135,12 +134,12 @@ class %(class_name)s : public %(base_class)s
         // Constructor
         %(class_name)s(ExtMachInst machInst, IntRegIndex _op1,
                        ConditionCode _condCode);
-        %(BasicExecDeclare)s
+        Fault execute(ExecContext *, Trace::InstRecord *) const override;
 };
 }};
 
 def template BranchRegCondConstructor {{
-    inline %(class_name)s::%(class_name)s(ExtMachInst machInst,
+    %(class_name)s::%(class_name)s(ExtMachInst machInst,
                                           IntRegIndex _op1,
                                           ConditionCode _condCode)
         : %(base_class)s("%(mnemonic)s", machInst, %(op_class)s,
@@ -167,7 +166,7 @@ class %(class_name)s : public %(base_class)s
         // Constructor
         %(class_name)s(ExtMachInst machInst,
                        IntRegIndex _op1, IntRegIndex _op2);
-        %(BasicExecDeclare)s
+        Fault execute(ExecContext *, Trace::InstRecord *) const override;
 };
 }};
 
@@ -178,16 +177,15 @@ class %(class_name)s : public %(base_class)s
         // Constructor
         %(class_name)s(ExtMachInst machInst,
                        IntRegIndex _op1, IntRegIndex _op2);
-        %(BasicExecDeclare)s
-
-        %(InitiateAccDeclare)s
-
-        %(CompleteAccDeclare)s
+        Fault execute(ExecContext *, Trace::InstRecord *) const override;
+        Fault initiateAcc(ExecContext *, Trace::InstRecord *) const override;
+        Fault completeAcc(PacketPtr, ExecContext *,
+                          Trace::InstRecord *) const override;
 };
 }};
 
 def template BranchRegRegConstructor {{
-    inline %(class_name)s::%(class_name)s(ExtMachInst machInst,
+    %(class_name)s::%(class_name)s(ExtMachInst machInst,
                                           IntRegIndex _op1,
                                           IntRegIndex _op2)
         : %(base_class)s("%(mnemonic)s", machInst, %(op_class)s, _op1, _op2)
@@ -211,14 +209,19 @@ class %(class_name)s : public %(base_class)s
         // Constructor
         %(class_name)s(ExtMachInst machInst,
                        int32_t imm, IntRegIndex _op1);
-        %(BasicExecDeclare)s
+        Fault execute(ExecContext *, Trace::InstRecord *) const override;
+        ArmISA::PCState branchTarget(
+                const ArmISA::PCState &branchPC) const override;
+
+        /// Explicitly import the otherwise hidden branchTarget
+        using StaticInst::branchTarget;
 };
 }};
 
 // Only used by CBNZ, CBZ which is conditional based on
 // a register value even though the instruction is always unconditional.
 def template BranchImmRegConstructor {{
-    inline %(class_name)s::%(class_name)s(ExtMachInst machInst,
+    %(class_name)s::%(class_name)s(ExtMachInst machInst,
                                           int32_t _imm,
                                           IntRegIndex _op1)
         : %(base_class)s("%(mnemonic)s", machInst, %(op_class)s, _imm, _op1)

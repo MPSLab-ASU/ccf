@@ -33,8 +33,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Gabe Black
  */
 
 #ifndef __ARCH_X86_INSTS_MACROOP_HH__
@@ -75,7 +73,7 @@ class MacroopBase : public X86StaticInst
     StaticInstPtr * microops;
 
     StaticInstPtr
-    fetchMicroop(MicroPC microPC) const
+    fetchMicroop(MicroPC microPC) const override
     {
         if (microPC >= numMicroops)
             return badMicroop;
@@ -84,7 +82,8 @@ class MacroopBase : public X86StaticInst
     }
 
     std::string
-    generateDisassembly(Addr pc, const SymbolTable *symtab) const
+    generateDisassembly(Addr pc,
+                        const Loader::SymbolTable *symtab) const override
     {
         return mnemonic;
     }

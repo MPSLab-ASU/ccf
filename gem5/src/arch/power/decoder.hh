@@ -24,21 +24,21 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Gabe Black
  */
 
 #ifndef __ARCH_POWER_DECODER_HH__
 #define __ARCH_POWER_DECODER_HH__
 
 #include "arch/generic/decode_cache.hh"
+#include "arch/generic/decoder.hh"
 #include "arch/types.hh"
 #include "cpu/static_inst.hh"
 
 namespace PowerISA
 {
 
-class Decoder
+class ISA;
+class Decoder : public InstDecoder
 {
   protected:
     // The extended machine instruction being generated
@@ -46,7 +46,7 @@ class Decoder
     bool instDone;
 
   public:
-    Decoder() : instDone(false)
+    Decoder(ISA* isa = nullptr) : instDone(false)
     {
     }
 
@@ -66,7 +66,7 @@ class Decoder
     void
     moreBytes(const PCState &pc, Addr fetchPC, MachInst inst)
     {
-        emi = inst;
+        emi = betoh(inst);
         instDone = true;
     }
 

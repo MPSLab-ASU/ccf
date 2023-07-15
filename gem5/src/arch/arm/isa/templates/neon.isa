@@ -1,6 +1,6 @@
 // -*- mode:c++ -*-
 
-// Copyright (c) 2010 ARM Limited
+// Copyright (c) 2010-2012, 2016 ARM Limited
 // All rights reserved
 //
 // The license below extends only to copyright in the software and shall
@@ -34,13 +34,16 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Authors: Gabe Black
 
 let {{
     simdEnabledCheckCode = '''
-        if (!neonEnabled(Cpacr, Cpsr, Fpexc))
-            return disabledFault();
+    {
+        Fault fault = checkAdvSIMDOrFPEnabled32(xc->tcBase(),
+                                                Cpsr, Cpacr, Nsacr, Fpexc,
+                                                true, true);
+        if (fault != NoFault)
+            return fault;
+    }
     '''
 }};
 
@@ -66,7 +69,7 @@ class %(class_name)s : public %(base_class)s
         }
     }
 
-    %(BasicExecDeclare)s
+    Fault execute(ExecContext *, Trace::InstRecord *) const override;
 };
 }};
 
@@ -92,7 +95,7 @@ class %(class_name)s : public %(base_class)s
         }
     }
 
-    %(BasicExecDeclare)s
+    Fault execute(ExecContext *, Trace::InstRecord *) const override;
 };
 }};
 
@@ -117,7 +120,7 @@ class %(class_name)s : public %(base_class)s
         }
     }
 
-    %(BasicExecDeclare)s
+    Fault execute(ExecContext *, Trace::InstRecord *) const override;
 };
 }};
 
@@ -140,7 +143,7 @@ class %(class_name)s : public %(base_class)s
         }
     }
 
-    %(BasicExecDeclare)s
+    Fault execute(ExecContext *, Trace::InstRecord *) const override;
 };
 }};
 
@@ -165,14 +168,14 @@ class %(class_name)s : public %(base_class)s
         }
     }
 
-    %(BasicExecDeclare)s
+    Fault execute(ExecContext *, Trace::InstRecord *) const override;
 };
 }};
 
 def template NeonExecDeclare {{
     template
     Fault %(class_name)s<%(targs)s>::execute(
-            %(CPU_exec_context)s *, Trace::InstRecord *) const;
+            ExecContext *, Trace::InstRecord *) const;
 }};
 
 output header {{
@@ -203,7 +206,7 @@ output header {{
 
 def template NeonEqualRegExecute {{
     template <class Element>
-    Fault %(class_name)s<Element>::execute(%(CPU_exec_context)s *xc,
+    Fault %(class_name)s<Element>::execute(ExecContext *xc,
             Trace::InstRecord *traceData) const
     {
         Fault fault = NoFault;
@@ -211,11 +214,17 @@ def template NeonEqualRegExecute {{
         %(op_rd)s;
 
         const unsigned rCount = %(r_count)d;
-        const unsigned eCount = rCount * sizeof(FloatRegBits) / sizeof(Element);
+        const unsigned eCount = rCount * sizeof(uint32_t) / sizeof(Element);
+        const unsigned eCountFull = 4 * sizeof(uint32_t) / sizeof(Element);
 
         union RegVect {
-            FloatRegBits regs[rCount];
+            uint32_t regs[rCount];
             Element elements[eCount];
+        };
+
+        union FullRegVect {
+            uint32_t regs[4];
+            Element elements[eCountFull];
         };
 
         if (%(predicate_test)s)
@@ -248,7 +257,7 @@ output header {{
 
 def template NeonUnequalRegExecute {{
     template <class Element>
-    Fault %(class_name)s<Element>::execute(%(CPU_exec_context)s *xc,
+    Fault %(class_name)s<Element>::execute(ExecContext *xc,
             Trace::InstRecord *traceData) const
     {
         typedef typename bigger_type_t<Element>::type BigElement;
@@ -257,16 +266,16 @@ def template NeonUnequalRegExecute {{
         %(op_rd)s;
 
         const unsigned rCount = %(r_count)d;
-        const unsigned eCount = rCount * sizeof(FloatRegBits) / sizeof(Element);
+        const unsigned eCount = rCount * sizeof(uint32_t) / sizeof(Element);
 
         union RegVect {
-            FloatRegBits regs[rCount];
+            uint32_t regs[rCount];
             Element elements[eCount];
             BigElement bigElements[eCount / 2];
         };
 
         union BigRegVect {
-            FloatRegBits regs[2 * rCount];
+            uint32_t regs[2 * rCount];
             BigElement elements[eCount];
         };
 

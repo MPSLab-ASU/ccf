@@ -1,0 +1,33 @@
+Mapping has started
+Operating mode:3
+inserting loads for largeConstants:	16	6	1
+inserting loads for largeConstants:	16	12	1
+Starting II: 2	rec_MII: 2
+
+Trying to schedule DFG at II: 2
+17
+1. src is: 7-2	target is: 1-5
+1. Edge points to NULL!
+18
+Redoing ASAP and ALAP
+18
+18
+Feasible II is 2	Schedule Len is 10
+
+II after scheduling is: 2
+Checking for DFG balance
+K : 1
+K : 0
+K : 1
+K : 1
+K : 0
+K : 0
+21
+21
+Feasible II is 2	Schedule Len is 10
+
+II after balancing is: 2
+Start Placement for II = 2
+Past CGRA reset and init
+MII = 2	 Current II=2
+Mapping is completed

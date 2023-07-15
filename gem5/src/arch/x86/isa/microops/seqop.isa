@@ -32,8 +32,6 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Authors: Gabe Black
 
 output header {{
     class SeqOpBase : public X86ISA::X86MicroopBase
@@ -52,7 +50,7 @@ output header {{
                 uint16_t _target, uint8_t _cc);
 
         std::string generateDisassembly(Addr pc,
-                const SymbolTable *symtab) const;
+                const Loader::SymbolTable *symtab) const override;
     };
 }};
 
@@ -63,12 +61,18 @@ def template SeqOpDeclare {{
         %(class_name)s(ExtMachInst _machInst, const char * instMnem,
                 uint64_t setFlags, uint16_t _target, uint8_t _cc);
 
-        %(BasicExecDeclare)s
+        Fault execute(ExecContext *, Trace::InstRecord *) const override;
+
+        X86ISA::PCState branchTarget(const X86ISA::PCState &branchPC) const
+        override;
+
+        /// Explicitly import the otherwise hidden branchTarget
+        using StaticInst::branchTarget;
     };
 }};
 
 def template SeqOpExecute {{
-        Fault %(class_name)s::execute(%(CPU_exec_context)s *xc,
+        Fault %(class_name)s::execute(ExecContext *xc,
                 Trace::InstRecord *traceData) const
         {
             %(op_decl)s;
@@ -84,7 +88,7 @@ def template SeqOpExecute {{
 }};
 
 output decoder {{
-    inline SeqOpBase::SeqOpBase(
+    SeqOpBase::SeqOpBase(
             ExtMachInst machInst, const char * mnemonic, const char * instMnem,
             uint64_t setFlags, uint16_t _target, uint8_t _cc) :
         X86MicroopBase(machInst, mnemonic, instMnem, setFlags, No_OpClass),
@@ -94,7 +98,7 @@ output decoder {{
 }};
 
 def template SeqOpConstructor {{
-    inline %(class_name)s::%(class_name)s(
+    %(class_name)s::%(class_name)s(
             ExtMachInst machInst, const char * instMnem,
             uint64_t setFlags, uint16_t _target, uint8_t _cc) :
         %(base_class)s(machInst, "%(mnemonic)s", instMnem,
@@ -103,11 +107,23 @@ def template SeqOpConstructor {{
         %(constructor)s;
         %(cond_control_flag_init)s;
     }
+
+    X86ISA::PCState
+    %(class_name)s::branchTarget(const X86ISA::PCState &branchPC) const
+    {
+        X86ISA::PCState pcs = branchPC;
+        DPRINTF(X86, "Br branchTarget PC info: %s, Target: %d\n",
+                pcs, (int16_t)target);
+        pcs.nupc(target);
+        pcs.uAdvance();
+        return pcs;
+    }
 }};
 
 output decoder {{
-    std::string SeqOpBase::generateDisassembly(Addr pc,
-            const SymbolTable *symtab) const
+    std::string
+    SeqOpBase::generateDisassembly(
+            Addr pc, const Loader::SymbolTable *symtab) const
     {
         std::stringstream response;
 
@@ -124,7 +140,7 @@ let {{
             self.target = target
             if flags:
                 if not isinstance(flags, (list, tuple)):
-                    raise Exception, "flags must be a list or tuple of flags"
+                    raise Exception("flags must be a list or tuple of flags")
                 self.cond = " | ".join(flags)
                 self.className += "Flags"
             else:
@@ -156,7 +172,7 @@ let {{
         def __init__(self, flags=None):
             if flags:
                 if not isinstance(flags, (list, tuple)):
-                    raise Exception, "flags must be a list or tuple of flags"
+                    raise Exception("flags must be a list or tuple of flags")
                 self.cond = " | ".join(flags)
                 self.className += "Flags"
             else:
@@ -174,7 +190,8 @@ let {{
              "else_code": "nuIP = nuIP;",
              "cond_test": "checkCondition(ccFlagBits | cfofBits | dfBit | \
                                           ecfBit | ezfBit, cc)",
-             "cond_control_flag_init": "flags[IsCondControl] = true"})
+             "cond_control_flag_init": "flags[IsCondControl] = true; \
+             flags[IsDirectControl] = true;"})
     exec_output += SeqOpExecute.subst(iop)
     header_output += SeqOpDeclare.subst(iop)
     decoder_output += SeqOpConstructor.subst(iop)
@@ -192,7 +209,8 @@ let {{
             {"code": "", "else_code": "",
              "cond_test": "checkCondition(ccFlagBits | cfofBits | dfBit | \
                                           ecfBit | ezfBit, cc)",
-             "cond_control_flag_init": ""})
+             "cond_control_flag_init": "flags[IsUncondControl] = true;\
+             flags[IsDirectControl] = true;"})
     exec_output += SeqOpExecute.subst(iop)
     header_output += SeqOpDeclare.subst(iop)
     decoder_output += SeqOpConstructor.subst(iop)

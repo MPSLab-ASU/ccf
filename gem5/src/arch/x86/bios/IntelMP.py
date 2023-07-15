@@ -32,8 +32,6 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Gabe Black
 
 from m5.params import *
 from m5.SimObject import SimObject
@@ -115,7 +113,7 @@ class X86IntelMPBus(X86IntelMPBaseConfigEntry):
 
     bus_id = Param.UInt8(0, 'bus id assigned by the bios')
     bus_type = Param.String("", 'string that identify the bus type')
-    # Legal values for bus_type are:
+    # Legal values for bus_type are [space padded to 6 bytes]:
     #
     # "CBUS", "CBUSII", "EISA", "FUTURE", "INTERN", "ISA", "MBI", "MBII",
     # "MCA", "MPI", "MPSA", "NUBUS", "PCI", "PCMCIA", "TC", "VL", "VME",

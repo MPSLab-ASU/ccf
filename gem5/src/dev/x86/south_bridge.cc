@@ -24,14 +24,13 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Gabe Black
  */
+
+#include "dev/x86/south_bridge.hh"
 
 #include <cassert>
 
 #include "dev/x86/pc.hh"
-#include "dev/x86/south_bridge.hh"
 
 using namespace X86ISA;
 

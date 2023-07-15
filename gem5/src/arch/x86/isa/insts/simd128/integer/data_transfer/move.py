@@ -32,8 +32,6 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Gabe Black
 
 microcode = '''
 def macroop MOVQ_XMM_XMM {
@@ -123,5 +121,15 @@ def macroop MOVDQU_P_XMM {
     stfp xmml, seg, riprel, "DISPLACEMENT", dataSize=8
     stfp xmmh, seg, riprel, "DISPLACEMENT + 8", dataSize=8
 };
+
+def macroop LDDQU_XMM_M {
+    ldfp xmml, seg, sib, "DISPLACEMENT", dataSize=8
+    ldfp xmmh, seg, sib, "DISPLACEMENT + 8", dataSize=8
+};
+
+def macroop LDDQU_XMM_P {
+    rdip t7
+    ldfp xmml, seg, sib, "DISPLACEMENT", dataSize=8
+    ldfp xmmh, seg, sib, "DISPLACEMENT + 8", dataSize=8
+};
 '''
-# LDDQU

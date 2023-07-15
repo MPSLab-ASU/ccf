@@ -1,4 +1,16 @@
 /*
+ * Copyright (c) 2015-2017 ARM Limited
+ * All rights reserved.
+ *
+ * The license below extends only to copyright in the software and shall
+ * not be construed as granting a license to any other intellectual
+ * property including but not limited to intellectual property relating
+ * to a hardware implementation of the functionality of the software
+ * licensed hereunder.  You may use the software subject to the license
+ * terms below provided that you ensure that this notice is replicated
+ * unmodified and in its entirety in all distributions of the software,
+ * modified or unmodified, in source code or in binary form.
+ *
  * Copyright (c) 2004-2005 The Regents of The University of Michigan
  * Copyright (c) 2013 Advanced Micro Devices, Inc.
  * All rights reserved.
@@ -25,14 +37,7 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Kevin Lim
- *          Steve Reinhardt
  */
-
-// Todo:  Create destructor.
-// Have it so that there's a more meaningful name given to the variable
-// that marks the beginning of the FP registers.
 
 #ifndef __CPU_O3_RENAME_MAP_HH__
 #define __CPU_O3_RENAME_MAP_HH__
@@ -46,6 +51,7 @@
 #include "cpu/o3/free_list.hh"
 #include "cpu/o3/regfile.hh"
 #include "cpu/reg_class.hh"
+#include "enums/VecRegRenameMode.hh"
 
 /**
  * Register rename map for a single class of registers (e.g., integer
@@ -56,14 +62,14 @@
  */
 class SimpleRenameMap
 {
-  public:
-
-    typedef TheISA::RegIndex RegIndex;
-
   private:
-
+    using Arch2PhysMap = std::vector<PhysRegIdPtr>;
     /** The acutal arch-to-phys register map */
-    std::vector<PhysRegIndex> map;
+    Arch2PhysMap map;
+  public:
+    using iterator = Arch2PhysMap::iterator;
+    using const_iterator = Arch2PhysMap::const_iterator;
+  private:
 
     /**
      * Pointer to the free list from which new physical registers
@@ -78,7 +84,7 @@ class SimpleRenameMap
      * table, it should be set to an invalid index so that it never
      * matches.
      */
-    RegIndex zeroReg;
+    RegId zeroReg;
 
   public:
 
@@ -99,7 +105,7 @@ class SimpleRenameMap
      * renamed to, and the previous physical register that the same
      * logical register was previously mapped to.
      */
-    typedef std::pair<PhysRegIndex, PhysRegIndex> RenameInfo;
+    typedef std::pair<PhysRegIdPtr, PhysRegIdPtr> RenameInfo;
 
     /**
      * Tell rename map to get a new free physical register to remap
@@ -108,17 +114,18 @@ class SimpleRenameMap
      * @return A RenameInfo pair indicating both the new and previous
      * physical registers.
      */
-    RenameInfo rename(RegIndex arch_reg);
+    RenameInfo rename(const RegId& arch_reg);
 
     /**
      * Look up the physical register mapped to an architectural register.
      * @param arch_reg The architectural register to look up.
      * @return The physical register it is currently mapped to.
      */
-    PhysRegIndex lookup(RegIndex arch_reg) const
+    PhysRegIdPtr
+    lookup(const RegId& arch_reg) const
     {
-        assert(arch_reg < map.size());
-        return map[arch_reg];
+        assert(arch_reg.flatIndex() <= map.size());
+        return map[arch_reg.flatIndex()];
     }
 
     /**
@@ -127,26 +134,44 @@ class SimpleRenameMap
      * @param arch_reg The architectural register to remap.
      * @param phys_reg The physical register to remap it to.
      */
-    void setEntry(RegIndex arch_reg, PhysRegIndex phys_reg)
+    void
+    setEntry(const RegId& arch_reg, PhysRegIdPtr phys_reg)
     {
-        map[arch_reg] = phys_reg;
+        assert(arch_reg.flatIndex() <= map.size());
+        map[arch_reg.flatIndex()] = phys_reg;
     }
 
     /** Return the number of free entries on the associated free list. */
     unsigned numFreeEntries() const { return freeList->numFreeRegs(); }
-};
 
+    /** Forward begin/cbegin to the map. */
+    /** @{ */
+    iterator begin() { return map.begin(); }
+    const_iterator begin() const { return map.begin(); }
+    const_iterator cbegin() const { return map.cbegin(); }
+    /** @} */
+
+    /** Forward end/cend to the map. */
+    /** @{ */
+    iterator end() { return map.end(); }
+    const_iterator end() const { return map.end(); }
+    const_iterator cend() const { return map.cend(); }
+    /** @} */
+};
 
 /**
  * Unified register rename map for all classes of registers.  Wraps a
  * set of class-specific rename maps.  Methods that do not specify a
- * register class (e.g., rename()) take unified register indices,
+ * register class (e.g., rename()) take register ids,
  * while methods that do specify a register class (e.g., renameInt())
- * take relative register indices.  See http://gem5.org/Register_Indexing.
+ * take register indices.
  */
 class UnifiedRenameMap
 {
   private:
+    static constexpr uint32_t NVecElems = TheISA::NumVecElemPerVecReg;
+    using VecReg = TheISA::VecReg;
+    using VecPredReg = TheISA::VecPredReg;
 
     /** The integer register rename map */
     SimpleRenameMap intMap;
@@ -154,25 +179,33 @@ class UnifiedRenameMap
     /** The floating-point register rename map */
     SimpleRenameMap floatMap;
 
-    /**
-     * The register file object is used only to distinguish integer
-     * from floating-point physical register indices, which in turn is
-     * used only for assert statements that make sure the physical
-     * register indices that get passed in and handed out are of the
-     * proper class.
-     */
-    PhysRegFile *regFile;
-
     /** The condition-code register rename map */
     SimpleRenameMap ccMap;
 
+    /** The vector register rename map */
+    SimpleRenameMap vecMap;
+
+    /** The vector element register rename map */
+    SimpleRenameMap vecElemMap;
+
+    /** The predicate register rename map */
+    SimpleRenameMap predMap;
+
+    using VecMode = Enums::VecRegRenameMode;
+    VecMode vecMode;
+
+    /**
+     * The register file object is used only to get PhysRegIdPtr
+     * on MiscRegs, as they are stored in it.
+     */
+    PhysRegFile *regFile;
+
   public:
-    typedef TheISA::RegIndex RegIndex;
 
     typedef SimpleRenameMap::RenameInfo RenameInfo;
 
     /** Default constructor.  init() must be called prior to use. */
-    UnifiedRenameMap() {};
+    UnifiedRenameMap() : regFile(nullptr) {};
 
     /** Destructor. */
     ~UnifiedRenameMap() {};
@@ -181,159 +214,141 @@ class UnifiedRenameMap
     void init(PhysRegFile *_regFile,
               RegIndex _intZeroReg,
               RegIndex _floatZeroReg,
-              UnifiedFreeList *freeList);
+              UnifiedFreeList *freeList,
+              VecMode _mode);
 
     /**
      * Tell rename map to get a new free physical register to remap
-     * the specified architectural register.  This version takes a
-     * unified flattened architectural register index and calls the
-     * appropriate class-specific rename table.
-     * @param arch_reg The unified architectural register index to remap.
+     * the specified architectural register. This version takes a
+     * RegId and reads the  appropriate class-specific rename table.
+     * @param arch_reg The architectural register id to remap.
      * @return A RenameInfo pair indicating both the new and previous
      * physical registers.
      */
-    RenameInfo rename(RegIndex arch_reg);
-
-    /**
-     * Perform rename() on an integer register, given a relative
-     * integer register index.
-     */
-    RenameInfo renameInt(RegIndex rel_arch_reg)
+    RenameInfo rename(const RegId& arch_reg)
     {
-        RenameInfo info = intMap.rename(rel_arch_reg);
-        assert(regFile->isIntPhysReg(info.first));
-        return info;
-    }
+        switch (arch_reg.classValue()) {
+          case IntRegClass:
+            return intMap.rename(arch_reg);
+          case FloatRegClass:
+            return floatMap.rename(arch_reg);
+          case VecRegClass:
+            assert(vecMode == Enums::Full);
+            return vecMap.rename(arch_reg);
+          case VecElemClass:
+            assert(vecMode == Enums::Elem);
+            return vecElemMap.rename(arch_reg);
+          case VecPredRegClass:
+            return predMap.rename(arch_reg);
+          case CCRegClass:
+            return ccMap.rename(arch_reg);
+          case MiscRegClass:
+            {
+            // misc regs aren't really renamed, just remapped
+            PhysRegIdPtr phys_reg = lookup(arch_reg);
+            // Set the new register to the previous one to keep the same
+            // mapping throughout the execution.
+            return RenameInfo(phys_reg, phys_reg);
+            }
 
-    /**
-     * Perform rename() on a floating-point register, given a relative
-     * floating-point register index.
-     */
-    RenameInfo renameFloat(RegIndex rel_arch_reg)
-    {
-        RenameInfo info = floatMap.rename(rel_arch_reg);
-        assert(regFile->isFloatPhysReg(info.first));
-        return info;
+          default:
+            panic("rename rename(): unknown reg class %s\n",
+                  arch_reg.className());
+        }
     }
-
-    /**
-     * Perform rename() on a condition-code register, given a relative
-     * condition-code register index.
-     */
-    RenameInfo renameCC(RegIndex rel_arch_reg)
-    {
-        RenameInfo info = ccMap.rename(rel_arch_reg);
-        assert(regFile->isCCPhysReg(info.first));
-        return info;
-    }
-
-    /**
-     * Perform rename() on a misc register, given a relative
-     * misc register index.
-     */
-    RenameInfo renameMisc(RegIndex rel_arch_reg)
-    {
-        // misc regs aren't really renamed, just remapped
-        PhysRegIndex phys_reg = lookupMisc(rel_arch_reg);
-        // Set the previous register to the same register; mainly it must be
-        // known that the prev reg was outside the range of normal registers
-        // so the free list can avoid adding it.
-        return RenameInfo(phys_reg, phys_reg);
-    }
-
 
     /**
      * Look up the physical register mapped to an architectural register.
-     * This version takes a unified flattened architectural register index
+     * This version takes a flattened architectural register id
      * and calls the appropriate class-specific rename table.
-     * @param arch_reg The unified architectural register to look up.
+     * @param arch_reg The architectural register to look up.
      * @return The physical register it is currently mapped to.
      */
-    PhysRegIndex lookup(RegIndex arch_reg) const;
-
-    /**
-     * Perform lookup() on an integer register, given a relative
-     * integer register index.
-     */
-    PhysRegIndex lookupInt(RegIndex rel_arch_reg) const
+    PhysRegIdPtr
+    lookup(const RegId& arch_reg) const
     {
-        PhysRegIndex phys_reg = intMap.lookup(rel_arch_reg);
-        assert(regFile->isIntPhysReg(phys_reg));
-        return phys_reg;
-    }
+        switch (arch_reg.classValue()) {
+          case IntRegClass:
+            return intMap.lookup(arch_reg);
 
-    /**
-     * Perform lookup() on a floating-point register, given a relative
-     * floating-point register index.
-     */
-    PhysRegIndex lookupFloat(RegIndex rel_arch_reg) const
-    {
-        PhysRegIndex phys_reg = floatMap.lookup(rel_arch_reg);
-        assert(regFile->isFloatPhysReg(phys_reg));
-        return phys_reg;
-    }
+          case FloatRegClass:
+            return  floatMap.lookup(arch_reg);
 
-    /**
-     * Perform lookup() on a condition-code register, given a relative
-     * condition-code register index.
-     */
-    PhysRegIndex lookupCC(RegIndex rel_arch_reg) const
-    {
-        PhysRegIndex phys_reg = ccMap.lookup(rel_arch_reg);
-        assert(regFile->isCCPhysReg(phys_reg));
-        return phys_reg;
-    }
+          case VecRegClass:
+            assert(vecMode == Enums::Full);
+            return  vecMap.lookup(arch_reg);
 
-    /**
-     * Perform lookup() on a misc register, given a relative
-     * misc register index.
-     */
-    PhysRegIndex lookupMisc(RegIndex rel_arch_reg) const
-    {
-        // misc regs aren't really renamed, just given an index
-        // beyond the range of actual physical registers
-        PhysRegIndex phys_reg = rel_arch_reg + regFile->totalNumPhysRegs();
-        return phys_reg;
+          case VecElemClass:
+            assert(vecMode == Enums::Elem);
+            return  vecElemMap.lookup(arch_reg);
+
+          case VecPredRegClass:
+            return predMap.lookup(arch_reg);
+
+          case CCRegClass:
+            return ccMap.lookup(arch_reg);
+
+          case MiscRegClass:
+            // misc regs aren't really renamed, they keep the same
+            // mapping throughout the execution.
+            return regFile->getMiscRegId(arch_reg.flatIndex());
+
+          default:
+            panic("rename lookup(): unknown reg class %s\n",
+                  arch_reg.className());
+        }
     }
 
     /**
      * Update rename map with a specific mapping.  Generally used to
      * roll back to old mappings on a squash.  This version takes a
-     * unified flattened architectural register index and calls the
+     * flattened architectural register id and calls the
      * appropriate class-specific rename table.
-     * @param arch_reg The unified architectural register to remap.
+     * @param arch_reg The architectural register to remap.
      * @param phys_reg The physical register to remap it to.
      */
-    void setEntry(RegIndex arch_reg, PhysRegIndex phys_reg);
-
-    /**
-     * Perform setEntry() on an integer register, given a relative
-     * integer register index.
-     */
-    void setIntEntry(RegIndex arch_reg, PhysRegIndex phys_reg)
+    void
+    setEntry(const RegId& arch_reg, PhysRegIdPtr phys_reg)
     {
-        assert(regFile->isIntPhysReg(phys_reg));
-        intMap.setEntry(arch_reg, phys_reg);
-    }
+        switch (arch_reg.classValue()) {
+          case IntRegClass:
+            assert(phys_reg->isIntPhysReg());
+            return intMap.setEntry(arch_reg, phys_reg);
 
-    /**
-     * Perform setEntry() on a floating-point register, given a relative
-     * floating-point register index.
-     */
-    void setFloatEntry(RegIndex arch_reg, PhysRegIndex phys_reg)
-    {
-        assert(regFile->isFloatPhysReg(phys_reg));
-        floatMap.setEntry(arch_reg, phys_reg);
-    }
+          case FloatRegClass:
+            assert(phys_reg->isFloatPhysReg());
+            return floatMap.setEntry(arch_reg, phys_reg);
 
-    /**
-     * Perform setEntry() on a condition-code register, given a relative
-     * condition-code register index.
-     */
-    void setCCEntry(RegIndex arch_reg, PhysRegIndex phys_reg)
-    {
-        assert(regFile->isCCPhysReg(phys_reg));
-        ccMap.setEntry(arch_reg, phys_reg);
+          case VecRegClass:
+            assert(phys_reg->isVectorPhysReg());
+            assert(vecMode == Enums::Full);
+            return vecMap.setEntry(arch_reg, phys_reg);
+
+          case VecElemClass:
+            assert(phys_reg->isVectorPhysElem());
+            assert(vecMode == Enums::Elem);
+            return vecElemMap.setEntry(arch_reg, phys_reg);
+
+          case VecPredRegClass:
+            assert(phys_reg->isVecPredPhysReg());
+            return predMap.setEntry(arch_reg, phys_reg);
+
+          case CCRegClass:
+            assert(phys_reg->isCCPhysReg());
+            return ccMap.setEntry(arch_reg, phys_reg);
+
+          case MiscRegClass:
+            // Misc registers do not actually rename, so don't change
+            // their mappings.  We end up here when a commit or squash
+            // tries to update or undo a hardwired misc reg nmapping,
+            // which should always be setting it to what it already is.
+            assert(phys_reg == lookup(arch_reg));
+            return;
+
+          default:
+            panic("rename setEntry(): unknown reg class %s\n",
+                  arch_reg.className());
+        }
     }
 
     /**
@@ -342,10 +357,57 @@ class UnifiedRenameMap
      * this number of entries is available regardless of which class
      * of registers is requested.
      */
-    unsigned numFreeEntries() const
+    unsigned
+    numFreeEntries() const
     {
-        return std::min(intMap.numFreeEntries(), floatMap.numFreeEntries());
+        return std::min({intMap.numFreeEntries(),
+                         floatMap.numFreeEntries(),
+                         vecMode == Enums::Full ? vecMap.numFreeEntries() :
+                                                  vecElemMap.numFreeEntries(),
+                         predMap.numFreeEntries()});
     }
+
+    unsigned numFreeIntEntries() const { return intMap.numFreeEntries(); }
+    unsigned numFreeFloatEntries() const { return floatMap.numFreeEntries(); }
+    unsigned
+    numFreeVecEntries() const
+    {
+        return vecMode == Enums::Full
+                ? vecMap.numFreeEntries()
+                : vecElemMap.numFreeEntries();
+    }
+    unsigned numFreePredEntries() const { return predMap.numFreeEntries(); }
+    unsigned numFreeCCEntries() const { return ccMap.numFreeEntries(); }
+
+    /**
+     * Return whether there are enough registers to serve the request.
+     */
+    bool
+    canRename(uint32_t intRegs, uint32_t floatRegs, uint32_t vectorRegs,
+              uint32_t vecElemRegs, uint32_t vecPredRegs,
+              uint32_t ccRegs) const
+    {
+        return intRegs <= intMap.numFreeEntries() &&
+            floatRegs <= floatMap.numFreeEntries() &&
+            vectorRegs <= vecMap.numFreeEntries() &&
+            vecElemRegs <= vecElemMap.numFreeEntries() &&
+            vecPredRegs <= predMap.numFreeEntries() &&
+            ccRegs <= ccMap.numFreeEntries();
+    }
+    /**
+     * Set vector mode to Full or Elem.
+     * Ignore 'silent' modifications.
+     *
+     * @param newVecMode new vector renaming mode
+     */
+    void switchMode(VecMode newVecMode);
+
+    /**
+     * Switch freeList of registers from Full to Elem or vicevers
+     * depending on vecMode (vector renaming mode).
+     */
+    void switchFreeList(UnifiedFreeList* freeList);
+
 };
 
 #endif //__CPU_O3_RENAME_MAP_HH__

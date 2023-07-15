@@ -1,0 +1,27 @@
+/* Mapping Info
+ *
+ * Author: Mahesh Balasubramanian
+ * Date: May, 2020
+ *
+ * Func: This function caluclates the height
+ *       based priorities for each node.
+ *       Useful to check if DFG is executable on a given CGRA. 
+ *
+ */
+
+#ifndef MappingInfo_H_
+#define MappingInfo_H_
+
+
+class MappingInfo
+{
+  public:
+    MappingInfo();
+    ~MappingInfo();
+
+  private:
+    bool mapped;
+  public:
+    bool is_Mapped();
+};
+

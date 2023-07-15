@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 ARM Limited
+ * Copyright (c) 2010, 2015, 2017 ARM Limited
  * All rights reserved
  *
  * The license below extends only to copyright in the software and shall
@@ -33,19 +33,19 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Ali Saidi
- *          William Wang
  */
 
 /** @file
  * Implementiation of a VNC input
  */
 
+#include "base/vnc/vncinput.hh"
+
 #include <sys/types.h>
 
-#include "base/vnc/vncinput.hh"
-#include "base/output.hh" //simout
+#include "base/logging.hh"
+#include "base/output.hh"
+
 #include "base/trace.hh"
 #include "debug/VNC.hh"
 
@@ -53,9 +53,11 @@ using namespace std;
 
 VncInput::VncInput(const Params *p)
     : SimObject(p), keyboard(NULL), mouse(NULL),
-      vc(NULL), fbPtr(NULL), videoMode(VideoConvert::UnknownMode),
-      _videoWidth(1), _videoHeight(1), captureEnabled(p->frame_capture),
-      captureCurrentFrame(0), captureLastHash(0), captureBitmap(0)
+      fb(&FrameBuffer::dummy),
+      _videoWidth(fb->width()), _videoHeight(fb->height()),
+      captureEnabled(p->frame_capture),
+      captureCurrentFrame(0), captureLastHash(0),
+      imgFormat(p->img_format)
 {
     if (captureEnabled) {
         // remove existing frame output directory if it exists, then create a
@@ -68,57 +70,66 @@ VncInput::VncInput(const Params *p)
 }
 
 void
-VncInput::setFrameBufferParams(VideoConvert::Mode mode, uint16_t width,
-    uint16_t height)
+VncInput::setFrameBuffer(const FrameBuffer *rfb)
 {
-    DPRINTF(VNC, "Updating video params: mode: %d width: %d height: %d\n", mode,
-            width, height);
+    if (!rfb)
+        panic("Trying to VNC frame buffer to NULL!");
 
-    if (mode != videoMode || width != videoWidth() || height != videoHeight()) {
-        videoMode = mode;
+    fb = rfb;
+
+    // Create the Image Writer object in charge of dumping
+    // the frame buffer raw data into a file in a specific format.
+    if (captureEnabled) {
+        captureImage = createImgWriter(imgFormat, rfb);
+    }
+
+    // Setting a new frame buffer means that we need to send an update
+    // to the client. Mark the internal buffers as dirty to do so.
+    setDirty();
+}
+
+void
+VncInput::setDirty()
+{
+    const unsigned width(fb->width());
+    const unsigned height(fb->height());
+
+    if (_videoWidth != width || _videoHeight != height) {
+        DPRINTF(VNC, "Updating video params: width: %d height: %d\n",
+                width, height);
+
         _videoWidth = width;
         _videoHeight = height;
 
-        if (vc)
-            delete vc;
-
-        vc = new VideoConvert(mode, VideoConvert::rgb8888, videoWidth(),
-                videoHeight());
-
-        if (captureEnabled) {
-            // create bitmap of the frame with new attributes
-            if (captureBitmap)
-                delete captureBitmap;
-
-            assert(fbPtr);
-            captureBitmap = new Bitmap(videoMode, width, height, fbPtr);
-            assert(captureBitmap);
-        }
+        frameBufferResized();
     }
+
+     if (captureEnabled)
+        captureFrameBuffer();
 }
 
 void
 VncInput::captureFrameBuffer()
 {
-    assert(captureBitmap);
+    assert(captureImage);
 
     // skip identical frames
-    uint64_t new_hash = captureBitmap->getHash();
+    uint64_t new_hash = fb->getHash();
     if (captureLastHash == new_hash)
         return;
     captureLastHash = new_hash;
 
     // get the filename for the current frame
     char frameFilenameBuffer[64];
-    snprintf(frameFilenameBuffer, 64, "fb.%06d.%lld.bmp.gz",
-            captureCurrentFrame, static_cast<long long int>(curTick()));
+    snprintf(frameFilenameBuffer, 64, "fb.%06d.%lld.%s.gz",
+            captureCurrentFrame, static_cast<long long int>(curTick()),
+            captureImage->getImgExtension());
     const string frameFilename(frameFilenameBuffer);
 
     // create the compressed framebuffer file
-    ostream *fb_out = simout.create(captureOutputDirectory + frameFilename,
-                    true);
-    captureBitmap->write(fb_out);
-    simout.close(fb_out);
+    OutputStream *fb_out(captureOutputDirectory->create(frameFilename, true));
+    captureImage->write(*fb_out->stream());
+    captureOutputDirectory->close(fb_out);
 
     ++captureCurrentFrame;
 }

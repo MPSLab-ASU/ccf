@@ -24,8 +24,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Gabe Black
  */
 
 #ifndef __CPU_NATIVETRACE_HH__
@@ -56,9 +54,8 @@ class NativeTraceRecord : public ExeTracerRecord
     NativeTraceRecord(NativeTrace * _parent,
                Tick _when, ThreadContext *_thread,
                const StaticInstPtr _staticInst, TheISA::PCState _pc,
-               bool spec, const StaticInstPtr _macroStaticInst = NULL)
-        : ExeTracerRecord(_when, _thread, _staticInst, _pc, spec,
-                _macroStaticInst),
+               const StaticInstPtr _macroStaticInst = NULL)
+        : ExeTracerRecord(_when, _thread, _staticInst, _pc, _macroStaticInst),
         parent(_parent)
     {
     }
@@ -83,18 +80,15 @@ class NativeTrace : public ExeTracer
             const StaticInstPtr staticInst, TheISA::PCState pc,
             const StaticInstPtr macroStaticInst = NULL)
     {
-        if (tc->misspeculating())
-            return NULL;
-
         return new NativeTraceRecord(this, when, tc,
-                staticInst, pc, tc->misspeculating(), macroStaticInst);
+                staticInst, pc, macroStaticInst);
     }
 
     template<class T>
     bool
     checkReg(const char * regName, T &val, T &realVal)
     {
-        if(val != realVal)
+        if (val != realVal)
         {
             DPRINTFN("Register %s should be %#x but is %#x.\n",
                     regName, realVal, val);

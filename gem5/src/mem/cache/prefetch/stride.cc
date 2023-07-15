@@ -1,4 +1,17 @@
 /*
+ * Copyright (c) 2018 Inria
+ * Copyright (c) 2012-2013, 2015 ARM Limited
+ * All rights reserved
+ *
+ * The license below extends only to copyright in the software and shall
+ * not be construed as granting a license to any other intellectual
+ * property including but not limited to intellectual property relating
+ * to a hardware implementation of the functionality of the software
+ * licensed hereunder.  You may use the software subject to the license
+ * terms below provided that you ensure that this notice is replicated
+ * unmodified and in its entirety in all distributions of the software,
+ * modified or unmodified, in source code or in binary form.
+ *
  * Copyright (c) 2005 The Regents of The University of Michigan
  * All rights reserved.
  *
@@ -24,9 +37,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Ron Dreslinski
- *          Steve Reinhardt
  */
 
 /**
@@ -34,103 +44,172 @@
  * Stride Prefetcher template instantiations.
  */
 
-#include "base/trace.hh"
-#include "debug/HWPrefetch.hh"
 #include "mem/cache/prefetch/stride.hh"
 
-void
-StridePrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addresses,
-                                    std::list<Cycles> &delays)
+#include <cassert>
+
+#include "base/intmath.hh"
+#include "base/logging.hh"
+#include "base/random.hh"
+#include "base/trace.hh"
+#include "debug/HWPrefetch.hh"
+#include "mem/cache/prefetch/associative_set_impl.hh"
+#include "mem/cache/replacement_policies/base.hh"
+#include "params/StridePrefetcher.hh"
+
+namespace Prefetcher {
+
+Stride::StrideEntry::StrideEntry(const SatCounter& init_confidence)
+  : TaggedEntry(), confidence(init_confidence)
 {
-    if (!pkt->req->hasPC()) {
-        DPRINTF(HWPrefetch, "ignoring request with no PC");
+    invalidate();
+}
+
+void
+Stride::StrideEntry::invalidate()
+{
+    lastAddr = 0;
+    stride = 0;
+    confidence.reset();
+}
+
+Stride::Stride(const StridePrefetcherParams *p)
+  : Queued(p),
+    initConfidence(p->confidence_counter_bits, p->initial_confidence),
+    threshConf(p->confidence_threshold/100.0),
+    useRequestorId(p->use_requestor_id),
+    degree(p->degree),
+    pcTableInfo(p->table_assoc, p->table_entries, p->table_indexing_policy,
+        p->table_replacement_policy)
+{
+}
+
+Stride::PCTable*
+Stride::findTable(int context)
+{
+    // Check if table for given context exists
+    auto it = pcTables.find(context);
+    if (it != pcTables.end())
+        return &it->second;
+
+    // If table does not exist yet, create one
+    return allocateNewContext(context);
+}
+
+Stride::PCTable*
+Stride::allocateNewContext(int context)
+{
+    // Create new table
+    auto insertion_result = pcTables.insert(std::make_pair(context,
+        PCTable(pcTableInfo.assoc, pcTableInfo.numEntries,
+        pcTableInfo.indexingPolicy, pcTableInfo.replacementPolicy,
+        StrideEntry(initConfidence))));
+
+    DPRINTF(HWPrefetch, "Adding context %i with stride entries\n", context);
+
+    // Get iterator to new pc table, and then return a pointer to the new table
+    return &(insertion_result.first->second);
+}
+
+void
+Stride::calculatePrefetch(const PrefetchInfo &pfi,
+                                    std::vector<AddrPriority> &addresses)
+{
+    if (!pfi.hasPC()) {
+        DPRINTF(HWPrefetch, "Ignoring request with no PC.\n");
         return;
     }
 
-    Addr blk_addr = pkt->getAddr() & ~(Addr)(blkSize-1);
-    MasterID master_id = useMasterId ? pkt->req->masterId() : 0;
-    Addr pc = pkt->req->getPC();
-    assert(master_id < Max_Contexts);
-    std::list<StrideEntry*> &tab = table[master_id];
+    // Get required packet info
+    Addr pf_addr = pfi.getAddr();
+    Addr pc = pfi.getPC();
+    bool is_secure = pfi.isSecure();
+    RequestorID requestor_id = useRequestorId ? pfi.getRequestorId() : 0;
 
-    /* Scan Table for instAddr Match */
-    std::list<StrideEntry*>::iterator iter;
-    for (iter = tab.begin(); iter != tab.end(); iter++) {
-        if ((*iter)->instAddr == pc)
-            break;
-    }
+    // Get corresponding pc table
+    PCTable* pcTable = findTable(requestor_id);
 
-    if (iter != tab.end()) {
+    // Search for entry in the pc table
+    StrideEntry *entry = pcTable->findEntry(pc, is_secure);
+
+    if (entry != nullptr) {
+        pcTable->accessEntry(entry);
+
         // Hit in table
+        int new_stride = pf_addr - entry->lastAddr;
+        bool stride_match = (new_stride == entry->stride);
 
-        int new_stride = blk_addr - (*iter)->missAddr;
-        bool stride_match = (new_stride == (*iter)->stride);
-
+        // Adjust confidence for stride entry
         if (stride_match && new_stride != 0) {
-            if ((*iter)->confidence < Max_Conf)
-                (*iter)->confidence++;
+            entry->confidence++;
         } else {
-            (*iter)->stride = new_stride;
-            if ((*iter)->confidence > Min_Conf)
-                (*iter)->confidence = 0;
+            entry->confidence--;
+            // If confidence has dropped below the threshold, train new stride
+            if (entry->confidence.calcSaturation() < threshConf) {
+                entry->stride = new_stride;
+            }
         }
 
-        DPRINTF(HWPrefetch, "hit: PC %x blk_addr %x stride %d (%s), conf %d\n",
-                pc, blk_addr, new_stride, stride_match ? "match" : "change",
-                (*iter)->confidence);
+        DPRINTF(HWPrefetch, "Hit: PC %x pkt_addr %x (%s) stride %d (%s), "
+                "conf %d\n", pc, pf_addr, is_secure ? "s" : "ns",
+                new_stride, stride_match ? "match" : "change",
+                (int)entry->confidence);
 
-        (*iter)->missAddr = blk_addr;
+        entry->lastAddr = pf_addr;
 
-        if ((*iter)->confidence <= 0)
+        // Abort prefetch generation if below confidence threshold
+        if (entry->confidence.calcSaturation() < threshConf) {
             return;
+        }
 
+        // Generate up to degree prefetches
         for (int d = 1; d <= degree; d++) {
-            Addr new_addr = blk_addr + d * new_stride;
-            if (pageStop && !samePage(blk_addr, new_addr)) {
-                // Spanned the page, so now stop
-                pfSpanPage += degree - d + 1;
-                return;
-            } else {
-                DPRINTF(HWPrefetch, "  queuing prefetch to %x @ %d\n",
-                        new_addr, latency);
-                addresses.push_back(new_addr);
-                delays.push_back(latency);
+            // Round strides up to atleast 1 cacheline
+            int prefetch_stride = new_stride;
+            if (abs(new_stride) < blkSize) {
+                prefetch_stride = (new_stride < 0) ? -blkSize : blkSize;
             }
+
+            Addr new_addr = pf_addr + d * prefetch_stride;
+            addresses.push_back(AddrPriority(new_addr, 0));
         }
     } else {
         // Miss in table
-        // Find lowest confidence and replace
+        DPRINTF(HWPrefetch, "Miss: PC %x pkt_addr %x (%s)\n", pc, pf_addr,
+                is_secure ? "s" : "ns");
 
-        DPRINTF(HWPrefetch, "miss: PC %x blk_addr %x\n", pc, blk_addr);
+        StrideEntry* entry = pcTable->findVictim(pc);
 
-        if (tab.size() >= 256) { //set default table size is 256
-            std::list<StrideEntry*>::iterator min_pos = tab.begin();
-            int min_conf = (*min_pos)->confidence;
-            for (iter = min_pos, ++iter; iter != tab.end(); ++iter) {
-                if ((*iter)->confidence < min_conf){
-                    min_pos = iter;
-                    min_conf = (*iter)->confidence;
-                }
-            }
-            DPRINTF(HWPrefetch, "  replacing PC %x\n", (*min_pos)->instAddr);
-
-            // free entry and delete it
-            delete *min_pos;
-            tab.erase(min_pos);
-        }
-
-        StrideEntry *new_entry = new StrideEntry;
-        new_entry->instAddr = pc;
-        new_entry->missAddr = blk_addr;
-        new_entry->stride = 0;
-        new_entry->confidence = 0;
-        tab.push_back(new_entry);
+        // Insert new entry's data
+        entry->lastAddr = pf_addr;
+        pcTable->insertEntry(pc, is_secure, entry);
     }
 }
 
+inline uint32_t
+StridePrefetcherHashedSetAssociative::extractSet(const Addr pc) const
+{
+    const Addr hash1 = pc >> 1;
+    const Addr hash2 = hash1 >> tagShift;
+    return (hash1 ^ hash2) & setMask;
+}
 
-StridePrefetcher*
+Addr
+StridePrefetcherHashedSetAssociative::extractTag(const Addr addr) const
+{
+    return addr;
+}
+
+} // namespace Prefetcher
+
+Prefetcher::StridePrefetcherHashedSetAssociative*
+StridePrefetcherHashedSetAssociativeParams::create()
+{
+    return new Prefetcher::StridePrefetcherHashedSetAssociative(this);
+}
+
+Prefetcher::Stride*
 StridePrefetcherParams::create()
 {
-   return new StridePrefetcher(this);
+    return new Prefetcher::Stride(this);
 }

@@ -1,5 +1,0 @@
-set(FP_TOLERANCE 0.016)
-list(APPEND LDFLAGS -lm)
-list(APPEND TARGET_FLAGS -msse2)
-list(APPEND LCCFLAGS -msse2)
-llvm_singlesource(PREFIX "Vector-")

@@ -1,5 +1,16 @@
 # -*- mode:python -*-
 
+# Copyright (c) 2018, 2020 ARM Limited
+#
+# The license below extends only to copyright in the software and shall
+# not be construed as granting a license to any other intellectual
+# property including but not limited to intellectual property relating
+# to a hardware implementation of the functionality of the software
+# licensed hereunder.  You may use the software subject to the license
+# terms below provided that you ensure that this notice is replicated
+# unmodified and in its entirety in all distributions of the software,
+# modified or unmodified, in source code or in binary form.
+#
 # Copyright (c) 2004-2005 The Regents of The University of Michigan
 # All rights reserved.
 #
@@ -25,21 +36,24 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Nathan Binkert
+
+from __future__ import print_function
 
 import array
 import bisect
+import functools
 import imp
-import marshal
 import os
 import re
+import six
 import sys
 import zlib
 
 from os.path import basename, dirname, exists, isdir, isfile, join as joinpath
 
 import SCons
+
+from gem5_scons import Transform, warning, error
 
 # This file defines how to build a particular configuration of gem5
 # based on variable settings in the 'env' build environment.
@@ -56,49 +70,106 @@ from m5.util import code_formatter, compareVersions
 ########################################################################
 # Code for adding source files of various types
 #
-# When specifying a source file of some type, a set of guards can be
-# specified for that file.  When get() is used to find the files, if
-# get specifies a set of filters, only files that match those filters
-# will be accepted (unspecified filters on files are assumed to be
-# false).  Current filters are:
-#     main -- specifies the gem5 main() function
-#     skip_lib -- do not put this file into the gem5 library
-#     <unittest> -- unit tests use filters based on the unit test name
-#
-# A parent can now be specified for a source file and default filter
-# values will be retrieved recursively from parents (children override
-# parents).
-#
+# When specifying a source file of some type, a set of tags can be
+# specified for that file.
+
+class SourceFilter(object):
+    def __init__(self, predicate):
+        self.predicate = predicate
+
+    def __or__(self, other):
+        return SourceFilter(lambda tags: self.predicate(tags) or
+                                         other.predicate(tags))
+
+    def __and__(self, other):
+        return SourceFilter(lambda tags: self.predicate(tags) and
+                                         other.predicate(tags))
+
+def with_tags_that(predicate):
+    '''Return a list of sources with tags that satisfy a predicate.'''
+    return SourceFilter(predicate)
+
+def with_any_tags(*tags):
+    '''Return a list of sources with any of the supplied tags.'''
+    return SourceFilter(lambda stags: len(set(tags) & stags) > 0)
+
+def with_all_tags(*tags):
+    '''Return a list of sources with all of the supplied tags.'''
+    return SourceFilter(lambda stags: set(tags) <= stags)
+
+def with_tag(tag):
+    '''Return a list of sources with the supplied tag.'''
+    return SourceFilter(lambda stags: tag in stags)
+
+def without_tags(*tags):
+    '''Return a list of sources without any of the supplied tags.'''
+    return SourceFilter(lambda stags: len(set(tags) & stags) == 0)
+
+def without_tag(tag):
+    '''Return a list of sources with the supplied tag.'''
+    return SourceFilter(lambda stags: tag not in stags)
+
+source_filter_factories = {
+    'with_tags_that': with_tags_that,
+    'with_any_tags': with_any_tags,
+    'with_all_tags': with_all_tags,
+    'with_tag': with_tag,
+    'without_tags': without_tags,
+    'without_tag': without_tag,
+}
+
+Export(source_filter_factories)
+
+class SourceList(list):
+    def apply_filter(self, f):
+        def match(source):
+            return f.predicate(source.tags)
+        return SourceList(filter(match, self))
+
+    def __getattr__(self, name):
+        func = source_filter_factories.get(name, None)
+        if not func:
+            raise AttributeError
+
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            return self.apply_filter(func(*args, **kwargs))
+        return wrapper
+
 class SourceMeta(type):
     '''Meta class for source files that keeps track of all files of a
-    particular type and has a get function for finding all functions
-    of a certain type that match a set of guards'''
+    particular type.'''
     def __init__(cls, name, bases, dict):
         super(SourceMeta, cls).__init__(name, bases, dict)
-        cls.all = []
-        
-    def get(cls, **guards):
-        '''Find all files that match the specified guards.  If a source
-        file does not specify a flag, the default is False'''
-        for src in cls.all:
-            for flag,value in guards.iteritems():
-                # if the flag is found and has a different value, skip
-                # this file
-                if src.all_guards.get(flag, False) != value:
-                    break
-            else:
-                yield src
+        cls.all = SourceList()
 
+@six.add_metaclass(SourceMeta)
 class SourceFile(object):
     '''Base object that encapsulates the notion of a source file.
     This includes, the source node, target node, various manipulations
-    of those.  A source file also specifies a set of guards which
-    describing which builds the source file applies to.  A parent can
-    also be specified to get default guards from'''
-    __metaclass__ = SourceMeta
-    def __init__(self, source, parent=None, **guards):
-        self.guards = guards
-        self.parent = parent
+    of those.  A source file also specifies a set of tags which
+    describing arbitrary properties of the source file.'''
+
+    static_objs = {}
+    shared_objs = {}
+
+    def __init__(self, source, tags=None, add_tags=None, append=None):
+        if tags is None:
+            tags='gem5 lib'
+        if isinstance(tags, six.string_types):
+            tags = set([tags])
+        if not isinstance(tags, set):
+            tags = set(tags)
+        self.tags = tags
+
+        if add_tags:
+            if isinstance(add_tags, six.string_types):
+                add_tags = set([add_tags])
+            if not isinstance(add_tags, set):
+                add_tags = set(add_tags)
+            self.tags |= add_tags
+
+        self.append = append
 
         tnode = source
         if not isinstance(source, SCons.Node.FS.File):
@@ -110,6 +181,24 @@ class SourceFile(object):
         for base in type(self).__mro__:
             if issubclass(base, SourceFile):
                 base.all.append(self)
+
+    def static(self, env):
+        key = (self.tnode, env['OBJSUFFIX'])
+        if self.append:
+            env = env.Clone()
+            env.Append(**self.append)
+        if not key in self.static_objs:
+            self.static_objs[key] = env.StaticObject(self.tnode)
+        return self.static_objs[key]
+
+    def shared(self, env):
+        key = (self.tnode, env['OBJSUFFIX'])
+        if self.append:
+            env = env.Clone()
+            env.Append(**self.append)
+        if not key in self.shared_objs:
+            self.shared_objs[key] = env.SharedObject(self.tnode)
+        return self.shared_objs[key]
 
     @property
     def filename(self):
@@ -132,16 +221,6 @@ class SourceFile(object):
 
         return self.basename[:index], self.basename[index+1:]
 
-    @property
-    def all_guards(self):
-        '''find all guards for this object getting default values
-        recursively from its parents'''
-        guards = {}
-        if self.parent:
-            guards.update(self.parent.guards)
-        guards.update(self.guards)
-        return guards
-
     def __lt__(self, other): return self.filename < other.filename
     def __le__(self, other): return self.filename <= other.filename
     def __gt__(self, other): return self.filename > other.filename
@@ -149,14 +228,105 @@ class SourceFile(object):
     def __eq__(self, other): return self.filename == other.filename
     def __ne__(self, other): return self.filename != other.filename
 
-class Source(SourceFile):
-    '''Add a c/c++ source file to the build'''
-    def __init__(self, source, Werror=True, swig=False, **guards):
-        '''specify the source file, and any guards'''
-        super(Source, self).__init__(source, **guards)
+def blobToCpp(data, symbol, cpp_code, hpp_code=None, namespace=None):
+    '''
+    Convert bytes data into C++ .cpp and .hh uint8_t byte array
+    code containing that binary data.
 
-        self.Werror = Werror
-        self.swig = swig
+    :param data: binary data to be converted to C++
+    :param symbol: name of the symbol
+    :param cpp_code: append the generated cpp_code to this object
+    :param hpp_code: append the generated hpp_code to this object
+                     If None, ignore it. Otherwise, also include it
+                     in the .cpp file.
+    :param namespace: namespace to put the symbol into. If None,
+                      don't put the symbols into any namespace.
+    '''
+    symbol_len_declaration = 'const std::size_t {}_len'.format(symbol)
+    symbol_declaration = 'const std::uint8_t {}[]'.format(symbol)
+    if hpp_code is not None:
+        cpp_code('''\
+#include "blobs/{}.hh"
+'''.format(symbol))
+        hpp_code('''\
+#include <cstddef>
+#include <cstdint>
+''')
+        if namespace is not None:
+            hpp_code('namespace {} {{'.format(namespace))
+        hpp_code('extern ' + symbol_len_declaration + ';')
+        hpp_code('extern ' + symbol_declaration + ';')
+        if namespace is not None:
+            hpp_code('}')
+    if namespace is not None:
+        cpp_code('namespace {} {{'.format(namespace))
+    if hpp_code is not None:
+        cpp_code(symbol_len_declaration + ' = {};'.format(len(data)))
+    cpp_code(symbol_declaration + ' = {')
+    cpp_code.indent()
+    step = 16
+    for i in six.moves.range(0, len(data), step):
+        x = array.array('B', data[i:i+step])
+        cpp_code(''.join('%d,' % d for d in x))
+    cpp_code.dedent()
+    cpp_code('};')
+    if namespace is not None:
+        cpp_code('}')
+
+def Blob(blob_path, symbol):
+    '''
+    Embed an arbitrary blob into the gem5 executable,
+    and make it accessible to C++ as a byte array.
+    '''
+    blob_path = os.path.abspath(blob_path)
+    blob_out_dir = os.path.join(env['BUILDDIR'], 'blobs')
+    path_noext = joinpath(blob_out_dir, symbol)
+    cpp_path = path_noext + '.cc'
+    hpp_path = path_noext + '.hh'
+    def embedBlob(target, source, env):
+        with open(str(source[0]), 'rb') as f:
+            data = f.read()
+        cpp_code = code_formatter()
+        hpp_code = code_formatter()
+        blobToCpp(data, symbol, cpp_code, hpp_code, namespace='Blobs')
+        cpp_path = str(target[0])
+        hpp_path = str(target[1])
+        cpp_dir = os.path.split(cpp_path)[0]
+        if not os.path.exists(cpp_dir):
+            os.makedirs(cpp_dir)
+        cpp_code.write(cpp_path)
+        hpp_code.write(hpp_path)
+    env.Command([cpp_path, hpp_path], blob_path,
+                MakeAction(embedBlob, Transform("EMBED BLOB")))
+    Source(cpp_path)
+
+def GdbXml(xml_id, symbol):
+    Blob(joinpath(gdb_xml_dir, xml_id), symbol)
+
+class Source(SourceFile):
+    ungrouped_tag = 'No link group'
+    source_groups = set()
+
+    _current_group_tag = ungrouped_tag
+
+    @staticmethod
+    def link_group_tag(group):
+        return 'link group: %s' % group
+
+    @classmethod
+    def set_group(cls, group):
+        new_tag = Source.link_group_tag(group)
+        Source._current_group_tag = new_tag
+        Source.source_groups.add(group)
+
+    def _add_link_group_tag(self):
+        self.tags.add(Source._current_group_tag)
+
+    '''Add a c/c++ source file to the build'''
+    def __init__(self, source, tags=None, add_tags=None, append=None):
+        '''specify the source file, and any tags'''
+        super(Source, self).__init__(source, tags, add_tags, append)
+        self._add_link_group_tag()
 
 class PySource(SourceFile):
     '''Add a python source file to the named package'''
@@ -165,9 +335,9 @@ class PySource(SourceFile):
     tnodes = {}
     symnames = {}
 
-    def __init__(self, package, source, **guards):
-        '''specify the python package, the source file, and any guards'''
-        super(PySource, self).__init__(source, **guards)
+    def __init__(self, package, source, tags=None, add_tags=None):
+        '''specify the python package, the source file, and any tags'''
+        super(PySource, self).__init__(source, tags, add_tags)
 
         modname,ext = self.extname
         assert ext == 'py'
@@ -207,38 +377,21 @@ class SimObject(PySource):
     fixed = False
     modnames = []
 
-    def __init__(self, source, **guards):
-        '''Specify the source file and any guards (automatically in
+    def __init__(self, source, tags=None, add_tags=None):
+        '''Specify the source file and any tags (automatically in
         the m5.objects package)'''
-        super(SimObject, self).__init__('m5.objects', source, **guards)
+        super(SimObject, self).__init__('m5.objects', source, tags, add_tags)
         if self.fixed:
-            raise AttributeError, "Too late to call SimObject now."
+            raise AttributeError("Too late to call SimObject now.")
 
         bisect.insort_right(SimObject.modnames, self.modname)
-
-class SwigSource(SourceFile):
-    '''Add a swig file to build'''
-
-    def __init__(self, package, source, **guards):
-        '''Specify the python package, the source file, and any guards'''
-        super(SwigSource, self).__init__(source, **guards)
-
-        modname,ext = self.extname
-        assert ext == 'i'
-
-        self.module = modname
-        cc_file = joinpath(self.dirname, modname + '_wrap.cc')
-        py_file = joinpath(self.dirname, modname + '.py')
-
-        self.cc_source = Source(cc_file, swig=True, parent=self)
-        self.py_source = PySource(package, py_file, parent=self)
 
 class ProtoBuf(SourceFile):
     '''Add a Protocol Buffer to build'''
 
-    def __init__(self, source, **guards):
-        '''Specify the source file, and any guards'''
-        super(ProtoBuf, self).__init__(source, **guards)
+    def __init__(self, source, tags=None, add_tags=None):
+        '''Specify the source file, and any tags'''
+        super(ProtoBuf, self).__init__(source, tags, add_tags)
 
         # Get the file name and the extension
         modname,ext = self.extname
@@ -249,35 +402,148 @@ class ProtoBuf(SourceFile):
         self.cc_file = File(modname + '.pb.cc')
         self.hh_file = File(modname + '.pb.h')
 
-class UnitTest(object):
-    '''Create a UnitTest'''
 
+exectuable_classes = []
+class ExecutableMeta(type):
+    '''Meta class for Executables.'''
     all = []
-    def __init__(self, target, *sources, **kwargs):
-        '''Specify the target name and any sources.  Sources that are
-        not SourceFiles are evalued with Source().  All files are
-        guarded with a guard of the same name as the UnitTest
-        target.'''
 
-        srcs = []
+    def __init__(cls, name, bases, d):
+        if not d.pop('abstract', False):
+            ExecutableMeta.all.append(cls)
+        super(ExecutableMeta, cls).__init__(name, bases, d)
+
+        cls.all = []
+
+@six.add_metaclass(ExecutableMeta)
+class Executable(object):
+    '''Base class for creating an executable from sources.'''
+
+    abstract = True
+
+    def __init__(self, target, *srcs_and_filts):
+        '''Specify the target name and any sources. Sources that are
+        not SourceFiles are evalued with Source().'''
+        super(Executable, self).__init__()
+        self.all.append(self)
+        self.target = target
+
+        isFilter = lambda arg: isinstance(arg, SourceFilter)
+        self.filters = filter(isFilter, srcs_and_filts)
+        sources = filter(lambda a: not isFilter(a), srcs_and_filts)
+
+        srcs = SourceList()
         for src in sources:
             if not isinstance(src, SourceFile):
-                src = Source(src, skip_lib=True)
-            src.guards[target] = True
+                src = Source(src, tags=[])
             srcs.append(src)
 
         self.sources = srcs
-        self.target = target
+        self.dir = Dir('.')
+
+    def path(self, env):
+        return self.dir.File(self.target + '.' + env['EXE_SUFFIX'])
+
+    def srcs_to_objs(self, env, sources):
+        return list([ s.static(env) for s in sources ])
+
+    @classmethod
+    def declare_all(cls, env):
+        return list([ instance.declare(env) for instance in cls.all ])
+
+    def declare(self, env, objs=None):
+        if objs is None:
+            objs = self.srcs_to_objs(env, self.sources)
+
+        env = env.Clone()
+        env['BIN_RPATH_PREFIX'] = os.path.relpath(
+                env['BUILDDIR'], self.path(env).dir.abspath)
+
+        if env['STRIP_EXES']:
+            stripped = self.path(env)
+            unstripped = env.File(str(stripped) + '.unstripped')
+            if sys.platform == 'sunos5':
+                cmd = 'cp $SOURCE $TARGET; strip $TARGET'
+            else:
+                cmd = 'strip $SOURCE -o $TARGET'
+            env.Program(unstripped, objs)
+            return env.Command(stripped, unstripped,
+                               MakeAction(cmd, Transform("STRIP")))
+        else:
+            return env.Program(self.path(env), objs)
+
+class UnitTest(Executable):
+    '''Create a UnitTest'''
+    def __init__(self, target, *srcs_and_filts, **kwargs):
+        super(UnitTest, self).__init__(target, *srcs_and_filts)
+
         self.main = kwargs.get('main', False)
-        UnitTest.all.append(self)
+
+    def declare(self, env):
+        sources = list(self.sources)
+        for f in self.filters:
+            sources += Source.all.apply_filter(f)
+        objs = self.srcs_to_objs(env, sources) + env['STATIC_OBJS']
+        if self.main:
+            objs += env['MAIN_OBJS']
+        return super(UnitTest, self).declare(env, objs)
+
+class GTest(Executable):
+    '''Create a unit test based on the google test framework.'''
+    all = []
+    def __init__(self, *srcs_and_filts, **kwargs):
+        super(GTest, self).__init__(*srcs_and_filts)
+
+        self.skip_lib = kwargs.pop('skip_lib', False)
+
+    @classmethod
+    def declare_all(cls, env):
+        env = env.Clone()
+        env.Append(LIBS=env['GTEST_LIBS'])
+        env.Append(CPPFLAGS=env['GTEST_CPPFLAGS'])
+        env['GTEST_LIB_SOURCES'] = Source.all.with_tag('gtest lib')
+        env['GTEST_OUT_DIR'] = \
+            Dir(env['BUILDDIR']).Dir('unittests.' + env['EXE_SUFFIX'])
+        return super(GTest, cls).declare_all(env)
+
+    def declare(self, env):
+        sources = list(self.sources)
+        if not self.skip_lib:
+            sources += env['GTEST_LIB_SOURCES']
+        for f in self.filters:
+            sources += Source.all.apply_filter(f)
+        objs = self.srcs_to_objs(env, sources)
+
+        binary = super(GTest, self).declare(env, objs)
+
+        out_dir = env['GTEST_OUT_DIR']
+        xml_file = out_dir.Dir(str(self.dir)).File(self.target + '.xml')
+        AlwaysBuild(env.Command(xml_file, binary,
+            "${SOURCES[0]} --gtest_output=xml:${TARGETS[0]}"))
+
+        return binary
+
+class Gem5(Executable):
+    '''Create a gem5 executable.'''
+
+    def __init__(self, target):
+        super(Gem5, self).__init__(target)
+
+    def declare(self, env):
+        objs = env['MAIN_OBJS'] + env['STATIC_OBJS']
+        return super(Gem5, self).declare(env, objs)
+
 
 # Children should have access
+Export('Blob')
+Export('GdbXml')
 Export('Source')
 Export('PySource')
 Export('SimObject')
-Export('SwigSource')
 Export('ProtoBuf')
+Export('Executable')
 Export('UnitTest')
+Export('GTest')
 
 ########################################################################
 #
@@ -286,12 +552,12 @@ Export('UnitTest')
 debug_flags = {}
 def DebugFlag(name, desc=None):
     if name in debug_flags:
-        raise AttributeError, "Flag %s already specified" % name
+        raise AttributeError("Flag {} already specified".format(name))
     debug_flags[name] = (name, (), desc)
 
 def CompoundFlag(name, flags, desc=None):
     if name in debug_flags:
-        raise AttributeError, "Flag %s already specified" % name
+        raise AttributeError("Flag {} already specified".format(name))
 
     compound = tuple(flags)
     debug_flags[name] = (name, compound, desc)
@@ -331,6 +597,7 @@ for root, dirs, files in os.walk(base_dir, topdown=True):
 
     if 'SConscript' in files:
         build_dir = joinpath(env['BUILDDIR'], root[len(base_dir) + 1:])
+        Source.set_group(build_dir)
         SConscript(joinpath(root, 'SConscript'), variant_dir=build_dir)
 
 for extra_dir in extras_dir_list:
@@ -347,19 +614,20 @@ for extra_dir in extras_dir_list:
 
         if 'SConscript' in files:
             build_dir = joinpath(env['BUILDDIR'], root[prefix_len:])
+            Source.set_group(build_dir)
             SConscript(joinpath(root, 'SConscript'), variant_dir=build_dir)
 
 for opt in export_vars:
     env.ConfigFile(opt)
 
 def makeTheISA(source, target, env):
-    isas = [ src.get_contents() for src in source ]
+    isas = [ src.get_contents().decode('utf-8') for src in source ]
     target_isa = env['TARGET_ISA']
     def define(isa):
-        return isa.upper() + '_ISA'
-    
+        return str(isa.upper()) + '_ISA'
+
     def namespace(isa):
-        return isa[0].upper() + isa[1:].lower() + 'ISA' 
+        return isa[0].upper() + isa[1:].lower() + 'ISA'
 
 
     code = code_formatter()
@@ -369,8 +637,17 @@ def makeTheISA(source, target, env):
 
 ''')
 
+    # create defines for the preprocessing and compile-time determination
     for i,isa in enumerate(isas):
         code('#define $0 $1', define(isa), i + 1)
+    code()
+
+    # create an enum for any run-time determination of the ISA, we
+    # reuse the same name as the namespaces
+    code('enum class Arch {')
+    for isa in isas:
+        code('  $0 = $1,', namespace(isa), define(isa))
+    code('};')
 
     code('''
 
@@ -382,8 +659,50 @@ def makeTheISA(source, target, env):
 
     code.write(str(target[0]))
 
-env.Command('config/the_isa.hh', map(Value, all_isa_list),
+env.Command('config/the_isa.hh', list(map(Value, all_isa_list)),
             MakeAction(makeTheISA, Transform("CFG ISA", 0)))
+
+def makeTheGPUISA(source, target, env):
+    isas = [ src.get_contents().decode('utf-8') for src in source ]
+    target_gpu_isa = env['TARGET_GPU_ISA']
+    def define(isa):
+        return str(isa.upper()) + '_ISA'
+
+    def namespace(isa):
+        return isa[0].upper() + isa[1:].lower() + 'ISA'
+
+
+    code = code_formatter()
+    code('''\
+#ifndef __CONFIG_THE_GPU_ISA_HH__
+#define __CONFIG_THE_GPU_ISA_HH__
+
+''')
+
+    # create defines for the preprocessing and compile-time determination
+    for i,isa in enumerate(isas):
+        code('#define $0 $1', define(isa), i + 1)
+    code()
+
+    # create an enum for any run-time determination of the ISA, we
+    # reuse the same name as the namespaces
+    code('enum class GPUArch {')
+    for isa in isas:
+        code('  $0 = $1,', namespace(isa), define(isa))
+    code('};')
+
+    code('''
+
+#define THE_GPU_ISA ${{define(target_gpu_isa)}}
+#define TheGpuISA ${{namespace(target_gpu_isa)}}
+#define THE_GPU_ISA_STR "${{target_gpu_isa}}"
+
+#endif // __CONFIG_THE_GPU_ISA_HH__''')
+
+    code.write(str(target[0]))
+
+env.Command('config/the_gpu_isa.hh', list(map(Value, all_gpu_isa_list)),
+            MakeAction(makeTheGPUISA, Transform("CFG ISA", 0)))
 
 ########################################################################
 #
@@ -399,9 +718,6 @@ class DictImporter(object):
         self.modules = modules
         self.installed = set()
 
-    def __del__(self):
-        self.unload()
-
     def unload(self):
         import sys
         for module in self.installed:
@@ -415,7 +731,7 @@ class DictImporter(object):
         if fullname == 'm5.objects':
             return self
 
-        if fullname.startswith('m5.internal'):
+        if fullname.startswith('_m5'):
             return None
 
         source = self.modules.get(fullname, None)
@@ -443,7 +759,8 @@ class DictImporter(object):
             mod.__path__ = source.modpath
         mod.__file__ = source.abspath
 
-        exec file(source.abspath, 'r') in mod.__dict__
+        compiled = compile(open(source.abspath).read(), source.abspath, 'exec')
+        exec(compiled, mod.__dict__)
 
         return mod
 
@@ -473,20 +790,7 @@ sys.meta_path.remove(importer)
 sim_objects = m5.SimObject.allClasses
 all_enums = m5.params.allEnums
 
-if m5.SimObject.noCxxHeader:
-    print >> sys.stderr, \
-        "warning: At least one SimObject lacks a header specification. " \
-        "This can cause unexpected results in the generated SWIG " \
-        "wrappers."
-
-# Find param types that need to be explicitly wrapped with swig.
-# These will be recognized because the ParamDesc will have a
-# swig_decl() method.  Most param types are based on types that don't
-# need this, either because they're based on native types (like Int)
-# or because they're SimObjects (which get swigged independently).
-# For now the only things handled here are VectorParam types.
-params_to_swig = {}
-for name,obj in sorted(sim_objects.iteritems()):
+for name,obj in sorted(sim_objects.items()):
     for param in obj._params.local.values():
         # load the ptype attribute now because it depends on the
         # current version of SimObject.allClasses, but when scons
@@ -494,18 +798,13 @@ for name,obj in sorted(sim_objects.iteritems()):
         # SimObject.allClasses will have been loaded
         param.ptype
 
-        if not hasattr(param, 'swig_decl'):
-            continue
-        pname = param.ptype_str
-        if pname not in params_to_swig:
-            params_to_swig[pname] = param
-
 ########################################################################
 #
 # calculate extra dependencies
 #
 module_depends = ["m5", "m5.SimObject", "m5.params"]
 depends = [ PySource.modules[dep].snode for dep in module_depends ]
+depends.sort(key = lambda x: x.name)
 
 ########################################################################
 #
@@ -515,18 +814,19 @@ depends = [ PySource.modules[dep].snode for dep in module_depends ]
 # Generate Python file containing a dict specifying the current
 # buildEnv flags.
 def makeDefinesPyFile(target, source, env):
-    build_env = source[0].get_contents()
+    build_env = source[0].get_contents().decode('utf-8')
 
     code = code_formatter()
     code("""
-import m5.internal
+import _m5.core
 import m5.util
 
 buildEnv = m5.util.SmartDict($build_env)
 
-compileDate = m5.internal.core.compileDate
+compileDate = _m5.core.compileDate
+gem5Version = _m5.core.gem5Version
 _globals = globals()
-for key,val in m5.internal.core.__dict__.iteritems():
+for key,val in _m5.core.__dict__.items():
     if key.startswith('flag_'):
         flag = key[5:]
         _globals[flag] = val
@@ -544,7 +844,8 @@ PySource('m5', 'python/m5/defines.py')
 def makeInfoPyFile(target, source, env):
     code = code_formatter()
     for src in source:
-        data = ''.join(file(src.srcnode().abspath, 'r').xreadlines())
+        with open(src.srcnode().abspath, 'r') as f:
+            data = ''.join(f)
         code('$src = ${{repr(data)}}')
     code.write(str(target[0]))
 
@@ -562,66 +863,69 @@ PySource('m5', 'python/m5/info.py')
 def createSimObjectParamStruct(target, source, env):
     assert len(target) == 1 and len(source) == 1
 
-    name = str(source[0].get_contents())
+    name = source[0].get_text_contents()
     obj = sim_objects[name]
 
     code = code_formatter()
     obj.cxx_param_decl(code)
     code.write(target[0].abspath)
 
-def createParamSwigWrapper(target, source, env):
-    assert len(target) == 1 and len(source) == 1
+def createSimObjectCxxConfig(is_header):
+    def body(target, source, env):
+        assert len(target) == 1 and len(source) == 1
 
-    name = str(source[0].get_contents())
-    param = params_to_swig[name]
+        name = source[0].get_contents().decode('utf-8')
+        obj = sim_objects[name]
 
-    code = code_formatter()
-    param.swig_decl(code)
-    code.write(target[0].abspath)
+        code = code_formatter()
+        obj.cxx_config_param_file(code, is_header)
+        code.write(target[0].abspath)
+    return body
 
 def createEnumStrings(target, source, env):
-    assert len(target) == 1 and len(source) == 1
+    assert len(target) == 1 and len(source) == 2
 
-    name = str(source[0].get_contents())
+    name = source[0].get_text_contents()
+    use_python = source[1].read()
     obj = all_enums[name]
 
     code = code_formatter()
     obj.cxx_def(code)
+    if use_python:
+        obj.pybind_def(code)
     code.write(target[0].abspath)
 
 def createEnumDecls(target, source, env):
     assert len(target) == 1 and len(source) == 1
 
-    name = str(source[0].get_contents())
+    name = source[0].get_text_contents()
     obj = all_enums[name]
 
     code = code_formatter()
     obj.cxx_decl(code)
     code.write(target[0].abspath)
 
-def createEnumSwigWrapper(target, source, env):
-    assert len(target) == 1 and len(source) == 1
-
-    name = str(source[0].get_contents())
-    obj = all_enums[name]
-
-    code = code_formatter()
-    obj.swig_decl(code)
-    code.write(target[0].abspath)
-
-def createSimObjectSwigWrapper(target, source, env):
-    name = source[0].get_contents()
+def createSimObjectPyBindWrapper(target, source, env):
+    name = source[0].get_text_contents()
     obj = sim_objects[name]
 
     code = code_formatter()
-    obj.swig_decl(code)
+    obj.pybind_decl(code)
     code.write(target[0].abspath)
 
 # Generate all of the SimObject param C++ struct header files
 params_hh_files = []
-for name,simobj in sorted(sim_objects.iteritems()):
+for name,simobj in sorted(sim_objects.items()):
+    # If this simobject's source changes, we need to regenerate the header.
     py_source = PySource.modules[simobj.__module__]
     extra_deps = [ py_source.tnode ]
+
+    # Get the params for just this SimObject, excluding base classes.
+    params = simobj._params.local.values()
+    # Extract the parameters' c++ types.
+    types = sorted(map(lambda p: p.ptype.cxx_type, params))
+    # If any of these types have changed, we need to regenerate the header.
+    extra_deps.append(Value(types))
 
     hh_file = File('params/%s.hh' % name)
     params_hh_files.append(hh_file)
@@ -629,23 +933,68 @@ for name,simobj in sorted(sim_objects.iteritems()):
                 MakeAction(createSimObjectParamStruct, Transform("SO PARAM")))
     env.Depends(hh_file, depends + extra_deps)
 
-# Generate any needed param SWIG wrapper files
-params_i_files = []
-for name,param in params_to_swig.iteritems():
-    i_file = File('python/m5/internal/%s.i' % (param.swig_module_name()))
-    params_i_files.append(i_file)
-    env.Command(i_file, Value(name),
-                MakeAction(createParamSwigWrapper, Transform("SW PARAM")))
-    env.Depends(i_file, depends)
-    SwigSource('m5.internal', i_file)
+# C++ parameter description files
+if GetOption('with_cxx_config'):
+    for name,simobj in sorted(sim_objects.items()):
+        py_source = PySource.modules[simobj.__module__]
+        extra_deps = [ py_source.tnode ]
+
+        cxx_config_hh_file = File('cxx_config/%s.hh' % name)
+        cxx_config_cc_file = File('cxx_config/%s.cc' % name)
+        env.Command(cxx_config_hh_file, Value(name),
+                    MakeAction(createSimObjectCxxConfig(True),
+                    Transform("CXXCPRHH")))
+        env.Command(cxx_config_cc_file, Value(name),
+                    MakeAction(createSimObjectCxxConfig(False),
+                    Transform("CXXCPRCC")))
+        env.Depends(cxx_config_hh_file, depends + extra_deps +
+                    [File('params/%s.hh' % name), File('sim/cxx_config.hh')])
+        env.Depends(cxx_config_cc_file, depends + extra_deps +
+                    [cxx_config_hh_file])
+        Source(cxx_config_cc_file)
+
+    cxx_config_init_cc_file = File('cxx_config/init.cc')
+
+    def createCxxConfigInitCC(target, source, env):
+        assert len(target) == 1 and len(source) == 1
+
+        code = code_formatter()
+
+        for name,simobj in sorted(sim_objects.items()):
+            if not hasattr(simobj, 'abstract') or not simobj.abstract:
+                code('#include "cxx_config/${name}.hh"')
+        code()
+        code('void cxxConfigInit()')
+        code('{')
+        code.indent()
+        for name,simobj in sorted(sim_objects.items()):
+            not_abstract = not hasattr(simobj, 'abstract') or \
+                not simobj.abstract
+            if not_abstract and 'type' in simobj.__dict__:
+                code('cxx_config_directory["${name}"] = '
+                     '${name}CxxConfigParams::makeDirectoryEntry();')
+        code.dedent()
+        code('}')
+        code.write(target[0].abspath)
+
+    py_source = PySource.modules[simobj.__module__]
+    extra_deps = [ py_source.tnode ]
+    env.Command(cxx_config_init_cc_file, Value(name),
+        MakeAction(createCxxConfigInitCC, Transform("CXXCINIT")))
+    cxx_param_hh_files = ["cxx_config/%s.hh" % simobj
+        for name,simobj in sorted(sim_objects.items())
+        if not hasattr(simobj, 'abstract') or not simobj.abstract]
+    Depends(cxx_config_init_cc_file, cxx_param_hh_files +
+            [File('sim/cxx_config.hh')])
+    Source(cxx_config_init_cc_file)
 
 # Generate all enum header files
-for name,enum in sorted(all_enums.iteritems()):
+for name,enum in sorted(all_enums.items()):
     py_source = PySource.modules[enum.__module__]
     extra_deps = [ py_source.tnode ]
 
     cc_file = File('enums/%s.cc' % name)
-    env.Command(cc_file, Value(name),
+    env.Command(cc_file, [Value(name), Value(env['USE_PYTHON'])],
                 MakeAction(createEnumStrings, Transform("ENUM STR")))
     env.Depends(cc_file, depends + extra_deps)
     Source(cc_file)
@@ -655,66 +1004,35 @@ for name,enum in sorted(all_enums.iteritems()):
                 MakeAction(createEnumDecls, Transform("ENUMDECL")))
     env.Depends(hh_file, depends + extra_deps)
 
-    i_file = File('python/m5/internal/enum_%s.i' % name)
-    env.Command(i_file, Value(name),
-                MakeAction(createEnumSwigWrapper, Transform("ENUMSWIG")))
-    env.Depends(i_file, depends + extra_deps)
-    SwigSource('m5.internal', i_file)
-
-# Generate SimObject SWIG wrapper files
-for name,simobj in sim_objects.iteritems():
-    py_source = PySource.modules[simobj.__module__]
-    extra_deps = [ py_source.tnode ]
-
-    i_file = File('python/m5/internal/param_%s.i' % name)
-    env.Command(i_file, Value(name),
-                MakeAction(createSimObjectSwigWrapper, Transform("SO SWIG")))
-    env.Depends(i_file, depends + extra_deps)
-    SwigSource('m5.internal', i_file)
-
-# Generate the main swig init file
-def makeEmbeddedSwigInit(target, source, env):
-    code = code_formatter()
-    module = source[0].get_contents()
-    code('''\
-#include "sim/init.hh"
-
-extern "C" {
-    void init_${module}();
-}
-
-EmbeddedSwig embed_swig_${module}(init_${module});
-''')
-    code.write(str(target[0]))
-    
-# Build all swig modules
-for swig in SwigSource.all:
-    env.Command([swig.cc_source.tnode, swig.py_source.tnode], swig.tnode,
-                MakeAction('$SWIG $SWIGFLAGS -outdir ${TARGETS[1].dir} '
-                '-o ${TARGETS[0]} $SOURCES', Transform("SWIG")))
-    cc_file = str(swig.tnode)
-    init_file = '%s/%s_init.cc' % (dirname(cc_file), basename(cc_file))
-    env.Command(init_file, Value(swig.module),
-                MakeAction(makeEmbeddedSwigInit, Transform("EMBED SW")))
-    Source(init_file, **swig.guards)
+# Generate SimObject Python bindings wrapper files
+if env['USE_PYTHON']:
+    for name,simobj in sorted(sim_objects.items()):
+        py_source = PySource.modules[simobj.__module__]
+        extra_deps = [ py_source.tnode ]
+        cc_file = File('python/_m5/param_%s.cc' % name)
+        env.Command(cc_file, Value(name),
+                    MakeAction(createSimObjectPyBindWrapper,
+                               Transform("SO PyBind")))
+        env.Depends(cc_file, depends + extra_deps)
+        Source(cc_file)
 
 # Build all protocol buffers if we have got protoc and protobuf available
-if env['HAVE_PROTOBUF']:
+if env['HAVE_PROTOC'] and env['HAVE_PROTOBUF']:
     for proto in ProtoBuf.all:
         # Use both the source and header as the target, and the .proto
         # file as the source. When executing the protoc compiler, also
         # specify the proto_path to avoid having the generated files
         # include the path.
         env.Command([proto.cc_file, proto.hh_file], proto.tnode,
-                    MakeAction('$PROTOC --cpp_out ${TARGET.dir} '
+                    MakeAction('${PROTOC} --cpp_out ${TARGET.dir} '
                                '--proto_path ${SOURCE.dir} $SOURCE',
                                Transform("PROTOC")))
 
         # Add the C++ source file
-        Source(proto.cc_file, **proto.guards)
+        Source(proto.cc_file, tags=proto.tags,
+                append={'CXXFLAGS': '-Wno-array-bounds'})
 elif ProtoBuf.all:
-    print 'Got protobuf to build, but lacks support!'
-    Exit(1)
+    error('Got protobuf to build, but lacks support!')
 
 #
 # Handle debug flags
@@ -722,40 +1040,39 @@ elif ProtoBuf.all:
 def makeDebugFlagCC(target, source, env):
     assert(len(target) == 1 and len(source) == 1)
 
-    val = eval(source[0].get_contents())
-    name, compound, desc = val
-    compound = list(sorted(compound))
-
     code = code_formatter()
+
+    # delay definition of CompoundFlags until after all the definition
+    # of all constituent SimpleFlags
+    comp_code = code_formatter()
 
     # file header
     code('''
 /*
- * DO NOT EDIT THIS FILE! Automatically generated
+ * DO NOT EDIT THIS FILE! Automatically generated by SCons.
  */
 
 #include "base/debug.hh"
+
+namespace Debug {
+
 ''')
 
-    for flag in compound:
-        code('#include "debug/$flag.hh"')
-    code()
-    code('namespace Debug {')
-    code()
+    for name, flag in sorted(source[0].read().items()):
+        n, compound, desc = flag
+        assert n == name
 
-    if not compound:
-        code('SimpleFlag $name("$name", "$desc");')
-    else:
-        code('CompoundFlag $name("$name", "$desc",')
-        code.indent()
-        last = len(compound) - 1
-        for i,flag in enumerate(compound):
-            if i != last:
-                code('$flag,')
-            else:
-                code('$flag);')
-        code.dedent()
+        if not compound:
+            code('SimpleFlag $name("$name", "$desc");')
+        else:
+            comp_code('CompoundFlag $name("$name", "$desc", {')
+            comp_code.indent()
+            for flag in compound:
+                comp_code('&$flag,')
+            comp_code.dedent()
+            comp_code('});')
 
+    code.append(comp_code)
     code()
     code('} // namespace Debug')
 
@@ -772,9 +1089,7 @@ def makeDebugFlagHH(target, source, env):
     # file header boilerplate
     code('''\
 /*
- * DO NOT EDIT THIS FILE!
- *
- * Automatically generated by SCons
+ * DO NOT EDIT THIS FILE! Automatically generated by SCons.
  */
 
 #ifndef __DEBUG_${name}_HH__
@@ -802,15 +1117,29 @@ namespace Debug {
 
     code.write(str(target[0]))
 
-for name,flag in sorted(debug_flags.iteritems()):
+for name,flag in sorted(debug_flags.items()):
     n, compound, desc = flag
     assert n == name
 
-    env.Command('debug/%s.hh' % name, Value(flag),
+    hh_file = 'debug/%s.hh' % name
+    env.Command(hh_file, Value(flag),
                 MakeAction(makeDebugFlagHH, Transform("TRACING", 0)))
-    env.Command('debug/%s.cc' % name, Value(flag),
-                MakeAction(makeDebugFlagCC, Transform("TRACING", 0)))
-    Source('debug/%s.cc' % name)
+
+env.Command('debug/flags.cc', Value(debug_flags),
+            MakeAction(makeDebugFlagCC, Transform("TRACING", 0)))
+Source('debug/flags.cc')
+
+# version tags
+tags = \
+env.Command('sim/tags.cc', None,
+            MakeAction('util/cpt_upgrader.py --get-cc-file > $TARGET',
+                       Transform("VER TAGS")))
+env.AlwaysBuild(tags)
+
+# Build a small helper that marshals the Python code using the same
+# version of Python as gem5. This is in an unorthodox location to
+# avoid building it for every variant.
+py_marshal = marshal_env.Program('marshal', 'python/marshal.cc')[0]
 
 # Embed python files.  All .py files that have been indicated by a
 # PySource() call in a SConscript need to be embedded into the M5
@@ -823,17 +1152,23 @@ def embedPyFile(target, source, env):
             return "0"
         return '"%s"' % string
 
-    '''Action function to compile a .py into a code object, marshal
-    it, compress it, and stick it into an asm file so the code appears
-    as just bytes with a label in the data section'''
+    '''Action function to compile a .py into a code object, marshal it,
+    compress it, and stick it into an asm file so the code appears as
+    just bytes with a label in the data section. The action takes two
+    sources:
 
-    src = file(str(source[0]), 'r').read()
+    source[0]: Binary used to marshal Python sources
+    source[1]: Python script to marshal
+    '''
 
-    pysource = PySource.tnodes[source[0]]
-    compiled = compile(src, pysource.abspath, 'exec')
-    marshalled = marshal.dumps(compiled)
+    import subprocess
+
+    marshalled = subprocess.check_output(
+            [source[0].abspath, str(source[1])], env=env['ENV'])
+
     compressed = zlib.compress(marshalled)
     data = compressed
+    pysource = PySource.tnodes[source[1]]
     sym = pysource.symname
 
     code = code_formatter()
@@ -842,16 +1177,10 @@ def embedPyFile(target, source, env):
 
 namespace {
 
-const uint8_t data_${sym}[] = {
 ''')
-    code.indent()
-    step = 16
-    for i in xrange(0, len(data), step):
-        x = array.array('B', data[i:i+step])
-        code(''.join('%d,' % d for d in x))
-    code.dedent()
-    
-    code('''};
+    blobToCpp(data, 'data_' + sym, code)
+    code('''\
+
 
 EmbeddedPython embedded_${sym}(
     ${{c_str(pysource.arcname)}},
@@ -866,9 +1195,9 @@ EmbeddedPython embedded_${sym}(
     code.write(str(target[0]))
 
 for source in PySource.all:
-    env.Command(source.cpp, source.tnode, 
-                MakeAction(embedPyFile, Transform("EMBED PY")))
-    Source(source.cpp)
+    marshal_env.Command(source.cpp, [ py_marshal, source.tnode ],
+                        MakeAction(embedPyFile, Transform("EMBED PY")))
+    Source(source.cpp, tags=source.tags, add_tags='python')
 
 ########################################################################
 #
@@ -877,132 +1206,113 @@ for source in PySource.all:
 #
 
 # List of constructed environments to pass back to SConstruct
-envList = []
+date_source = Source('base/date.cc', tags=[])
 
-date_source = Source('base/date.cc', skip_lib=True)
+gem5_binary = Gem5('gem5')
 
 # Function to create a new build environment as clone of current
 # environment 'env' with modified object suffix and optional stripped
 # binary.  Additional keyword arguments are appended to corresponding
 # build environment vars.
-def makeEnv(label, objsfx, strip = False, **kwargs):
+def makeEnv(env, label, objsfx, strip=False, **kwargs):
     # SCons doesn't know to append a library suffix when there is a '.' in the
     # name.  Use '_' instead.
     libname = 'gem5_' + label
-    exename = 'gem5.' + label
     secondary_exename = 'm5.' + label
 
     new_env = env.Clone(OBJSUFFIX=objsfx, SHOBJSUFFIX=objsfx + 's')
     new_env.Label = label
     new_env.Append(**kwargs)
 
-    swig_env = new_env.Clone()
+    lib_sources = Source.all.with_tag('gem5 lib')
 
-    # Both gcc and clang have issues with unused labels and values in
-    # the SWIG generated code
-    swig_env.Append(CCFLAGS=['-Wno-unused-label', '-Wno-unused-value'])
+    # Without Python, leave out all Python content from the library
+    # builds.  The option doesn't affect gem5 built as a program
+    if GetOption('without_python'):
+        lib_sources = lib_sources.without_tag('python')
 
-    # Add additional warnings here that should not be applied to
-    # the SWIG generated code
-    new_env.Append(CXXFLAGS='-Wmissing-declarations')
+    static_objs = []
+    shared_objs = []
 
-    if env['GCC']:
-        # Depending on the SWIG version, we also need to supress
-        # warnings about uninitialized variables and missing field
-        # initializers.
-        swig_env.Append(CCFLAGS=['-Wno-uninitialized',
-                                 '-Wno-missing-field-initializers'])
+    for s in lib_sources.with_tag(Source.ungrouped_tag):
+        static_objs.append(s.static(new_env))
+        shared_objs.append(s.shared(new_env))
 
-        if compareVersions(env['GCC_VERSION'], '4.6') >= 0:
-            swig_env.Append(CCFLAGS='-Wno-unused-but-set-variable')
+    for group in Source.source_groups:
+        srcs = lib_sources.with_tag(Source.link_group_tag(group))
+        if not srcs:
+            continue
 
-        # If gcc supports it, also warn for deletion of derived
-        # classes with non-virtual desctructors. For gcc >= 4.7 we
-        # also have to disable warnings about the SWIG code having
-        # potentially uninitialized variables.
-        if compareVersions(env['GCC_VERSION'], '4.7') >= 0:
-            new_env.Append(CXXFLAGS='-Wdelete-non-virtual-dtor')
-            swig_env.Append(CCFLAGS='-Wno-maybe-uninitialized')
-    if env['CLANG']:
-        # Always enable the warning for deletion of derived classes
-        # with non-virtual destructors
-        new_env.Append(CXXFLAGS=['-Wdelete-non-virtual-dtor'])
+        group_static = [ s.static(new_env) for s in srcs ]
+        group_shared = [ s.shared(new_env) for s in srcs ]
 
-    werror_env = new_env.Clone()
-    werror_env.Append(CCFLAGS=['-Werror',
-			       '-Wno-error=deprecated-declarations',
-			       '-Wno-error=deprecated',
-			      ])
+        # Disable partial linking if mixing it with LTO is broken and LTO
+        # is enabled.
+        #
+        # Also, up until Apple LLVM version 10.0.0 (clang-1000.11.45.5),
+        # partial linked objects do not expose symbols that are marked with
+        # the hidden visibility and consequently building gem5 on Mac OS
+        # fails. As a workaround, we disable partial linking, however, we
+        # may want to revisit in the future.
+        broken_inc_lto = env.get('BROKEN_INCREMENTAL_LTO', False)
+        forced_lto = GetOption('force_lto')
+        darwin = (env['PLATFORM'] == 'darwin')
+        disable_partial = (broken_inc_lto and forced_lto) or darwin
 
-    def make_obj(source, static, extra_deps = None):
-        '''This function adds the specified source to the correct
-        build environment, and returns the corresponding SCons Object
-        nodes'''
+        # If partial linking is disabled, add these sources to the build
+        # directly, and short circuit this loop.
+        if disable_partial:
+            static_objs.extend(group_static)
+            shared_objs.extend(group_shared)
+            continue
 
-        if source.swig:
-            env = swig_env
-        elif source.Werror:
-            env = werror_env
-        else:
-            env = new_env
+        # Set up the static partially linked objects.
+        file_name = new_env.subst("${OBJPREFIX}lib${OBJSUFFIX}.partial")
+        target = File(joinpath(group, file_name))
+        partial = env.PartialStatic(target=target, source=group_static)
+        static_objs.extend(partial)
 
-        if static:
-            obj = env.StaticObject(source.tnode)
-        else:
-            obj = env.SharedObject(source.tnode)
+        # Set up the shared partially linked objects.
+        file_name = new_env.subst("${SHOBJPREFIX}lib${SHOBJSUFFIX}.partial")
+        target = File(joinpath(group, file_name))
+        partial = env.PartialShared(target=target, source=group_shared)
+        shared_objs.extend(partial)
 
-        if extra_deps:
-            env.Depends(obj, extra_deps)
+    static_date = date_source.static(new_env)
+    new_env.Depends(static_date, static_objs)
+    static_objs.extend(static_date)
 
-        return obj
+    shared_date = date_source.shared(new_env)
+    new_env.Depends(shared_date, shared_objs)
+    shared_objs.extend(shared_date)
 
-    static_objs = \
-        [ make_obj(s, True) for s in Source.get(main=False, skip_lib=False) ]
-    shared_objs = \
-        [ make_obj(s, False) for s in Source.get(main=False, skip_lib=False) ]
-
-    static_date = make_obj(date_source, static=True, extra_deps=static_objs)
-    static_objs.append(static_date)
-    
-    shared_date = make_obj(date_source, static=False, extra_deps=shared_objs)
-    shared_objs.append(shared_date)
+    main_objs = [ s.static(new_env) for s in Source.all.with_tag('main') ]
 
     # First make a library of everything but main() so other programs can
     # link against m5.
     static_lib = new_env.StaticLibrary(libname, static_objs)
     shared_lib = new_env.SharedLibrary(libname, shared_objs)
 
-    # Now link a stub with main() and the static library.
-    main_objs = [ make_obj(s, True) for s in Source.get(main=True) ]
+    # Keep track of the object files generated so far so Executables can
+    # include them.
+    new_env['STATIC_OBJS'] = static_objs
+    new_env['SHARED_OBJS'] = shared_objs
+    new_env['MAIN_OBJS'] = main_objs
 
-    for test in UnitTest.all:
-        flags = { test.target : True }
-        test_sources = Source.get(**flags)
-        test_objs = [ make_obj(s, static=True) for s in test_sources ]
-        if test.main:
-            test_objs += main_objs
-        testname = "unittest/%s.%s" % (test.target, label)
-        new_env.Program(testname, test_objs + static_objs)
+    new_env['STATIC_LIB'] = static_lib
+    new_env['SHARED_LIB'] = shared_lib
 
-    progname = exename
-    if strip:
-        progname += '.unstripped'
+    # Record some settings for building Executables.
+    new_env['EXE_SUFFIX'] = label
+    new_env['STRIP_EXES'] = strip
 
-    targets = new_env.Program(progname, main_objs + static_objs)
+    for cls in ExecutableMeta.all:
+        cls.declare_all(new_env)
 
-    if strip:
-        if sys.platform == 'sunos5':
-            cmd = 'cp $SOURCE $TARGET; strip $TARGET'
-        else:
-            cmd = 'strip $SOURCE -o $TARGET'
-        targets = new_env.Command(exename, progname,
-                    MakeAction(cmd, Transform("STRIP")))
+    new_env.M5Binary = File(gem5_binary.path(new_env))
 
-    new_env.Command(secondary_exename, exename,
+    new_env.Command(secondary_exename, new_env.M5Binary,
             MakeAction('ln $SOURCE $TARGET', Transform("HARDLINK")))
-
-    new_env.M5Binary = targets[0]
-    envList.append(new_env)
 
 # Start out with the compiler flags common to all compilers,
 # i.e. they all use -g for opt and -g -pg for prof
@@ -1041,8 +1351,7 @@ elif env['CLANG']:
     for target in ['opt', 'fast', 'prof', 'perf']:
         ccflags[target] += ['-O3']
 else:
-    print 'Unknown compiler, please fix compiler options'
-    Exit(1)
+    error('Unknown compiler, please fix compiler options')
 
 
 # To speed things up, we only instantiate the build environments we
@@ -1057,11 +1366,8 @@ def identifyTarget(t):
     ext = t.split('.')[-1]
     if ext in target_types:
         return ext
-    if obj2target.has_key(ext):
+    if ext in obj2target:
         return obj2target[ext]
-    match = re.search(r'/tests/([^/]+)/', t)
-    if match and match.group(1) in target_types:
-        return match.group(1)
     return 'all'
 
 needed_envs = [identifyTarget(target) for target in BUILD_TARGETS]
@@ -1070,37 +1376,35 @@ if 'all' in needed_envs:
 
 # Debug binary
 if 'debug' in needed_envs:
-    makeEnv('debug', '.do',
+    makeEnv(env, 'debug', '.do',
             CCFLAGS = Split(ccflags['debug']),
             CPPDEFINES = ['DEBUG', 'TRACING_ON=1'],
             LINKFLAGS = Split(ldflags['debug']))
 
 # Optimized binary
 if 'opt' in needed_envs:
-    makeEnv('opt', '.o',
+    makeEnv(env, 'opt', '.o',
             CCFLAGS = Split(ccflags['opt']),
             CPPDEFINES = ['TRACING_ON=1'],
             LINKFLAGS = Split(ldflags['opt']))
 
 # "Fast" binary
 if 'fast' in needed_envs:
-    makeEnv('fast', '.fo', strip = True,
+    makeEnv(env, 'fast', '.fo', strip = True,
             CCFLAGS = Split(ccflags['fast']),
             CPPDEFINES = ['NDEBUG', 'TRACING_ON=0'],
             LINKFLAGS = Split(ldflags['fast']))
 
 # Profiled binary using gprof
 if 'prof' in needed_envs:
-    makeEnv('prof', '.po',
+    makeEnv(env, 'prof', '.po',
             CCFLAGS = Split(ccflags['prof']),
             CPPDEFINES = ['NDEBUG', 'TRACING_ON=0'],
             LINKFLAGS = Split(ldflags['prof']))
 
 # Profiled binary using google-pprof
 if 'perf' in needed_envs:
-    makeEnv('perf', '.gpo',
+    makeEnv(env, 'perf', '.gpo',
             CCFLAGS = Split(ccflags['perf']),
             CPPDEFINES = ['NDEBUG', 'TRACING_ON=0'],
             LINKFLAGS = Split(ldflags['perf']))
-
-Return('envList')

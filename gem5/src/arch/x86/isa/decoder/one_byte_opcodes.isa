@@ -32,15 +32,13 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Authors: Gabe Black
 
 ////////////////////////////////////////////////////////////////////
 //
 // Decode the one byte opcodes
 //
 
-0x1: decode OPCODE_OP_TOP5 {
+'X86ISA::OneByteOpcode': decode OPCODE_OP_TOP5 {
     format Inst {
         0x00: decode OPCODE_OP_BOTTOM3 {
             0x6: decode MODE_SUBMODE {
@@ -400,8 +398,9 @@
                         // will sign extend it, and there's no easy way to
                         // specify only checking the first byte.
                         0xffffffffffffff80:
-                            SyscallInst::int80('xc->syscall(Rax)',
-                                 IsSyscall, IsNonSpeculative, IsSerializeAfter);
+                            SyscallInst::int80({{
+                                return std::make_shared<SESyscallFault>();
+                            }});
                     }
 
                     default: Inst::INT(Ib);

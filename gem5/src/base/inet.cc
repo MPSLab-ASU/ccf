@@ -37,11 +37,9 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Nathan Binkert
- *          Gabe Black
- *          Geoffrey Blake
  */
+
+#include "base/inet.hh"
 
 #include <cstddef>
 #include <cstdio>
@@ -49,7 +47,7 @@
 #include <string>
 
 #include "base/cprintf.hh"
-#include "base/inet.hh"
+#include "base/logging.hh"
 #include "base/types.hh"
 
 using namespace std;
@@ -62,12 +60,14 @@ EthAddr::EthAddr()
 
 EthAddr::EthAddr(const uint8_t ea[ETH_ADDR_LEN])
 {
-    *data = *ea;
+    for (int i = 0; i < ETH_ADDR_LEN; ++i)
+        data[i] = ea[i];
 }
 
 EthAddr::EthAddr(const eth_addr &ea)
 {
-    *data = *ea.data;
+    for (int i = 0; i < ETH_ADDR_LEN; ++i)
+        data[i] = ea.data[i];
 }
 
 EthAddr::EthAddr(const std::string &addr)
@@ -122,7 +122,7 @@ EthAddr::string() const
 bool
 operator==(const EthAddr &left, const EthAddr &right)
 {
-    return memcmp(left.bytes(), right.bytes(), ETH_ADDR_LEN);
+    return !memcmp(left.bytes(), right.bytes(), ETH_ADDR_LEN);
 }
 
 ostream &
@@ -235,7 +235,7 @@ cksum(const TcpPtr &tcp)
     } else if (Ip6Ptr(tcp.packet())) {
         return __tu_cksum6(Ip6Ptr(tcp.packet()));
     } else {
-        assert(0);
+        panic("Unrecognized IP packet format");
     }
     // Should never reach here
     return 0;
@@ -249,7 +249,7 @@ cksum(const UdpPtr &udp)
     } else if (Ip6Ptr(udp.packet())) {
         return __tu_cksum6(Ip6Ptr(udp.packet()));
     } else {
-        assert(0);
+        panic("Unrecognized IP packet format");
     }
     return 0;
 }
@@ -372,7 +372,7 @@ TcpHdr::options(vector<const TcpOpt *> &vec) const
     return true;
 }
 
-int 
+int
 hsplit(const EthPacketPtr &ptr)
 {
     int split_point = 0;

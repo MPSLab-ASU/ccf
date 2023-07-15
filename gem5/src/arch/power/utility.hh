@@ -26,10 +26,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Korey Sewell
- *          Stephen Hines
- *          Timothy M. Jones
  */
 
 #ifndef __ARCH_POWER_UTILITY_HH__
@@ -49,31 +45,15 @@ buildRetPC(const PCState &curPC, const PCState &callPC)
     return retPC;
 }
 
-/**
- * Function to ensure ISA semantics about 0 registers.
- * @param tc The thread context.
- */
-template <class TC>
-void zeroRegisters(TC *tc);
-
-inline void
-startupCPU(ThreadContext *tc, int cpuId)
-{
-    tc->activate(Cycles(0));
-}
-
-void
-copyRegs(ThreadContext *src, ThreadContext *dest);
+void copyRegs(ThreadContext *src, ThreadContext *dest);
 
 static inline void
 copyMiscRegs(ThreadContext *src, ThreadContext *dest)
 {
 }
 
-void skipFunction(ThreadContext *tc);
-
 inline void
-advancePC(PCState &pc, const StaticInstPtr inst)
+advancePC(PCState &pc, const StaticInstPtr &inst)
 {
     pc.advance();
 }
@@ -91,8 +71,6 @@ getExecutingAsid(ThreadContext *tc)
 {
     return 0;
 }
-
-void initCPU(ThreadContext *, int cpuId);
 
 } // namespace PowerISA
 

@@ -30,7 +30,4 @@
 
 Import('*')
 
-CpuModel('AtomicCGRA', 'atomic_cgra_exec.cc',
-         '#include "cpu/atomiccgra/atomiccgra.hh"',
-         { 'CPU_exec_context': 'AtomicCGRA' },
-         default=True)
+CpuModel('AtomicCGRA', default=True)

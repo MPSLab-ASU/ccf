@@ -36,13 +36,12 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Ali Saidi
  */
+
+#include "dev/arm/amba_device.hh"
 
 #include "base/trace.hh"
 #include "debug/AMBA.hh"
-#include "dev/arm/amba_device.hh"
 #include "dev/arm/amba_fake.hh"
 #include "mem/packet.hh"
 #include "mem/packet_access.hh"
@@ -56,16 +55,16 @@ AmbaPioDevice::AmbaPioDevice(const Params *p, Addr pio_size)
 
 AmbaIntDevice::AmbaIntDevice(const Params *p, Addr pio_size)
     : AmbaPioDevice(p, pio_size),
-      intNum(p->int_num), gic(p->gic), intDelay(p->int_delay)
+      interrupt(p->interrupt->get()), intDelay(p->int_delay)
 {
 }
 
 
 
-AmbaDmaDevice::AmbaDmaDevice(const Params *p)
+AmbaDmaDevice::AmbaDmaDevice(const Params *p, Addr pio_size)
     : DmaDevice(p), ambaId(AmbaVendor | p->amba_id),
-      pioAddr(p->pio_addr), pioSize(0),
-      pioDelay(p->pio_latency),intNum(p->int_num), gic(p->gic)
+      pioAddr(p->pio_addr), pioSize(pio_size),
+      pioDelay(p->pio_latency), interrupt(p->interrupt->get())
 {
 }
 
@@ -76,14 +75,12 @@ AmbaDevice::readId(PacketPtr pkt, uint64_t amba_id, Addr pio_addr)
     if (daddr < AMBA_PER_ID0 || daddr > AMBA_CEL_ID3)
         return false;
 
-    pkt->allocate();
-
     int byte = (daddr - AMBA_PER_ID0) << 1;
     // Too noisy right now
     DPRINTF(AMBA, "Returning %#x for offset %#x(%d)\n",
             (amba_id >> byte) & 0xFF,
             pkt->getAddr() - pio_addr, byte);
-    assert(pkt->getSize() == 4);
-    pkt->set<uint32_t>((amba_id >> byte) & 0xFF);
+
+    pkt->setUintX((amba_id >> byte) & 0xFF, ByteOrder::little);
     return true;
 }

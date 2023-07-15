@@ -23,15 +23,17 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Ali Saidi
 
 import m5
 from m5.objects import *
-m5.util.addToPath('../configs/common')
-import FSConfig
+m5.util.addToPath('../configs/')
+from common import FSConfig
 
-system = FSConfig.makeSparcSystem('atomic')
+try:
+    system = FSConfig.makeSparcSystem('atomic')
+except IOError as e:
+    skip_test(reason=str(e))
+
 system.voltage_domain = VoltageDomain()
 system.clk_domain = SrcClockDomain(clock = '1GHz',
                                    voltage_domain = system.voltage_domain)
@@ -47,7 +49,7 @@ cpu.connectAllPorts(system.membus)
 # the physmem name to avoid bumping all the reference stats
 system.physmem = [SimpleMemory(range = r)
                   for r in system.mem_ranges]
-for i in xrange(len(system.physmem)):
+for i in range(len(system.physmem)):
     system.physmem[i].port = system.membus.master
 
 root = Root(full_system=True, system=system)

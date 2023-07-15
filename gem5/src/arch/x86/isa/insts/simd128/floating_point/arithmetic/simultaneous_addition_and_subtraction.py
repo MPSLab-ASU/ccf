@@ -32,10 +32,27 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Gabe Black
 
 microcode = '''
 # ADDSUBPS
-# ADDSUBPD
+
+def macroop ADDSUBPD_XMM_XMM {
+    msubf xmml, xmml, xmmlm, size=8, ext=Scalar
+    maddf xmmh, xmmh, xmmhm, size=8, ext=Scalar
+};
+
+def macroop ADDSUBPD_XMM_M {
+    ldfp ufp1, seg, sib, disp, dataSize=8
+    ldfp ufp2, seg, sib, "DISPLACEMENT+8", dataSize=8
+    msubf xmmlm, xmml, ufp1, size=8, ext=0
+    maddf xmmhm, xmmh, ufp2, size=8, ext=0
+};
+
+def macroop ADDSUBPD_XMM_P {
+    rdip t7
+    ldfp ufp1, seg, sib, disp, dataSize=8
+    ldfp ufp2, seg, sib, "DISPLACEMENT+8", dataSize=8
+    msubf xmmlm, xmml, ufp1, size=8, ext=0
+    maddf xmmhm, xmmh, ufp2, size=8, ext=0
+};
 '''

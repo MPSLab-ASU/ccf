@@ -24,13 +24,13 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Gabe Black
  */
+
+#include "arch/sparc/isa.hh"
 
 #include "arch/sparc/asi.hh"
 #include "arch/sparc/decoder.hh"
-#include "arch/sparc/isa.hh"
+#include "arch/sparc/interrupts.hh"
 #include "base/bitfield.hh"
 #include "base/trace.hh"
 #include "cpu/base.hh"
@@ -59,13 +59,8 @@ buildPstateMask()
 
 static const PSTATE PstateMask = buildPstateMask();
 
-ISA::ISA(Params *p)
-    : SimObject(p)
+ISA::ISA(Params *p) : BaseISA(p)
 {
-    tickCompare = NULL;
-    sTickCompare = NULL;
-    hSTickCompare = NULL;
-
     clear();
 }
 
@@ -172,8 +167,8 @@ ISA::clear()
         panic("Tick comparison event active when clearing the ISA object.\n");
 }
 
-MiscReg
-ISA::readMiscRegNoEffect(int miscReg)
+RegVal
+ISA::readMiscRegNoEffect(int miscReg) const
 {
 
   // The three miscRegs are moved up from the switch statement
@@ -247,7 +242,7 @@ ISA::readMiscRegNoEffect(int miscReg)
       case MISCREG_TBA:
         return tba;
       case MISCREG_PSTATE:
-        return (MiscReg)pstate;
+        return (RegVal)pstate;
       case MISCREG_TL:
         return tl;
       case MISCREG_PIL:
@@ -270,7 +265,7 @@ ISA::readMiscRegNoEffect(int miscReg)
 
         /** Hyper privileged registers */
       case MISCREG_HPSTATE:
-        return (MiscReg)hpstate;
+        return (RegVal)hpstate;
       case MISCREG_HTSTATE:
         return htstate[tl-1];
       case MISCREG_HINTP:
@@ -333,8 +328,8 @@ ISA::readMiscRegNoEffect(int miscReg)
     }
 }
 
-MiscReg
-ISA::readMiscReg(int miscReg, ThreadContext * tc)
+RegVal
+ISA::readMiscReg(int miscReg)
 {
     switch (miscReg) {
         // tick and stick are aliased to each other in niagra
@@ -376,13 +371,13 @@ ISA::readMiscReg(int miscReg, ThreadContext * tc)
       case MISCREG_QUEUE_NRES_ERROR_HEAD:
       case MISCREG_QUEUE_NRES_ERROR_TAIL:
       case MISCREG_HPSTATE:
-        return readFSReg(miscReg, tc);
+        return readFSReg(miscReg);
     }
     return readMiscRegNoEffect(miscReg);
 }
 
 void
-ISA::setMiscRegNoEffect(int miscReg, MiscReg val)
+ISA::setMiscRegNoEffect(int miscReg, RegVal val)
 {
     switch (miscReg) {
 //      case MISCREG_Y:
@@ -479,6 +474,7 @@ ISA::setMiscRegNoEffect(int miscReg, MiscReg val)
         break;
       case MISCREG_HINTP:
         hintp = val;
+        break;
       case MISCREG_HTBA:
         htba = val;
         break;
@@ -562,9 +558,9 @@ ISA::setMiscRegNoEffect(int miscReg, MiscReg val)
 }
 
 void
-ISA::setMiscReg(int miscReg, MiscReg val, ThreadContext * tc)
+ISA::setMiscReg(int miscReg, RegVal val)
 {
-    MiscReg new_val = val;
+    RegVal new_val = val;
 
     switch (miscReg) {
       case MISCREG_ASI:
@@ -591,9 +587,9 @@ ISA::setMiscReg(int miscReg, MiscReg val, ThreadContext * tc)
         {
             tl = val;
             if (hpstate.tlz && tl == 0 && !hpstate.hpriv)
-                tc->getCpuPtr()->postInterrupt(IT_TRAP_LEVEL_ZERO, 0);
+                tc->getCpuPtr()->postInterrupt(0, IT_TRAP_LEVEL_ZERO, 0);
             else
-                tc->getCpuPtr()->clearInterrupt(IT_TRAP_LEVEL_ZERO, 0);
+                tc->getCpuPtr()->clearInterrupt(0, IT_TRAP_LEVEL_ZERO, 0);
             return;
         }
       case MISCREG_CWP:
@@ -631,14 +627,14 @@ ISA::setMiscReg(int miscReg, MiscReg val, ThreadContext * tc)
       case MISCREG_QUEUE_NRES_ERROR_HEAD:
       case MISCREG_QUEUE_NRES_ERROR_TAIL:
       case MISCREG_HPSTATE:
-        setFSReg(miscReg, val, tc);
+        setFSReg(miscReg, val);
         return;
     }
     setMiscRegNoEffect(miscReg, new_val);
 }
 
 void
-ISA::serialize(std::ostream &os)
+ISA::serialize(CheckpointOut &cp) const
 {
     SERIALIZE_SCALAR(asi);
     SERIALIZE_SCALAR(tick);
@@ -653,12 +649,12 @@ ISA::serialize(std::ostream &os)
     SERIALIZE_ARRAY(tstate,MaxTL);
     SERIALIZE_ARRAY(tt,MaxTL);
     SERIALIZE_SCALAR(tba);
-    SERIALIZE_SCALAR((uint16_t)pstate);
+    SERIALIZE_SCALAR(pstate);
     SERIALIZE_SCALAR(tl);
     SERIALIZE_SCALAR(pil);
     SERIALIZE_SCALAR(cwp);
     SERIALIZE_SCALAR(gl);
-    SERIALIZE_SCALAR((uint64_t)hpstate);
+    SERIALIZE_SCALAR(hpstate);
     SERIALIZE_ARRAY(htstate,MaxTL);
     SERIALIZE_SCALAR(hintp);
     SERIALIZE_SCALAR(htba);
@@ -678,43 +674,22 @@ ISA::serialize(std::ostream &os)
     SERIALIZE_SCALAR(res_error_tail);
     SERIALIZE_SCALAR(nres_error_head);
     SERIALIZE_SCALAR(nres_error_tail);
+
     Tick tick_cmp = 0, stick_cmp = 0, hstick_cmp = 0;
-    ThreadContext *tc = NULL;
-    BaseCPU *cpu = NULL;
-    int tc_num = 0;
-    bool tick_intr_sched = true;
+    if (tickCompare && tickCompare->scheduled())
+        tick_cmp = tickCompare->when();
+    if (sTickCompare && sTickCompare->scheduled())
+        stick_cmp = sTickCompare->when();
+    if (hSTickCompare && hSTickCompare->scheduled())
+        hstick_cmp = hSTickCompare->when();
 
-    if (tickCompare)
-        tc = tickCompare->getTC();
-    else if (sTickCompare)
-        tc = sTickCompare->getTC();
-    else if (hSTickCompare)
-        tc = hSTickCompare->getTC();
-    else
-        tick_intr_sched = false;
-
-    SERIALIZE_SCALAR(tick_intr_sched);
-
-    if (tc) {
-        cpu = tc->getCpuPtr();
-        tc_num = cpu->findContext(tc);
-        if (tickCompare && tickCompare->scheduled())
-            tick_cmp = tickCompare->when();
-        if (sTickCompare && sTickCompare->scheduled())
-            stick_cmp = sTickCompare->when();
-        if (hSTickCompare && hSTickCompare->scheduled())
-            hstick_cmp = hSTickCompare->when();
-
-        SERIALIZE_OBJPTR(cpu);
-        SERIALIZE_SCALAR(tc_num);
-        SERIALIZE_SCALAR(tick_cmp);
-        SERIALIZE_SCALAR(stick_cmp);
-        SERIALIZE_SCALAR(hstick_cmp);
-    }
+    SERIALIZE_SCALAR(tick_cmp);
+    SERIALIZE_SCALAR(stick_cmp);
+    SERIALIZE_SCALAR(hstick_cmp);
 }
 
 void
-ISA::unserialize(Checkpoint *cp, const std::string &section)
+ISA::unserialize(CheckpointIn &cp)
 {
     UNSERIALIZE_SCALAR(asi);
     UNSERIALIZE_SCALAR(tick);
@@ -765,35 +740,22 @@ ISA::unserialize(Checkpoint *cp, const std::string &section)
     UNSERIALIZE_SCALAR(nres_error_tail);
 
     Tick tick_cmp = 0, stick_cmp = 0, hstick_cmp = 0;
-    ThreadContext *tc = NULL;
-    BaseCPU *cpu = NULL;
-    int tc_num;
-    bool tick_intr_sched;
-    UNSERIALIZE_SCALAR(tick_intr_sched);
-    if (tick_intr_sched) {
-        UNSERIALIZE_OBJPTR(cpu);
-        if (cpu) {
-            UNSERIALIZE_SCALAR(tc_num);
-            UNSERIALIZE_SCALAR(tick_cmp);
-            UNSERIALIZE_SCALAR(stick_cmp);
-            UNSERIALIZE_SCALAR(hstick_cmp);
-            tc = cpu->getContext(tc_num);
+    UNSERIALIZE_SCALAR(tick_cmp);
+    UNSERIALIZE_SCALAR(stick_cmp);
+    UNSERIALIZE_SCALAR(hstick_cmp);
 
-            if (tick_cmp) {
-                tickCompare = new TickCompareEvent(this, tc);
-                schedule(tickCompare, tick_cmp);
-            }
-            if (stick_cmp)  {
-                sTickCompare = new STickCompareEvent(this, tc);
-                schedule(sTickCompare, stick_cmp);
-            }
-            if (hstick_cmp)  {
-                hSTickCompare = new HSTickCompareEvent(this, tc);
-                schedule(hSTickCompare, hstick_cmp);
-            }
-        }
+    if (tick_cmp) {
+        tickCompare = new TickCompareEvent(this);
+        schedule(tickCompare, tick_cmp);
     }
-
+    if (stick_cmp)  {
+        sTickCompare = new STickCompareEvent(this);
+        schedule(sTickCompare, stick_cmp);
+    }
+    if (hstick_cmp)  {
+        hSTickCompare = new HSTickCompareEvent(this);
+        schedule(hSTickCompare, hstick_cmp);
+    }
 }
 
 }

@@ -31,11 +31,10 @@
 #define __CPU_RUBYTEST_CHECKTABLE_HH__
 
 #include <iostream>
+#include <unordered_map>
 #include <vector>
 
-#include "base/hashmap.hh"
 #include "mem/ruby/common/Address.hh"
-#include "mem/ruby/common/Global.hh"
 
 class Check;
 class RubyTester;
@@ -47,7 +46,7 @@ class CheckTable
     ~CheckTable();
 
     Check* getRandomCheck();
-    Check* getCheck(const Address& address);
+    Check* getCheck(Addr address);
 
     //  bool isPresent(const Address& address) const;
     //  void removeCheckFromTable(const Address& address);
@@ -57,14 +56,14 @@ class CheckTable
     void print(std::ostream& out) const;
 
   private:
-    void addCheck(const Address& address);
+    void addCheck(Addr address);
 
     // Private copy constructor and assignment operator
     CheckTable(const CheckTable& obj);
     CheckTable& operator=(const CheckTable& obj);
 
     std::vector<Check*> m_check_vector;
-    m5::hash_map<Address, Check*> m_lookup_map;
+    std::unordered_map<Addr, Check*> m_lookup_map;
 
     int m_num_writers;
     int m_num_readers;

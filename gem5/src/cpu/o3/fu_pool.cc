@@ -36,13 +36,12 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Kevin Lim
  */
+
+#include "cpu/o3/fu_pool.hh"
 
 #include <sstream>
 
-#include "cpu/o3/fu_pool.hh"
 #include "cpu/func_unit.hh"
 
 using namespace std;
@@ -87,10 +86,8 @@ FUPool::FUPool(const Params *p)
 
     funcUnits.clear();
 
-    for (int i = 0; i < Num_OpClasses; ++i) {
-        maxOpLatencies[i] = Cycles(0);
-        maxIssueLatencies[i] = Cycles(0);
-    }
+    maxOpLatencies.fill(Cycles(0));
+    pipelined.fill(true);
 
     //
     //  Iterate through the list of FUDescData structures
@@ -123,13 +120,13 @@ FUPool::FUPool(const Params *p)
                     fuPerCapList[(*j)->opClass].addFU(numFU + k);
 
                 // indicate that this FU has the capability
-                fu->addCapability((*j)->opClass, (*j)->opLat, (*j)->issueLat);
+                fu->addCapability((*j)->opClass, (*j)->opLat, (*j)->pipelined);
 
                 if ((*j)->opLat > maxOpLatencies[(*j)->opClass])
                     maxOpLatencies[(*j)->opClass] = (*j)->opLat;
 
-                if ((*j)->issueLat > maxIssueLatencies[(*j)->opClass])
-                    maxIssueLatencies[(*j)->opClass] = (*j)->issueLat;
+                if (!(*j)->pipelined)
+                    pipelined[(*j)->opClass] = false;
             }
 
             numFU++;
@@ -154,22 +151,6 @@ FUPool::FUPool(const Params *p)
 
     for (int i = 0; i < numFU; i++) {
         unitBusy[i] = false;
-    }
-}
-
-void
-FUPool::annotateMemoryUnits(Cycles hit_latency)
-{
-    maxOpLatencies[MemReadOp] = hit_latency;
-
-    fuListIterator i = funcUnits.begin();
-    fuListIterator iend = funcUnits.end();
-    for (; i != iend; ++i) {
-        if ((*i)->provides(MemReadOp))
-            (*i)->opLatency(MemReadOp) = hit_latency;
-
-        if ((*i)->provides(MemWriteOp))
-            (*i)->opLatency(MemWriteOp) = hit_latency;
     }
 }
 

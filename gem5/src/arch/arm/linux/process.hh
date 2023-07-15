@@ -1,4 +1,16 @@
 /*
+ * Copyright (c) 2011-2012 ARM Limited
+ * All rights reserved
+ *
+ * The license below extends only to copyright in the software and shall
+ * not be construed as granting a license to any other intellectual
+ * property including but not limited to intellectual property relating
+ * to a hardware implementation of the functionality of the software
+ * licensed hereunder.  You may use the software subject to the license
+ * terms below provided that you ensure that this notice is replicated
+ * unmodified and in its entirety in all distributions of the software,
+ * modified or unmodified, in source code or in binary form.
+ *
  * Copyright (c) 2007-2008 The Florida State University
  * All rights reserved.
  *
@@ -24,46 +36,75 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Stephen Hines
  */
 
 #ifndef __ARM_LINUX_PROCESS_HH__
 #define __ARM_LINUX_PROCESS_HH__
 
+#include <vector>
+
 #include "arch/arm/process.hh"
 
-/// A process with emulated Arm/Linux syscalls.
-class ArmLinuxProcess : public ArmLiveProcess
+class ArmLinuxProcessBits
 {
   public:
-    ArmLinuxProcess(LiveProcessParams * params, ObjectFile *objFile,
-                    ObjectFile::Arch _arch);
+    struct SyscallABI {};
+};
 
-    virtual SyscallDesc* getDesc(int callnum);
+namespace GuestABI
+{
 
-    void initState();
+template <typename ABI>
+struct Result<ABI, SyscallReturn,
+    typename std::enable_if<std::is_base_of<
+        ArmLinuxProcessBits::SyscallABI, ABI>::value>::type>
+{
+    static void
+    store(ThreadContext *tc, const SyscallReturn &ret)
+    {
+        if (ret.suppressed() || ret.needsRetry())
+            return;
 
-    ArmISA::IntReg getSyscallArg(ThreadContext *tc, int &i);
-    /// Explicitly import the otherwise hidden getSyscallArg
-    using ArmLiveProcess::getSyscallArg;
-    void setSyscallArg(ThreadContext *tc, int i, ArmISA::IntReg val);
+        tc->setIntReg(ArmISA::ReturnValueReg, ret.encodedValue());
+        if (ret.count() > 1)
+            tc->setIntReg(ArmISA::SyscallPseudoReturnReg, ret.value2());
+    }
+};
 
-    /// The target system's hostname.
-    static const char *hostname;
+} // namespace GuestABI
+
+/// A process with emulated Arm/Linux syscalls.
+class ArmLinuxProcess32 : public ArmProcess32, public ArmLinuxProcessBits
+{
+  public:
+    ArmLinuxProcess32(ProcessParams * params, ::Loader::ObjectFile *objFile,
+                      ::Loader::Arch _arch);
+
+    void initState() override;
+
+    void syscall(ThreadContext *tc) override;
 
     /// A page to hold "kernel" provided functions. The name might be wrong.
     static const Addr commPage;
 
-    /// Array of syscall descriptors, indexed by call number.
-    static SyscallDesc syscallDescs[];
+    struct SyscallABI : public ArmProcess32::SyscallABI,
+                        public ArmLinuxProcessBits::SyscallABI
+    {};
+};
 
-    /// Array of "arm private" syscall descriptors.
-    static SyscallDesc privSyscallDescs[];
+/// A process with emulated Arm/Linux syscalls.
+class ArmLinuxProcess64 : public ArmProcess64, public ArmLinuxProcessBits
+{
+  public:
+    ArmLinuxProcess64(ProcessParams * params, ::Loader::ObjectFile *objFile,
+                      ::Loader::Arch _arch);
 
-    const int Num_Syscall_Descs;
+    void initState() override;
+    void syscall(ThreadContext *tc) override;
 
-    const int Num_Priv_Syscall_Descs;
+    struct SyscallABI : public ArmProcess64::SyscallABI,
+                        public ArmLinuxProcessBits::SyscallABI
+    {};
 };
 
 #endif // __ARM_LINUX_PROCESS_HH__

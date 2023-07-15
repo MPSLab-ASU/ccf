@@ -24,22 +24,23 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Gabe Black
  */
 
-#include "debug/CMOS.hh"
 #include "dev/x86/cmos.hh"
+
+#include "base/trace.hh"
+#include "debug/CMOS.hh"
 #include "dev/x86/intdev.hh"
 #include "mem/packet_access.hh"
 
 void
 X86ISA::Cmos::X86RTC::handleEvent()
 {
-    assert(intPin);
-    intPin->raise();
-    //XXX This is a hack.
-    intPin->lower();
+    for (auto *wire: intPin) {
+        wire->raise();
+        //XXX This is a hack.
+        wire->lower();
+    }
 }
 
 Tick
@@ -49,10 +50,10 @@ X86ISA::Cmos::read(PacketPtr pkt)
     switch(pkt->getAddr() - pioAddr)
     {
       case 0x0:
-        pkt->set(address);
+        pkt->setLE(address);
         break;
       case 0x1:
-        pkt->set(readRegister(address));
+        pkt->setLE(readRegister(address));
         break;
       default:
         panic("Read from undefined CMOS port.\n");
@@ -68,10 +69,10 @@ X86ISA::Cmos::write(PacketPtr pkt)
     switch(pkt->getAddr() - pioAddr)
     {
       case 0x0:
-        address = pkt->get<uint8_t>();
+        address = pkt->getLE<uint8_t>();
         break;
       case 0x1:
-        writeRegister(address, pkt->get<uint8_t>());
+        writeRegister(address, pkt->getLE<uint8_t>());
         break;
       default:
         panic("Write to undefined CMOS port.\n");
@@ -113,23 +114,29 @@ X86ISA::Cmos::writeRegister(uint8_t reg, uint8_t val)
 }
 
 void
-X86ISA::Cmos::serialize(std::ostream &os)
+X86ISA::Cmos::startup()
+{
+    rtc.startup();
+}
+
+void
+X86ISA::Cmos::serialize(CheckpointOut &cp) const
 {
     SERIALIZE_SCALAR(address);
     SERIALIZE_ARRAY(regs, numRegs);
 
     // Serialize the timer
-    rtc.serialize("rtc", os);
+    rtc.serialize("rtc", cp);
 }
 
 void
-X86ISA::Cmos::unserialize(Checkpoint *cp, const std::string &section)
+X86ISA::Cmos::unserialize(CheckpointIn &cp)
 {
     UNSERIALIZE_SCALAR(address);
     UNSERIALIZE_ARRAY(regs, numRegs);
 
     // Serialize the timer
-    rtc.unserialize("rtc", cp, section);
+    rtc.unserialize("rtc", cp);
 }
 
 X86ISA::Cmos *

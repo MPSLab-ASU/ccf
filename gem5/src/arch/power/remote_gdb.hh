@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2015 LabWare
  * Copyright (c) 2002-2005 The Regents of The University of Michigan
  * Copyright (c) 2007-2008 The Florida State University
  * Copyright (c) 2009 The University of Edinburgh
@@ -26,57 +27,61 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Nathan Binkert
- *          Stephen Hines
- *          Timothy M. Jones
  */
 
-#ifndef __ARCH_ARM_REMOTE_GDB_HH__
-#define __ARCH_ARM_REMOTE_GDB_HH__
+#ifndef __ARCH_POWER_REMOTE_GDB_HH__
+#define __ARCH_POWER_REMOTE_GDB_HH__
 
+#include "arch/power/registers.hh"
+#include "arch/power/remote_gdb.hh"
 #include "base/remote_gdb.hh"
 
 namespace PowerISA
 {
 
+
 class RemoteGDB : public BaseRemoteGDB
 {
+  protected:
+    bool acc(Addr addr, size_t len);
+
+    class PowerGdbRegCache : public BaseGdbRegCache
+    {
+      using BaseGdbRegCache::BaseGdbRegCache;
+      private:
+        struct {
+            uint32_t gpr[NumIntArchRegs];
+            uint64_t fpr[NumFloatArchRegs];
+            uint32_t pc;
+            uint32_t msr;
+            uint32_t cr;
+            uint32_t lr;
+            uint32_t ctr;
+            uint32_t xer;
+        } r;
+      public:
+        char *data() const { return (char *)&r; }
+        size_t size() const { return sizeof(r); }
+        void getRegs(ThreadContext*);
+        void setRegs(ThreadContext*) const;
+        const std::string
+        name() const
+        {
+            return gdb->name() + ".PowerGdbRegCache";
+        }
+    };
+
+    PowerGdbRegCache regCache;
+
   public:
-    RemoteGDB(System *system, ThreadContext *context)
-        : BaseRemoteGDB(system, context, 1)
+    RemoteGDB(System *_system, ThreadContext *tc, int _port);
+    BaseGdbRegCache *gdbRegs();
+    std::vector<std::string>
+    availableFeatures() const
     {
-    }
-
-    bool
-    acc(Addr, size_t)
-    {
-        panic("acc not implemented for POWER!");
-    }
-
-    void
-    getregs()
-    {
-        panic("getregs not implemented for POWER!");
-    }
-
-    void
-    setregs()
-    {
-        panic("setregs not implemented for POWER!");
-    }
-
-    void
-    clearSingleStep()
-    {
-        panic("clearSingleStep not implemented for POWER!");
-    }
-
-    void
-    setSingleStep()
-    {
-        panic("setSingleStep not implemented for POWER!");
-    }
+        return {"qXfer:features:read+"};
+    };
+    bool getXferFeaturesRead(const std::string &annex, std::string &output);
 };
 
 } // namespace PowerISA

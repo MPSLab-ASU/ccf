@@ -23,8 +23,9 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Nathan Binkert
+
+from __future__ import print_function
+from __future__ import absolute_import
 
 import optparse
 import sys
@@ -129,7 +130,7 @@ class OptionParser(dict):
     def parse_args(self):
         opts,args = self._optparse.parse_args()
 
-        for key,val in opts.__dict__.iteritems():
+        for key,val in opts.__dict__.items():
             if val is not None or key not in self:
                 self[key] = val
 

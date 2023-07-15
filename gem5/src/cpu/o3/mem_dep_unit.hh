@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 ARM Limited
+ * Copyright (c) 2012, 2014, 2020 ARM Limited
  * All rights reserved
  *
  * The license below extends only to copyright in the software and shall
@@ -36,18 +36,17 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Kevin Lim
  */
 
 #ifndef __CPU_O3_MEM_DEP_UNIT_HH__
 #define __CPU_O3_MEM_DEP_UNIT_HH__
 
 #include <list>
+#include <memory>
 #include <set>
+#include <unordered_map>
+#include <unordered_set>
 
-#include "base/hashmap.hh"
-#include "base/refcnt.hh"
 #include "base/statistics.hh"
 #include "cpu/inst_seq.hh"
 #include "debug/MemDepUnit.hh"
@@ -85,6 +84,7 @@ class MemDepUnit
 
   public:
     typedef typename Impl::DynInstPtr DynInstPtr;
+    typedef typename Impl::DynInstConstPtr DynInstConstPtr;
 
     /** Empty constructor. Must call init() prior to using in this case. */
     MemDepUnit();
@@ -104,6 +104,9 @@ class MemDepUnit
     /** Registers statistics. */
     void regStats();
 
+    /** Determine if we are drained. */
+    bool isDrained() const;
+
     /** Perform sanity checks after a drain. */
     void drainSanityCheck() const;
 
@@ -114,36 +117,30 @@ class MemDepUnit
     void setIQ(InstructionQueue<Impl> *iq_ptr);
 
     /** Inserts a memory instruction. */
-    void insert(DynInstPtr &inst);
+    void insert(const DynInstPtr &inst);
 
     /** Inserts a non-speculative memory instruction. */
-    void insertNonSpec(DynInstPtr &inst);
+    void insertNonSpec(const DynInstPtr &inst);
 
     /** Inserts a barrier instruction. */
-    void insertBarrier(DynInstPtr &barr_inst);
+    void insertBarrier(const DynInstPtr &barr_inst);
 
     /** Indicate that an instruction has its registers ready. */
-    void regsReady(DynInstPtr &inst);
+    void regsReady(const DynInstPtr &inst);
 
     /** Indicate that a non-speculative instruction is ready. */
-    void nonSpecInstReady(DynInstPtr &inst);
+    void nonSpecInstReady(const DynInstPtr &inst);
 
     /** Reschedules an instruction to be re-executed. */
-    void reschedule(DynInstPtr &inst);
+    void reschedule(const DynInstPtr &inst);
 
     /** Replays all instructions that have been rescheduled by moving them to
      *  the ready list.
      */
-    void replay(DynInstPtr &inst);
+    void replay();
 
-    /** Completes a memory instruction. */
-    void completed(DynInstPtr &inst);
-
-    /** Completes a barrier instruction. */
-    void completeBarrier(DynInstPtr &inst);
-
-    /** Wakes any dependents of a memory instruction. */
-    void wakeDependents(DynInstPtr &inst);
+    /** Notifies completion of an instruction. */
+    void completeInst(const DynInstPtr &inst);
 
     /** Squashes all instructions up until a given sequence number for a
      *  specific thread.
@@ -151,30 +148,38 @@ class MemDepUnit
     void squash(const InstSeqNum &squashed_num, ThreadID tid);
 
     /** Indicates an ordering violation between a store and a younger load. */
-    void violation(DynInstPtr &store_inst, DynInstPtr &violating_load);
+    void violation(const DynInstPtr &store_inst,
+                   const DynInstPtr &violating_load);
 
     /** Issues the given instruction */
-    void issue(DynInstPtr &inst);
+    void issue(const DynInstPtr &inst);
 
     /** Debugging function to dump the lists of instructions. */
     void dumpLists();
 
   private:
+
+    /** Completes a memory instruction. */
+    void completed(const DynInstPtr &inst);
+
+    /** Wakes any dependents of a memory instruction. */
+    void wakeDependents(const DynInstPtr &inst);
+
     typedef typename std::list<DynInstPtr>::iterator ListIt;
 
     class MemDepEntry;
 
-    typedef RefCountingPtr<MemDepEntry> MemDepEntryPtr;
+    typedef std::shared_ptr<MemDepEntry> MemDepEntryPtr;
 
     /** Memory dependence entries that track memory operations, marking
      *  when the instruction is ready to execute and what instructions depend
      *  upon it.
      */
-    class MemDepEntry : public RefCounted {
+    class MemDepEntry {
       public:
         /** Constructs a memory dependence entry. */
-        MemDepEntry(DynInstPtr &new_inst)
-            : inst(new_inst), regsReady(false), memDepReady(false),
+        MemDepEntry(const DynInstPtr &new_inst)
+            : inst(new_inst), regsReady(false), memDeps(0),
               completed(false), squashed(false)
         {
 #ifdef DEBUG
@@ -213,8 +218,8 @@ class MemDepUnit
 
         /** If the registers are ready or not. */
         bool regsReady;
-        /** If all memory dependencies have been satisfied. */
-        bool memDepReady;
+        /** Number of memory dependencies that need to be satisfied. */
+        int memDeps;
         /** If the instruction is completed. */
         bool completed;
         /** If the instruction is squashed. */
@@ -229,12 +234,12 @@ class MemDepUnit
     };
 
     /** Finds the memory dependence entry in the hash map. */
-    inline MemDepEntryPtr &findInHash(const DynInstPtr &inst);
+    inline MemDepEntryPtr &findInHash(const DynInstConstPtr& inst);
 
     /** Moves an entry to the ready list. */
     inline void moveToReady(MemDepEntryPtr &ready_inst_entry);
 
-    typedef m5::hash_map<InstSeqNum, MemDepEntryPtr, SNHash> MemDepHash;
+    typedef std::unordered_map<InstSeqNum, MemDepEntryPtr, SNHash> MemDepHash;
 
     typedef typename MemDepHash::iterator MemDepHashIt;
 
@@ -254,14 +259,20 @@ class MemDepUnit
      */
     MemDepPred depPred;
 
+    /** Sequence numbers of outstanding load barriers. */
+    std::unordered_set<InstSeqNum> loadBarrierSNs;
+
+    /** Sequence numbers of outstanding store barriers. */
+    std::unordered_set<InstSeqNum> storeBarrierSNs;
+
     /** Is there an outstanding load barrier that loads must wait on. */
-    bool loadBarrier;
-    /** The sequence number of the load barrier. */
-    InstSeqNum loadBarrierSN;
+    bool hasLoadBarrier() const { return !loadBarrierSNs.empty(); }
+
     /** Is there an outstanding store barrier that loads must wait on. */
-    bool storeBarrier;
-    /** The sequence number of the store barrier. */
-    InstSeqNum storeBarrierSN;
+    bool hasStoreBarrier() const { return !storeBarrierSNs.empty(); }
+
+    /** Inserts the SN of a barrier inst. to the list of tracked barriers */
+    void insertBarrierSN(const DynInstPtr &barr_inst);
 
     /** Pointer to the IQ. */
     InstructionQueue<Impl> *iqPtr;

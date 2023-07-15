@@ -1,4 +1,16 @@
 /*
+ * Copyright (c) 2020 ARM Limited
+ * All rights reserved
+ *
+ * The license below extends only to copyright in the software and shall
+ * not be construed as granting a license to any other intellectual
+ * property including but not limited to intellectual property relating
+ * to a hardware implementation of the functionality of the software
+ * licensed hereunder.  You may use the software subject to the license
+ * terms below provided that you ensure that this notice is replicated
+ * unmodified and in its entirety in all distributions of the software,
+ * modified or unmodified, in source code or in binary form.
+ *
  * Copyright (c) 2003-2005 The Regents of The University of Michigan
  * All rights reserved.
  *
@@ -24,54 +36,92 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Nathan Binkert
- *          Gabe Black
  */
 
-#include "arch/isa_traits.hh"
-#include "base/misc.hh"
+#include "sim/faults.hh"
+
+#include "arch/decoder.hh"
+#include "arch/locked_mem.hh"
+#include "base/logging.hh"
 #include "cpu/base.hh"
 #include "cpu/thread_context.hh"
 #include "debug/Fault.hh"
 #include "mem/page_table.hh"
-#include "sim/faults.hh"
 #include "sim/full_system.hh"
 #include "sim/process.hh"
 
-void FaultBase::invoke(ThreadContext * tc, StaticInstPtr inst)
+void
+FaultBase::invoke(ThreadContext *tc, const StaticInstPtr &inst)
 {
-    if (FullSystem) {
-        DPRINTF(Fault, "Fault %s at PC: %s\n", name(), tc->pcState());
-        assert(!tc->misspeculating());
-    } else {
-        panic("fault (%s) detected @ PC %s", name(), tc->pcState());
-    }
+    panic_if(!FullSystem, "fault (%s) detected @ PC %s",
+             name(), tc->pcState());
+    DPRINTF(Fault, "Fault %s at PC: %s\n", name(), tc->pcState());
 }
 
-void UnimpFault::invoke(ThreadContext * tc, StaticInstPtr inst)
+void
+UnimpFault::invoke(ThreadContext *tc, const StaticInstPtr &inst)
 {
-    panic("Unimpfault: %s\n", panicStr.c_str());
+    panic("Unimpfault: %s", panicStr.c_str());
 }
 
-void ReExec::invoke(ThreadContext *tc, StaticInstPtr inst)
+void
+SESyscallFault::invoke(ThreadContext *tc, const StaticInstPtr &inst)
+{
+    tc->syscall();
+    // Move the PC forward since that doesn't happen automatically.
+    TheISA::PCState pc = tc->pcState();
+    inst->advancePC(pc);
+    tc->pcState(pc);
+}
+
+void
+ReExec::invoke(ThreadContext *tc, const StaticInstPtr &inst)
 {
     tc->pcState(tc->pcState());
 }
 
-void GenericPageTableFault::invoke(ThreadContext *tc, StaticInstPtr inst)
+void
+SyscallRetryFault::invoke(ThreadContext *tc, const StaticInstPtr &inst)
+{
+    tc->pcState(tc->pcState());
+}
+
+void
+GenericPageTableFault::invoke(ThreadContext *tc, const StaticInstPtr &inst)
 {
     bool handled = false;
     if (!FullSystem) {
         Process *p = tc->getProcessPtr();
-        handled = p->fixupStackFault(vaddr);
+        handled = p->fixupFault(vaddr);
     }
-    if (!handled)
-        panic("Page table fault when accessing virtual address %#x\n", vaddr);
+    panic_if(!handled, "Page table fault when accessing virtual address %#x",
+             vaddr);
 
 }
 
-void GenericAlignmentFault::invoke(ThreadContext *tc, StaticInstPtr inst)
+void
+GenericAlignmentFault::invoke(ThreadContext *tc, const StaticInstPtr &inst)
 {
     panic("Alignment fault when accessing virtual address %#x\n", vaddr);
+}
+
+void GenericHtmFailureFault::invoke(ThreadContext *tc,
+                                    const StaticInstPtr &inst)
+{
+    // reset decoder
+    TheISA::Decoder* dcdr = tc->getDecoderPtr();
+    dcdr->reset();
+
+    // restore transaction checkpoint
+    const auto& checkpoint = tc->getHtmCheckpointPtr();
+    assert(checkpoint);
+    assert(checkpoint->valid());
+
+    checkpoint->restore(tc, getHtmFailureFaultCause());
+
+    // reset the global monitor
+    TheISA::globalClearExclusive(tc);
+
+    // send abort packet to ruby (in final breath)
+    tc->htmAbortTransaction(htmUid, cause);
 }

@@ -33,8 +33,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Andreas Sandberg
  */
 
 #ifndef __CPU_KVM_TIMER_HH__
@@ -95,6 +93,9 @@ class BaseKvmTimer
      * signals upon timeout.
      */
     virtual void disarm() = 0;
+    virtual bool expired() {
+        return true;
+    }
 
     /**
      * Determine the resolution of the timer in ticks. This method is
@@ -193,15 +194,17 @@ class PosixKvmTimer : public BaseKvmTimer
                   float hostFactor, Tick hostFreq);
     ~PosixKvmTimer();
 
-    void arm(Tick ticks);
-    void disarm();
+    void arm(Tick ticks) override;
+    void disarm() override;
+    bool expired() override;
 
   protected:
-    Tick calcResolution();
+    Tick calcResolution() override;
 
   private:
     clockid_t clockID;
     timer_t timer;
+    struct itimerspec prevTimerSpec;
 };
 
 /**

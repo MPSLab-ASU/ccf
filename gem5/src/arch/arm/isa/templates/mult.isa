@@ -34,8 +34,6 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Authors: Gabe Black
 
 def template Mult3Declare {{
 class %(class_name)s : public %(base_class)s
@@ -44,12 +42,12 @@ class %(class_name)s : public %(base_class)s
         // Constructor
         %(class_name)s(ExtMachInst machInst, IntRegIndex _reg0,
                        IntRegIndex _reg1, IntRegIndex _reg2);
-        %(BasicExecDeclare)s
+        Fault execute(ExecContext *, Trace::InstRecord *) const override;
 };
 }};
 
 def template Mult3Constructor {{
-    inline %(class_name)s::%(class_name)s(ExtMachInst machInst,
+    %(class_name)s::%(class_name)s(ExtMachInst machInst,
                                           IntRegIndex _reg0,
                                           IntRegIndex _reg1,
                                           IntRegIndex _reg2)
@@ -73,12 +71,12 @@ class %(class_name)s : public %(base_class)s
         %(class_name)s(ExtMachInst machInst,
                        IntRegIndex _reg0, IntRegIndex _reg1,
                        IntRegIndex _reg2, IntRegIndex _reg3);
-        %(BasicExecDeclare)s
+        Fault execute(ExecContext *, Trace::InstRecord *) const override;
 };
 }};
 
 def template Mult4Constructor {{
-    inline %(class_name)s::%(class_name)s(ExtMachInst machInst,
+    %(class_name)s::%(class_name)s(ExtMachInst machInst,
                                           IntRegIndex _reg0,
                                           IntRegIndex _reg1,
                                           IntRegIndex _reg2,

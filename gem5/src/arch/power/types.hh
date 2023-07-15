@@ -24,8 +24,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Timothy M. Jones
  */
 
 #ifndef __ARCH_POWER_TYPES_HH__
@@ -33,7 +31,6 @@
 
 #include "arch/generic/types.hh"
 #include "base/bitunion.hh"
-#include "base/hashmap.hh"
 #include "base/types.hh"
 
 namespace PowerISA
@@ -89,7 +86,7 @@ typedef GenericISA::SimplePCState<MachInst> PCState;
 
 } // PowerISA namespace
 
-__hash_namespace_begin
+namespace std {
 
 template<>
 struct hash<PowerISA::ExtMachInst> : public hash<uint32_t> {
@@ -98,6 +95,6 @@ struct hash<PowerISA::ExtMachInst> : public hash<uint32_t> {
     };
 };
 
-__hash_namespace_end
+}
 
 #endif // __ARCH_POWER_TYPES_HH__

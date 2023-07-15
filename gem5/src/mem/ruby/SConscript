@@ -25,8 +25,8 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Nathan Binkert
+
+from __future__ import print_function
 
 import os
 import sys
@@ -35,13 +35,33 @@ from os.path import basename, isdir, join as joinpath
 
 import SCons
 
-Import('*')
+from gem5_scons import Transform
 
-if env['TARGET_ISA'] == 'null':
-    Return()
+Import('*')
 
 if env['PROTOCOL'] == 'None':
     Return()
+
+DebugFlag('ProtocolTrace')
+DebugFlag('RubyCache')
+DebugFlag('RubyCacheTrace')
+DebugFlag('RubyDma')
+DebugFlag('RubyGenerated')
+DebugFlag('RubyNetwork')
+DebugFlag('RubyPort')
+DebugFlag('RubyPrefetcher')
+DebugFlag('RubyQueue')
+DebugFlag('RubySequencer')
+DebugFlag('RubySlicc')
+DebugFlag('RubySystem')
+DebugFlag('RubyTester')
+DebugFlag('RubyStats')
+DebugFlag('RubyResourceStalls')
+
+CompoundFlag('Ruby', [ 'RubyQueue', 'RubyNetwork', 'RubyTester',
+    'RubyGenerated', 'RubySlicc', 'RubySystem', 'RubyCache',
+    'RubyDma', 'RubyPort', 'RubySequencer', 'RubyCacheTrace',
+    'RubyPrefetcher'])
 
 def do_embed_text(target, source, env):
     """convert a text file into a file that can be embedded in C
@@ -76,42 +96,47 @@ def do_embed_text(target, source, env):
 #
 # Link includes
 #
-generated_dir = Dir('../protocol')
+generated_dir = Dir('protocol')
 
 def MakeIncludeAction(target, source, env):
-    f = file(str(target[0]), 'w')
-    for s in source:
-        print >>f, '#include "%s"' % str(s.abspath)
-    f.close()
+    with open(str(target[0]), 'w') as f:
+        for s in source:
+            print('#include "%s"' % str(s.abspath), file=f)
 
 def MakeInclude(source):
     target = generated_dir.File(basename(source))
     include_action = MakeAction(MakeIncludeAction, Transform("MAKE INC", 1))
     env.Command(target, source, include_action)
 
-MakeInclude('slicc_interface/AbstractEntry.hh')
 MakeInclude('slicc_interface/AbstractCacheEntry.hh')
-MakeInclude('slicc_interface/AbstractProtocol.hh')
 MakeInclude('slicc_interface/Message.hh')
-MakeInclude('slicc_interface/NetworkMessage.hh')
 MakeInclude('slicc_interface/RubyRequest.hh')
 
 # External types
-MakeInclude('buffers/MessageBuffer.hh')
 MakeInclude('common/Address.hh')
+MakeInclude('common/BoolVec.hh')
 MakeInclude('common/DataBlock.hh')
+MakeInclude('common/IntVec.hh')
+MakeInclude('common/MachineID.hh')
 MakeInclude('common/NetDest.hh')
 MakeInclude('common/Set.hh')
-MakeInclude('filters/GenericBloomFilter.hh')
-MakeInclude('structures/Prefetcher.hh')
-MakeInclude('system/CacheMemory.hh')
+MakeInclude('common/WriteMask.hh')
+MakeInclude('network/MessageBuffer.hh')
+MakeInclude('structures/CacheMemory.hh')
+MakeInclude('structures/DirectoryMemory.hh')
+MakeInclude('structures/PerfectCacheMemory.hh')
+MakeInclude('structures/PersistentTable.hh')
+MakeInclude('structures/RubyPrefetcher.hh')
+MakeInclude('structures/TBETable.hh')
+MakeInclude('structures/TimerTable.hh')
+MakeInclude('structures/WireBuffer.hh')
 MakeInclude('system/DMASequencer.hh')
-MakeInclude('system/DirectoryMemory.hh')
-MakeInclude('system/MachineID.hh')
-MakeInclude('system/MemoryControl.hh')
-MakeInclude('system/WireBuffer.hh')
-MakeInclude('system/PerfectCacheMemory.hh')
-MakeInclude('system/PersistentTable.hh')
 MakeInclude('system/Sequencer.hh')
-MakeInclude('system/TBETable.hh')
-MakeInclude('system/TimerTable.hh')
+
+# External types : Group "mem/ruby/protocol" : include "header.hh" to the
+# bottom of this MakeIncludes if it is referenced as
+# <# include "mem/ruby/protocol/header.hh"> in any file
+# generated_dir = Dir('protocol')
+MakeInclude('system/GPUCoalescer.hh')
+MakeInclude('system/HTMSequencer.hh')
+MakeInclude('system/VIPERCoalescer.hh')

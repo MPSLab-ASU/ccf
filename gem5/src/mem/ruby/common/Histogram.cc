@@ -26,11 +26,12 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "mem/ruby/common/Histogram.hh"
+
 #include <cmath>
 #include <iomanip>
 
 #include "base/intmath.hh"
-#include "mem/ruby/common/Histogram.hh"
 
 using namespace std;
 
@@ -84,7 +85,7 @@ Histogram::doubleBinSize()
 }
 
 void
-Histogram::add(int64 value)
+Histogram::add(int64_t value)
 {
     assert(value >= 0);
     m_max = max(m_max, value);

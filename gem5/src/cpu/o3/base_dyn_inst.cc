@@ -24,13 +24,11 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Kevin Lim
  */
 
+#include "cpu/base_dyn_inst_impl.hh"
 #include "cpu/o3/cpu.hh"
 #include "cpu/o3/isa_specific.hh"
-#include "cpu/base_dyn_inst_impl.hh"
 
 // Explicit instantiation
 template class BaseDynInst<O3CPUImpl>;

@@ -36,9 +36,8 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Stephen Hines
  */
+
 #ifndef __ARCH_ARM_MEM_HH__
 #define __ARCH_ARM_MEM_HH__
 
@@ -46,22 +45,6 @@
 
 namespace ArmISA
 {
-
-class Swap : public PredOp
-{
-  protected:
-    IntRegIndex dest;
-    IntRegIndex op1;
-    IntRegIndex base;
-
-    Swap(const char *mnem, ExtMachInst _machInst, OpClass __opClass,
-         IntRegIndex _dest, IntRegIndex _op1, IntRegIndex _base)
-        : PredOp(mnem, _machInst, __opClass),
-          dest(_dest), op1(_op1), base(_base)
-    {}
-
-    std::string generateDisassembly(Addr pc, const SymbolTable *symtab) const;
-};
 
 class MightBeMicro : public PredOp
 {
@@ -71,7 +54,7 @@ class MightBeMicro : public PredOp
     {}
 
     void
-    advancePC(PCState &pcState) const
+    advancePC(PCState &pcState) const override
     {
         if (flags[IsLastMicroop]) {
             pcState.uEnd();
@@ -118,13 +101,14 @@ class RfeOp : public MightBeMicro
     }
 
     StaticInstPtr
-    fetchMicroop(MicroPC microPC) const
+    fetchMicroop(MicroPC microPC) const override
     {
         assert(uops != NULL && microPC < numMicroops);
         return uops[microPC];
     }
 
-    std::string generateDisassembly(Addr pc, const SymbolTable *symtab) const;
+    std::string generateDisassembly(
+            Addr pc, const Loader::SymbolTable *symtab) const override;
 };
 
 // The address is a base register plus an immediate.
@@ -158,13 +142,14 @@ class SrsOp : public MightBeMicro
     }
 
     StaticInstPtr
-    fetchMicroop(MicroPC microPC) const
+    fetchMicroop(MicroPC microPC) const override
     {
         assert(uops != NULL && microPC < numMicroops);
         return uops[microPC];
     }
 
-    std::string generateDisassembly(Addr pc, const SymbolTable *symtab) const;
+    std::string generateDisassembly(
+            Addr pc, const Loader::SymbolTable *symtab) const override;
 };
 
 class Memory : public MightBeMicro
@@ -198,7 +183,7 @@ class Memory : public MightBeMicro
     }
 
     StaticInstPtr
-    fetchMicroop(MicroPC microPC) const
+    fetchMicroop(MicroPC microPC) const override
     {
         assert(uops != NULL && microPC < numMicroops);
         return uops[microPC];
@@ -211,7 +196,7 @@ class Memory : public MightBeMicro
     virtual void
     printDest(std::ostream &os) const
     {
-        printReg(os, dest);
+        printIntReg(os, dest);
     }
 
     void printInst(std::ostream &os, AddrMode addrMode) const;
@@ -253,7 +238,7 @@ class MemoryExImm : public MemoryImm
     void
     printDest(std::ostream &os) const
     {
-        printReg(os, result);
+        printIntReg(os, result);
         os << ", ";
         MemoryImm::printDest(os);
     }
@@ -277,7 +262,7 @@ class MemoryDImm : public MemoryImm
     {
         MemoryImm::printDest(os);
         os << ", ";
-        printReg(os, dest2);
+        printIntReg(os, dest2);
     }
 };
 
@@ -296,7 +281,7 @@ class MemoryExDImm : public MemoryDImm
     void
     printDest(std::ostream &os) const
     {
-        printReg(os, result);
+        printIntReg(os, result);
         os << ", ";
         MemoryDImm::printDest(os);
     }
@@ -341,7 +326,7 @@ class MemoryDReg : public MemoryReg
     {
         MemoryReg::printDest(os);
         os << ", ";
-        printReg(os, dest2);
+        printIntReg(os, dest2);
     }
 };
 
@@ -387,7 +372,8 @@ class MemoryOffset : public Base
     {}
 
     std::string
-    generateDisassembly(Addr pc, const SymbolTable *symtab) const
+    generateDisassembly(Addr pc,
+                        const Loader::SymbolTable *symtab) const override
     {
         std::stringstream ss;
         this->printInst(ss, Memory::AddrMd_Offset);
@@ -437,7 +423,8 @@ class MemoryPreIndex : public Base
     {}
 
     std::string
-    generateDisassembly(Addr pc, const SymbolTable *symtab) const
+    generateDisassembly(Addr pc,
+                        const Loader::SymbolTable *symtab) const override
     {
         std::stringstream ss;
         this->printInst(ss, Memory::AddrMd_PreIndex);
@@ -487,7 +474,8 @@ class MemoryPostIndex : public Base
     {}
 
     std::string
-    generateDisassembly(Addr pc, const SymbolTable *symtab) const
+    generateDisassembly(Addr pc,
+                        const Loader::SymbolTable *symtab) const override
     {
         std::stringstream ss;
         this->printInst(ss, Memory::AddrMd_PostIndex);

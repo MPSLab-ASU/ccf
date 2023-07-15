@@ -1,6 +1,6 @@
 // -*- mode:c++ -*-
 
-// Copyright (c) 2010 ARM Limited
+// Copyright (c) 2010-2014 ARM Limited
 // All rights reserved
 //
 // The license below extends only to copyright in the software and shall
@@ -37,9 +37,6 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Authors: Stephen Hines
-//          Gabe Black
 
 ////////////////////////////////////////////////////////////////////
 //
@@ -51,6 +48,19 @@ let {{
     microLdrUopIop = InstObjParams('ldr_uop', 'MicroLdrUop',
                                    'MicroMemOp',
                                    {'memacc_code': microLdrUopCode,
+                                    'ea_code': 'EA = URb + (up ? imm : -imm);',
+                                    'predicate_test': predicateTest},
+                                   ['IsMicroop'])
+
+    microLdr2UopCode = '''
+                        uint64_t data = Mem_ud;
+                        Dest = cSwap((uint32_t) data, ((CPSR)Cpsr).e);
+                        IWDest2 = cSwap((uint32_t) (data >> 32),
+                                        ((CPSR)Cpsr).e);
+                        '''
+    microLdr2UopIop = InstObjParams('ldr2_uop', 'MicroLdr2Uop',
+                                   'MicroMemPairOp',
+                                   {'memacc_code': microLdr2UopCode,
                                     'ea_code': 'EA = URb + (up ? imm : -imm);',
                                     'predicate_test': predicateTest},
                                    ['IsMicroop'])
@@ -91,7 +101,8 @@ let {{
         SCTLR sctlr = Sctlr;
 
         CPSR new_cpsr =
-            cpsrWriteByInstr(old_cpsr, Spsr, 0xF, true, sctlr.nmfi);
+            cpsrWriteByInstr(old_cpsr, Spsr, Scr, Nsacr, 0xF, true,
+                             sctlr.nmfi, xc->tcBase());
         Cpsr = ~CondCodesMask & new_cpsr;
         CondCodesNZ = new_cpsr.nz;
         CondCodesC = new_cpsr.c;
@@ -111,7 +122,7 @@ let {{
                                           'EA = URb + (up ? imm : -imm);',
                                        'predicate_test': condPredicateTest},
                                       ['IsMicroop','IsNonSpeculative',
-                                       'IsSerializeAfter'])
+                                       'IsSerializeAfter', 'IsSquashAfter'])
 
     microStrUopCode = "Mem = cSwap(URa_uw, ((CPSR)Cpsr).e);"
     microStrUopIop = InstObjParams('str_uop', 'MicroStrUop',
@@ -173,12 +184,18 @@ let {{
         exec_output += StoreExecute.subst(iop) + \
                        StoreInitiateAcc.subst(iop) + \
                        StoreCompleteAcc.subst(iop)
+
+    header_output += MicroMemPairDeclare.subst(microLdr2UopIop)
+    decoder_output += MicroMemPairConstructor.subst(microLdr2UopIop)
+    exec_output += LoadExecute.subst(microLdr2UopIop) + \
+                   LoadInitiateAcc.subst(microLdr2UopIop) + \
+                   LoadCompleteAcc.subst(microLdr2UopIop)
 }};
 
 let {{
     exec_output = header_output = ''
 
-    eaCode = 'EA = URa + imm;'
+    eaCode = 'EA = XURa + imm;'
 
     for size in (1, 2, 3, 4, 6, 8, 12, 16):
         # Set up the memory access.
@@ -198,11 +215,11 @@ let {{
                                     sizeof(memUnion.elements[0]);
             if (((CPSR)Cpsr).e) {
                 for (unsigned i = 0; i < eCount; i++) {
-                    memUnion.elements[i] = gtobe(memUnion.elements[i]);
+                    memUnion.elements[i] = letobe(memUnion.elements[i]);
                 }
             } else {
                 for (unsigned i = 0; i < eCount; i++) {
-                    memUnion.elements[i] = gtole(memUnion.elements[i]);
+                    memUnion.elements[i] = memUnion.elements[i];
                 }
             }
         '''
@@ -214,14 +231,14 @@ let {{
             if reg == regs - 1:
                 mask = ' & mask(%d)' % (32 - 8 * (regs * 4 - size))
             regSetCode += '''
-            FpDestP%(reg)d_uw = gtoh(memUnion.floatRegBits[%(reg)d])%(mask)s;
+            FpDestP%(reg)d_uw = letoh(memUnion.floatRegBits[%(reg)d])%(mask)s;
             ''' % { "reg" : reg, "mask" : mask }
 
         # Pull everything in from registers
         regGetCode = ''
         for reg in range(regs):
             regGetCode += '''
-            memUnion.floatRegBits[%(reg)d] = htog(FpDestP%(reg)d_uw);
+            memUnion.floatRegBits[%(reg)d] = htole(FpDestP%(reg)d_uw);
             ''' % { "reg" : reg }
 
         loadMemAccCode = convCode + regSetCode
@@ -293,20 +310,20 @@ let {{
         unloadConv = ''
         for dReg in range(dRegs):
             loadConv += '''
-                conv1.cRegs[%(sReg0)d] = htog(FpOp1P%(sReg0)d_uw);
-                conv1.cRegs[%(sReg1)d] = htog(FpOp1P%(sReg1)d_uw);
+                conv1.cRegs[%(sReg0)d] = htole(FpOp1P%(sReg0)d_uw);
+                conv1.cRegs[%(sReg1)d] = htole(FpOp1P%(sReg1)d_uw);
             ''' % { "sReg0" : (dReg * 2), "sReg1" : (dReg * 2 + 1) }
             unloadConv += '''
-                FpDestS%(dReg)dP0_uw = gtoh(conv2.cRegs[2 * %(dReg)d + 0]);
-                FpDestS%(dReg)dP1_uw = gtoh(conv2.cRegs[2 * %(dReg)d + 1]);
+                FpDestS%(dReg)dP0_uw = letoh(conv2.cRegs[2 * %(dReg)d + 0]);
+                FpDestS%(dReg)dP1_uw = letoh(conv2.cRegs[2 * %(dReg)d + 1]);
             ''' % { "dReg" : dReg }
         microDeintNeonCode = '''
             const unsigned dRegs = %(dRegs)d;
             const unsigned regs = 2 * dRegs;
-            const unsigned perDReg = (2 * sizeof(FloatRegBits)) /
-                                     sizeof(Element);
+            const unsigned perDReg =
+                (2 * sizeof(uint32_t)) / sizeof(Element);
             union convStruct {
-                FloatRegBits cRegs[regs];
+                uint32_t cRegs[regs];
                 Element elements[dRegs * perDReg];
             } conv1, conv2;
 
@@ -339,20 +356,20 @@ let {{
         unloadConv = ''
         for dReg in range(dRegs):
             loadConv += '''
-                conv1.cRegs[2 * %(dReg)d + 0] = htog(FpOp1S%(dReg)dP0_uw);
-                conv1.cRegs[2 * %(dReg)d + 1] = htog(FpOp1S%(dReg)dP1_uw);
+                conv1.cRegs[2 * %(dReg)d + 0] = htole(FpOp1S%(dReg)dP0_uw);
+                conv1.cRegs[2 * %(dReg)d + 1] = htole(FpOp1S%(dReg)dP1_uw);
             ''' % { "dReg" : dReg }
             unloadConv += '''
-                FpDestP%(sReg0)d_uw = gtoh(conv2.cRegs[%(sReg0)d]);
-                FpDestP%(sReg1)d_uw = gtoh(conv2.cRegs[%(sReg1)d]);
+                FpDestP%(sReg0)d_uw = letoh(conv2.cRegs[%(sReg0)d]);
+                FpDestP%(sReg1)d_uw = letoh(conv2.cRegs[%(sReg1)d]);
             ''' % { "sReg0" : (dReg * 2), "sReg1" : (dReg * 2 + 1) }
         microInterNeonCode = '''
             const unsigned dRegs = %(dRegs)d;
             const unsigned regs = 2 * dRegs;
-            const unsigned perDReg = (2 * sizeof(FloatRegBits)) /
-                                     sizeof(Element);
+            const unsigned perDReg =
+                (2 * sizeof(uint32_t)) / sizeof(Element);
             union convStruct {
-                FloatRegBits cRegs[regs];
+                uint32_t cRegs[regs];
                 Element elements[dRegs * perDReg];
             } conv1, conv2;
 
@@ -405,8 +422,8 @@ let {{
         baseLoadRegs = ''
         for reg in range(sRegs):
             baseLoadRegs += '''
-                sourceRegs.fRegs[%(reg0)d] = htog(FpOp1P%(reg0)d_uw);
-                sourceRegs.fRegs[%(reg1)d] = htog(FpOp1P%(reg1)d_uw);
+                sourceRegs.fRegs[%(reg0)d] = htole(FpOp1P%(reg0)d_uw);
+                sourceRegs.fRegs[%(reg1)d] = htole(FpOp1P%(reg1)d_uw);
             ''' % { "reg0" : (2 * reg + 0),
                     "reg1" : (2 * reg + 1) }
         for dRegs in range(sRegs, 5):
@@ -414,24 +431,23 @@ let {{
             loadRegs = baseLoadRegs
             for reg in range(dRegs):
                 loadRegs += '''
-                    destRegs[%(reg)d].fRegs[0] = htog(FpDestS%(reg)dP0_uw);
-                    destRegs[%(reg)d].fRegs[1] = htog(FpDestS%(reg)dP1_uw);
+                    destRegs[%(reg)d].fRegs[0] = htole(FpDestS%(reg)dP0_uw);
+                    destRegs[%(reg)d].fRegs[1] = htole(FpDestS%(reg)dP1_uw);
                 ''' % { "reg" : reg }
                 unloadRegs += '''
-                    FpDestS%(reg)dP0_uw = gtoh(destRegs[%(reg)d].fRegs[0]);
-                    FpDestS%(reg)dP1_uw = gtoh(destRegs[%(reg)d].fRegs[1]);
+                    FpDestS%(reg)dP0_uw = letoh(destRegs[%(reg)d].fRegs[0]);
+                    FpDestS%(reg)dP1_uw = letoh(destRegs[%(reg)d].fRegs[1]);
                 ''' % { "reg" : reg }
             microUnpackNeonCode = '''
-            const unsigned perDReg = (2 * sizeof(FloatRegBits)) /
-                                     sizeof(Element);
+            const unsigned perDReg = (2 * sizeof(uint32_t)) / sizeof(Element);
 
             union SourceRegs {
-                FloatRegBits fRegs[2 * %(sRegs)d];
+                uint32_t fRegs[2 * %(sRegs)d];
                 Element elements[%(sRegs)d * perDReg];
             } sourceRegs;
 
             union DestReg {
-                FloatRegBits fRegs[2];
+                uint32_t fRegs[2];
                 Element elements[perDReg];
             } destRegs[%(dRegs)d];
 
@@ -460,28 +476,27 @@ let {{
         loadRegs = ''
         for reg in range(sRegs):
             loadRegs += '''
-                sourceRegs.fRegs[%(reg0)d] = htog(FpOp1P%(reg0)d_uw);
-                sourceRegs.fRegs[%(reg1)d] = htog(FpOp1P%(reg1)d_uw);
+                sourceRegs.fRegs[%(reg0)d] = htole(FpOp1P%(reg0)d_uw);
+                sourceRegs.fRegs[%(reg1)d] = htole(FpOp1P%(reg1)d_uw);
             ''' % { "reg0" : (2 * reg + 0),
                     "reg1" : (2 * reg + 1) }
         for dRegs in range(sRegs, 5):
             unloadRegs = ''
             for reg in range(dRegs):
                 unloadRegs += '''
-                    FpDestS%(reg)dP0_uw = gtoh(destRegs[%(reg)d].fRegs[0]);
-                    FpDestS%(reg)dP1_uw = gtoh(destRegs[%(reg)d].fRegs[1]);
+                    FpDestS%(reg)dP0_uw = letoh(destRegs[%(reg)d].fRegs[0]);
+                    FpDestS%(reg)dP1_uw = letoh(destRegs[%(reg)d].fRegs[1]);
                 ''' % { "reg" : reg }
             microUnpackAllNeonCode = '''
-            const unsigned perDReg = (2 * sizeof(FloatRegBits)) /
-                                     sizeof(Element);
+            const unsigned perDReg = (2 * sizeof(uint32_t)) / sizeof(Element);
 
             union SourceRegs {
-                FloatRegBits fRegs[2 * %(sRegs)d];
+                uint32_t fRegs[2 * %(sRegs)d];
                 Element elements[%(sRegs)d * perDReg];
             } sourceRegs;
 
             union DestReg {
-                FloatRegBits fRegs[2];
+                uint32_t fRegs[2];
                 Element elements[perDReg];
             } destRegs[%(dRegs)d];
 
@@ -511,28 +526,28 @@ let {{
         unloadRegs = ''
         for reg in range(dRegs):
             unloadRegs += '''
-                FpDestP%(reg0)d_uw = gtoh(destRegs.fRegs[%(reg0)d]);
-                FpDestP%(reg1)d_uw = gtoh(destRegs.fRegs[%(reg1)d]);
+                FpDestP%(reg0)d_uw = letoh(destRegs.fRegs[%(reg0)d]);
+                FpDestP%(reg1)d_uw = letoh(destRegs.fRegs[%(reg1)d]);
             ''' % { "reg0" : (2 * reg + 0),
                     "reg1" : (2 * reg + 1) }
         for sRegs in range(dRegs, 5):
             loadRegs = ''
             for reg in range(sRegs):
                 loadRegs += '''
-                    sourceRegs[%(reg)d].fRegs[0] = htog(FpOp1S%(reg)dP0_uw);
-                    sourceRegs[%(reg)d].fRegs[1] = htog(FpOp1S%(reg)dP1_uw);
+                    sourceRegs[%(reg)d].fRegs[0] = htole(FpOp1S%(reg)dP0_uw);
+                    sourceRegs[%(reg)d].fRegs[1] = htole(FpOp1S%(reg)dP1_uw);
                 ''' % { "reg" : reg }
             microPackNeonCode = '''
-            const unsigned perDReg = (2 * sizeof(FloatRegBits)) /
-                                     sizeof(Element);
+            const unsigned perDReg =
+                (2 * sizeof(uint32_t)) / sizeof(Element);
 
             union SourceReg {
-                FloatRegBits fRegs[2];
+                uint32_t fRegs[2];
                 Element elements[perDReg];
             } sourceRegs[%(sRegs)d];
 
             union DestRegs {
-                FloatRegBits fRegs[2 * %(dRegs)d];
+                uint32_t fRegs[2 * %(dRegs)d];
                 Element elements[%(dRegs)d * perDReg];
             } destRegs;
 
@@ -565,7 +580,7 @@ let {{
     exec_output = ''
     for typeSize in (8, 16, 32):
         for sRegs in 1, 2:
-            for dRegs in range(sRegs, min(sRegs * 64 / typeSize + 1, 5)):
+            for dRegs in range(sRegs, min(sRegs * 64 // typeSize + 1, 5)):
                 for format in ("MicroUnpackNeon%(sRegs)dto%(dRegs)dUop",
                                "MicroUnpackAllNeon%(sRegs)dto%(dRegs)dUop",
                                "MicroPackNeon%(dRegs)dto%(sRegs)dUop"):
@@ -592,6 +607,26 @@ let {{
         URa = URb + shift_rm_imm(URc, shiftAmt, shiftType, OptShiftRmCondCodesC);
     '''
 
+    microAddXiUopIop = InstObjParams('addxi_uop', 'MicroAddXiUop',
+                                     'MicroIntImmXOp',
+                                     'XURa = XURb + imm;',
+                                     ['IsMicroop'])
+
+    microAddXiSpAlignUopIop = InstObjParams('addxi_uop', 'MicroAddXiSpAlignUop',
+                                            'MicroIntImmXOp', '''
+        if (isSP((IntRegIndex) urb) && bits(XURb, 3, 0) &&
+            SPAlignmentCheckEnabled(xc->tcBase())) {
+            return std::make_shared<SPAlignmentFault>();
+        }
+        XURa = XURb + imm;
+    ''', ['IsMicroop'])
+
+    microAddXERegUopIop = InstObjParams('addxr_uop', 'MicroAddXERegUop',
+                                        'MicroIntRegXOp',
+                                        'XURa = XURb + ' + \
+                                            'extendReg64(XURc, type, shiftAmt, 64);',
+                                        ['IsMicroop'])
+
     microAddUopIop = InstObjParams('add_uop', 'MicroAddUop',
                                    'MicroIntRegOp',
                                    {'code': microAddUopCode,
@@ -603,6 +638,11 @@ let {{
                                     {'code': 'URa = URb - imm;',
                                      'predicate_test': predicateTest},
                                     ['IsMicroop'])
+
+    microSubXiUopIop = InstObjParams('subxi_uop', 'MicroSubXiUop',
+                                     'MicroIntImmXOp',
+                                     'XURa = XURb - imm;',
+                                     ['IsMicroop'])
 
     microSubUopCode = '''
         URa = URb - shift_rm_imm(URc, shiftAmt, shiftType, OptShiftRmCondCodesC);
@@ -624,15 +664,15 @@ let {{
                                      {'code': microRetUopCode % 'URb',
                                       'predicate_test': predicateTest},
                                      ['IsMicroop', 'IsNonSpeculative',
-                                      'IsSerializeAfter'])
+                                      'IsSerializeAfter', 'IsSquashAfter'])
 
     setPCCPSRDecl = '''
                     CPSR cpsrOrCondCodes = URc;
                     SCTLR sctlr = Sctlr;
                     pNPC = URa;
                     CPSR new_cpsr =
-                    cpsrWriteByInstr(cpsrOrCondCodes, URb,
-                                     0xF, true, sctlr.nmfi);
+                    cpsrWriteByInstr(cpsrOrCondCodes, URb, Scr, Nsacr,
+                                     0xF, true, sctlr.nmfi, xc->tcBase());
                     Cpsr = ~CondCodesMask & new_cpsr;
                     NextThumb = new_cpsr.t;
                     NextJazelle = new_cpsr.j;
@@ -648,28 +688,40 @@ let {{
                                          'MicroSetPCCPSR',
                                          {'code': setPCCPSRDecl,
                                           'predicate_test': predicateTest},
-                                         ['IsMicroop'])
+                                         ['IsMicroop', 'IsSerializeAfter'])
 
     header_output = MicroIntImmDeclare.subst(microAddiUopIop) + \
+                    MicroIntImmDeclare.subst(microAddXiUopIop) + \
+                    MicroIntImmDeclare.subst(microAddXiSpAlignUopIop) + \
                     MicroIntImmDeclare.subst(microSubiUopIop) + \
+                    MicroIntImmDeclare.subst(microSubXiUopIop) + \
                     MicroIntRegDeclare.subst(microAddUopIop) + \
                     MicroIntRegDeclare.subst(microSubUopIop) + \
+                    MicroIntXERegDeclare.subst(microAddXERegUopIop) + \
                     MicroIntMovDeclare.subst(microUopRegMovIop) + \
                     MicroIntMovDeclare.subst(microUopRegMovRetIop) + \
                     MicroSetPCCPSRDeclare.subst(microUopSetPCCPSRIop)
 
     decoder_output = MicroIntImmConstructor.subst(microAddiUopIop) + \
+                     MicroIntImmXConstructor.subst(microAddXiUopIop) + \
+                     MicroIntImmXConstructor.subst(microAddXiSpAlignUopIop) + \
                      MicroIntImmConstructor.subst(microSubiUopIop) + \
+                     MicroIntImmXConstructor.subst(microSubXiUopIop) + \
                      MicroIntRegConstructor.subst(microAddUopIop) + \
                      MicroIntRegConstructor.subst(microSubUopIop) + \
+                     MicroIntXERegConstructor.subst(microAddXERegUopIop) + \
                      MicroIntMovConstructor.subst(microUopRegMovIop) + \
                      MicroIntMovConstructor.subst(microUopRegMovRetIop) + \
                      MicroSetPCCPSRConstructor.subst(microUopSetPCCPSRIop)
 
     exec_output = PredOpExecute.subst(microAddiUopIop) + \
+                  BasicExecute.subst(microAddXiUopIop) + \
+                  BasicExecute.subst(microAddXiSpAlignUopIop) + \
                   PredOpExecute.subst(microSubiUopIop) + \
+                  BasicExecute.subst(microSubXiUopIop) + \
                   PredOpExecute.subst(microAddUopIop) + \
                   PredOpExecute.subst(microSubUopIop) + \
+                  BasicExecute.subst(microAddXERegUopIop) + \
                   PredOpExecute.subst(microUopRegMovIop) + \
                   PredOpExecute.subst(microUopRegMovRetIop) + \
                   PredOpExecute.subst(microUopSetPCCPSRIop)
@@ -680,6 +732,25 @@ let {{
     iop = InstObjParams("ldmstm", "LdmStm", 'MacroMemOp', "", [])
     header_output = MacroMemDeclare.subst(iop)
     decoder_output = MacroMemConstructor.subst(iop)
+
+    iop = InstObjParams("ldpstp", "LdpStp", 'PairMemOp', "", [])
+    header_output += PairMemDeclare.subst(iop)
+    decoder_output += PairMemConstructor.subst(iop)
+
+    iopImm = InstObjParams("bigfpmemimm", "BigFpMemImm", "BigFpMemImmOp", "")
+    iopPre = InstObjParams("bigfpmempre", "BigFpMemPre", "BigFpMemPreOp", "")
+    iopPost = InstObjParams("bigfpmempost", "BigFpMemPost", "BigFpMemPostOp", "")
+    for iop in (iopImm, iopPre, iopPost):
+        header_output += BigFpMemImmDeclare.subst(iop)
+        decoder_output += BigFpMemImmConstructor.subst(iop)
+
+    iop = InstObjParams("bigfpmemreg", "BigFpMemReg", "BigFpMemRegOp", "")
+    header_output += BigFpMemRegDeclare.subst(iop)
+    decoder_output += BigFpMemRegConstructor.subst(iop)
+
+    iop = InstObjParams("bigfpmemlit", "BigFpMemLit", "BigFpMemLitOp", "")
+    header_output += BigFpMemLitDeclare.subst(iop)
+    decoder_output += BigFpMemLitConstructor.subst(iop)
 
     iop = InstObjParams("vldmult", "VldMult", 'VldMultOp', "", [])
     header_output += VMemMultDeclare.subst(iop)

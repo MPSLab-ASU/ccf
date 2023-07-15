@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 ARM Limited
+ * Copyright (c) 2013-2014 ARM Limited
  * All rights reserved.
  *
  * The license below extends only to copyright in the software and shall
@@ -36,8 +36,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Ron Dreslinski
  */
 
 /**
@@ -45,250 +43,219 @@
  * Hardware Prefetcher Definition.
  */
 
-#include <list>
-
-#include "arch/isa_traits.hh"
-#include "base/trace.hh"
-#include "config/the_isa.hh"
-#include "debug/HWPrefetch.hh"
 #include "mem/cache/prefetch/base.hh"
+
+#include <cassert>
+
+#include "base/intmath.hh"
+#include "cpu/base.hh"
 #include "mem/cache/base.hh"
-#include "mem/request.hh"
+#include "params/BasePrefetcher.hh"
 #include "sim/system.hh"
 
-BasePrefetcher::BasePrefetcher(const Params *p)
-    : ClockedObject(p), size(p->size), latency(p->latency), degree(p->degree),
-      useMasterId(p->use_master_id), pageStop(!p->cross_pages),
-      serialSquash(p->serial_squash), onlyData(p->data_accesses_only),
-      system(p->sys), masterId(system->getMasterId(name()))
+namespace Prefetcher {
+
+Base::PrefetchInfo::PrefetchInfo(PacketPtr pkt, Addr addr, bool miss)
+  : address(addr), pc(pkt->req->hasPC() ? pkt->req->getPC() : 0),
+    requestorId(pkt->req->requestorId()), validPC(pkt->req->hasPC()),
+    secure(pkt->isSecure()), size(pkt->req->getSize()), write(pkt->isWrite()),
+    paddress(pkt->req->getPaddr()), cacheMiss(miss)
+{
+    unsigned int req_size = pkt->req->getSize();
+    if (!write && miss) {
+        data = nullptr;
+    } else {
+        data = new uint8_t[req_size];
+        Addr offset = pkt->req->getPaddr() - pkt->getAddr();
+        std::memcpy(data, &(pkt->getConstPtr<uint8_t>()[offset]), req_size);
+    }
+}
+
+Base::PrefetchInfo::PrefetchInfo(PrefetchInfo const &pfi, Addr addr)
+  : address(addr), pc(pfi.pc), requestorId(pfi.requestorId),
+    validPC(pfi.validPC), secure(pfi.secure), size(pfi.size),
+    write(pfi.write), paddress(pfi.paddress), cacheMiss(pfi.cacheMiss),
+    data(nullptr)
 {
 }
 
 void
-BasePrefetcher::setCache(BaseCache *_cache)
+Base::PrefetchListener::notify(const PacketPtr &pkt)
 {
+    if (isFill) {
+        parent.notifyFill(pkt);
+    } else {
+        parent.probeNotify(pkt, miss);
+    }
+}
+
+Base::Base(const BasePrefetcherParams *p)
+    : ClockedObject(p), listeners(), cache(nullptr), blkSize(p->block_size),
+      lBlkSize(floorLog2(blkSize)), onMiss(p->on_miss), onRead(p->on_read),
+      onWrite(p->on_write), onData(p->on_data), onInst(p->on_inst),
+      requestorId(p->sys->getRequestorId(this)),
+      pageBytes(p->sys->getPageBytes()),
+      prefetchOnAccess(p->prefetch_on_access),
+      useVirtualAddresses(p->use_virtual_addresses),
+      prefetchStats(this), issuedPrefetches(0),
+      usefulPrefetches(0), tlb(nullptr)
+{
+}
+
+void
+Base::setCache(BaseCache *_cache)
+{
+    assert(!cache);
     cache = _cache;
+
+    // If the cache has a different block size from the system's, save it
     blkSize = cache->getBlockSize();
+    lBlkSize = floorLog2(blkSize);
 }
-
-void
-BasePrefetcher::regStats()
+Base::StatGroup::StatGroup(Stats::Group *parent)
+    : Stats::Group(parent),
+    ADD_STAT(pfIssued, "number of hwpf issued")
 {
-    pfIdentified
-        .name(name() + ".prefetcher.num_hwpf_identified")
-        .desc("number of hwpf identified")
-        ;
-
-    pfMSHRHit
-        .name(name() + ".prefetcher.num_hwpf_already_in_mshr")
-        .desc("number of hwpf that were already in mshr")
-        ;
-
-    pfCacheHit
-        .name(name() + ".prefetcher.num_hwpf_already_in_cache")
-        .desc("number of hwpf that were already in the cache")
-        ;
-
-    pfBufferHit
-        .name(name() + ".prefetcher.num_hwpf_already_in_prefetcher")
-        .desc("number of hwpf that were already in the prefetch queue")
-        ;
-
-    pfRemovedFull
-        .name(name() + ".prefetcher.num_hwpf_evicted")
-        .desc("number of hwpf removed due to no buffer left")
-        ;
-
-    pfRemovedMSHR
-        .name(name() + ".prefetcher.num_hwpf_removed_MSHR_hit")
-        .desc("number of hwpf removed because MSHR allocated")
-        ;
-
-    pfIssued
-        .name(name() + ".prefetcher.num_hwpf_issued")
-        .desc("number of hwpf issued")
-        ;
-
-    pfSpanPage
-        .name(name() + ".prefetcher.num_hwpf_span_page")
-        .desc("number of hwpf spanning a virtual page")
-        ;
-
-    pfSquashed
-        .name(name() + ".prefetcher.num_hwpf_squashed_from_miss")
-        .desc("number of hwpf that got squashed due to a miss "
-              "aborting calculation time")
-        ;
-}
-
-inline bool
-BasePrefetcher::inCache(Addr addr)
-{
-    if (cache->inCache(addr)) {
-        pfCacheHit++;
-        return true;
-    }
-    return false;
-}
-
-inline bool
-BasePrefetcher::inMissQueue(Addr addr)
-{
-    if (cache->inMissQueue(addr)) {
-        pfMSHRHit++;
-        return true;
-    }
-    return false;
-}
-
-PacketPtr
-BasePrefetcher::getPacket()
-{
-    DPRINTF(HWPrefetch, "Requesting a hw_pf to issue\n");
-
-    if (pf.empty()) {
-        DPRINTF(HWPrefetch, "No HW_PF found\n");
-        return NULL;
-    }
-
-    PacketPtr pkt = pf.begin()->pkt;
-    while (!pf.empty()) {
-        pkt = pf.begin()->pkt;
-        pf.pop_front();
-
-        Addr blk_addr = pkt->getAddr() & ~(Addr)(blkSize-1);
-
-        if (!inCache(blk_addr) && !inMissQueue(blk_addr))
-            // we found a prefetch, return it
-            break;
-
-        DPRINTF(HWPrefetch, "addr 0x%x in cache, skipping\n", pkt->getAddr());
-        delete pkt->req;
-        delete pkt;
-
-        if (pf.empty()) {
-            cache->deassertMemSideBusRequest(BaseCache::Request_PF);
-            return NULL; // None left, all were in cache
-        }
-    }
-
-    pfIssued++;
-    assert(pkt != NULL);
-    DPRINTF(HWPrefetch, "returning 0x%x\n", pkt->getAddr());
-    return pkt;
 }
 
 
-Tick
-BasePrefetcher::notify(PacketPtr &pkt, Tick tick)
+bool
+Base::observeAccess(const PacketPtr &pkt, bool miss) const
 {
-    if (!pkt->req->isUncacheable() && !(pkt->req->isInstFetch() && onlyData)) {
-        // Calculate the blk address
-        Addr blk_addr = pkt->getAddr() & ~(Addr)(blkSize-1);
+    bool fetch = pkt->req->isInstFetch();
+    bool read = pkt->isRead();
+    bool inv = pkt->isInvalidate();
 
-        // Check if miss is in pfq, if so remove it
-        std::list<DeferredPacket>::iterator iter = inPrefetch(blk_addr);
-        if (iter != pf.end()) {
-            DPRINTF(HWPrefetch, "Saw a miss to a queued prefetch addr: "
-                    "0x%x, removing it\n", blk_addr);
-            pfRemovedMSHR++;
-            delete iter->pkt->req;
-            delete iter->pkt;
-            iter = pf.erase(iter);
-            if (pf.empty())
-                cache->deassertMemSideBusRequest(BaseCache::Request_PF);
-        }
+    if (pkt->req->isUncacheable()) return false;
+    if (fetch && !onInst) return false;
+    if (!fetch && !onData) return false;
+    if (!fetch && read && !onRead) return false;
+    if (!fetch && !read && !onWrite) return false;
+    if (!fetch && !read && inv) return false;
+    if (pkt->cmd == MemCmd::CleanEvict) return false;
 
-        // Remove anything in queue with delay older than time
-        // since everything is inserted in time order, start from end
-        // and work until pf.empty() or time is earlier
-        // This is done to emulate Aborting the previous work on a new miss
-        // Needed for serial calculators like GHB
-        if (serialSquash) {
-            iter = pf.end();
-            if (iter != pf.begin())
-                iter--;
-            while (!pf.empty() && iter->tick >= tick) {
-                pfSquashed++;
-                DPRINTF(HWPrefetch, "Squashing old prefetch addr: 0x%x\n",
-                        iter->pkt->getAddr());
-                delete iter->pkt->req;
-                delete iter->pkt;
-                iter = pf.erase(iter);
-                if (iter != pf.begin())
-                    iter--;
-            }
-            if (pf.empty())
-                cache->deassertMemSideBusRequest(BaseCache::Request_PF);
-        }
-
-
-        std::list<Addr> addresses;
-        std::list<Cycles> delays;
-        calculatePrefetch(pkt, addresses, delays);
-
-        std::list<Addr>::iterator addrIter = addresses.begin();
-        std::list<Cycles>::iterator delayIter = delays.begin();
-        for (; addrIter != addresses.end(); ++addrIter, ++delayIter) {
-            Addr addr = *addrIter;
-
-            pfIdentified++;
-
-            DPRINTF(HWPrefetch, "Found a pf candidate addr: 0x%x, "
-                    "inserting into prefetch queue with delay %d time %d\n",
-                    addr, *delayIter, time);
-
-            // Check if it is already in the pf buffer
-            if (inPrefetch(addr) != pf.end()) {
-                pfBufferHit++;
-                DPRINTF(HWPrefetch, "Prefetch addr already in pf buffer\n");
-                continue;
-            }
-
-            // create a prefetch memreq
-            Request *prefetchReq = new Request(*addrIter, blkSize, 0, masterId);
-            PacketPtr prefetch =
-                new Packet(prefetchReq, MemCmd::HardPFReq);
-            prefetch->allocate();
-            prefetch->req->setThreadContext(pkt->req->contextId(),
-                                            pkt->req->threadId());
-
-            // We just remove the head if we are full
-            if (pf.size() == size) {
-                pfRemovedFull++;
-                PacketPtr old_pkt = pf.begin()->pkt;
-                DPRINTF(HWPrefetch, "Prefetch queue full, "
-                        "removing oldest 0x%x\n", old_pkt->getAddr());
-                delete old_pkt->req;
-                delete old_pkt;
-                pf.pop_front();
-            }
-
-            pf.push_back(DeferredPacket(tick + clockPeriod() * *delayIter,
-                                        prefetch));
-        }
+    if (onMiss) {
+        return miss;
     }
 
-    return pf.empty() ? 0 : pf.front().tick;
-}
-
-std::list<BasePrefetcher::DeferredPacket>::iterator
-BasePrefetcher::inPrefetch(Addr address)
-{
-    // Guaranteed to only be one match, we always check before inserting
-    std::list<DeferredPacket>::iterator iter;
-    for (iter = pf.begin(); iter != pf.end(); iter++) {
-        if ((iter->pkt->getAddr() & ~(Addr)(blkSize-1)) == address) {
-            return iter;
-        }
-    }
-    return pf.end();
+    return true;
 }
 
 bool
-BasePrefetcher::samePage(Addr a, Addr b)
+Base::inCache(Addr addr, bool is_secure) const
 {
-    return roundDown(a, TheISA::VMPageSize) == roundDown(b, TheISA::VMPageSize);
+    return cache->inCache(addr, is_secure);
 }
 
+bool
+Base::inMissQueue(Addr addr, bool is_secure) const
+{
+    return cache->inMissQueue(addr, is_secure);
+}
 
+bool
+Base::hasBeenPrefetched(Addr addr, bool is_secure) const
+{
+    return cache->hasBeenPrefetched(addr, is_secure);
+}
+
+bool
+Base::samePage(Addr a, Addr b) const
+{
+    return roundDown(a, pageBytes) == roundDown(b, pageBytes);
+}
+
+Addr
+Base::blockAddress(Addr a) const
+{
+    return a & ~((Addr)blkSize-1);
+}
+
+Addr
+Base::blockIndex(Addr a) const
+{
+    return a >> lBlkSize;
+}
+
+Addr
+Base::pageAddress(Addr a) const
+{
+    return roundDown(a, pageBytes);
+}
+
+Addr
+Base::pageOffset(Addr a) const
+{
+    return a & (pageBytes - 1);
+}
+
+Addr
+Base::pageIthBlockAddress(Addr page, uint32_t blockIndex) const
+{
+    return page + (blockIndex << lBlkSize);
+}
+
+void
+Base::probeNotify(const PacketPtr &pkt, bool miss)
+{
+    // Don't notify prefetcher on SWPrefetch, cache maintenance
+    // operations or for writes that we are coaslescing.
+    if (pkt->cmd.isSWPrefetch()) return;
+    if (pkt->req->isCacheMaintenance()) return;
+    if (pkt->isWrite() && cache != nullptr && cache->coalesce()) return;
+    if (!pkt->req->hasPaddr()) {
+        panic("Request must have a physical address");
+    }
+
+    if (hasBeenPrefetched(pkt->getAddr(), pkt->isSecure())) {
+        usefulPrefetches += 1;
+    }
+
+    // Verify this access type is observed by prefetcher
+    if (observeAccess(pkt, miss)) {
+        if (useVirtualAddresses && pkt->req->hasVaddr()) {
+            PrefetchInfo pfi(pkt, pkt->req->getVaddr(), miss);
+            notify(pkt, pfi);
+        } else if (!useVirtualAddresses) {
+            PrefetchInfo pfi(pkt, pkt->req->getPaddr(), miss);
+            notify(pkt, pfi);
+        }
+    }
+}
+
+void
+Base::regProbeListeners()
+{
+    /**
+     * If no probes were added by the configuration scripts, connect to the
+     * parent cache using the probe "Miss". Also connect to "Hit", if the
+     * cache is configured to prefetch on accesses.
+     */
+    if (listeners.empty() && cache != nullptr) {
+        ProbeManager *pm(cache->getProbeManager());
+        listeners.push_back(new PrefetchListener(*this, pm, "Miss", false,
+                                                true));
+        listeners.push_back(new PrefetchListener(*this, pm, "Fill", true,
+                                                 false));
+        if (prefetchOnAccess) {
+            listeners.push_back(new PrefetchListener(*this, pm, "Hit", false,
+                                                     false));
+        }
+    }
+}
+
+void
+Base::addEventProbe(SimObject *obj, const char *name)
+{
+    ProbeManager *pm(obj->getProbeManager());
+    listeners.push_back(new PrefetchListener(*this, pm, name));
+}
+
+void
+Base::addTLB(BaseTLB *t)
+{
+    fatal_if(tlb != nullptr, "Only one TLB can be registered");
+    tlb = t;
+}
+
+} // namespace Prefetcher

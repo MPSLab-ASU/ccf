@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 ARM Limited
+ * Copyright (c) 2010, 2019 ARM Limited
  * All rights reserved
  *
  * The license below extends only to copyright in the software and shall
@@ -36,18 +36,17 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Ali Saidi
  */
+
+#include "dev/arm/amba_fake.hh"
 
 #include "base/trace.hh"
 #include "debug/AMBA.hh"
-#include "dev/arm/amba_fake.hh"
 #include "mem/packet.hh"
 #include "mem/packet_access.hh"
 
 AmbaFake::AmbaFake(const Params *p)
-    : AmbaPioDevice(p, 0xfff)
+    : AmbaPioDevice(p, 0x1000)
 {
 }
 
@@ -57,13 +56,13 @@ AmbaFake::read(PacketPtr pkt)
     assert(pkt->getAddr() >= pioAddr && pkt->getAddr() < pioAddr + pioSize);
 
     Addr daddr = pkt->getAddr() - pioAddr;
-    pkt->allocate();
 
     DPRINTF(AMBA, " read register %#x\n", daddr);
 
-    pkt->set<uint32_t>(0);
+    pkt->setLE<uint32_t>(0);
     if (!readId(pkt, ambaId, pioAddr) && !params()->ignore_access)
-        panic("Tried to read AmbaFake at offset %#x that doesn't exist\n", daddr);
+        panic("Tried to read AmbaFake %s at offset %#x that doesn't exist\n",
+              name(), daddr);
 
     pkt->makeAtomicResponse();
     return pioDelay;
@@ -74,10 +73,10 @@ AmbaFake::write(PacketPtr pkt)
 {
 
     Addr daddr = pkt->getAddr() - pioAddr;
-    pkt->allocate();
 
     if (!params()->ignore_access)
-        panic("Tried to write AmbaFake at offset %#x that doesn't exist\n", daddr);
+        panic("Tried to write AmbaFake %s at offset %#x that doesn't exist\n",
+              name(), daddr);
 
     pkt->makeAtomicResponse();
     return pioDelay;

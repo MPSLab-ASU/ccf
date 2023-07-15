@@ -1,0 +1,197 @@
+#!/bin/bash
+#Author: Shail Dave
+#Last Edited: June 20, 2017
+
+#Expected arguments or inputs - .c or .cpp files
+
+#Set Paths
+ccf_root="/home/local/ASUAD/quoclon1/ccf9_27"
+install_path="/home/local/ASUAD/quoclon1/sw"
+obj="obj"
+objFound=0;
+searchstring=".o"
+src="clang++ -L${ccf_root}/llvm-project/build/include/ -w -g -O3 -fno-unroll-loops -fno-vectorize -fno-slp-vectorize --target=armv7a-linux-eabi -isystem /usr/arm-linux-gnueabi/include";
+srcIR="clang++ -L${ccf_root}/llvm-project/build/include/ -w -g -O3 -fno-unroll-loops -fno-vectorize -fno-slp-vectorize --target=armv7a-linux-eabi -isystem /usr/arm-linux-gnueabi/include -S -o - -emit-llvm";
+oolchain="/home/local/ASUAD/aabuyaz1/documents/code/ccf_1804"
+linkModule="";
+combineObj=0;
+objNum=0;
+MakeType=2;
+LIB="";
+
+#Check if file exists
+if [ ! -f ./simplified.ll ]; then 
+    clang++ -L${ccf_root}/llvm-project/build/include/ -w -O3 -g -fno-unroll-loops -fno-slp-vectorize -fno-vectorize --target=armv7a-linux-eabi -isystem /usr/arm-linux-gnueabi/include $ccf_root/scripts/CGRALib/cgra.cpp -S -o - -emit-llvm -o from_clang.ll
+    opt -loop-simplify -redundant-dbg-inst-elim from_clang.ll -o simplified.bc
+    llvm-dis -f simplified.bc -o simplified.ll
+fi
+
+cp simplified.ll combinedIR.ll
+
+j=1;
+for i in "$@"
+do
+	#If switch is beginning with -o, check for object file name
+	if [[ "$i" == *-o* ]]
+	then
+		objNum=$(( j + 1 ))
+        fi
+	if [[ $j -eq $objNum ]]		
+	then
+	    obj="${i##*/}"
+	    if [[ "$obj" != *.* ]]
+	    then
+		objFound=1;
+		MakeType=1;
+		obj="$i"; 
+		break;
+	    else
+		MakeType=2;
+	    fi
+
+	fi
+	((j = j + 1))
+done
+
+if [[ $objFound -gt $zero ]]
+then
+	MakeType=1;
+	for i in "$@"
+	do
+		if [[ "$i" == *.o ]]
+		then
+			MakeType=3;
+			break;
+		fi
+	done
+else
+	#TypeTwo
+	for i in "$@"
+	do 
+    	    src+=" $i"
+	    if [[ "$i" == *.o ]]
+  	    then
+	    	objFound=1;    
+	        srcIR+=" temp.ll"
+		echo "$i" >> tempObjList.txt
+	    else
+	        srcIR+=" $i"
+	    fi	
+	    if [ -f "$i" ] && [[ "$i" != *.o ]]
+	    then
+		tempString=`echo $i | sed -e 's/\.[^.]*$//'`
+		echo "./$tempString.o" >> tempObjList.txt
+            fi
+	done	
+	$src
+	if [[ $objFound -eq $zero ]]
+	then
+	    srcIR+=" -o temp.ll"
+	fi
+	$srcIR
+	llvm-link temp.ll combinedIR.ll -S -o combinedIR.ll
+	exit
+fi
+
+objFound=0;
+
+if [ $MakeType -eq 1 ]
+then
+    #TypeOne
+    for i in "$@"
+    do 
+    	src+=" $i"
+    done
+    $src	
+    for i in "$@"
+    do 
+
+	if [ $objFound -eq 1 ] && [ ! -f "$i" ]
+	then
+	    LIB+=" $i"
+        fi
+
+	if [[ "$i" == *-o* ]]
+	then
+	     objFound=1;
+    	fi
+
+	if [ $objFound -ne 1 ] && [ ! -f "$i" ]
+	then
+	    srcIR+=" $i"
+        fi
+
+	if [ -f "$i" ] && [[ "$i" != "$obj" ]]
+	then
+	    srcNew="$srcIR";
+	    srcNew+=" $i"
+            srcNew+=" -o temp.ll"
+	    $srcNew
+	    llvm-link temp.ll combinedIR.ll -S -o combinedIR.ll
+	fi
+    done
+else
+    for i in "$@"
+    do 
+
+	if [ "$i" == "$obj" ] 
+	then
+	     objFound=1;
+    	fi
+
+	if [ -f "$i" ] && [[ "$i" != "$obj" ]] 
+	then
+	    if ! grep -q "$i" tempObjList.txt
+	    then
+	        LIB+=" $i"
+      	    fi
+	fi	
+
+	if [ $objFound -eq 1 ] && [ ! -f "$i" ] && [[ "$i" != "$obj" ]]
+	then
+	    LIB+=" $i"
+        fi
+    done	
+fi
+
+$ccf_root/scripts/opt.sh combinedIR.ll ${install_path} ${ccf_root}
+
+if [ ! -d "CGRAExec" ]; then
+    echo "Loop was not compiled for CGRA"
+    exit 1
+fi
+
+llvm-dis CGRAGen.bc -o CGRAGen.ll
+
+llc -march="arm" CGRAGen.ll
+
+#apply remaining optimizations here such as vectoirize
+clang++ -L${ccf_root}/llvm-project/build/include/ -w -O3 -static -fno-unroll-loops -fno-slp-vectorize -fno-vectorize -pthread -target armv7a-none-linux-eabi CGRAGen.s -o $obj -lm
+
+
+#Delete temporary files
+rm *.s *.bc #*.ll
+
+# Check if CGRAExec exists.
+if [ -d "CGRAExec" ]; then
+	#Change directory
+	cd CGRAExec
+
+	noDir=$(ls -lR | grep ^d | wc -l)
+	echo "Total Loops Compiled for CGRA: " $noDir
+	i=0;
+	#For each of the loop folders, copy and execute run file to generate CGRA instructions
+	for ((i=1; i<=noDir; i++));
+	do
+		cd L"$i"
+    cp ../../CGRA_config.csv .
+    #cp ../../run_command .
+    #chmod +x run_command
+		cp $ccf_root/scripts/CGRALib/run.sh ./
+		./run.sh ../../$obj ${ccf_root}
+		cd ..
+	done
+	cd ..
+fi
+
+exit

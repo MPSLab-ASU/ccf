@@ -32,8 +32,6 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Authors: Gabe Black
 
 def format ArmUnconditional() {{
     decode_block = '''
@@ -99,11 +97,11 @@ def format ArmUnconditional() {{
                       case 0x1:
                         return new Clrex(machInst);
                       case 0x4:
-                        return new Dsb(machInst);
+                        return new Dsb(machInst, 0);
                       case 0x5:
-                        return new Dmb(machInst);
+                        return new Dmb(machInst, 0);
                       case 0x6:
-                        return new Isb(machInst);
+                        return new Isb(machInst, 0);
                     }
                 }
             } else if (bits(op2, 0) == 0) {
@@ -166,7 +164,12 @@ def format ArmUnconditional() {{
                     const uint32_t val = ((machInst >> 20) & 0x5);
                     if (val == 0x4) {
                         const uint32_t mode = bits(machInst, 4, 0);
-                        if (badMode((OperatingMode)mode))
+                        // We check at decode stage if the mode exists even
+                        // if the checking is re-done by Srs::execute.
+                        // This is done because we will otherwise panic if
+                        // trying to read the banked stack pointer of an
+                        // unrecognized mode.
+                        if (unknownMode32((OperatingMode)mode))
                             return new Unknown(machInst);
                         switch (bits(machInst, 24, 21)) {
                           case 0x2:
@@ -234,7 +237,9 @@ def format ArmUnconditional() {{
                     return new BlxImm(machInst, imm, COND_UC);
                 }
               case 0x2:
-                if (bits(op1, 4, 0) != 0) {
+                if (bits(machInst, 31, 25) == 0x7e){
+                    return decodeAdvancedSIMD(machInst);
+                } else if (bits(op1, 4, 0) != 0) {
                     if (CPNUM == 0xa || CPNUM == 0xb) {
                         return decodeExtensionRegLoadStore(machInst);
                     }
@@ -250,23 +255,18 @@ def format ArmUnconditional() {{
                                         "ldc, ldc2 (immediate)", machInst);
                             }
                         }
-                        if (op1 == 0xC5) {
-                            return new WarnUnimplemented(
-                                    "mrrc, mrrc2", machInst);
-                        }
                     } else {
                         if (bits(op1, 4, 3) != 0 || bits(op1, 1) == 1) {
                             return new WarnUnimplemented(
                                     "stc, stc2", machInst);
-                        } else if (op1 == 0xC4) {
-                            return new WarnUnimplemented(
-                                    "mcrr, mcrrc", machInst);
                         }
                     }
                 }
                 break;
               case 0x3:
-                if (bits(op1, 4) == 0) {
+                if (bits(machInst, 31, 24) == 0xfe) {
+                    return decodeAdvancedSIMD(machInst);
+                } else if (bits(op1, 4) == 0) {
                     if (CPNUM == 0xa || CPNUM == 0xb) {
                         return decodeShortFpTransfer(machInst);
                     } else if (CPNUM == 0xe) {

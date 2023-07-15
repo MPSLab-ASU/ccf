@@ -24,76 +24,20 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Gabe Black
- *          Ali Saidi
  */
 
 #ifndef __ARCH_SPARC_ISA_TRAITS_HH__
 #define __ARCH_SPARC_ISA_TRAITS_HH__
 
-#include "arch/sparc/sparc_traits.hh"
-#include "arch/sparc/types.hh"
 #include "base/types.hh"
-#include "cpu/static_inst_fwd.hh"
-
-namespace BigEndianGuest {}
 
 namespace SparcISA
 {
-const int MachineBytes = 8;
 
-// This makes sure the big endian versions of certain functions are used.
-using namespace BigEndianGuest;
+const ByteOrder GuestByteOrder = ByteOrder::big;
 
-// SPARC has a delay slot
-#define ISA_HAS_DELAY_SLOT 1
-
-// SPARC NOP (sethi %(hi(0), g0)
-const MachInst NoopMachInst = 0x01000000;
-
-// 8K. This value is implmentation specific; and should probably
-// be somewhere else.
-const int LogVMPageSize = 13;
-const int VMPageSize = (1 << LogVMPageSize);
-
-// real address virtual mapping
-// sort of like alpha super page, but less frequently used
-const Addr SegKPMEnd  = ULL(0xfffffffc00000000);
-const Addr SegKPMBase = ULL(0xfffffac000000000);
-
-// Why does both the previous set of constants and this one exist?
-const int PageShift = 13;
-const int PageBytes = 1ULL << PageShift;
-
-const int BranchPredAddrShiftAmt = 2;
-
-StaticInstPtr decodeInst(ExtMachInst);
-
-/////////// TLB Stuff ////////////
-const Addr StartVAddrHole = ULL(0x0000800000000000);
-const Addr EndVAddrHole = ULL(0xFFFF7FFFFFFFFFFF);
-const Addr VAddrAMask = ULL(0xFFFFFFFF);
-const Addr PAddrImplMask = ULL(0x000000FFFFFFFFFF);
-const Addr BytesInPageMask = ULL(0x1FFF);
-
-enum InterruptTypes
-{
-    IT_TRAP_LEVEL_ZERO,
-    IT_HINTP,
-    IT_INT_VEC,
-    IT_CPU_MONDO,
-    IT_DEV_MONDO,
-    IT_RES_ERROR,
-    IT_SOFT_INT,
-    NumInterruptTypes
-};
-
-// Memory accesses cannot be unaligned
-const bool HasUnalignedMemAcc = false;
-
-const bool CurThreadInfoImplemented = false;
-const int CurThreadInfoReg = -1;
+const Addr PageShift = 13;
+const Addr PageBytes = ULL(1) << PageShift;
 
 }
 

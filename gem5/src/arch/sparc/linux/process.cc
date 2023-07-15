@@ -24,69 +24,120 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Steve Reinhardt
- *          Gabe Black
- *          Ali Saidi
  */
 
 #include "arch/sparc/linux/process.hh"
+
 #include "arch/sparc/isa_traits.hh"
 #include "arch/sparc/registers.hh"
+#include "base/loader/object_file.hh"
 #include "base/trace.hh"
 #include "cpu/thread_context.hh"
 #include "kern/linux/linux.hh"
 #include "sim/process.hh"
+#include "sim/syscall_desc.hh"
 #include "sim/syscall_emul.hh"
 
 using namespace std;
 using namespace SparcISA;
 
-SyscallDesc*
-SparcLinuxProcess::getDesc(int callnum)
+namespace
 {
-    if (callnum < 0 || callnum >= Num_Syscall_Descs)
-        return NULL;
-    return &syscallDescs[callnum];
-}
 
-SyscallDesc*
-SparcLinuxProcess::getDesc32(int callnum)
+class SparcLinuxObjectFileLoader : public Process::Loader
 {
-    if (callnum < 0 || callnum >= Num_Syscall32_Descs)
-        return NULL;
-    return &syscall32Descs[callnum];
-}
+  public:
+    Process *
+    load(ProcessParams *params, ::Loader::ObjectFile *obj_file) override
+    {
+        auto arch = obj_file->getArch();
+        auto opsys = obj_file->getOpSys();
 
-Sparc32LinuxProcess::Sparc32LinuxProcess(LiveProcessParams * params,
-                                         ObjectFile *objFile)
-    : Sparc32LiveProcess(params, objFile)
+        if (arch != ::Loader::SPARC64 && arch != ::Loader::SPARC32)
+            return nullptr;
+
+        if (opsys == ::Loader::UnknownOpSys) {
+            warn("Unknown operating system; assuming Linux.");
+            opsys = ::Loader::Linux;
+        }
+
+        if (opsys != ::Loader::Linux)
+            return nullptr;
+
+        if (arch == ::Loader::SPARC64)
+            return new Sparc64LinuxProcess(params, obj_file);
+        else
+            return new Sparc32LinuxProcess(params, obj_file);
+    }
+};
+
+SparcLinuxObjectFileLoader loader;
+
+} // anonymous namespace
+
+Sparc32LinuxProcess::Sparc32LinuxProcess(ProcessParams * params,
+                                         ::Loader::ObjectFile *objFile)
+    : Sparc32Process(params, objFile)
 {}
 
-void Sparc32LinuxProcess::handleTrap(int trapNum, ThreadContext *tc)
+void
+Sparc32LinuxProcess::syscall(ThreadContext *tc)
+{
+    Sparc32Process::syscall(tc);
+    syscall32Descs.get(tc->readIntReg(1))->doSyscall(tc);
+}
+
+void
+Sparc32LinuxProcess::handleTrap(int trapNum, ThreadContext *tc)
 {
     switch (trapNum) {
       case 0x10: //Linux 32 bit syscall trap
-        tc->syscall(tc->readIntReg(1));
+        tc->syscall();
         break;
       default:
-        SparcLiveProcess::handleTrap(trapNum, tc);
+        SparcProcess::handleTrap(trapNum, tc);
     }
 }
 
-Sparc64LinuxProcess::Sparc64LinuxProcess(LiveProcessParams * params,
-                                         ObjectFile *objFile)
-    : Sparc64LiveProcess(params, objFile)
+Sparc64LinuxProcess::Sparc64LinuxProcess(ProcessParams * params,
+                                         ::Loader::ObjectFile *objFile)
+    : Sparc64Process(params, objFile)
 {}
 
-void Sparc64LinuxProcess::handleTrap(int trapNum, ThreadContext *tc)
+void
+Sparc64LinuxProcess::syscall(ThreadContext *tc)
+{
+    Sparc64Process::syscall(tc);
+    syscallDescs.get(tc->readIntReg(1))->doSyscall(tc);
+}
+
+void
+Sparc64LinuxProcess::getContext(ThreadContext *tc)
+{
+    warn("The getcontext trap is not implemented on SPARC");
+}
+
+void
+Sparc64LinuxProcess::setContext(ThreadContext *tc)
+{
+    panic("The setcontext trap is not implemented on SPARC");
+}
+
+void
+Sparc64LinuxProcess::handleTrap(int trapNum, ThreadContext *tc)
 {
     switch (trapNum) {
       // case 0x10: // Linux 32 bit syscall trap
       case 0x6d: // Linux 64 bit syscall trap
-        tc->syscall(tc->readIntReg(1));
+        tc->syscall();
+        break;
+      case 0x6e: // Linux 64 bit getcontext trap
+        getContext(tc);
+        break;
+      case 0x6f: // Linux 64 bit setcontext trap
+        setContext(tc);
         break;
       default:
-        SparcLiveProcess::handleTrap(trapNum, tc);
+        SparcProcess::handleTrap(trapNum, tc);
     }
 }

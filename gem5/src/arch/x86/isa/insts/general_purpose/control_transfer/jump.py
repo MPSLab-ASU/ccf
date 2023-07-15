@@ -1,4 +1,5 @@
 # Copyright (c) 2007 The Hewlett-Packard Development Company
+# Copyright (c) 2012-2013 AMD
 # All rights reserved.
 #
 # The license below extends only to copyright in the software and shall
@@ -32,14 +33,13 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Gabe Black
 
 microcode = '''
 def macroop JMP_I
 {
     # Make the default data size of jumps 64 bits in 64 bit mode
     .adjust_env oszIn64Override
+    .control_direct
 
     rdip t1
     limm t2, imm
@@ -50,6 +50,7 @@ def macroop JMP_R
 {
     # Make the default data size of jumps 64 bits in 64 bit mode
     .adjust_env oszIn64Override
+    .control_indirect
 
     wripi reg, 0
 };
@@ -58,6 +59,7 @@ def macroop JMP_M
 {
     # Make the default data size of jumps 64 bits in 64 bit mode
     .adjust_env oszIn64Override
+    .control_indirect
 
     ld t1, seg, sib, disp
     wripi t1, 0
@@ -67,6 +69,7 @@ def macroop JMP_P
 {
     # Make the default data size of jumps 64 bits in 64 bit mode
     .adjust_env oszIn64Override
+    .control_indirect
 
     rdip t7
     ld t1, seg, riprel, disp
@@ -75,6 +78,8 @@ def macroop JMP_P
 
 def macroop JMP_FAR_M
 {
+    .control_indirect
+
     limm t1, 0, dataSize=8
     limm t2, 0, dataSize=8
     lea t1, seg, sib, disp, dataSize=asz
@@ -85,6 +90,8 @@ def macroop JMP_FAR_M
 
 def macroop JMP_FAR_P
 {
+    .control_indirect
+
     limm t1, 0, dataSize=8
     limm t2, 0, dataSize=8
     rdip t7, dataSize=asz
@@ -96,6 +103,8 @@ def macroop JMP_FAR_P
 
 def macroop JMP_FAR_I
 {
+    .control_indirect
+
     # Put the whole far pointer into a register.
     limm t2, imm, dataSize=8
     # Figure out the width of the offset.
@@ -115,7 +124,7 @@ def rom
     # t1 has the offset and t2 has the new selector.
     # This is intended to run in protected mode.
     andi t0, t2, 0xFC, flags=(EZF,), dataSize=2
-    fault "new GeneralProtection(0)", flags=(CEZF,)
+    fault "std::make_shared<GeneralProtection>(0)", flags=(CEZF,)
     andi t3, t2, 0xF8, dataSize=8
     andi t0, t2, 0x4, flags=(EZF,), dataSize=2
     br rom_local_label("farJmpGlobalDescriptor"), flags=(CEZF,)
@@ -127,9 +136,9 @@ farJmpProcessDescriptor:
     rcri t0, t4, 13, flags=(ECF,), dataSize=2
     br rom_local_label("farJmpSystemDescriptor"), flags=(nCECF,)
     chks t2, t4, CSCheck, dataSize=8
-    wrdl cs, t4, t2
-    wrsel cs, t2
-    wrip t0, t1
+    wrdl cs, t4, t2, dataSize=4
+    wrsel cs, t2, dataSize=4
+    wrip t0, t1, dataSize=4
     eret
 
 farJmpSystemDescriptor:
@@ -139,36 +148,41 @@ farJmpSystemDescriptor:
 
 def macroop JMP_FAR_REAL_M
 {
+    .control_indirect
+
     lea t1, seg, sib, disp, dataSize=asz
     ld t2, seg, [1, t0, t1], dsz
     ld t1, seg, [1, t0, t1]
     zexti t3, t1, 15, dataSize=8
     slli t3, t3, 4, dataSize=8
     wrsel cs, t1, dataSize=2
-    wrbase cs, t3
+    wrbase cs, t3, dataSize=8
     wrip t0, t2, dataSize=asz
 };
 
 def macroop JMP_FAR_REAL_P
 {
+    .control_indirect
     panic "Real mode far jump executed in 64 bit mode!"
 };
 
 def macroop JMP_FAR_REAL_I
 {
+    .control_indirect
+
     # Put the whole far pointer into a register.
     limm t2, imm, dataSize=8
     # Figure out the width of the offset.
     limm t3, dsz, dataSize=8
     slli t3, t3, 3, dataSize=8
     # Get the selector into t1.
-    sll t1, t2, t3, dataSize=8
+    srl t1, t2, t3, dataSize=8
     mov t1, t0, t1, dataSize=2
     # And get the offset into t2
     mov t2, t0, t2
-    slli t3, t3, 4, dataSize=8
+    slli t3, t1, 4, dataSize=8
     wrsel cs, t1, dataSize=2
-    wrbase cs, t3
+    wrbase cs, t3, dataSize=8
     wrip t0, t2, dataSize=asz
 };
 '''

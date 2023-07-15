@@ -23,8 +23,6 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Andreas Sandberg
 
 
 # Register usage:
@@ -36,9 +34,6 @@ fldenvTemplate = """
 
     ld t1, seg, %(mode)s, "DISPLACEMENT + 4", dataSize=2
     wrval fsw, t1
-    srli t1, t1, 11, dataSize=2
-    andi t1, t1, 0x7, dataSize=2
-    wrval "InstRegIndex(MISCREG_X87_TOP)", t1
 
     ld t1, seg, %(mode)s, "DISPLACEMENT + 8", dataSize=2
     wrval ftw, t1
@@ -66,6 +61,9 @@ fnstenvTemplate = """
     # FSW includes TOP when read
     rdval t1, fsw
     st t1, seg, %(mode)s, "DISPLACEMENT + 4", dataSize=2
+    srli t1, t1, 11, dataSize=2
+    andi t1, t1, 0x7, dataSize=2
+    wrval "InstRegIndex(MISCREG_X87_TOP)", t1
 
     rdval t1, ftw
     st t1, seg, %(mode)s, "DISPLACEMENT + 8", dataSize=2

@@ -24,16 +24,15 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Ali Saidi
  */
 
 
-#include "base/misc.hh"
 #include "kern/operatingsystem.hh"
 
+#include "base/logging.hh"
+
 int
-OperatingSystem::openSpecialFile(std::string path, LiveProcess *process,
+OperatingSystem::openSpecialFile(std::string path, Process *process,
                                  ThreadContext *tc)
 {
     warn("Attempting to open special file: %s. Ignoring. Simulation may"

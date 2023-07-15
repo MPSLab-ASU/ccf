@@ -25,16 +25,13 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Nathan Binkert
- *          Steve Reinhardt
- *          Gabe Black
  */
 
-#include "base/misc.hh"
+#include "base/logging.hh"
 #include "base/trace.hh"
 #include "config/the_isa.hh"
 #include "debug/TimeSync.hh"
+#include "sim/eventq.hh"
 #include "sim/full_system.hh"
 #include "sim/root.hh"
 
@@ -103,8 +100,9 @@ Root::timeSyncSpinThreshold(Time newThreshold)
     timeSyncEnable(en);
 }
 
-Root::Root(RootParams *p) : SimObject(p), _enabled(false),
-    _periodTick(p->time_sync_period), syncEvent(this)
+Root::Root(RootParams *p)
+    : SimObject(p), _enabled(false), _periodTick(p->time_sync_period),
+      syncEvent([this]{ timeSync(); }, name())
 {
     _period.setTick(p->time_sync_period);
     _spinThreshold.setTick(p->time_sync_spin_threshold);
@@ -117,50 +115,17 @@ Root::Root(RootParams *p) : SimObject(p), _enabled(false),
 }
 
 void
-Root::initState()
+Root::startup()
 {
     timeSyncEnable(params()->time_sync_enable);
 }
 
 void
-Root::loadState(Checkpoint *cp)
+Root::serialize(CheckpointOut &cp) const
 {
-    SimObject::loadState(cp);
-    timeSyncEnable(params()->time_sync_enable);
-}
-
-void
-Root::serialize(std::ostream &os)
-{
-    uint64_t cpt_ver = gem5CheckpointVersion;
-    SERIALIZE_SCALAR(cpt_ver);
     SERIALIZE_SCALAR(FullSystem);
     std::string isa = THE_ISA_STR;
     SERIALIZE_SCALAR(isa);
-}
-
-void
-Root::unserialize(Checkpoint *cp, const std::string &section)
-{
-    uint64_t cpt_ver = 0;
-    UNSERIALIZE_OPT_SCALAR(cpt_ver);
-    if (cpt_ver < gem5CheckpointVersion) {
-        warn("**********************************************************\n");
-        warn("!!!! Checkpoint ver %#x is older than current ver %#x !!!!\n",
-                cpt_ver, gem5CheckpointVersion);
-        warn("You might experience some issues when restoring and should run "
-             "the checkpoint upgrader (util/cpt_upgrader.py) on your "
-             "checkpoint\n");
-        warn("**********************************************************\n");
-    } else if (cpt_ver > gem5CheckpointVersion) {
-        warn("**********************************************************\n");
-        warn("!!!! Checkpoint ver %#x is newer than current ver %#x !!!!\n",
-                cpt_ver, gem5CheckpointVersion);
-        warn("Running a new checkpoint with an older version of gem5 is not "
-             "supported. While it might work, you may experience incorrect "
-             "behavior or crashes.\n");
-        warn("**********************************************************\n");
-     }
 }
 
 

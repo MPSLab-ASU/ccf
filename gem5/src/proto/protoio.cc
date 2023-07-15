@@ -33,12 +33,11 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Andreas Hansson
  */
 
-#include "base/misc.hh"
 #include "proto/protoio.hh"
+
+#include "base/logging.hh"
 
 using namespace std;
 using namespace google::protobuf;
@@ -88,7 +87,12 @@ ProtoOutputStream::write(const Message& msg)
     io::CodedOutputStream codedStream(zeroCopyStream);
 
     // Write the size of the message to the stream
-    codedStream.WriteVarint32(msg.ByteSize());
+#   if GOOGLE_PROTOBUF_VERSION < 3001000
+        auto msg_size = msg.ByteSize();
+#   else
+        auto msg_size = msg.ByteSizeLong();
+#   endif
+    codedStream.WriteVarint32(msg_size);
 
     // Write the message itself to the stream
     msg.SerializeWithCachedSizes(&codedStream);

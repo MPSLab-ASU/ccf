@@ -24,8 +24,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Nathan Binkert
  */
 
 #ifndef __BASE_STATS_INFO_HH__
@@ -35,6 +33,8 @@
 #include "base/flags.hh"
 
 namespace Stats {
+
+class Group;
 
 typedef uint16_t FlagsType;
 typedef ::Flags<FlagsType> Flags;
@@ -97,6 +97,7 @@ class Info
 
     /** Set the name of this statistic */
     void setName(const std::string &name);
+    void setName(const Group *parent, const std::string &name);
     void setSeparator(std::string _sep) { separatorString = _sep;}
 
     /**
@@ -229,6 +230,8 @@ class Vector2dInfo : public Info
     mutable VCounter cvec;
 
     void enable();
+
+    virtual Result total() const = 0;
 };
 
 class FormulaInfo : public VectorInfo

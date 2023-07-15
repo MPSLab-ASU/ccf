@@ -25,30 +25,15 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Nathan Binkert
 
 Import('*')
 
 Source('unittest.cc')
 
-UnitTest('bitvectest', 'bitvectest.cc')
-UnitTest('circletest', 'circletest.cc')
-UnitTest('cprintftest', 'cprintftest.cc')
-UnitTest('cprintftime', 'cprintftest.cc')
-UnitTest('initest', 'initest.cc')
-UnitTest('lrutest', 'lru_test.cc')
+UnitTest('cprintftime', 'cprintftime.cc')
 UnitTest('nmtest', 'nmtest.cc')
-UnitTest('offtest', 'offtest.cc')
-UnitTest('rangemaptest', 'rangemaptest.cc')
-UnitTest('refcnttest', 'refcnttest.cc')
-UnitTest('strnumtest', 'strnumtest.cc')
-UnitTest('trietest', 'trietest.cc')
 
-stattest_py = PySource('m5', 'stattestmain.py', skip_lib=True)
-stattest_swig = SwigSource('m5.internal', 'stattest.i', skip_lib=True)
-UnitTest('stattest', 'stattest.cc', stattest_py, stattest_swig, main=True)
+stattest_py = PySource('m5', 'stattestmain.py', tags='stattest')
+UnitTest('stattest', 'stattest.cc', with_tag('stattest'), main=True)
 
 UnitTest('symtest', 'symtest.cc')
-UnitTest('tokentest', 'tokentest.cc')
-UnitTest('tracetest', 'tracetest.cc')

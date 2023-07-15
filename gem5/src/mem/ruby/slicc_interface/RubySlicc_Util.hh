@@ -1,5 +1,18 @@
 /*
+ * Copyright (c) 2020 ARM Limited
+ * All rights reserved
+ *
+ * The license below extends only to copyright in the software and shall
+ * not be construed as granting a license to any other intellectual
+ * property including but not limited to intellectual property relating
+ * to a hardware implementation of the functionality of the software
+ * licensed hereunder.  You may use the software subject to the license
+ * terms below provided that you ensure that this notice is replicated
+ * unmodified and in its entirety in all distributions of the software,
+ * modified or unmodified, in source code or in binary form.
+ *
  * Copyright (c) 1999-2008 Mark D. Hill and David A. Wood
+ * Copyright (c) 2013 Advanced Micro Devices, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,24 +43,20 @@
  * These are the functions that exported to slicc from ruby.
  */
 
-#ifndef __MEM_RUBY_SLICC_INTERFACE_RUBYSLICCUTIL_HH__
-#define __MEM_RUBY_SLICC_INTERFACE_RUBYSLICCUTIL_HH__
+#ifndef __MEM_RUBY_SLICC_INTERFACE_RUBYSLICC_UTIL_HH__
+#define __MEM_RUBY_SLICC_INTERFACE_RUBYSLICC_UTIL_HH__
 
 #include <cassert>
 
 #include "debug/RubySlicc.hh"
-#include "mem/ruby/common/Address.hh"
-#include "mem/ruby/slicc_interface/RubySlicc_ComponentMapping.hh"
 #include "mem/packet.hh"
-
-inline int
-random(int n)
-{
-  return random() % n;
-}
+#include "mem/ruby/common/Address.hh"
+#include "mem/ruby/common/BoolVec.hh"
+#include "mem/ruby/common/DataBlock.hh"
+#include "mem/ruby/common/TypeDefines.hh"
+#include "mem/ruby/common/WriteMask.hh"
 
 inline Cycles zero_time() { return Cycles(0); }
-inline Cycles TimeToCycles(Time t) { return Cycles(t); }
 
 inline NodeID
 intToID(int nodenum)
@@ -63,28 +72,18 @@ IDToInt(NodeID id)
     return nodenum;
 }
 
-// Appends an offset to an address
-inline Address
-setOffset(Address addr, int offset)
-{
-    Address result = addr;
-    result.setOffset(offset);
-    return result;
-}
-
-// Makes an address into a line address
-inline Address
-makeLineAddress(Address addr)
-{
-    Address result = addr;
-    result.makeLineAddress();
-    return result;
-}
-
 inline int
-addressOffset(Address addr)
+addressToInt(Addr addr)
 {
-    return addr.getOffset();
+    assert(!(addr & 0xffffffff00000000));
+    return addr;
+}
+
+inline Addr
+intToAddress(int addr)
+{
+    assert(!(addr & 0xffffffff00000000));
+    return addr;
 }
 
 inline int
@@ -98,30 +97,132 @@ inline int max_tokens()
   return 1024;
 }
 
+inline bool
+isWriteRequest(RubyRequestType type)
+{
+    if ((type == RubyRequestType_ST) ||
+        (type == RubyRequestType_ATOMIC) ||
+        (type == RubyRequestType_RMW_Read) ||
+        (type == RubyRequestType_RMW_Write) ||
+        (type == RubyRequestType_Store_Conditional) ||
+        (type == RubyRequestType_Locked_RMW_Read) ||
+        (type == RubyRequestType_Locked_RMW_Write) ||
+        (type == RubyRequestType_FLUSH)) {
+            return true;
+    } else {
+            return false;
+    }
+}
+
+inline bool
+isDataReadRequest(RubyRequestType type)
+{
+    if ((type == RubyRequestType_LD) ||
+        (type == RubyRequestType_Load_Linked)) {
+            return true;
+    } else {
+            return false;
+    }
+}
+
+inline bool
+isReadRequest(RubyRequestType type)
+{
+    if (isDataReadRequest(type) ||
+        (type == RubyRequestType_IFETCH)) {
+            return true;
+    } else {
+            return false;
+    }
+}
+
+inline bool
+isHtmCmdRequest(RubyRequestType type)
+{
+    if ((type == RubyRequestType_HTM_Start)  ||
+        (type == RubyRequestType_HTM_Commit) ||
+        (type == RubyRequestType_HTM_Cancel) ||
+        (type == RubyRequestType_HTM_Abort)) {
+            return true;
+    } else {
+            return false;
+    }
+}
+
+inline RubyRequestType
+htmCmdToRubyRequestType(const Packet *pkt)
+{
+    if (pkt->req->isHTMStart()) {
+        return RubyRequestType_HTM_Start;
+    } else if (pkt->req->isHTMCommit()) {
+        return RubyRequestType_HTM_Commit;
+    } else if (pkt->req->isHTMCancel()) {
+        return RubyRequestType_HTM_Cancel;
+    } else if (pkt->req->isHTMAbort()) {
+        return RubyRequestType_HTM_Abort;
+    }
+    else {
+        panic("invalid ruby packet type\n");
+    }
+}
+
 /**
  * This function accepts an address, a data block and a packet. If the address
  * range for the data block contains the address which the packet needs to
  * read, then the data from the data block is written to the packet. True is
  * returned if the data block was read, otherwise false is returned.
+ *
+ * This is used during a functional access "search the world" operation. The
+ * functional access looks in every place that might hold a valid data block
+ * and, if it finds one, checks to see if it is holding the address the access
+ * is searching for. During the access check, the WriteMask could be in any
+ * state, including empty.
  */
 inline bool
-testAndRead(Address addr, DataBlock& blk, Packet *pkt)
+testAndRead(Addr addr, DataBlock& blk, Packet *pkt)
 {
-    Address pktLineAddr(pkt->getAddr());
-    pktLineAddr.makeLineAddress();
-
-    Address lineAddr = addr;
-    lineAddr.makeLineAddress();
+    Addr pktLineAddr = makeLineAddress(pkt->getAddr());
+    Addr lineAddr = makeLineAddress(addr);
 
     if (pktLineAddr == lineAddr) {
-        uint8_t *data = pkt->getPtr<uint8_t>(true);
+        uint8_t *data = pkt->getPtr<uint8_t>();
         unsigned int size_in_bytes = pkt->getSize();
-        unsigned startByte = pkt->getAddr() - lineAddr.getAddress();
+        unsigned startByte = pkt->getAddr() - lineAddr;
 
         for (unsigned i = 0; i < size_in_bytes; ++i) {
             data[i] = blk.getByte(i + startByte);
         }
         return true;
+    }
+    return false;
+}
+
+/**
+ * This function accepts an address, a data block, a write mask and a packet.
+ * If the valid address range for the data block contains the address which
+ * the packet needs to read, then the data from the data block is written to
+ * the packet. True is returned if any part of the data block was read,
+ * otherwise false is returned.
+ */
+inline bool
+testAndReadMask(Addr addr, DataBlock& blk, WriteMask& mask, Packet *pkt)
+{
+    Addr pktLineAddr = makeLineAddress(pkt->getAddr());
+    Addr lineAddr = makeLineAddress(addr);
+
+    if (pktLineAddr == lineAddr) {
+        uint8_t *data = pkt->getPtr<uint8_t>();
+        unsigned int size_in_bytes = pkt->getSize();
+        unsigned startByte = pkt->getAddr() - lineAddr;
+        bool was_read = false;
+
+        for (unsigned i = 0; i < size_in_bytes; ++i) {
+            if (mask.test(i + startByte)) {
+                was_read = true;
+                data[i] = blk.getByte(i + startByte);
+            }
+        }
+        return was_read;
     }
     return false;
 }
@@ -133,18 +234,15 @@ testAndRead(Address addr, DataBlock& blk, Packet *pkt)
  * returned if the data block was written, otherwise false is returned.
  */
 inline bool
-testAndWrite(Address addr, DataBlock& blk, Packet *pkt)
+testAndWrite(Addr addr, DataBlock& blk, Packet *pkt)
 {
-    Address pktLineAddr(pkt->getAddr());
-    pktLineAddr.makeLineAddress();
-
-    Address lineAddr = addr;
-    lineAddr.makeLineAddress();
+    Addr pktLineAddr = makeLineAddress(pkt->getAddr());
+    Addr lineAddr = makeLineAddress(addr);
 
     if (pktLineAddr == lineAddr) {
-        uint8_t *data = pkt->getPtr<uint8_t>(true);
+        const uint8_t *data = pkt->getConstPtr<uint8_t>();
         unsigned int size_in_bytes = pkt->getSize();
-        unsigned startByte = pkt->getAddr() - lineAddr.getAddress();
+        unsigned startByte = pkt->getAddr() - lineAddr;
 
         for (unsigned i = 0; i < size_in_bytes; ++i) {
             blk.setByte(i + startByte, data[i]);
@@ -154,4 +252,16 @@ testAndWrite(Address addr, DataBlock& blk, Packet *pkt)
     return false;
 }
 
-#endif // __MEM_RUBY_SLICC_INTERFACE_RUBYSLICCUTIL_HH__
+inline int
+countBoolVec(BoolVec bVec)
+{
+    int count = 0;
+    for (const bool e: bVec) {
+        if (e) {
+            count++;
+        }
+    }
+    return count;
+}
+
+#endif //__MEM_RUBY_SLICC_INTERFACE_RUBYSLICC_UTIL_HH__

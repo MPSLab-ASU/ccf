@@ -32,8 +32,6 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Authors: Gabe Black
 
 def format ArmMultAndMultAcc() {{
     decode_block = '''
@@ -87,6 +85,8 @@ def format ArmMultAndMultAcc() {{
               } else {
                   return new Smlal(machInst, ra, rd, rn, rm);
               }
+            default:
+              M5_UNREACHABLE;
         }
     }
     '''
@@ -112,6 +112,8 @@ def format ArmHalfWordMultAndMultAcc() {{
                 return new SmlabtCc(machInst, rd, rn, rm, ra);
               case 0x3:
                 return new SmlattCc(machInst, rd, rn, rm, ra);
+              default:
+                M5_UNREACHABLE;
             }
           case 0x1:
             if (op) {
@@ -137,6 +139,8 @@ def format ArmHalfWordMultAndMultAcc() {{
                 return new Smlalbt(machInst, ra, rd, rn, rm);
               case 0x3:
                 return new Smlaltt(machInst, ra, rd, rn, rm);
+              default:
+                M5_UNREACHABLE;
             }
           case 0x3:
             switch (bits(machInst, 6, 5)) {
@@ -148,7 +152,11 @@ def format ArmHalfWordMultAndMultAcc() {{
                 return new Smulbt(machInst, rd, rn, rm);
               case 0x3:
                 return new Smultt(machInst, rd, rn, rm);
+              default:
+                M5_UNREACHABLE;
             }
+          default:
+            M5_UNREACHABLE;
         }
     }
     '''
@@ -201,6 +209,7 @@ def format Thumb32MulMulAccAndAbsDiff() {{
                     return new SmlattCc(machInst, rd, rn, rm, ra);
                 }
             }
+            M5_UNREACHABLE;
           case 0x2:
             if (ra == 0xf) {
                 if (bits(machInst, 4)) {
@@ -271,6 +280,8 @@ def format Thumb32MulMulAccAndAbsDiff() {{
             } else {
                 return new Usada8(machInst, rd, rn, rm, ra);
             }
+          default:
+            M5_UNREACHABLE;
         }
     }
     '''

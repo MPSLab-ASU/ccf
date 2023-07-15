@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 ARM Limited
+ * Copyright (c) 2012, 2019 ARM Limited
  * All rights reserved
  *
  * The license below extends only to copyright in the software and shall
@@ -33,16 +33,16 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Vasileios Spiliopoulos
- *          Akash Bagdia
  */
 
 #ifndef __SIM_VOLTAGE_DOMAIN_HH__
 #define __SIM_VOLTAGE_DOMAIN_HH__
 
+#include <vector>
+
 #include "base/statistics.hh"
 #include "params/VoltageDomain.hh"
+#include "sim/clock_domain.hh"
 #include "sim/sim_object.hh"
 
 /**
@@ -52,33 +52,108 @@
  */
 class VoltageDomain : public SimObject
 {
-
-  private:
-
-    /**
-     * The voltage of the domain expressed in Volts
-     */
-    double _voltage;
-
   public:
 
     typedef VoltageDomainParams Params;
     VoltageDomain(const Params *p);
 
+    typedef SrcClockDomain::PerfLevel PerfLevel;
+
     /**
-     * Get the current volate.
+     * Get the current voltage.
      *
      * @return Voltage of the domain
      */
-    inline double voltage() const { return _voltage; }
+    double voltage() const { return voltageOpPoints[_perfLevel]; }
 
     /**
-     * Set the voltage of the domain.
+     * Get the voltage at specified performance level.
      *
+     * @param perf_level Performance level for which the voltage is requested
+     * @return Voltage of the domain at specified performance level
+     */
+    double voltage(PerfLevel perf_level) const
+    {
+        chatty_assert(perf_level < numVoltages(), "VoltageDomain %s "\
+                      "request for voltage perf level %u is outside "\
+                      "of numVoltages %u", name(), perf_level,
+                      numVoltages());
+        return voltageOpPoints[perf_level];
+    }
+
+    uint32_t numVoltages() const { return (uint32_t)voltageOpPoints.size(); }
+
+    /**
+     * Set the voltage point of the domain.
      * @param Voltage value to be set
      */
-    void voltage(double voltage);
+    void perfLevel(PerfLevel perf_level);
 
+    /**
+     * Get the voltage point of the domain.
+     * @param Voltage value to be set
+     */
+    PerfLevel perfLevel() const { return _perfLevel; }
+
+    /**
+     * Register a SrcClockDomain with this voltage domain.
+     * @param src_clock_domain The SrcClockDomain to register.
+     */
+    void registerSrcClockDom(SrcClockDomain *src_clock_dom) {
+        assert(src_clock_dom->voltageDomain() == this);
+        srcClockChildren.push_back(src_clock_dom);
+    }
+
+    /**
+     * Startup has all SrcClockDomains registered with this voltage domain, so
+     * try to make sure that all perf level requests from them are met.
+     */
+    void startup() override;
+
+    /**
+     * Recomputes the highest (fastest, i.e., numerically lowest) requested
+     * performance level of all associated clock domains, and updates the
+     * performance level of this voltage domain to match.  This means that for
+     * two connected clock domains, one fast and one slow, the voltage domain
+     * will provide the voltage associated with the fast DVFS operation point.
+     * Must be called whenever a clock domain decides to swtich its performance
+     * level.
+     *
+     * @return True, if the voltage was actually changed.
+     */
+    bool sanitiseVoltages();
+
+    void serialize(CheckpointOut &cp) const override;
+    void unserialize(CheckpointIn &cp) override;
+
+  private:
+    typedef std::vector<double> Voltages;
+    /**
+     * List of possible minimum voltage at each of the frequency operational
+     * points, should be in descending order and same size as freqOpPoints.
+     * An empty list corresponds to default voltage specified for the voltage
+     * domain its clock domain belongs. The same voltage is applied for each
+     * freqOpPoints, overall implying NO DVS
+     */
+    const Voltages voltageOpPoints;
+    PerfLevel _perfLevel;
+
+    struct VoltageDomainStats : public Stats::Group
+    {
+        VoltageDomainStats(VoltageDomain &vd);
+
+        /**
+         * Stat for reporting voltage of the domain
+         */
+        Stats::Value voltage;
+    } stats;
+
+    /**
+     * List of associated SrcClockDomains that are connected to this voltage
+     * domain.
+     */
+    typedef std::vector<SrcClockDomain *> SrcClockChildren;
+    SrcClockChildren srcClockChildren;
 };
 
 #endif

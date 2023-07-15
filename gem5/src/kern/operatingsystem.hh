@@ -24,8 +24,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Gabe Black
  */
 
 #ifndef __KERN_OPERATINGSYSTEM_HH__
@@ -35,12 +33,12 @@
 
 #include <string>
 
-class LiveProcess;
+class Process;
 class ThreadContext;
 
-/// This struct is used to build an target-OS-dependent table that
-/// maps the target's open() flags to the host open() flags.
-struct OpenFlagTransTable {
+/// This struct is used to build target-OS-dependent tables that
+/// map the target's flags to the host's flags.
+struct SyscallFlagTransTable {
     int tgtFlag;        //!< Target system flag value.
     int hostFlag;       //!< Corresponding host system flag value.
 };
@@ -114,11 +112,8 @@ class OperatingSystem {
         int64_t ru_nivcsw;              //!< involuntary "
     } rusage;
 
-    static int openSpecialFile(std::string path, LiveProcess *process, ThreadContext *tc);
-
-    static const bool mmapGrowsUp = true;
-
-    static bool mmapGrowsDown() { return false; }
+    static int openSpecialFile(std::string path, Process *process,
+                               ThreadContext *tc);
 
 };  // class OperatingSystem
 

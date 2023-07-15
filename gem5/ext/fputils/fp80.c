@@ -1,33 +1,35 @@
 /*
- * Copyright (c) 2013, Andreas Sandberg
- * All rights reserved.
+ * Copyright (c) 2013 Andreas Sandberg
+ * All rights reserved
  *
  * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above
- *    copyright notice, this list of conditions and the following
- *    disclaimer in the documentation and/or other materials provided
- *    with the distribution.
+ * modification, are permitted provided that the following conditions are
+ * met: redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer;
+ * redistributions in binary form must reproduce the above copyright
+ * notice, this list of conditions and the following disclaimer in the
+ * documentation and/or other materials provided with the distribution;
+ * neither the name of the copyright holders nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Authors: Andreas Sandberg
  */
 
 #include <fputils/fp80.h>
+#include <fputils/fp64.h>
 #include "fpbits.h"
 
 #include <assert.h>
@@ -35,39 +37,13 @@
 
 #include <stdio.h>
 
-typedef union {
-    uint64_t bits;
-    double value;
-} fp64_t;
 
-
-const fp80_t fp80_pinf = BUILD_FP80(0, 0, FP80_EXP_SPECIAL);
-const fp80_t fp80_ninf = BUILD_FP80(1, 0, FP80_EXP_SPECIAL);
-const fp80_t fp80_qnan = BUILD_FP80(0,  FP80_FRAC_QNAN, FP80_EXP_SPECIAL);
+const fp80_t fp80_pinf  = BUILD_FP80(0, 0,               FP80_EXP_SPECIAL);
+const fp80_t fp80_ninf  = BUILD_FP80(1, 0,               FP80_EXP_SPECIAL);
+const fp80_t fp80_qnan  = BUILD_FP80(0, FP80_FRAC_QNAN,  FP80_EXP_SPECIAL);
 const fp80_t fp80_qnani = BUILD_FP80(1, FP80_FRAC_QNANI, FP80_EXP_SPECIAL);
-const fp80_t fp80_snan = BUILD_FP80(0, FP80_FRAC_SNAN, FP80_EXP_SPECIAL);
-const fp80_t fp80_nan = BUILD_FP80(0, FP80_FRAC_QNAN, FP80_EXP_SPECIAL);
-
-static const fp64_t fp64_pinf = BUILD_FP64(0, 0, FP64_EXP_SPECIAL);
-static const fp64_t fp64_ninf = BUILD_FP64(1, 0, FP64_EXP_SPECIAL);
-static const fp64_t fp64_qnan = BUILD_FP64(0,  FP64_FRAC_QNAN,
-                                           FP64_EXP_SPECIAL);
-static const fp64_t fp64_nqnan = BUILD_FP64(1,  FP64_FRAC_QNAN,
-                                            FP64_EXP_SPECIAL);
-static const fp64_t fp64_qnani = BUILD_FP64(1, FP64_FRAC_QNANI,
-                                            FP64_EXP_SPECIAL);
-static const fp64_t fp64_snan = BUILD_FP64(0, FP64_FRAC_SNAN,
-                                           FP64_EXP_SPECIAL);
-static const fp64_t fp64_nsnan = BUILD_FP64(1, FP64_FRAC_SNAN,
-                                            FP64_EXP_SPECIAL);
-
-static double
-build_fp64(int sign, uint64_t frac, int exp)
-{
-    const fp64_t f = BUILD_FP64(sign, frac, exp);
-
-    return f.value;
-}
+const fp80_t fp80_snan  = BUILD_FP80(0, FP80_FRAC_SNAN,  FP80_EXP_SPECIAL);
+const fp80_t fp80_nan   = BUILD_FP80(0, FP80_FRAC_QNAN,  FP80_EXP_SPECIAL);
 
 int
 fp80_sgn(fp80_t fp80)
@@ -167,6 +143,12 @@ fp80_classify(fp80_t fp80)
 double
 fp80_cvtd(fp80_t fp80)
 {
+    return fp80_cvtfp64(fp80).value;
+}
+
+fp64_t
+fp80_cvtfp64(fp80_t fp80)
+{
     const int sign = fp80.repr.se & FP80_SIGN_BIT;
 
     if (!fp80_isspecial(fp80)) {
@@ -180,7 +162,10 @@ fp80_cvtd(fp80_t fp80)
              * as normals */
             return build_fp64(sign, fp64_frac, fp64_exp);
         } else if (fp64_exp <= 0) {
-            uint64_t fp64_denormal_frac = fp64_frac >> (-fp64_exp);
+            uint64_t fp64_denormal_frac = -64 < fp64_exp
+                // -64 < fp_exp <= 0, so safe to bitshift by -fp_exp
+                ? fp64_frac >> (-fp64_exp)
+                : 0;
             /* Generate a denormal or zero */
             return build_fp64(sign, fp64_denormal_frac, 0);
         } else {
@@ -191,12 +176,12 @@ fp80_cvtd(fp80_t fp80)
         if (fp80_isinf(fp80)) {
             return build_fp64(sign, 0, FP64_EXP_SPECIAL);
         } else if (fp80_issnan(fp80)) {
-            return fp80_sgn(fp80) > 0 ? fp64_snan.value : fp64_nsnan.value;
+            return fp80_sgn(fp80) > 0 ? fp64_snan : fp64_nsnan;
         } else if (fp80_isqnani(fp80)) {
-            return fp64_qnani.value;
+            return fp64_qnani;
         } else {
             assert(fp80_isqnan(fp80));
-            return fp80_sgn(fp80) > 0 ? fp64_qnan.value : fp64_nqnan.value;
+            return fp80_sgn(fp80) > 0 ? fp64_qnan : fp64_nqnan;
         }
     }
 }
@@ -205,6 +190,13 @@ fp80_t
 fp80_cvfd(double value)
 {
     const fp64_t fp64 = { .value = value };
+
+    return fp80_cvffp64(fp64);
+}
+
+fp80_t
+fp80_cvffp64(fp64_t fp64)
+{
     const uint64_t frac = FP64_FRAC(fp64);
     const unsigned exp = FP64_EXP(fp64);
     const int unb_exp = exp - FP64_EXP_BIAS;

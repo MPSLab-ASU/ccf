@@ -24,121 +24,104 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Nathan Binkert
- *          Steve Reinhardt
  */
 
-#ifndef __OBJECT_FILE_HH__
-#define __OBJECT_FILE_HH__
+#ifndef __BASE_LOADER_OBJECT_FILE_HH__
+#define __BASE_LOADER_OBJECT_FILE_HH__
 
-#include <limits>
 #include <string>
 
+#include "base/loader/image_file.hh"
+#include "base/loader/image_file_data.hh"
+#include "base/loader/memory_image.hh"
+#include "base/loader/symtab.hh"
+#include "base/logging.hh"
 #include "base/types.hh"
 
-class PortProxy;
+namespace Loader
+{
+
+enum Arch {
+    UnknownArch,
+    SPARC64,
+    SPARC32,
+    Mips,
+    X86_64,
+    I386,
+    Arm64,
+    Arm,
+    Thumb,
+    Power,
+    Riscv64,
+    Riscv32
+};
+
+enum OpSys {
+    UnknownOpSys,
+    Tru64,
+    Linux,
+    Solaris,
+    LinuxArmOABI,
+    FreeBSD
+};
+
 class SymbolTable;
 
-class ObjectFile
+class ObjectFile : public ImageFile
 {
-  public:
-
-    enum Arch {
-        UnknownArch,
-        Alpha,
-        SPARC64,
-        SPARC32,
-        Mips,
-        X86_64,
-        I386,
-        Arm,
-        Thumb,
-        Power
-    };
-
-    enum OpSys {
-        UnknownOpSys,
-        Tru64,
-        Linux,
-        Solaris,
-        LinuxArmOABI
-    };
-
   protected:
-    const std::string filename;
-    int descriptor;
-    uint8_t *fileData;
-    size_t len;
+    Arch arch = UnknownArch;
+    OpSys opSys = UnknownOpSys;
 
-    Arch  arch;
-    OpSys opSys;
+    SymbolTable _symtab;
 
-    ObjectFile(const std::string &_filename, int _fd,
-               size_t _len, uint8_t *_data,
-               Arch _arch, OpSys _opSys);
+    ObjectFile(ImageFileDataPtr ifd);
 
   public:
-    virtual ~ObjectFile();
+    virtual ~ObjectFile() {};
 
-    void close();
+    virtual ObjectFile *getInterpreter() const { return nullptr; }
+    virtual bool relocatable() const { return false; }
+    virtual Addr
+    mapSize() const
+    {
+        panic("mapSize() should only be called on relocatable objects\n");
+    }
+    virtual void
+    updateBias(Addr bias_addr)
+    {
+        panic("updateBias() should only be called on relocatable objects\n");
+    }
+    virtual Addr bias() const { return 0; }
 
-    virtual bool loadSections(PortProxy& memProxy, Addr addrMask =
-            std::numeric_limits<Addr>::max());
-    virtual bool loadGlobalSymbols(SymbolTable *symtab, Addr addrMask =
-            std::numeric_limits<Addr>::max()) = 0;
-    virtual bool loadLocalSymbols(SymbolTable *symtab, Addr addrMask =
-            std::numeric_limits<Addr>::max()) = 0;
-    virtual bool loadWeakSymbols(SymbolTable *symtab, Addr addrMask =
-            std::numeric_limits<Addr>::max())
-    { return false; }
-
-    virtual bool isDynamic() { return false; }
     virtual bool hasTLS() { return false; }
 
     Arch  getArch()  const { return arch; }
     OpSys getOpSys() const { return opSys; }
 
+    const SymbolTable &symtab() const { return _symtab; }
+
   protected:
-
-    struct Section {
-        Addr     baseAddr;
-        uint8_t *fileImage;
-        size_t   size;
-    };
-
-    Addr entry;
-    Addr globalPtr;
-
-    Section text;
-    Section data;
-    Section bss;
-
-    bool loadSection(Section *sec, PortProxy& memProxy, Addr addrMask);
-    void setGlobalPointer(Addr global_ptr) { globalPtr = global_ptr; }
+    Addr entry = 0;
 
   public:
     Addr entryPoint() const { return entry; }
-
-    Addr globalPointer() const { return globalPtr; }
-
-    Addr textBase() const { return text.baseAddr; }
-    Addr dataBase() const { return data.baseAddr; }
-    Addr bssBase() const { return bss.baseAddr; }
-
-    size_t textSize() const { return text.size; }
-    size_t dataSize() const { return data.size; }
-    size_t bssSize() const { return bss.size; }
-
-    /* This function allows you to override the base address where
-     * a binary is going to be loaded or set it if the binary is just a
-     * blob that doesn't include an object header.
-     * @param a address to load the binary/text section at
-     */
-    void setTextBase(Addr a) { text.baseAddr = a; }
 };
 
-ObjectFile *createObjectFile(const std::string &fname, bool raw = false);
+class ObjectFileFormat
+{
+  protected:
+    ObjectFileFormat();
 
+  public:
+    ObjectFileFormat(const ObjectFileFormat &) = delete;
+    void operator=(const ObjectFileFormat &) = delete;
 
-#endif // __OBJECT_FILE_HH__
+    virtual ObjectFile *load(ImageFileDataPtr data) = 0;
+};
+
+ObjectFile *createObjectFile(const std::string &fname, bool raw=false);
+
+} // namespace Loader
+
+#endif // __BASE_LOADER_OBJECT_FILE_HH__

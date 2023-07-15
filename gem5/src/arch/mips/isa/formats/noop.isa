@@ -25,8 +25,6 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Authors: Korey Sewell
 
 ////////////////////////////////////////////////////////////////////
 //
@@ -53,16 +51,16 @@ output header {{
 
         ~Nop() { }
 
-        std::string
-        generateDisassembly(Addr pc, const SymbolTable *symtab) const;
+        std::string generateDisassembly(
+                Addr pc, const Loader::SymbolTable *symtab) const override;
 
-        %(BasicExecDeclare)s
+        Fault execute(ExecContext *, Trace::InstRecord *) const override;
     };
 }};
 
 output decoder {{
-    std::string Nop::generateDisassembly(Addr pc,
-                                         const SymbolTable *symtab) const
+    std::string
+    Nop::generateDisassembly(Addr pc, const Loader::SymbolTable *symtab) const
     {
         return csprintf("%-10s %s", "nop", originalDisassembly);
     }
@@ -82,7 +80,7 @@ output decoder {{
 
 output exec {{
     Fault
-    Nop::execute(%(CPU_exec_context)s *, Trace::InstRecord *) const
+    Nop::execute(ExecContext *, Trace::InstRecord *) const
     {
         return NoFault;
     }

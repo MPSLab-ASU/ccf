@@ -1,4 +1,6 @@
 # Copyright (c) 2007 The Hewlett-Packard Development Company
+# Copyright (c) 2015 Advanced Micro Devices, Inc.
+#
 # All rights reserved.
 #
 # The license below extends only to copyright in the software and shall
@@ -32,10 +34,40 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Gabe Black
 
 microcode = '''
-# RCPPS
-# RCPSS
+def macroop RCPSS_XMM_XMM {
+    mrcp xmml, xmmlm, size=4, ext=Scalar
+};
+
+def macroop RCPSS_XMM_M {
+    ldfp ufp1, seg, sib, disp, dataSize=8
+    mrcp xmml, ufp1, size=4, ext=Scalar
+};
+
+def macroop RCPSS_XMM_P {
+    rdip t7
+    ldfp ufp1, seg, riprel, disp, dataSize=8
+    mrcp xmml, ufp1, size=4, ext=Scalar
+};
+
+def macroop RCPPS_XMM_XMM {
+    mrcp xmml, xmmlm, size=4, ext=0
+    mrcp xmmh, xmmhm, size=4, ext=0
+};
+
+def macroop RCPPS_XMM_M {
+    ldfp ufp1, seg, sib, "DISPLACEMENT", dataSize=8
+    ldfp ufp2, seg, sib, "DISPLACEMENT + 8", dataSize=8
+    mrcp xmml, ufp1, size=4, ext=0
+    mrcp xmmh, ufp2, size=4, ext=0
+};
+
+def macroop RCPPS_XMM_P {
+    rdip t7
+    ldfp ufp1, seg, riprel, "DISPLACEMENT", dataSize=8
+    ldfp ufp2, seg, riprel, "DISPLACEMENT + 8", dataSize=8
+    mrcp xmml, ufp1, size=4, ext=0
+    mrcp xmmh, ufp2, size=4, ext=0
+};
 '''

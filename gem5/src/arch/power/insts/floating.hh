@@ -24,9 +24,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Timothy M. Jones
- *          Korey Sewell
  */
 
 #ifndef __ARCH_POWER_INSTS_FLOATING_HH__
@@ -145,7 +142,8 @@ class FloatOp : public PowerStaticInst
         return c;
     }
 
-    std::string generateDisassembly(Addr pc, const SymbolTable *symtab) const;
+    std::string generateDisassembly(
+            Addr pc, const Loader::SymbolTable *symtab) const override;
 };
 
 } // namespace PowerISA

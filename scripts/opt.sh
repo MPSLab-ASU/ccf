@@ -1,27 +1,45 @@
 #!/bin/bash
-#Author: Shail Dave
+#Author: Shail Dave, Arkan Abuyazid
 file="$1"
+install_path="$2"
 name=${file%.ll}
 
 llfile="$name.ll"
 
-toolchain="$HOME/shail/ccf"
-llvmbin="$toolchain/llvm/build/bin"
-llvmlib="$toolchain/llvm/build/lib"
-llvmbuild="$toolchain/llvm/build"
+toolchain="$3"
 
-$llvmbuild/bin/opt -strip-debug -O3 $llfile -o temp.bc
+opt -loop-simplify -strip-debug -O3 -force-vector-width=1 $llfile -o temp.bc
 llvm-dis temp.bc -o $llfile
 
-$llvmbuild/bin/opt -load $llvmbuild/lib/LLVMDDGGen.so -DDGGen $llfile -o temp.bc 
-llvm-dis temp.bc -o temporary.ll
-cp temp.bc $name.bc
+echo "CondDDGGen Pass" 
+echo $llfile
+#$llvmbuild/bin/opt -load $llvmbuild/lib/LLVMDDGGen.so -DDGGen $llfile -o temp.bc 
+opt -enable-new-pm=0 -load ${install_path}/lib/LLVMCondDDGGen.so -CondDDGGen $llfile -o CondDDGGen.bc
 
-# Check whether the directory CGRAExec exists
+#echo "passed LLVMCond"
+if [ -f "CondDDGGen.bc" ]; then
+  echo "found CondDDGGen.bc"
+else
+  echo "No CondDDGGen.bc found check llvm pass"
+fi
+ 
+llvm-dis CondDDGGen.bc -o CondDDGGen.ll
+cp CondDDGGen.bc $name.bc
+
 if [ -d "CGRAExec" ]; then
-	$llvmbuild/bin/opt -load $llvmbuild/lib/LLVMInvokeCGRA.so -InvokeCGRA temp.bc -o temp1.bc
-	llvm-dis temp1.bc -o temporaryIR.ll
-	$llvmbuild/bin/opt -load $llvmbuild/lib/LLVMCGRAGen.so -CGRAGen temp1.bc -o $name.bc
+	echo "CGRAGen Pass" 
+        opt -enable-new-pm=0 -load ${install_path}/lib/LLVMCGRAGen.so -CGRAGen CondDDGGen.bc -o CGRAGen.bc
+    	echo "CGRAGen Pass Complete"
+
 fi
 
-exit
+# Check whether the directory CGRAExec exists
+#if [ -d "CGRAExec" ]; then
+#    echo "InvokeCGRA Pass" 
+#	opt -enable-new-pm=0 -load ${install_path}/lib/LLVMInvokeCGRA.so -InvokeCGRA CondDDGGen.bc -o InvokeCGRA.bc
+#	llvm-dis InvokeCGRA.bc -o InvokeCGRA.ll
+#    echo "CGRAGen Pass" 
+#	opt -enable-new-pm=0 -load ${install_path}/lib/LLVMCGRAGen.so -CGRAGen InvokeCGRA.bc -o CGRAGen.bc
+#    echo "CGRAGen Pass Complete"
+#fi
+exit 0

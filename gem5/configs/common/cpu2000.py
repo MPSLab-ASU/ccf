@@ -23,8 +23,9 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Nathan Binkert
+
+from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import sys
@@ -91,13 +92,13 @@ class Benchmark(object):
         try:
             func = getattr(self.__class__, input_set)
         except AttributeError:
-            raise AttributeError, \
-                  'The benchmark %s does not have the %s input set' % \
-                  (self.name, input_set)
+            raise AttributeError(
+                'The benchmark %s does not have the %s input set' % \
+                (self.name, input_set))
 
         executable = joinpath(spec_dist, 'binaries', isa, os, self.binary)
         if not isfile(executable):
-            raise AttributeError, '%s not found' % executable
+            raise AttributeError('%s not found' % executable)
         self.executable = executable
 
         # root of tree for input & output data files
@@ -111,7 +112,7 @@ class Benchmark(object):
         self.input_set = input_set
 
         if not isdir(inputs_dir):
-            raise AttributeError, '%s not found' % inputs_dir
+            raise AttributeError('%s not found' % inputs_dir)
 
         self.inputs_dir = [ inputs_dir ]
         if isdir(all_dir):
@@ -131,8 +132,8 @@ class Benchmark(object):
 
         func(self, isa, os)
 
-    def makeLiveProcessArgs(self, **kwargs):
-        # set up default args for LiveProcess object
+    def makeProcessArgs(self, **kwargs):
+        # set up default args for Process object
         process_args = {}
         process_args['cmd'] = [ self.name ] + self.args
         process_args['executable'] = self.executable
@@ -147,11 +148,11 @@ class Benchmark(object):
 
         return process_args
 
-    def makeLiveProcess(self, **kwargs):
-        process_args = self.makeLiveProcessArgs(**kwargs)
+    def makeProcess(self, **kwargs):
+        process_args = self.makeProcessArgs(**kwargs)
 
         # figure out working directory: use m5's outdir unless
-        # overridden by LiveProcess's cwd param
+        # overridden by Process's cwd param
         cwd = process_args.get('cwd')
 
         if not cwd:
@@ -163,9 +164,9 @@ class Benchmark(object):
         # copy input files to working directory
         for d in self.inputs_dir:
             copyfiles(d, cwd)
-        # generate LiveProcess object
-        from m5.objects import LiveProcess
-        return LiveProcess(**process_args)
+        # generate Process object
+        from m5.objects import Process
+        return Process(**process_args)
 
     def __str__(self):
         return self.name
@@ -663,12 +664,12 @@ class vortex(Benchmark):
     stdin = None
 
     def __init__(self, isa, os, input_set):
-        if (isa == 'alpha' or isa == 'arm'):
+        if (isa in ('arm', 'thumb', 'aarch64')):
             self.endian = 'lendian'
         elif (isa == 'sparc' or isa == 'sparc32'):
             self.endian = 'bendian'
         else:
-            raise AttributeError, "unknown ISA %s" % isa
+            raise AttributeError("unknown ISA %s" % isa)
 
         super(vortex, self).__init__(isa, os, input_set)
 
@@ -747,8 +748,8 @@ if __name__ == '__main__':
     from pprint import pprint
     for bench in all:
         for input_set in 'ref', 'test', 'train':
-            print 'class: %s' % bench.__name__
-            x = bench('alpha', 'tru64', input_set)
-            print '%s: %s' % (x, input_set)
-            pprint(x.makeLiveProcessArgs())
-            print
+            print('class: %s' % bench.__name__)
+            x = bench('x86', 'linux', input_set)
+            print('%s: %s' % (x, input_set))
+            pprint(x.makeProcessArgs())
+            print()

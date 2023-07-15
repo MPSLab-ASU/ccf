@@ -38,13 +38,12 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Nathan Binkert
- *          Sascha Bischoff
  */
 
 // This file will contain default statistics for the simulator that
 // don't really belong to a specific simulator object
+
+#include "sim/stat_control.hh"
 
 #include <fstream>
 #include <iostream>
@@ -56,7 +55,6 @@
 #include "base/time.hh"
 #include "cpu/base.hh"
 #include "sim/global_event.hh"
-#include "sim/stat_control.hh"
 
 using namespace std;
 
@@ -71,15 +69,6 @@ Time statTime(true);
 Tick startTick;
 
 GlobalEvent *dumpEvent;
-
-struct SimTicksReset : public Callback
-{
-    void process()
-    {
-        statTime.setTimer();
-        startTick = curTick();
-    }
-};
 
 double
 statElapsedTime()
@@ -102,8 +91,6 @@ statFinalTick()
 {
     return curTick();
 }
-
-SimTicksReset simTicksReset;
 
 struct Global
 {
@@ -157,8 +144,8 @@ Global::Global()
     finalTick
         .functor(statFinalTick)
         .name("final_tick")
-        .desc("Number of ticks from beginning of simulation \
-(restored from checkpoints and never reset)")
+        .desc("Number of ticks from beginning of simulation "
+              "(restored from checkpoints and never reset)")
         ;
 
     hostInstRate
@@ -200,7 +187,10 @@ Global::Global()
     hostOpRate = simOps / hostSeconds;
     hostTickRate = simTicks / hostSeconds;
 
-    registerResetCallback(&simTicksReset);
+    registerResetCallback([]() {
+        statTime.setTimer();
+        startTick = curTick();
+    });
 }
 
 void

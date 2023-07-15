@@ -24,8 +24,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Rick Strong
  */
 
 #ifndef __ARCH_MIPS_INTERRUPT_HH__
@@ -33,12 +31,12 @@
 
 #include <string>
 
+#include "arch/generic/interrupts.hh"
 #include "arch/mips/faults.hh"
 #include "base/compiler.hh"
-#include "base/misc.hh"
+#include "base/logging.hh"
 #include "params/MipsInterrupts.hh"
 #include "sim/serialize.hh"
-#include "sim/sim_object.hh"
 
 class BaseCPU;
 class Checkpoint;
@@ -46,7 +44,7 @@ class Checkpoint;
 namespace MipsISA
 {
 
-class Interrupts : public SimObject
+class Interrupts : public BaseInterrupts
 {
   public:
     typedef MipsInterruptsParams Params;
@@ -57,14 +55,7 @@ class Interrupts : public SimObject
         return dynamic_cast<const Params *>(_params);
     }
 
-    Interrupts(Params * p) : SimObject(p)
-    {
-        newInfoSet = false;
-    }
-
-    void
-    setCPU(BaseCPU *_cpu)
-    {}
+    Interrupts(Params * p) : BaseInterrupts(p) {}
 
     //  post(int int_num, int index) is responsible
     //  for posting an interrupt. It sets a bit
@@ -72,8 +63,8 @@ class Interrupts : public SimObject
     //  MIPS register Cause is updated by updateIntrInfo
     //  which is called by checkInterrupts
     //
-    void post(int int_num, ThreadContext *tc);
-    void post(int int_num, int index);
+    void post(int int_num);
+    void post(int int_num, int index) override;
 
     // clear(int int_num, int index) is responsible
     //  for clearing an interrupt. It clear a bit
@@ -81,8 +72,8 @@ class Interrupts : public SimObject
     //  MIPS register Cause is updated by updateIntrInfo
     //  which is called by checkInterrupts
     //
-    void clear(int int_num, ThreadContext* tc);
-    void clear(int int_num, int index);
+    void clear(int int_num);
+    void clear(int int_num, int index) override;
 
     //  clearAll() is responsible
     //  for clearing all interrupts. It clears all bits
@@ -90,48 +81,36 @@ class Interrupts : public SimObject
     //  MIPS register Cause is updated by updateIntrInfo
     //  which is called by checkInterrupts
     //
-    void clearAll(ThreadContext *tc);
-    void clearAll();
+    void clearAll() override;
 
-    // getInterrupt(ThreadContext * tc) checks if an interrupt
+    // getInterrupt() checks if an interrupt
     //  should be returned. It ands the interrupt mask and
     //  and interrupt pending bits to see if one exists. It
     //  also makes sure interrupts are enabled (IE) and
     //  that ERL and ERX are not set
     //
-    Fault getInterrupt(ThreadContext *tc);
+    Fault getInterrupt() override;
 
-    // updateIntrInfo(ThreadContext *tc) const syncs the
+    // updateIntrInfo() const syncs the
     //  MIPS cause register with the instatus variable. instatus
     //  is essentially a copy of the MIPS cause[IP7:IP0]
     //
-    void updateIntrInfo(ThreadContext *tc) const;
-    bool interruptsPending(ThreadContext *tc) const;
-    bool onCpuTimerInterrupt(ThreadContext *tc) const;
-
-    bool
-    checkInterrupts(ThreadContext *tc) const
-    {
-        return interruptsPending(tc);
-    }
-
+    void updateIntrInfo() override;
+    bool interruptsPending() const;
+    bool onCpuTimerInterrupt() const;
+    bool checkInterrupts() const override;
 
     void
-    serialize(std::ostream &os)
+    serialize(CheckpointOut &cp) const override
     {
         fatal("Serialization of Interrupts Unimplemented for MIPS");
     }
 
     void
-    unserialize(Checkpoint *cp, const std::string &section)
+    unserialize(CheckpointIn &cp) override
     {
         fatal("Unserialization of Interrupts Unimplemented for MIPS");
     }
-
-  private:
-    bool newInfoSet;
-    int newIpl;
-    int newSummary;
 };
 
 }

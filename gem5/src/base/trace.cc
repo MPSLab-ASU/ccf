@@ -1,4 +1,7 @@
 /*
+ * Copyright (c) 2014, 2019 ARM Limited
+ * All rights reserved
+ *
  * Copyright (c) 2001-2006 The Regents of The University of Michigan
  * All rights reserved.
  *
@@ -24,128 +27,144 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Nathan Binkert
- *          Steve Reinhardt
  */
+
+#include "base/trace.hh"
 
 #include <cctype>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <string>
 
-#include "base/misc.hh"
+#include "base/atomicio.hh"
+#include "base/debug.hh"
+#include "base/logging.hh"
 #include "base/output.hh"
 #include "base/str.hh"
-#include "base/trace.hh"
-#include "base/varargs.hh"
+#include "debug/FmtFlag.hh"
+#include "debug/FmtStackTrace.hh"
+#include "debug/FmtTicksOff.hh"
+#include "sim/backtrace.hh"
 
-using namespace std;
+const std::string &name()
+{
+    static const std::string default_name("global");
 
-namespace Trace {
+    return default_name;
+}
 
-const string DefaultName("global");
-bool enabled = false;
+namespace Trace
+{
 
-//
-// This variable holds the output stream for debug information.  Other
-// than setting up/redirecting this stream, do *NOT* reference this
-// directly; use DebugOut() (see below) to access this stream for
-// output.
-//
-ostream *dprintf_stream = &cerr;
-ostream &
+// This variable holds the output logger for debug information.  Other
+// than setting up/redirecting this logger, do *NOT* reference this
+// directly
+
+Logger *debug_logger = NULL;
+
+Logger *
+getDebugLogger()
+{
+    /* Set a default logger to cerr when no other logger is set */
+    if (!debug_logger)
+        debug_logger = new OstreamLogger(std::cerr);
+
+    return debug_logger;
+}
+
+std::ostream &
 output()
 {
-    return *dprintf_stream;
+    return getDebugLogger()->getOstream();
 }
 
 void
-setOutput(const string &filename)
+setDebugLogger(Logger *logger)
 {
-    dprintf_stream = simout.find(filename);
-    if (!dprintf_stream)
-        dprintf_stream = simout.create(filename);
+    if (!logger)
+        warn("Trying to set debug logger to NULL\n");
+    else
+        debug_logger = logger;
+}
+
+void
+enable()
+{
+    Debug::Flag::globalEnable();
+}
+
+void
+disable()
+{
+    Debug::Flag::globalDisable();
 }
 
 ObjectMatch ignore;
 
+
 void
-dprintf(Tick when, const std::string &name, const char *format,
-        CPRINTF_DEFINITION)
+Logger::dump(Tick when, const std::string &name,
+         const void *d, int len, const std::string &flag)
 {
     if (!name.empty() && ignore.match(name))
         return;
-
-    std::ostream &os = *dprintf_stream;
-
-    string fmt = "";
-    CPrintfArgsList args(VARARGS_ALLARGS);
-
-    if (!name.empty()) {
-        fmt = "%s: " + fmt;
-        args.push_front(name);
-    }
-
-    if (when != (Tick)-1) {
-        fmt = "%7d: " + fmt;
-        args.push_front(when);
-    }
-
-    fmt += format;
-
-    ccprintf(os, fmt.c_str(), args);
-    os.flush();
-}
-
-void
-dump(Tick when, const std::string &name, const void *d, int len)
-{
-    if (!name.empty() && ignore.match(name))
-        return;
-
-    std::ostream &os = *dprintf_stream;
-
-    string fmt = "";
-    CPrintfArgsList args;
-
-    if (!name.empty()) {
-        fmt = "%s: " + fmt;
-        args.push_front(name);
-    }
-
-    if (when != (Tick)-1) {
-        fmt = "%7d: " + fmt;
-        args.push_front(when);
-    }
 
     const char *data = static_cast<const char *>(d);
     int c, i, j;
+
     for (i = 0; i < len; i += 16) {
-        ccprintf(os, fmt, args);
-        ccprintf(os, "%08x  ", i);
+        std::ostringstream line;
+
+        ccprintf(line, "%08x  ", i);
         c = len - i;
         if (c > 16) c = 16;
 
         for (j = 0; j < c; j++) {
-            ccprintf(os, "%02x ", data[i + j] & 0xff);
+            ccprintf(line, "%02x ", data[i + j] & 0xff);
             if ((j & 0xf) == 7 && j > 0)
-                ccprintf(os, " ");
+                ccprintf(line, " ");
         }
 
         for (; j < 16; j++)
-            ccprintf(os, "   ");
-        ccprintf(os, "  ");
+            ccprintf(line, "   ");
+        ccprintf(line, "  ");
 
         for (j = 0; j < c; j++) {
             int ch = data[i + j] & 0x7f;
-            ccprintf(os, "%c", (char)(isprint(ch) ? ch : ' '));
+            ccprintf(line, "%c", (char)(isprint(ch) ? ch : ' '));
         }
 
-        ccprintf(os, "\n");
+        ccprintf(line, "\n");
+        logMessage(when, name, flag, line.str());
 
         if (c < 16)
             break;
+    }
+}
+
+void
+OstreamLogger::logMessage(Tick when, const std::string &name,
+        const std::string &flag, const std::string &message)
+{
+    if (!name.empty() && ignore.match(name))
+        return;
+
+    if (!DTRACE(FmtTicksOff) && (when != MaxTick))
+        ccprintf(stream, "%7d: ", when);
+
+    if (DTRACE(FmtFlag) && !flag.empty())
+        stream << flag << ": ";
+
+    if (!name.empty())
+        stream << name << ": ";
+
+    stream << message;
+    stream.flush();
+
+    if (DTRACE(FmtStackTrace)) {
+        print_backtrace();
+        STATIC_ERR("\n");
     }
 }
 

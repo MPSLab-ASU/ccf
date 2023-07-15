@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python2.7
 
 # Copyright (c) 2010 Advanced Micro Devices, Inc.
 # All rights reserved.
@@ -55,11 +55,11 @@
 #
 # Examples:
 #
-# util/checkpoint-tester.py -i 400000 -- build/ALPHA_SE/m5.opt \
-#      configs/example/se.py -c tests/test-progs/hello/bin/alpha/tru64/hello \
+# util/checkpoint-tester.py -i 400000 -- build/<ISA>/m5.opt \
+#      configs/example/se.py -c tests/test-progs/hello/bin/<isa>/tru64/hello \
 #      --output=progout --errout=progerr
 #
-# util/checkpoint-tester.py -i 200000000000 -- build/ALPHA_FS/m5.opt \
+# util/checkpoint-tester.py -i 200000000000 -- build/<ISA>/m5.opt \
 #      configs/example/fs.py --script tests/halt.sh
 #
 
@@ -109,7 +109,7 @@ for dir in dirs:
         cpts.append(int(match.group(1)))
 
 cpts.sort()
-        
+
 # We test by loading checkpoint N, simulating to (and dumping at)
 # checkpoint N+1, then comparing the resulting checkpoint with the
 # original checkpoint N+1.  Thus the number of tests we can run is one
@@ -132,4 +132,4 @@ for i in range(1, len(cpts)):
     print diffout.read(),
     diffout.close()
 
-        
+

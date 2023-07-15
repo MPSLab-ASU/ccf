@@ -1,4 +1,0 @@
-__func__: +[A foo]
-__FUNCTION__: +[A foo]
-__PRETTY_FUNCTION__: +[A foo]
-exit 0

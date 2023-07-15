@@ -24,15 +24,12 @@
  * ARISING OUT OF OR IN CONNECTION WITH THE USE OF THE SOFTWARE, EVEN
  * IF IT HAS BEEN OR IS HEREAFTER ADVISED OF THE POSSIBILITY OF SUCH
  * DAMAGES.
- *
- * Authors: Ali G. Saidi
- *          Andrew L. Schultz
- *          Miguel J. Serrano
  */
 
-#include "base/misc.hh"
-#include "debug/Intel8254Timer.hh"
 #include "dev/intel_8254_timer.hh"
+
+#include "base/logging.hh"
+#include "debug/Intel8254Timer.hh"
 
 using namespace std;
 
@@ -71,38 +68,46 @@ Intel8254Timer::writeControl(const CtrlReg data)
 }
 
 void
-Intel8254Timer::serialize(const string &base, ostream &os)
+Intel8254Timer::serialize(const string &base, CheckpointOut &cp) const
 {
     // serialize the counters
-    counter[0]->serialize(base + ".counter0", os);
-    counter[1]->serialize(base + ".counter1", os);
-    counter[2]->serialize(base + ".counter2", os);
+    counter[0]->serialize(base + ".counter0", cp);
+    counter[1]->serialize(base + ".counter1", cp);
+    counter[2]->serialize(base + ".counter2", cp);
 }
 
 void
-Intel8254Timer::unserialize(const string &base, Checkpoint *cp,
-        const string &section)
+Intel8254Timer::unserialize(const string &base, CheckpointIn &cp)
 {
     // unserialze the counters
-    counter[0]->unserialize(base + ".counter0", cp, section);
-    counter[1]->unserialize(base + ".counter1", cp, section);
-    counter[2]->unserialize(base + ".counter2", cp, section);
+    counter[0]->unserialize(base + ".counter0", cp);
+    counter[1]->unserialize(base + ".counter1", cp);
+    counter[2]->unserialize(base + ".counter2", cp);
+}
+
+void
+Intel8254Timer::startup()
+{
+    counter[0]->startup();
+    counter[1]->startup();
+    counter[2]->startup();
 }
 
 Intel8254Timer::Counter::Counter(Intel8254Timer *p,
         const string &name, unsigned int _num)
-    : _name(name), num(_num), event(this), initial_count(0),
-      latched_count(0), period(0), mode(0), output_high(false),
-      latch_on(false), read_byte(LSB), write_byte(LSB), parent(p)
+    : _name(name), num(_num), event(this), running(false),
+      initial_count(0), latched_count(0), period(0), mode(0),
+      output_high(false), latch_on(false), read_byte(LSB),
+      write_byte(LSB), parent(p)
 {
-
+    offset = period * event.getInterval();
 }
 
 void
 Intel8254Timer::Counter::latchCount()
 {
     // behave like a real latch
-    if(!latch_on) {
+    if (!latch_on) {
         latch_on = true;
         read_byte = LSB;
         latched_count = currentCount();
@@ -179,7 +184,9 @@ Intel8254Timer::Counter::write(const uint8_t data)
         else
             period = initial_count;
 
-        if (period > 0)
+        offset = period * event.getInterval();
+
+        if (running && (period > 0))
             event.setTo(period);
 
         write_byte = LSB;
@@ -197,7 +204,7 @@ Intel8254Timer::Counter::setRW(int rw_val)
 void
 Intel8254Timer::Counter::setMode(int mode_val)
 {
-    if(mode_val != InitTc && mode_val != RateGen &&
+    if (mode_val != InitTc && mode_val != RateGen &&
        mode_val != SquareWave)
         panic("PIT mode %#x is not implemented: \n", mode_val);
 
@@ -218,42 +225,49 @@ Intel8254Timer::Counter::outputHigh()
 }
 
 void
-Intel8254Timer::Counter::serialize(const string &base, ostream &os)
+Intel8254Timer::Counter::serialize(const string &base, CheckpointOut &cp) const
 {
-    paramOut(os, base + ".initial_count", initial_count);
-    paramOut(os, base + ".latched_count", latched_count);
-    paramOut(os, base + ".period", period);
-    paramOut(os, base + ".mode", mode);
-    paramOut(os, base + ".output_high", output_high);
-    paramOut(os, base + ".latch_on", latch_on);
-    paramOut(os, base + ".read_byte", read_byte);
-    paramOut(os, base + ".write_byte", write_byte);
+    paramOut(cp, base + ".initial_count", initial_count);
+    paramOut(cp, base + ".latched_count", latched_count);
+    paramOut(cp, base + ".period", period);
+    paramOut(cp, base + ".mode", mode);
+    paramOut(cp, base + ".output_high", output_high);
+    paramOut(cp, base + ".latch_on", latch_on);
+    paramOut(cp, base + ".read_byte", read_byte);
+    paramOut(cp, base + ".write_byte", write_byte);
 
-    Tick event_tick = 0;
+    Tick event_tick_offset = 0;
     if (event.scheduled())
-        event_tick = event.when();
-    paramOut(os, base + ".event_tick", event_tick);
+        event_tick_offset = event.when() - curTick();
+    paramOut(cp, base + ".event_tick_offset", event_tick_offset);
 }
 
 void
-Intel8254Timer::Counter::unserialize(const string &base, Checkpoint *cp,
-                                         const string &section)
+Intel8254Timer::Counter::unserialize(const string &base, CheckpointIn &cp)
 {
-    paramIn(cp, section, base + ".initial_count", initial_count);
-    paramIn(cp, section, base + ".latched_count", latched_count);
-    paramIn(cp, section, base + ".period", period);
-    paramIn(cp, section, base + ".mode", mode);
-    paramIn(cp, section, base + ".output_high", output_high);
-    paramIn(cp, section, base + ".latch_on", latch_on);
-    paramIn(cp, section, base + ".read_byte", read_byte);
-    paramIn(cp, section, base + ".write_byte", write_byte);
+    paramIn(cp, base + ".initial_count", initial_count);
+    paramIn(cp, base + ".latched_count", latched_count);
+    paramIn(cp, base + ".period", period);
+    paramIn(cp, base + ".mode", mode);
+    paramIn(cp, base + ".output_high", output_high);
+    paramIn(cp, base + ".latch_on", latch_on);
+    paramIn(cp, base + ".read_byte", read_byte);
+    paramIn(cp, base + ".write_byte", write_byte);
 
-    Tick event_tick = 0;
-    if (event.scheduled())
-        parent->deschedule(event);
-    paramIn(cp, section, base + ".event_tick", event_tick);
-    if (event_tick)
-        parent->schedule(event, event_tick);
+    Tick event_tick_offset = 0;
+    assert(!event.scheduled());
+    paramIn(cp, base + ".event_tick_offset", event_tick_offset);
+    offset = event_tick_offset;
+}
+
+void
+Intel8254Timer::Counter::startup()
+{
+    running = true;
+    if ((period > 0) && (offset > 0))
+    {
+        parent->schedule(event, curTick() + offset);
+    }
 }
 
 Intel8254Timer::Counter::CounterEvent::CounterEvent(Counter* c_ptr)
@@ -302,3 +316,10 @@ Intel8254Timer::Counter::CounterEvent::description() const
 {
     return "Intel 8254 Interval timer";
 }
+
+Tick
+Intel8254Timer::Counter::CounterEvent::getInterval()
+{
+    return interval;
+}
+

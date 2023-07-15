@@ -24,10 +24,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Ali Saidi
- *          Andrew Schultz
- *          Miguel Serrano
  */
 
 /** @file
@@ -51,9 +47,6 @@
  */
 class MaltaIO : public BasicPioDevice
 {
-  private:
-    struct tm tm;
-
   protected:
 
     class RTC : public MC146818
@@ -123,8 +116,8 @@ class MaltaIO : public BasicPioDevice
      */
     MaltaIO(const Params *p);
 
-    virtual Tick read(PacketPtr pkt);
-    virtual Tick write(PacketPtr pkt);
+    Tick read(PacketPtr pkt) override;
+    Tick write(PacketPtr pkt) override;
 
 
     /** Post an Interrupt to the CPU */
@@ -133,18 +126,13 @@ class MaltaIO : public BasicPioDevice
     /** Clear an Interrupt to the CPU */
     void clearIntr(uint8_t interrupt);
 
-    /**
-     * Serialize this object to the given output stream.
-     * @param os The stream to serialize to.
-     */
-    virtual void serialize(std::ostream &os);
+    void serialize(CheckpointOut &cp) const override;
+    void unserialize(CheckpointIn &cp) override;
 
     /**
-     * Reconstruct the state of this object from a checkpoint.
-     * @param cp The checkpoint use.
-     * @param section The section name of this object
+     * Start running.
      */
-    virtual void unserialize(Checkpoint *cp, const std::string &section);
+    void startup() override;
 
 };
 

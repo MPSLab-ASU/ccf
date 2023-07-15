@@ -24,26 +24,22 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Gabe Black
  */
 
 #ifndef __ARCH_POWER_INTERRUPT_HH__
 #define __ARCH_POWER_INTERRUPT_HH__
 
-#include "base/misc.hh"
+#include "arch/generic/interrupts.hh"
+#include "base/logging.hh"
 #include "params/PowerInterrupts.hh"
-#include "sim/sim_object.hh"
 
+class BaseCPU;
 class ThreadContext;
 
 namespace PowerISA {
 
-class Interrupts : public SimObject
+class Interrupts : public BaseInterrupts
 {
-  private:
-    BaseCPU * cpu;
-
   public:
     typedef PowerInterruptsParams Params;
 
@@ -53,14 +49,7 @@ class Interrupts : public SimObject
         return dynamic_cast<const Params *>(_params);
     }
 
-    Interrupts(Params * p) : SimObject(p), cpu(NULL)
-    {}
-
-    void
-    setCPU(BaseCPU * _cpu)
-    {
-        cpu = _cpu;
-    }
+    Interrupts(Params *p) : BaseInterrupts(p) {}
 
     void
     post(int int_num, int index)
@@ -81,19 +70,20 @@ class Interrupts : public SimObject
     }
 
     bool
-    checkInterrupts(ThreadContext *tc) const
+    checkInterrupts() const
     {
         panic("Interrupts::checkInterrupts not implemented.\n");
     }
 
     Fault
-    getInterrupt(ThreadContext *tc)
+    getInterrupt()
     {
+        assert(checkInterrupts());
         panic("Interrupts::getInterrupt not implemented.\n");
     }
 
     void
-    updateIntrInfo(ThreadContext *tc)
+    updateIntrInfo()
     {
         panic("Interrupts::updateIntrInfo not implemented.\n");
     }

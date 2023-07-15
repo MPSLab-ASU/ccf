@@ -1,0 +1,23 @@
+Mapping has started
+Curerent II: 3	rec_MII: 3
+
+Trying to schedule DDG at II: 3
+7
+7
+Feasible II is 3	Schedule Len is 2
+
+II after scheduling is: 3
+Start Placement for II = 3
+Node 0 is scheduled at 2 ASAP: 0  ALAP: 2 Mod: 2
+Node 1 is scheduled at 2 ASAP: 0  ALAP: 2 Mod: 2
+Node 2 is scheduled at 3 ASAP: 1  ALAP: 3 Mod: 0
+Node 3 is scheduled at 3 ASAP: 1  ALAP: 3 Mod: 0
+Node 4 is scheduled at 4 ASAP: 2  ALAP: 4 Mod: 1
+Node 5 is scheduled at 3 ASAP: 1  ALAP: 3 Mod: 0
+Node 6 is scheduled at 4 ASAP: 2  ALAP: 4 Mod: 1
+Graph has n = 112 vertices.
+Find a Clique of size at least k = 7
+Attempt total number 1, Clique Size: 7
+
+MII = 3	 Current II=3
+Mapping is completed

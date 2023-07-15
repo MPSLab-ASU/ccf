@@ -1,0 +1,152 @@
+2021-01-28  Eli Zaretskii  <eliz@gnu.org>
+
+	PR 4356
+	* windres.c (quot): Use double quotes to protect strings on
+	Windows platforms.
+
+2021-01-28  Eli Zaretskii  <eliz@gnu.org>
+
+	PR 27252
+	* bucomm.c (get_file_size): Add code to handle /dev/null on
+	Windows systems.
+	* elfedit.c (check_file): Likewise.
+
+2021-01-27  Nick Clifton  <nickc@redhat.com>
+
+	* objcopy.c (copy_main): Remove conditional control of the calls
+	to free, simplifying the code and making it easier to detect
+	typos.
+
+2021-01-26  Frederic Cambus  <fred@statdns.com>
+
+	* objcopy.c (copy_main): Fix a double free happening when both
+	--localize-symbols and --globalize-symbols options are invoked
+	together.
+
+2021-01-24  Nick Clifton  <nickc@redhat.com>
+
+	* README-how-to-make-a-release: Minor updates after the 2.36 release.
+
+2021-01-16  Alan Modra  <amodra@gmail.com>
+
+	* readelf.c (uncompress_section_contents): Tidy inflateEnd result test.
+
+2021-01-15  Alan Modra  <amodra@gmail.com>
+
+	PR 26539
+	* readelf.c (uncompress_section_contents): Always call inflateEnd.
+
+2021-01-14  Alexandre Oliva <oliva@gnu.org>
+
+	* MAINTAINERS: Update my email address.
+
+2021-01-14  Nick Clifton  <nickc@redhat.com>
+
+	* po/sv.po: Updated Swedish translation.
+
+2021-01-13  Alan Modra  <amodra@gmail.com>
+
+	* Makefile.in: Regenerate.
+	* doc/Makefile.in: Regenerate.
+
+2021-01-13  Zebediah Figura  <z.figura12@gmail.com>
+
+	PR 27037
+	* dlltool.c (i386_trampoline): Adjust %rsp immediately on entry
+	and before exit.
+	(i386_x64_trampoline): Add SEH annotations.
+	(struct mac): Add how_seh field.
+	(make_delay_head): If how_set field is true add SEh instructions.
+
+2021-01-12  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR binutils/26792
+	* configure.ac: Use GNU_MAKE_JOBSERVER.
+	* aclocal.m4: Regenerated.
+	* configure: Likewise.
+
+2021-01-12  Nick Clifton  <nickc@redhat.com>
+
+	* po/fr.po: Updated French translation.
+
+2021-01-11  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/27173
+	* configure: Regenerated.
+
+2021-01-11  Nick Clifton  <nickc@redhat.com>
+
+	* po/pt.po: Updated Portuguese translation.
+	* po/sr.po: Updated Serbian translation.
+	* po/uk.po: Updated Ukranian translation.
+
+2021-01-09  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* configure: Regenerated.
+
+2021-01-09  Nick Clifton  <nickc@redhat.com>
+
+	* configure: Regenerate.
+	* po/binutils.pot: Regenerate.
+
+2021-01-09  Nick Clifton  <nickc@redhat.com>
+
+	* 2.36 release branch crated.
+	* README-how-to-make-a-release: Add note about updating Makefiles
+	and libtool files.
+	* BRANCHES: Add binutils-2.36-branch.
+
+2021-01-09  Alan Modra  <amodra@gmail.com>
+
+	* configure: Regenerate.
+
+2021-01-07  Samuel Thibault  <samuel.thibault@gnu.org>
+
+	* configure: Regenerate.
+
+2021-01-07  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR 27109
+	* objcopy.c (copy_object): Handle section symbols for
+	non-relocatable inputs.
+	* testsuite/binutils-all/readelf.exp (readelf_test): Check
+	is_elf_unused_section_symbols.
+	* testsuite/binutils-all/readelf.s-64: Updated.
+	* testsuite/binutils-all/readelf.ss: Likewise.
+	* testsuite/binutils-all/readelf.ss-64: Likewise.
+	* testsuite/binutils-all/readelf.s-64-unused: New file.
+	* testsuite/binutils-all/readelf.ss-64-unused: Likewise.
+	* testsuite/binutils-all/readelf.ss-unused: Likewise.
+	* testsuite/lib/binutils-common.exp
+	(is_elf_unused_section_symbols): New proc.
+
+2021-01-06  Reuben Thomas  <rrt@sc3d.org>
+
+	* binutils/readelf.c: Correct grammar in comment.
+
+2021-01-01  Nicolas Boulenguez  <nicolas@debian.org>
+
+	* coffgrok.c (do_type): Correct spelling of auxiliary in errors.
+	* doc/binutils.texi: Correct grammar.
+	* readelf.c (process_version_sections): Correct spelling of auxiliary
+	in warning.
+	* testsuite/binutils-all/vax/objdump.exp: Comment grammar fix.
+
+2021-01-01  Alan Modra  <amodra@gmail.com>
+
+	Update year range in copyright notice of all files.
+
+For older changes see ChangeLog-2020
+
+Copyright (C) 2021 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+Local Variables:
+mode: change-log
+left-margin: 8
+fill-column: 74
+version-control: never
+End:

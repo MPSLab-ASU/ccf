@@ -1,4 +1,16 @@
 /*
+ * Copyright (c) 2017, 2020 ARM Limited
+ * All rights reserved
+ *
+ * The license below extends only to copyright in the software and shall
+ * not be construed as granting a license to any other intellectual
+ * property including but not limited to intellectual property relating
+ * to a hardware implementation of the functionality of the software
+ * licensed hereunder.  You may use the software subject to the license
+ * terms below provided that you ensure that this notice is replicated
+ * unmodified and in its entirety in all distributions of the software,
+ * modified or unmodified, in source code or in binary form.
+ *
  * Copyright (c) 2003-2005 The Regents of The University of Michigan
  * Copyright (c) 2013 Advanced Micro Devices, Inc.
  * All rights reserved.
@@ -25,47 +37,42 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Steve Reinhardt
  */
 
 #ifndef __CPU_STATIC_INST_HH__
 #define __CPU_STATIC_INST_HH__
 
 #include <bitset>
+#include <memory>
 #include <string>
 
 #include "arch/registers.hh"
 #include "arch/types.hh"
-#include "base/misc.hh"
+#include "base/logging.hh"
 #include "base/refcnt.hh"
 #include "base/types.hh"
 #include "config/the_isa.hh"
 #include "cpu/op_class.hh"
+#include "cpu/reg_class.hh"
 #include "cpu/static_inst_fwd.hh"
 #include "cpu/thread_context.hh"
-#include "sim/fault_fwd.hh"
+#include "enums/StaticInstFlags.hh"
+#include "sim/byteswap.hh"
 
 // forward declarations
 class Packet;
 
-struct O3CPUImpl;
-template <class Impl> class BaseO3DynInst;
-typedef BaseO3DynInst<O3CPUImpl> O3DynInst;
-class InOrderDynInst;
+class ExecContext;
 
-class CheckerCPU;
-class FastCPU;
-class AtomicSimpleCPU;
-class TimingSimpleCPU;
-class InorderCPU;
-class TimingCGRA;
+namespace Loader
+{
 class SymbolTable;
-class AtomicCGRA;
+} // namespace Loader
 
-namespace Trace {
-    class InstRecord;
-}
+namespace Trace
+{
+class InstRecord;
+} // namespace Trace
 
 /**
  * Base, ISA-independent static instruction class.
@@ -75,102 +82,21 @@ namespace Trace {
  * solely on these flags can process instructions without being
  * recompiled for multiple ISAs.
  */
-class StaticInst : public RefCounted
+class StaticInst : public RefCounted, public StaticInstFlags
 {
   public:
     /// Binary extended machine instruction type.
     typedef TheISA::ExtMachInst ExtMachInst;
-    /// Logical register index type.
-    typedef TheISA::RegIndex RegIndex;
 
     enum {
         MaxInstSrcRegs = TheISA::MaxInstSrcRegs,        //< Max source regs
         MaxInstDestRegs = TheISA::MaxInstDestRegs       //< Max dest regs
     };
 
-    /// Set of boolean static instruction properties.
-    ///
-    /// Notes:
-    /// - The IsInteger and IsFloating flags are based on the class of
-    /// registers accessed by the instruction.  Although most
-    /// instructions will have exactly one of these two flags set, it
-    /// is possible for an instruction to have neither (e.g., direct
-    /// unconditional branches, memory barriers) or both (e.g., an
-    /// FP/int conversion).
-    /// - If IsMemRef is set, then exactly one of IsLoad or IsStore
-    /// will be set.
-    /// - If IsControl is set, then exactly one of IsDirectControl or
-    /// IsIndirect Control will be set, and exactly one of
-    /// IsCondControl or IsUncondControl will be set.
-    /// - IsSerializing, IsMemBarrier, and IsWriteBarrier are
-    /// implemented as flags since in the current model there's no
-    /// other way for instructions to inject behavior into the
-    /// pipeline outside of fetch.  Once we go to an exec-in-exec CPU
-    /// model we should be able to get rid of these flags and
-    /// implement this behavior via the execute() methods.
-    ///
-    enum Flags {
-        IsNop,          ///< Is a no-op (no effect at all).
-
-        IsInteger,      ///< References integer regs.
-        IsFloating,     ///< References FP regs.
-        IsCC,           ///< References CC regs.
-
-        IsMemRef,       ///< References memory (load, store, or prefetch).
-        IsLoad,         ///< Reads from memory (load or prefetch).
-        IsStore,        ///< Writes to memory.
-        IsStoreConditional,    ///< Store conditional instruction.
-        IsIndexed,      ///< Accesses memory with an indexed address computation
-        IsInstPrefetch, ///< Instruction-cache prefetch.
-        IsDataPrefetch, ///< Data-cache prefetch.
-
-        IsControl,              ///< Control transfer instruction.
-        IsDirectControl,        ///< PC relative control transfer.
-        IsIndirectControl,      ///< Register indirect control transfer.
-        IsCondControl,          ///< Conditional control transfer.
-        IsUncondControl,        ///< Unconditional control transfer.
-        IsCall,                 ///< Subroutine call.
-        IsReturn,               ///< Subroutine return.
-
-        IsCondDelaySlot,///< Conditional Delay-Slot Instruction
-
-        IsThreadSync,   ///< Thread synchronization operation.
-
-        IsSerializing,  ///< Serializes pipeline: won't execute until all
-                        /// older instructions have committed.
-        IsSerializeBefore,
-        IsSerializeAfter,
-        IsMemBarrier,   ///< Is a memory barrier
-        IsWriteBarrier, ///< Is a write barrier
-        IsReadBarrier,  ///< Is a read barrier
-        IsERET, /// <- Causes the IFU to stall (MIPS ISA)
-
-        IsNonSpeculative, ///< Should not be executed speculatively
-        IsQuiesce,      ///< Is a quiesce instruction
-
-        IsIprAccess,    ///< Accesses IPRs
-        IsUnverifiable, ///< Can't be verified by a checker
-
-        IsSyscall,      ///< Causes a system call to be emulated in syscall
-                        /// emulation mode.
-
-        //Flags for microcode
-        IsMacroop,      ///< Is a macroop containing microops
-        IsMicroop,      ///< Is a microop
-        IsDelayedCommit,        ///< This microop doesn't commit right away
-        IsLastMicroop,  ///< This microop ends a microop sequence
-        IsFirstMicroop, ///< This microop begins a microop sequence
-        //This flag doesn't do anything yet
-        IsMicroBranch,  ///< This microop branches within the microcode for a macroop
-        IsDspOp,
-        IsSquashAfter, ///< Squash all uncommitted state after executed
-        NumFlags
-    };
-
   protected:
 
     /// Flag values for this instruction.
-    std::bitset<NumFlags> flags;
+    std::bitset<Num_Flags> flags;
 
     /// See opClass().
     OpClass _opClass;
@@ -189,13 +115,21 @@ class StaticInst : public RefCounted
     int8_t _numCCDestRegs;
     //@}
 
+    /** To use in architectures with vector register file. */
+    /** @{ */
+    int8_t _numVecDestRegs;
+    int8_t _numVecElemDestRegs;
+    int8_t _numVecPredDestRegs;
+    /** @} */
+
   public:
 
     /// @name Register information.
-    /// The sum of numFPDestRegs() and numIntDestRegs() equals
-    /// numDestRegs().  The former two functions are used to track
-    /// physical register usage for machines with separate int & FP
-    /// reg files.
+    /// The sum of numFPDestRegs(), numIntDestRegs(), numVecDestRegs(),
+    /// numVecElemDestRegs() and numVecPredDestRegs() equals numDestRegs().
+    /// The former two functions are used to track physical register usage for
+    /// machines with separate int & FP reg files, the next three are for
+    /// machines with vector and predicate register files.
     //@{
     /// Number of source registers.
     int8_t numSrcRegs()  const { return _numSrcRegs; }
@@ -205,6 +139,14 @@ class StaticInst : public RefCounted
     int8_t numFPDestRegs()  const { return _numFPDestRegs; }
     /// Number of integer destination regs.
     int8_t numIntDestRegs() const { return _numIntDestRegs; }
+    /// Number of vector destination regs.
+    int8_t numVecDestRegs() const { return _numVecDestRegs; }
+    /// Number of vector element destination regs.
+    int8_t numVecElemDestRegs() const { return _numVecElemDestRegs; }
+    /// Number of predicate destination regs.
+    int8_t numVecPredDestRegs() const { return _numVecPredDestRegs; }
+    /// Number of coprocesor destination regs.
+    int8_t numCCDestRegs() const { return _numCCDestRegs; }
     //@}
 
     /// @name Flag accessors.
@@ -218,6 +160,7 @@ class StaticInst : public RefCounted
     bool isMemRef()       const { return flags[IsMemRef]; }
     bool isLoad()         const { return flags[IsLoad]; }
     bool isStore()        const { return flags[IsStore]; }
+    bool isAtomic()       const { return flags[IsAtomic]; }
     bool isStoreConditional()     const { return flags[IsStoreConditional]; }
     bool isInstPrefetch() const { return flags[IsInstPrefetch]; }
     bool isDataPrefetch() const { return flags[IsDataPrefetch]; }
@@ -226,6 +169,7 @@ class StaticInst : public RefCounted
 
     bool isInteger()      const { return flags[IsInteger]; }
     bool isFloating()     const { return flags[IsFloating]; }
+    bool isVector()       const { return flags[IsVector]; }
     bool isCC()           const { return flags[IsCC]; }
 
     bool isControl()      const { return flags[IsControl]; }
@@ -258,8 +202,21 @@ class StaticInst : public RefCounted
     bool isFirstMicroop() const { return flags[IsFirstMicroop]; }
     //This flag doesn't do anything yet
     bool isMicroBranch() const { return flags[IsMicroBranch]; }
+    // hardware transactional memory
+    // HtmCmds must be identified as such in order
+    // to provide them with necessary memory ordering semantics.
+    bool isHtmStart() const { return flags[IsHtmStart]; }
+    bool isHtmStop() const { return flags[IsHtmStop]; }
+    bool isHtmCancel() const { return flags[IsHtmCancel]; }
+
+    bool
+    isHtmCmd() const
+    {
+        return isHtmStart() || isHtmStop() || isHtmCancel();
+    }
     //@}
 
+    void setFirstMicroop() { flags[IsFirstMicroop] = true; }
     void setLastMicroop() { flags[IsLastMicroop] = true; }
     void setDelayedCommit() { flags[IsDelayedCommit] = true; }
     void setFlag(Flags f) { flags[f] = true; }
@@ -270,34 +227,17 @@ class StaticInst : public RefCounted
 
     /// Return logical index (architectural reg num) of i'th destination reg.
     /// Only the entries from 0 through numDestRegs()-1 are valid.
-    RegIndex destRegIdx(int i) const { return _destRegIdx[i]; }
+    const RegId& destRegIdx(int i) const { return _destRegIdx[i]; }
 
     /// Return logical index (architectural reg num) of i'th source reg.
     /// Only the entries from 0 through numSrcRegs()-1 are valid.
-    RegIndex srcRegIdx(int i)  const { return _srcRegIdx[i]; }
+    const RegId& srcRegIdx(int i)  const { return _srcRegIdx[i]; }
 
     /// Pointer to a statically allocated "null" instruction object.
-    /// Used to give eaCompInst() and memAccInst() something to return
-    /// when called on non-memory instructions.
     static StaticInstPtr nullStaticInstPtr;
 
-    /**
-     * Memory references only: returns "fake" instruction representing
-     * the effective address part of the memory operation.  Used to
-     * obtain the dependence info (numSrcRegs and srcRegIdx[]) for
-     * just the EA computation.
-     */
-    virtual const
-    StaticInstPtr &eaCompInst() const { return nullStaticInstPtr; }
-
-    /**
-     * Memory references only: returns "fake" instruction representing
-     * the memory access part of the memory operation.  Used to
-     * obtain the dependence info (numSrcRegs and srcRegIdx[]) for
-     * just the memory access (not the EA computation).
-     */
-    virtual const
-    StaticInstPtr &memAccInst() const { return nullStaticInstPtr; }
+    /// Pointer to a statically allocated generic "nop" instruction object.
+    static StaticInstPtr nopStaticInstPtr;
 
     /// The binary machine instruction.
     const ExtMachInst machInst;
@@ -305,9 +245,9 @@ class StaticInst : public RefCounted
   protected:
 
     /// See destRegIdx().
-    RegIndex _destRegIdx[MaxInstDestRegs];
+    RegId _destRegIdx[MaxInstDestRegs];
     /// See srcRegIdx().
-    RegIndex _srcRegIdx[MaxInstSrcRegs];
+    RegId _srcRegIdx[MaxInstSrcRegs];
 
     /**
      * Base mnemonic (e.g., "add").  Used by generateDisassembly()
@@ -327,7 +267,7 @@ class StaticInst : public RefCounted
      * Internal function to generate disassembly string.
      */
     virtual std::string
-    generateDisassembly(Addr pc, const SymbolTable *symtab) const = 0;
+    generateDisassembly(Addr pc, const Loader::SymbolTable *symtab) const = 0;
 
     /// Constructor.
     /// It's important to initialize everything here to a sane
@@ -336,18 +276,28 @@ class StaticInst : public RefCounted
     /// instruction.
     StaticInst(const char *_mnemonic, ExtMachInst _machInst, OpClass __opClass)
         : _opClass(__opClass), _numSrcRegs(0), _numDestRegs(0),
-          _numFPDestRegs(0), _numIntDestRegs(0),
+          _numFPDestRegs(0), _numIntDestRegs(0), _numCCDestRegs(0),
+          _numVecDestRegs(0), _numVecElemDestRegs(0), _numVecPredDestRegs(0),
           machInst(_machInst), mnemonic(_mnemonic), cachedDisassembly(0)
     { }
 
   public:
     virtual ~StaticInst();
 
-/**
- * The execute() signatures are auto-generated by scons based on the
- * set of CPU models we are compiling in today.
- */
-#include "cpu/static_inst_exec_sigs.hh"
+    virtual Fault execute(ExecContext *xc,
+                          Trace::InstRecord *traceData) const = 0;
+
+    virtual Fault initiateAcc(ExecContext *xc,
+                              Trace::InstRecord *traceData) const
+    {
+        panic("initiateAcc not defined!");
+    }
+
+    virtual Fault completeAcc(Packet *pkt, ExecContext *xc,
+                              Trace::InstRecord *traceData) const
+    {
+        panic("completeAcc not defined!");
+    }
 
     virtual void advancePC(TheISA::PCState &pcState) const = 0;
 
@@ -388,10 +338,41 @@ class StaticInst : public RefCounted
      * should not be cached, this function should be overridden directly.
      */
     virtual const std::string &disassemble(Addr pc,
-        const SymbolTable *symtab = 0) const;
+        const Loader::SymbolTable *symtab=nullptr) const;
+
+    /**
+     * Print a separator separated list of this instruction's set flag
+     * names on the given stream.
+     */
+    void printFlags(std::ostream &outs, const std::string &separator) const;
 
     /// Return name of machine instruction
     std::string getName() { return mnemonic; }
+
+  protected:
+    template<typename T>
+    size_t
+    simpleAsBytes(void *buf, size_t max_size, const T &t)
+    {
+        size_t size = sizeof(T);
+        if (size <= max_size)
+            *reinterpret_cast<T *>(buf) = htole<T>(t);
+        return size;
+    }
+
+  public:
+    /**
+     * Instruction classes can override this function to return a
+     * a representation of themselves as a blob of bytes, generally assumed to
+     * be that instructions ExtMachInst.
+     *
+     * buf is a buffer to hold the bytes.
+     * max_size is the size allocated for that buffer by the caller.
+     * The return value is how much data was actually put into the buffer,
+     * zero if no data was put in the buffer, or the necessary size of the
+     * buffer if there wasn't enough space.
+     */
+    virtual size_t asBytes(void *buf, size_t max_size) { return 0; }
 };
 
 #endif // __CPU_STATIC_INST_HH__

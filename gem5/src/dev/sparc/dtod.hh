@@ -24,8 +24,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Ali Saidi
  */
 
 /** @file
@@ -60,23 +58,11 @@ class DumbTOD : public BasicPioDevice
         return dynamic_cast<const Params *>(_params);
     }
 
-    virtual Tick read(PacketPtr pkt);
-    virtual Tick write(PacketPtr pkt);
+    Tick read(PacketPtr pkt) override;
+    Tick write(PacketPtr pkt) override;
 
-    /**
-     * Serialize this object to the given output stream.
-     * @param os The stream to serialize to.
-     */
-    virtual void serialize(std::ostream &os);
-
-    /**
-     * Reconstruct the state of this object from a checkpoint.
-     * @param cp The checkpoint use.
-     * @param section The section name of this object
-     */
-    virtual void unserialize(Checkpoint *cp, const std::string &section);
-
-
+    void serialize(CheckpointOut &cp) const override;
+    void unserialize(CheckpointIn &cp) override;
 };
 
 #endif // __DEV_BADDEV_HH__

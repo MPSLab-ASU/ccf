@@ -1,0 +1,597 @@
+Mapping has started
+Operating mode:3
+inserting loads for largeConstants:	41	18	1
+Starting II: 12	rec_MII: 6
+45
+1. src is: 73-13	target is: 71-26
+1. Edge points to NULL!
+49
+Feasible II is 12	Schedule Len is 32
+
+II after scheduling is: 12
+Left Nodes Are: 0	
+K : 11
+distance: 12
+ adding nodes between: 0-->28
+Left Nodes Are: 1	
+Left Nodes Are: 2	
+K : 1
+distance: 2
+ adding nodes between: 2-->21
+K : 8
+distance: 9
+ adding nodes between: 2-->14
+Left Nodes Are: 5	
+K : 4
+distance: 5
+ adding nodes between: 5-->13
+Left Nodes Are: 9	
+Left Nodes Are: 13	
+Left Nodes Are: 14	
+K : 10
+distance: 11
+ adding nodes between: 14-->1
+Left Nodes Are: 18	
+Left Nodes Are: 20	
+K : 1
+distance: 2
+ adding nodes between: 20-->22
+Left Nodes Are: 21	
+K : 3
+distance: 4
+ adding nodes between: 21-->22
+Left Nodes Are: 22	
+Left Nodes Are: 23	
+K : 15
+distance: 16
+ adding nodes between: 23-->70
+Left Nodes Are: 24	
+K : 3
+distance: 4
+ adding nodes between: 24-->2
+Left Nodes Are: 25	
+Left Nodes Are: 27	
+K : 0
+distance: 1
+ adding nodes between: 27-->0
+Left Nodes Are: 28	
+Left Nodes Are: 36	
+K : 3
+distance: 4
+ adding nodes between: 36-->9
+Left Nodes Are: 47	
+K : 1
+distance: 2
+ adding nodes between: 47-->20
+Left Nodes Are: 50	
+K : 1
+distance: 2
+ adding nodes between: 50-->21
+Left Nodes Are: 53	
+K : 8
+distance: 9
+ adding nodes between: 53-->25
+Left Nodes Are: 56	
+K : 2
+distance: 3
+ adding nodes between: 56-->60
+Left Nodes Are: 58	
+Left Nodes Are: 60	
+K : 1
+distance: 2
+ adding nodes between: 60-->61
+Left Nodes Are: 61	
+K : 9
+distance: 10
+ adding nodes between: 61-->60
+Left Nodes Are: 66	
+K : 7
+distance: 8
+ adding nodes between: 66-->70
+Left Nodes Are: 70	
+K : 2
+distance: 3
+ adding nodes between: 70-->71
+Left Nodes Are: 71	
+K : 8
+distance: 9
+ adding nodes between: 71-->70
+Left Nodes Are: 73	
+K : 5
+distance: 6
+ adding nodes between: 73-->56
+Left Nodes Are: 75	
+K : 1
+distance: 2
+ adding nodes between: 75-->18
+Left Nodes Are: 78	
+K : 2
+distance: 3
+ adding nodes between: 78-->20
+Left Nodes Are: 79	
+K : 1
+distance: 2
+ adding nodes between: 79-->58
+45
+1. src is: 73-13	target is: 71-24
+1. Edge points to NULL!
+1. src is: 2-0	target is: 61-15
+1. Edge points to NULL!
+49
+Feasible II is 12	Schedule Len is 32
+
+II after scheduling is: 12
+Left Nodes Are: 0	
+K : 11
+distance: 12
+ adding nodes between: 0-->28
+Left Nodes Are: 1	
+Left Nodes Are: 2	
+K : 1
+distance: 2
+ adding nodes between: 2-->21
+Left Nodes Are: 3	
+K : 1
+distance: 2
+ adding nodes between: 3-->4
+Left Nodes Are: 4	
+Left Nodes Are: 5	
+K : 3
+distance: 4
+ adding nodes between: 5-->13
+Left Nodes Are: 9	
+Left Nodes Are: 13	
+Left Nodes Are: 14	
+K : 3
+distance: 4
+ adding nodes between: 14-->60
+K : 10
+distance: 11
+ adding nodes between: 14-->1
+Left Nodes Are: 18	
+Left Nodes Are: 20	
+K : 4
+distance: 5
+ adding nodes between: 20-->22
+Left Nodes Are: 21	
+K : 3
+distance: 4
+ adding nodes between: 21-->22
+Left Nodes Are: 22	
+Left Nodes Are: 23	
+K : 11
+distance: 12
+ adding nodes between: 23-->70
+Left Nodes Are: 24	
+K : 3
+distance: 4
+ adding nodes between: 24-->2
+Left Nodes Are: 25	
+Left Nodes Are: 27	
+K : 0
+distance: 1
+ adding nodes between: 27-->0
+Left Nodes Are: 28	
+Left Nodes Are: 36	
+K : 3
+distance: 4
+ adding nodes between: 36-->9
+Left Nodes Are: 50	
+K : 1
+distance: 2
+ adding nodes between: 50-->21
+Left Nodes Are: 53	
+K : 7
+distance: 8
+ adding nodes between: 53-->25
+Left Nodes Are: 56	
+K : 12
+distance: 13
+ adding nodes between: 56-->60
+Left Nodes Are: 60	
+K : 1
+distance: 2
+ adding nodes between: 60-->61
+Left Nodes Are: 61	
+K : 9
+distance: 10
+ adding nodes between: 61-->60
+Left Nodes Are: 66	
+K : 2
+distance: 3
+ adding nodes between: 66-->70
+Left Nodes Are: 68	
+Left Nodes Are: 70	
+K : 4
+distance: 5
+ adding nodes between: 70-->71
+Left Nodes Are: 71	
+K : 6
+distance: 7
+ adding nodes between: 71-->70
+Left Nodes Are: 73	
+K : 2
+distance: -1
+ adding nodes between: 73-->56
+Left Nodes Are: 75	
+K : 2
+distance: 3
+ adding nodes between: 75-->18
+Left Nodes Are: 76	
+K : 2
+distance: 3
+ adding nodes between: 76-->68
+Left Nodes Are: 77	
+K : 1
+distance: 2
+ adding nodes between: 77-->66
+Left Nodes Are: 78	
+K : 7
+distance: 8
+ adding nodes between: 78-->14
+45
+48
+Feasible II is 12	Schedule Len is 32
+
+II after scheduling is: 12
+Left Nodes Are: 0	
+K : 11
+distance: 12
+ adding nodes between: 0-->28
+Left Nodes Are: 1	
+Left Nodes Are: 2	
+K : 3
+distance: 4
+ adding nodes between: 2-->21
+K : 8
+distance: 9
+ adding nodes between: 2-->14
+Left Nodes Are: 3	
+K : 1
+distance: 2
+ adding nodes between: 3-->4
+Left Nodes Are: 4	
+Left Nodes Are: 5	
+K : 3
+distance: 4
+ adding nodes between: 5-->13
+Left Nodes Are: 9	
+Left Nodes Are: 13	
+Left Nodes Are: 14	
+K : 10
+distance: 11
+ adding nodes between: 14-->1
+Left Nodes Are: 18	
+Left Nodes Are: 20	
+K : 1
+distance: 2
+ adding nodes between: 20-->22
+Left Nodes Are: 21	
+K : 1
+distance: 2
+ adding nodes between: 21-->22
+Left Nodes Are: 22	
+Left Nodes Are: 23	
+K : 11
+distance: 12
+ adding nodes between: 23-->70
+Left Nodes Are: 24	
+K : 3
+distance: 4
+ adding nodes between: 24-->2
+Left Nodes Are: 25	
+Left Nodes Are: 27	
+K : 0
+distance: 1
+ adding nodes between: 27-->0
+Left Nodes Are: 28	
+Left Nodes Are: 36	
+K : 3
+distance: 4
+ adding nodes between: 36-->9
+Left Nodes Are: 47	
+K : 3
+distance: 4
+ adding nodes between: 47-->20
+Left Nodes Are: 50	
+K : 3
+distance: 4
+ adding nodes between: 50-->21
+Left Nodes Are: 53	
+K : 7
+distance: 8
+ adding nodes between: 53-->25
+Left Nodes Are: 56	
+K : 6
+distance: 7
+ adding nodes between: 56-->60
+Left Nodes Are: 58	
+Left Nodes Are: 60	
+K : 4
+distance: 5
+ adding nodes between: 60-->61
+Left Nodes Are: 61	
+K : 6
+distance: 7
+ adding nodes between: 61-->60
+Left Nodes Are: 66	
+K : 4
+distance: 5
+ adding nodes between: 66-->70
+Left Nodes Are: 68	
+Left Nodes Are: 70	
+K : 2
+distance: 3
+ adding nodes between: 70-->71
+Left Nodes Are: 71	
+K : 8
+distance: 9
+ adding nodes between: 71-->70
+Left Nodes Are: 73	
+K : 1
+distance: 2
+ adding nodes between: 73-->56
+Left Nodes Are: 75	
+K : 1
+distance: 2
+ adding nodes between: 75-->18
+Left Nodes Are: 76	
+K : 4
+distance: 5
+ adding nodes between: 76-->68
+Left Nodes Are: 77	
+K : 2
+distance: 3
+ adding nodes between: 77-->20
+Left Nodes Are: 78	
+K : 1
+distance: 2
+ adding nodes between: 78-->58
+45
+1. src is: 13-8	target is: 61-20
+1. Edge points to NULL!
+1. src is: 1-10	target is: 61-20
+1. Edge points to NULL!
+1. src is: 2-0	target is: 61-20
+1. Edge points to NULL!
+49
+45
+1. src is: 2-0	target is: 61-13
+1. Edge points to NULL!
+47
+Feasible II is 12	Schedule Len is 32
+
+II after scheduling is: 12
+Left Nodes Are: 0	
+K : 11
+distance: 12
+ adding nodes between: 0-->28
+Left Nodes Are: 1	
+Left Nodes Are: 2	
+K : 1
+distance: 2
+ adding nodes between: 2-->21
+K : 3
+distance: 4
+ adding nodes between: 2-->20
+Left Nodes Are: 3	
+K : 3
+distance: 4
+ adding nodes between: 3-->4
+Left Nodes Are: 4	
+Left Nodes Are: 5	
+K : 1
+distance: 2
+ adding nodes between: 5-->13
+Left Nodes Are: 9	
+Left Nodes Are: 13	
+Left Nodes Are: 14	
+K : 1
+distance: 2
+ adding nodes between: 14-->60
+K : 10
+distance: 11
+ adding nodes between: 14-->1
+Left Nodes Are: 18	
+Left Nodes Are: 20	
+K : 1
+distance: 2
+ adding nodes between: 20-->22
+Left Nodes Are: 21	
+K : 3
+distance: 4
+ adding nodes between: 21-->22
+Left Nodes Are: 22	
+Left Nodes Are: 23	
+K : 12
+distance: 13
+ adding nodes between: 23-->70
+Left Nodes Are: 24	
+K : 3
+distance: 4
+ adding nodes between: 24-->2
+Left Nodes Are: 25	
+Left Nodes Are: 27	
+K : 0
+distance: 1
+ adding nodes between: 27-->0
+Left Nodes Are: 28	
+Left Nodes Are: 36	
+K : 3
+distance: 4
+ adding nodes between: 36-->9
+Left Nodes Are: 47	
+K : 1
+distance: 2
+ adding nodes between: 47-->20
+Left Nodes Are: 50	
+K : 1
+distance: 2
+ adding nodes between: 50-->21
+Left Nodes Are: 53	
+K : 8
+distance: 9
+ adding nodes between: 53-->25
+Left Nodes Are: 56	
+K : 10
+distance: 11
+ adding nodes between: 56-->60
+Left Nodes Are: 60	
+K : 1
+distance: 2
+ adding nodes between: 60-->61
+Left Nodes Are: 61	
+K : 9
+distance: 10
+ adding nodes between: 61-->60
+Left Nodes Are: 66	
+K : 5
+distance: 6
+ adding nodes between: 66-->70
+Left Nodes Are: 68	
+Left Nodes Are: 70	
+K : 3
+distance: 4
+ adding nodes between: 70-->71
+Left Nodes Are: 71	
+K : 7
+distance: 8
+ adding nodes between: 71-->70
+Left Nodes Are: 73	
+K : 2
+distance: -1
+ adding nodes between: 73-->56
+Left Nodes Are: 75	
+K : 1
+distance: 2
+ adding nodes between: 75-->18
+Left Nodes Are: 76	
+K : 1
+distance: 2
+ adding nodes between: 76-->68
+Left Nodes Are: 77	
+K : 7
+distance: 8
+ adding nodes between: 77-->14
+45
+1. src is: 73-13	target is: 71-24
+1. Edge points to NULL!
+50
+Feasible II is 12	Schedule Len is 32
+
+II after scheduling is: 12
+Left Nodes Are: 0	
+K : 11
+distance: 12
+ adding nodes between: 0-->28
+Left Nodes Are: 1	
+Left Nodes Are: 2	
+K : 3
+distance: 4
+ adding nodes between: 2-->20
+K : 8
+distance: 9
+ adding nodes between: 2-->14
+Left Nodes Are: 3	
+K : 1
+distance: 2
+ adding nodes between: 3-->4
+Left Nodes Are: 4	
+Left Nodes Are: 5	
+K : 1
+distance: 2
+ adding nodes between: 5-->13
+Left Nodes Are: 9	
+Left Nodes Are: 13	
+Left Nodes Are: 14	
+K : 10
+distance: 11
+ adding nodes between: 14-->1
+Left Nodes Are: 18	
+Left Nodes Are: 20	
+K : 1
+distance: 2
+ adding nodes between: 20-->22
+Left Nodes Are: 21	
+K : 2
+distance: 3
+ adding nodes between: 21-->22
+Left Nodes Are: 22	
+Left Nodes Are: 23	
+K : 9
+distance: 10
+ adding nodes between: 23-->70
+Left Nodes Are: 24	
+K : 3
+distance: 4
+ adding nodes between: 24-->2
+Left Nodes Are: 25	
+Left Nodes Are: 27	
+K : 0
+distance: 1
+ adding nodes between: 27-->0
+Left Nodes Are: 28	
+Left Nodes Are: 36	
+K : 2
+distance: 3
+ adding nodes between: 36-->9
+Left Nodes Are: 47	
+K : 3
+distance: 4
+ adding nodes between: 47-->20
+Left Nodes Are: 50	
+K : 2
+distance: 3
+ adding nodes between: 50-->21
+Left Nodes Are: 53	
+K : 3
+distance: 4
+ adding nodes between: 53-->25
+Left Nodes Are: 56	
+K : 1
+distance: 2
+ adding nodes between: 56-->60
+Left Nodes Are: 58	
+Left Nodes Are: 60	
+K : 10
+distance: 11
+ adding nodes between: 60-->61
+Left Nodes Are: 61	
+K : 0
+distance: 1
+ adding nodes between: 61-->60
+Left Nodes Are: 66	
+K : 1
+distance: 2
+ adding nodes between: 66-->70
+Left Nodes Are: 68	
+Left Nodes Are: 70	
+K : 6
+distance: 7
+ adding nodes between: 70-->71
+Left Nodes Are: 71	
+K : 4
+distance: 5
+ adding nodes between: 71-->70
+Left Nodes Are: 73	
+K : 6
+distance: 7
+ adding nodes between: 73-->56
+Left Nodes Are: 75	
+K : 1
+distance: 2
+ adding nodes between: 75-->18
+Left Nodes Are: 77	
+K : 4
+distance: 5
+ adding nodes between: 77-->68
+Left Nodes Are: 79	
+K : 1
+distance: 2
+ adding nodes between: 79-->3
+Left Nodes Are: 80	
+K : 1
+distance: 2
+ adding nodes between: 80-->58
+Start Placement for II = 12
+Past CGRA reset and init

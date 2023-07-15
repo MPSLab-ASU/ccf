@@ -33,8 +33,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Gabe Black
  */
 
 #ifndef __ARCH_X86_INSTS_MICROOP_HH__
@@ -107,12 +105,13 @@ namespace X86ISA
             // sized chunks, feed it those one at a time while oring them in.
             for (int i = 0; i < Chunks; i++) {
                 unsigned shift = i * ChunkSize * 8;
-                flags |= (std::bitset<NumFlags>(setFlags >> shift) << shift);
+                flags |= (std::bitset<Num_Flags>(setFlags >> shift) << shift);
             }
         }
 
-        std::string generateDisassembly(Addr pc,
-                const SymbolTable *symtab) const
+        std::string
+        generateDisassembly(Addr pc,
+                           const Loader::SymbolTable *symtab) const override
         {
             std::stringstream ss;
 
@@ -124,7 +123,7 @@ namespace X86ISA
         bool checkCondition(uint64_t flags, int condition) const;
 
         void
-        advancePC(PCState &pcState) const
+        advancePC(PCState &pcState) const override
         {
             if (flags[IsLastMicroop])
                 pcState.uEnd();

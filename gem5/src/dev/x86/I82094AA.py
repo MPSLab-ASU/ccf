@@ -23,23 +23,20 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Gabe Black
 
 from m5.params import *
 from m5.proxy import *
-from Device import BasicPioDevice
-from X86IntPin import X86IntSinkPin
+from m5.objects.Device import BasicPioDevice
+from m5.objects.IntPin import VectorIntSinkPin
 
 class I82094AA(BasicPioDevice):
     type = 'I82094AA'
     cxx_class = 'X86ISA::I82094AA'
     cxx_header = "dev/x86/i82094aa.hh"
     apic_id = Param.Int(1, 'APIC id for this IO APIC')
-    int_master = MasterPort("Port for sending interrupt messages")
+    int_requestor = RequestPort("Port for sending interrupt messages")
     int_latency = Param.Latency('1ns', \
             "Latency for an interrupt to propagate through this device.")
     external_int_pic = Param.I8259(NULL, "External PIC, if any")
 
-    def pin(self, line):
-        return X86IntSinkPin(device=self, number=line)
+    inputs = VectorIntSinkPin('The pins that drive this IO APIC')

@@ -35,17 +35,15 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Gabe Black
 
 microcode = '''
 def macroop INVLPG_M {
-    .serializing
+    .serialize_after
     tia seg, sib, disp
 };
 
 def macroop INVLPG_P {
-    .serializing
+    .serialize_after
     rdip t7
     tia seg, riprel, disp
 };

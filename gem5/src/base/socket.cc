@@ -1,4 +1,7 @@
 /*
+ * Copyright (c) 2020 The Regents of the University of California
+ * All rights reserved
+ *
  * Copyright (c) 2002-2005 The Regents of The University of Michigan
  * All rights reserved.
  *
@@ -24,9 +27,9 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Nathan Binkert
  */
+
+#include "base/socket.hh"
 
 #include <netinet/in.h>
 #include <netinet/tcp.h>
@@ -36,14 +39,24 @@
 
 #include <cerrno>
 
-#include "base/misc.hh"
-#include "base/socket.hh"
+#include "base/logging.hh"
 #include "base/types.hh"
+#include "sim/byteswap.hh"
 
 using namespace std;
 
 bool ListenSocket::listeningDisabled = false;
 bool ListenSocket::anyListening = false;
+
+bool ListenSocket::bindToLoopback = false;
+
+void
+ListenSocket::cleanup()
+{
+    listeningDisabled = false;
+    anyListening = false;
+    bindToLoopback = false;
+}
 
 void
 ListenSocket::disableAll()
@@ -57,6 +70,14 @@ bool
 ListenSocket::allDisabled()
 {
     return listeningDisabled;
+}
+
+void
+ListenSocket::loopbackOnly()
+{
+    if (anyListening)
+        panic("Too late to bind to loopback, already have a listener");
+    bindToLoopback = true;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -80,9 +101,12 @@ ListenSocket::listen(int port, bool reuse)
     if (listening)
         panic("Socket already listening!");
 
-    fd = ::socket(PF_INET, SOCK_STREAM, 0);
-    if (fd < 0)
-        panic("Can't create socket:%s !", strerror(errno));
+    // only create socket if not already created by a previous call
+    if (fd == -1) {
+        fd = ::socket(PF_INET, SOCK_STREAM, 0);
+        if (fd < 0)
+            panic("Can't create socket:%s !", strerror(errno));
+    }
 
     if (reuse) {
         int i = 1;
@@ -93,9 +117,11 @@ ListenSocket::listen(int port, bool reuse)
 
     struct sockaddr_in sockaddr;
     sockaddr.sin_family = PF_INET;
-    sockaddr.sin_addr.s_addr = INADDR_ANY;
-
+    sockaddr.sin_addr.s_addr =
+        htobe<in_addr_t>(bindToLoopback ? INADDR_LOOPBACK : INADDR_ANY);
     sockaddr.sin_port = htons(port);
+    // finally clear sin_zero
+    memset(&sockaddr.sin_zero, 0, sizeof(sockaddr.sin_zero));
     int ret = ::bind(fd, (struct sockaddr *)&sockaddr, sizeof (sockaddr));
     if (ret != 0) {
         if (ret == -1 && errno != EADDRINUSE)
@@ -103,11 +129,14 @@ ListenSocket::listen(int port, bool reuse)
         return false;
     }
 
-    if (::listen(fd, 1) == -1)
-        panic("ListenSocket(listen): listen() failed!");
+    if (::listen(fd, 1) == -1) {
+        if (errno != EADDRINUSE)
+            panic("ListenSocket(listen): listen() failed!");
+
+        return false;
+    }
 
     listening = true;
-
     anyListening = true;
     return true;
 }
@@ -123,7 +152,9 @@ ListenSocket::accept(bool nodelay)
     int sfd = ::accept(fd, (struct sockaddr *)&sockaddr, &slen);
     if (sfd != -1 && nodelay) {
         int i = 1;
-        ::setsockopt(sfd, IPPROTO_TCP, TCP_NODELAY, (char *)&i, sizeof(i));
+        if (::setsockopt(sfd, IPPROTO_TCP, TCP_NODELAY, (char *)&i,
+                         sizeof(i)) < 0)
+            warn("ListenSocket(accept): setsockopt() TCP_NODELAY failed!");
     }
 
     return sfd;

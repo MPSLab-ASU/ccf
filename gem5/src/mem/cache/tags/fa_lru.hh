@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2013 ARM Limited
+ * Copyright (c) 2012-2013,2016,2018 ARM Limited
  * All rights reserved.
  *
  * The license below extends only to copyright in the software and shall
@@ -36,8 +36,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Erik Hallnor
  */
 
 /**
@@ -48,36 +46,57 @@
 #ifndef __MEM_CACHE_TAGS_FA_LRU_HH__
 #define __MEM_CACHE_TAGS_FA_LRU_HH__
 
-#include <list>
+#include <cstdint>
+#include <functional>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
-#include "base/hashmap.hh"
+#include "base/bitfield.hh"
+#include "base/intmath.hh"
+#include "base/logging.hh"
+#include "base/statistics.hh"
+#include "base/types.hh"
+#include "mem/cache/cache_blk.hh"
 #include "mem/cache/tags/base.hh"
-#include "mem/cache/blk.hh"
 #include "mem/packet.hh"
 #include "params/FALRU.hh"
+
+// Uncomment to enable sanity checks for the FALRU cache and the
+// TrackedCaches class
+//#define FALRU_DEBUG
+
+class BaseCache;
+class ReplaceableEntry;
+
+// A bitmask of the caches we are keeping track of. Currently the
+// lowest bit is the smallest cache we are tracking, as it is
+// specified by the corresponding parameter. The rest of the bits are
+// for exponentially growing cache sizes.
+typedef uint32_t CachesMask;
 
 /**
  * A fully associative cache block.
  */
 class FALRUBlk : public CacheBlk
 {
-public:
+  public:
+    FALRUBlk() : CacheBlk(), prev(nullptr), next(nullptr), inCachesMask(0) {}
+
     /** The previous block in LRU order. */
     FALRUBlk *prev;
     /** The next block in LRU order. */
     FALRUBlk *next;
-    /** Has this block been touched? */
-    bool isTouched;
+
+    /** A bit mask of the caches that fit this block. */
+    CachesMask inCachesMask;
 
     /**
-     * A bit mask of the sizes of cache that this block is resident in.
-     * Each bit represents a power of 2 in MB size cache.
-     * If bit 0 is set, this block is in a 1MB cache
-     * If bit 2 is set, this block is in a 4MB cache, etc.
-     * There is one bit for each cache smaller than the full size (default
-     * 16MB).
+     * Pretty-print inCachesMask and other CacheBlk information.
+     *
+     * @return string with basic state information
      */
-    int inCache;
+    std::string print() const override;
 };
 
 /**
@@ -89,17 +108,8 @@ class FALRU : public BaseTags
   public:
     /** Typedef the block type used in this class. */
     typedef FALRUBlk BlkType;
-    /** Typedef a list of pointers to the local block type. */
-    typedef std::list<FALRUBlk*> BlkList;
 
   protected:
-    /** Array of pointers to blocks at the cache size  boundaries. */
-    FALRUBlk **cacheBoundaries;
-    /** A mask for the FALRUBlk::inCache bits. */
-    int cacheMask;
-    /** The number of different size caches being tracked. */
-    unsigned numCaches;
-
     /** The cache blocks. */
     FALRUBlk *blks;
 
@@ -109,53 +119,35 @@ class FALRU : public BaseTags
     FALRUBlk *tail;
 
     /** Hash table type mapping addresses to cache block pointers. */
-    typedef m5::hash_map<Addr, FALRUBlk *, m5::hash<Addr> > hash_t;
-    /** Iterator into the address hash table. */
-    typedef hash_t::const_iterator tagIterator;
+    struct PairHash
+    {
+        template <class T1, class T2>
+        std::size_t operator()(const std::pair<T1, T2> &p) const
+        {
+            return std::hash<T1>()(p.first) ^ std::hash<T2>()(p.second);
+        }
+    };
+    typedef std::pair<Addr, bool> TagHashKey;
+    typedef std::unordered_map<TagHashKey, FALRUBlk *, PairHash> TagHash;
 
     /** The address hash table. */
-    hash_t tagHash;
-
-    /**
-     * Find the cache block for the given address.
-     * @param addr The address to find.
-     * @return The cache block of the address, if any.
-     */
-    FALRUBlk * hashLookup(Addr addr) const;
+    TagHash tagHash;
 
     /**
      * Move a cache block to the MRU position.
+     *
      * @param blk The block to promote.
      */
     void moveToHead(FALRUBlk *blk);
 
     /**
-     * Check to make sure all the cache boundaries are still where they should
-     * be. Used for debugging.
-     * @return True if everything is correct.
+     * Move a cache block to the LRU position.
+     *
+     * @param blk The block to demote.
      */
-    bool check();
+    void moveToTail(FALRUBlk *blk);
 
-    /**
-     * @defgroup FALRUStats Fully Associative LRU specific statistics
-     * The FA lru stack lets us track multiple cache sizes at once. These
-     * statistics track the hits and misses for different cache sizes.
-     * @{
-     */
-
-    /** Hits in each cache size >= 128K. */
-    Stats::Vector hits;
-    /** Misses in each cache size >= 128K. */
-    Stats::Vector misses;
-    /** Total number of accesses. */
-    Stats::Scalar accesses;
-
-    /**
-     * @}
-     */
-
-public:
-
+  public:
     typedef FALRUParams Params;
 
     /**
@@ -165,86 +157,80 @@ public:
     ~FALRU();
 
     /**
-     * Register the stats for this object.
-     * @param name The name to prepend to the stats name.
+     * Initialize blocks as FALRUBlk instances.
      */
-    void regStats();
+    void tagsInit() override;
+
+    /**
+     * Register the stats for this object.
+     */
+    void regStats() override;
 
     /**
      * Invalidate a cache block.
      * @param blk The block to invalidate.
      */
-    void invalidate(BlkType *blk);
+    void invalidate(CacheBlk *blk) override;
 
     /**
-     * Access block and update replacement data.  May not succeed, in which case
-     * NULL pointer is returned.  This has all the implications of a cache
-     * access and should only be used as such.
-     * Returns the access latency and inCache flags as a side effect.
+     * Access block and update replacement data.  May not succeed, in which
+     * case nullptr pointer is returned.  This has all the implications of a
+     * cache access and should only be used as such.
+     * Returns tag lookup latency and the inCachesMask flags as a side effect.
+     *
      * @param addr The address to look for.
-     * @param asid The address space ID.
-     * @param lat The latency of the access.
-     * @param inCache The FALRUBlk::inCache flags.
+     * @param is_secure True if the target memory space is secure.
+     * @param lat The latency of the tag lookup.
+     * @param in_cache_mask Mask indicating the caches in which the blk fits.
      * @return Pointer to the cache block.
      */
-    FALRUBlk* accessBlock(Addr addr, Cycles &lat, int context_src, int *inCache = 0);
+    CacheBlk* accessBlock(Addr addr, bool is_secure, Cycles &lat,
+                          CachesMask *in_cache_mask);
+
+    /**
+     * Just a wrapper of above function to conform with the base interface.
+     */
+    CacheBlk* accessBlock(Addr addr, bool is_secure, Cycles &lat) override;
 
     /**
      * Find the block in the cache, do not update the replacement data.
      * @param addr The address to look for.
+     * @param is_secure True if the target memory space is secure.
      * @param asid The address space ID.
      * @return Pointer to the cache block.
      */
-    FALRUBlk* findBlock(Addr addr) const;
+    CacheBlk* findBlock(Addr addr, bool is_secure) const override;
 
     /**
-     * Find a replacement block for the address provided.
-     * @param pkt The request to a find a replacement candidate for.
-     * @param writebacks List for any writebacks to be performed.
-     * @return The block to place the replacement in.
+     * Find a block given set and way.
+     *
+     * @param set The set of the block.
+     * @param way The way of the block.
+     * @return The block.
      */
-    FALRUBlk* findVictim(Addr addr, PacketList & writebacks);
-
-    void insertBlock(PacketPtr pkt, BlkType *blk);
-
-    /**
-     * Return the hit latency of this cache.
-     * @return The hit latency.
-     */
-    Cycles getHitLatency() const
-    {
-        return hitLatency;
-    }
+    ReplaceableEntry* findBlockBySetAndWay(int set, int way) const override;
 
     /**
-     * Return the block size of this cache.
-     * @return The block size.
+     * Find replacement victim based on address. The list of evicted blocks
+     * only contains the victim.
+     *
+     * @param addr Address to find a victim for.
+     * @param is_secure True if the target memory space is secure.
+     * @param size Size, in bits, of new block to allocate.
+     * @param evict_blks Cache blocks to be evicted.
+     * @return Cache block to be replaced.
      */
-    unsigned
-    getBlockSize() const
-    {
-        return blkSize;
-    }
+    CacheBlk* findVictim(Addr addr, const bool is_secure,
+                         const std::size_t size,
+                         std::vector<CacheBlk*>& evict_blks) override;
 
     /**
-     * Return the subblock size of this cache, always the block size.
-     * @return The block size.
+     * Insert the new block into the cache and update replacement data.
+     *
+     * @param pkt Packet holding the address to update
+     * @param blk The block to update.
      */
-    unsigned
-    getSubBlockSize() const
-    {
-        return blkSize;
-    }
-
-    /**
-     * Align an address to the block size.
-     * @param addr the address to align.
-     * @return The aligned address.
-     */
-    Addr blkAlign(Addr addr) const
-    {
-        return (addr & ~(Addr)(blkSize-1));
-    }
+    void insertBlock(const PacketPtr pkt, CacheBlk *blk) override;
 
     /**
      * Generate the tag from the addres. For fully associative this is just the
@@ -252,73 +238,155 @@ public:
      * @param addr The address to get the tag from.
      * @return The tag.
      */
-    Addr extractTag(Addr addr) const
+    Addr extractTag(Addr addr) const override
     {
         return blkAlign(addr);
     }
 
     /**
-     * Return the set of an address. Only one set in a fully associative cache.
-     * @param addr The address to get the set from.
-     * @return 0.
-     */
-    int extractSet(Addr addr) const
-    {
-        return 0;
-    }
-
-    /**
-     * Calculate the block offset of an address.
-     * @param addr the address to get the offset of.
-     * @return the block offset.
-     */
-    int extractBlkOffset(Addr addr) const
-    {
-        return (addr & (Addr)(blkSize-1));
-    }
-
-    /**
-     * Regenerate the block address from the tag and the set.
-     * @param tag The tag of the block.
-     * @param set The set the block belongs to.
+     * Regenerate the block address from the tag.
+     *
+     * @param block The block.
      * @return the block address.
      */
-    Addr regenerateBlkAddr(Addr tag, int set) const
+    Addr regenerateBlkAddr(const CacheBlk* blk) const override
     {
-        return (tag);
+        return blk->tag;
     }
 
-    /**
-     *iterated through all blocks and clear all locks
-     *Needed to clear all lock tracking at once
-     */
-    virtual void clearLocks();
-
-    /**
-     * @todo Implement as in lru. Currently not used
-     */
-    virtual std::string print() const { return ""; }
-
-    /**
-     * Visit each block in the tag store and apply a visitor to the
-     * block.
-     *
-     * The visitor should be a function (or object that behaves like a
-     * function) that takes a cache block reference as its parameter
-     * and returns a bool. A visitor can request the traversal to be
-     * stopped by returning false, returning true causes it to be
-     * called for the next block in the tag store.
-     *
-     * \param visitor Visitor to call on each block.
-     */
-    template <typename V>
-    void forEachBlk(V &visitor) {
+    void forEachBlk(std::function<void(CacheBlk &)> visitor) override {
         for (int i = 0; i < numBlocks; i++) {
-            if (!visitor(blks[i]))
-                return;
+            visitor(blks[i]);
         }
     }
 
+    bool anyBlk(std::function<bool(CacheBlk &)> visitor) override {
+        for (int i = 0; i < numBlocks; i++) {
+            if (visitor(blks[i])) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+  private:
+    /**
+     * Mechanism that allows us to simultaneously collect miss
+     * statistics for multiple caches. Currently, we keep track of
+     * caches from a set minimum size of interest up to the actual
+     * cache size.
+     */
+    class CacheTracking
+    {
+      public:
+        CacheTracking(unsigned min_size, unsigned max_size,
+                      unsigned block_size)
+            : blkSize(block_size),
+              minTrackedSize(min_size),
+              numTrackedCaches(max_size > min_size ?
+                               floorLog2(max_size) - floorLog2(min_size) : 0),
+              inAllCachesMask(mask(numTrackedCaches)),
+              boundaries(numTrackedCaches)
+        {
+            fatal_if(numTrackedCaches > sizeof(CachesMask) * 8,
+                     "Not enough bits (%s) in type CachesMask type to keep "
+                     "track of %d caches\n", sizeof(CachesMask),
+                     numTrackedCaches);
+        }
+
+        /**
+         * Initialiaze cache blocks and the tracking mechanism
+         *
+         * All blocks in the cache need to be initialized once.
+         *
+         * @param blk the MRU block
+         * @param blk the LRU block
+         */
+        void init(FALRUBlk *head, FALRUBlk *tail);
+
+        /**
+         * Update boundaries as a block will be moved to the MRU.
+         *
+         * For all caches that didn't fit the block before moving it,
+         * we move their boundaries one block closer to the MRU. We
+         * also update InCacheMasks as neccessary.
+         *
+         * @param blk the block that will be moved to the head
+         */
+        void moveBlockToHead(FALRUBlk *blk);
+
+        /**
+         * Update boundaries as a block will be moved to the LRU.
+         *
+         * For all caches that fitted the block before moving it, we
+         * move their boundaries one block closer to the LRU. We
+         * also update InCacheMasks as neccessary.
+         *
+         * @param blk the block that will be moved to the head
+         */
+        void moveBlockToTail(FALRUBlk *blk);
+
+        /**
+         * Notify of a block access.
+         *
+         * This should be called every time a block is accessed and it
+         * updates statistics. If the input block is nullptr then we
+         * treat the access as a miss. The block's InCacheMask
+         * determines the caches in which the block fits.
+         *
+         * @param blk the block to record the access for
+         */
+        void recordAccess(FALRUBlk *blk);
+
+        /**
+         * Check that the tracking mechanism is in consistent state.
+         *
+         * Iterate from the head (MRU) to the tail (LRU) of the list
+         * of blocks and assert the inCachesMask and the boundaries
+         * are in consistent state.
+         *
+         * @param head the MRU block of the actual cache
+         * @param head the LRU block of the actual cache
+         */
+        void check(const FALRUBlk *head, const FALRUBlk *tail) const;
+
+        /**
+         * Register the stats for this object.
+         */
+        void regStats(std::string name);
+
+      private:
+        /** The size of the cache block */
+        const unsigned blkSize;
+        /** The smallest cache we are tracking */
+        const unsigned minTrackedSize;
+        /** The number of different size caches being tracked. */
+        const int numTrackedCaches;
+        /** A mask for all cache being tracked. */
+        const CachesMask inAllCachesMask;
+        /** Array of pointers to blocks at the cache boundaries. */
+        std::vector<FALRUBlk*> boundaries;
+
+      protected:
+        /**
+         * @defgroup FALRUStats Fully Associative LRU specific statistics
+         * The FA lru stack lets us track multiple cache sizes at once. These
+         * statistics track the hits and misses for different cache sizes.
+         * @{
+         */
+
+        /** Hits in each cache */
+        Stats::Vector hits;
+        /** Misses in each cache */
+        Stats::Vector misses;
+        /** Total number of accesses */
+        Stats::Scalar accesses;
+
+        /**
+         * @}
+         */
+    };
+    CacheTracking cacheTracking;
 };
 
 #endif // __MEM_CACHE_TAGS_FA_LRU_HH__

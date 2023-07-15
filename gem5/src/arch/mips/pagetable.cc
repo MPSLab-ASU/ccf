@@ -25,20 +25,17 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Nathan Binkert
- *          Steve Reinhardt
- *          Jaidev Patwardhan
  */
 
 #include "arch/mips/pagetable.hh"
+
 #include "sim/serialize.hh"
 
 namespace MipsISA
 {
 
 void
-PTE::serialize(std::ostream &os)
+PTE::serialize(CheckpointOut &cp) const
 {
     SERIALIZE_SCALAR(Mask);
     SERIALIZE_SCALAR(VPN);
@@ -57,7 +54,7 @@ PTE::serialize(std::ostream &os)
 }
 
 void
-PTE::unserialize(Checkpoint *cp, const std::string &section)
+PTE::unserialize(CheckpointIn &cp)
 {
     UNSERIALIZE_SCALAR(Mask);
     UNSERIALIZE_SCALAR(VPN);

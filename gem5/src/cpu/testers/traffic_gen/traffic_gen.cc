@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2013 ARM Limited
+ * Copyright (c) 2012-2013, 2016-2020 ARM Limited
  * All rights reserved
  *
  * The license below extends only to copyright in the software and shall
@@ -33,36 +33,28 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Thomas Grass
- *          Andreas Hansson
- *          Sascha Bischoff
  */
+#include "cpu/testers/traffic_gen/traffic_gen.hh"
 
+#include <libgen.h>
+#include <unistd.h>
+
+#include <fstream>
 #include <sstream>
 
+#include "base/intmath.hh"
 #include "base/random.hh"
-#include "cpu/testers/traffic_gen/traffic_gen.hh"
-#include "debug/Checkpoint.hh"
 #include "debug/TrafficGen.hh"
+#include "params/TrafficGen.hh"
 #include "sim/stats.hh"
 #include "sim/system.hh"
 
 using namespace std;
 
 TrafficGen::TrafficGen(const TrafficGenParams* p)
-    : MemObject(p),
-      system(p->system),
-      masterID(system->getMasterId(name())),
+    : BaseTrafficGen(p),
       configFile(p->config_file),
-      elasticReq(p->elastic_req),
-      nextTransitionTick(0),
-      nextPacketTick(0),
-      port(name() + ".port", *this),
-      retryPkt(NULL),
-      retryPktTick(0),
-      updateEvent(this),
-      drainManager(NULL)
+      currState(0)
 {
 }
 
@@ -72,133 +64,67 @@ TrafficGenParams::create()
     return new TrafficGen(this);
 }
 
-BaseMasterPort&
-TrafficGen::getMasterPort(const string& if_name, PortID idx)
-{
-    if (if_name == "port") {
-        return port;
-    } else {
-        return MemObject::getMasterPort(if_name, idx);
-    }
-}
-
 void
 TrafficGen::init()
 {
-    if (!port.isConnected())
-        fatal("The port of %s is not connected!\n", name());
+    BaseTrafficGen::init();
 
-    // if the system is in timing mode active the request generator
-    if (system->isTimingMode()) {
-        DPRINTF(TrafficGen, "Timing mode, activating request generator\n");
-
-        parseConfig();
-
-        // enter initial state
-        enterState(currState);
-    } else {
-        DPRINTF(TrafficGen,
-                "Traffic generator is only active in timing mode\n");
-    }
+    parseConfig();
 }
 
 void
 TrafficGen::initState()
 {
+    BaseTrafficGen::initState();
+
     // when not restoring from a checkpoint, make sure we kick things off
     if (system->isTimingMode()) {
-        // call nextPacketTick on the state to advance it
-        nextPacketTick = states[currState]->nextPacketTick(elasticReq, 0);
-        schedule(updateEvent, std::min(nextPacketTick, nextTransitionTick));
+        DPRINTF(TrafficGen, "Timing mode, activating request generator\n");
+        start();
     } else {
         DPRINTF(TrafficGen,
                 "Traffic generator is only active in timing mode\n");
     }
 }
 
-unsigned int
-TrafficGen::drain(DrainManager *dm)
-{
-    if (retryPkt == NULL) {
-        // shut things down
-        nextPacketTick = MaxTick;
-        nextTransitionTick = MaxTick;
-        deschedule(updateEvent);
-        return 0;
-    } else {
-        drainManager = dm;
-        return 1;
-    }
-}
-
 void
-TrafficGen::serialize(ostream &os)
+TrafficGen::serialize(CheckpointOut &cp) const
 {
-    DPRINTF(Checkpoint, "Serializing TrafficGen\n");
-
-    // save ticks of the graph event if it is scheduled
-    Tick nextEvent = updateEvent.scheduled() ? updateEvent.when() : 0;
-
-    DPRINTF(TrafficGen, "Saving nextEvent=%llu\n", nextEvent);
-
-    SERIALIZE_SCALAR(nextEvent);
-
-    SERIALIZE_SCALAR(nextTransitionTick);
-
-    SERIALIZE_SCALAR(nextPacketTick);
-
     SERIALIZE_SCALAR(currState);
+
+    BaseTrafficGen::serialize(cp);
 }
 
 void
-TrafficGen::unserialize(Checkpoint* cp, const string& section)
+TrafficGen::unserialize(CheckpointIn &cp)
 {
-    // restore scheduled events
-    Tick nextEvent;
-    UNSERIALIZE_SCALAR(nextEvent);
-    if (nextEvent != 0) {
-        schedule(updateEvent, nextEvent);
-    }
-
-    UNSERIALIZE_SCALAR(nextTransitionTick);
-
-    UNSERIALIZE_SCALAR(nextPacketTick);
-
     // @todo In the case of a stateful generator state such as the
     // trace player we would also have to restore the position in the
     // trace playback and the tick offset
     UNSERIALIZE_SCALAR(currState);
+
+    BaseTrafficGen::unserialize(cp);
 }
 
-void
-TrafficGen::update()
+std::string
+TrafficGen::resolveFile(const std::string &name)
 {
-    // if we have reached the time for the next state transition, then
-    // perform the transition
-    if (curTick() >= nextTransitionTick) {
-        transition();
-    } else {
-        assert(curTick() >= nextPacketTick);
-        // get the next packet and try to send it
-        PacketPtr pkt = states[currState]->getNextPacket();
-        numPackets++;
-        if (!port.sendTimingReq(pkt)) {
-            retryPkt = pkt;
-            retryPktTick = curTick();
-        }
-    }
+    // Do nothing for empty and absolute file names
+    if (name.empty() || name[0] == '/')
+        return name;
 
-    // if we are waiting for a retry, do not schedule any further
-    // events, in the case of a transition or a successful send, go
-    // ahead and determine when the next update should take place
-    if (retryPkt == NULL) {
-        // schedule next update event based on either the next execute
-        // tick or the next transition, which ever comes first
-        nextPacketTick = states[currState]->nextPacketTick(elasticReq, 0);
-        Tick nextEventTick = std::min(nextPacketTick, nextTransitionTick);
-        DPRINTF(TrafficGen, "Next event scheduled at %lld\n", nextEventTick);
-        schedule(updateEvent, nextEventTick);
-    }
+    char *config_path = strdup(configFile.c_str());
+    char *config_dir = dirname(config_path);
+    const std::string config_rel = csprintf("%s/%s", config_dir, name);
+    free(config_path);
+
+    // Check the path relative to the config file first
+    if (access(config_rel.c_str(), R_OK) == 0)
+        return config_rel;
+
+    // Fall back to the old behavior and search relative to the
+    // current working directory.
+    return name;
 }
 
 void
@@ -215,6 +141,8 @@ TrafficGen::parseConfig()
         fatal("Traffic generator %s config file not found at %s\n",
               name(), configFile);
     }
+
+    bool init_state_set = false;
 
     // read line by line and determine the action based on the first
     // keyword
@@ -243,14 +171,19 @@ TrafficGen::parseConfig()
                     Addr addrOffset;
 
                     is >> traceFile >> addrOffset;
+                    traceFile = resolveFile(traceFile);
 
-                    states[id] = new TraceGen(name(), masterID, duration,
-                                              traceFile, addrOffset);
+                    states[id] = createTrace(duration, traceFile, addrOffset);
                     DPRINTF(TrafficGen, "State: %d TraceGen\n", id);
                 } else if (mode == "IDLE") {
-                    states[id] = new IdleGen(name(), masterID, duration);
+                    states[id] = createIdle(duration);
                     DPRINTF(TrafficGen, "State: %d IdleGen\n", id);
-                } else if (mode == "LINEAR" || mode == "RANDOM") {
+                } else if (mode == "EXIT") {
+                    states[id] = createExit(duration);
+                    DPRINTF(TrafficGen, "State: %d ExitGen\n", id);
+                } else if (mode == "LINEAR" || mode == "RANDOM" ||
+                           mode == "DRAM"   || mode == "DRAM_ROTATE" ||
+                           mode == "NVM") {
                     uint32_t read_percent;
                     Addr start_addr;
                     Addr end_addr;
@@ -268,31 +201,95 @@ TrafficGen::parseConfig()
                             max_period, read_percent);
 
 
-                    if (blocksize > system->cacheLineSize())
-                        fatal("TrafficGen %s block size (%d) is larger than "
-                              "system block size (%d)\n", name(),
-                              blocksize, system->cacheLineSize());
-
-                    if (read_percent > 100)
-                        fatal("%s cannot have more than 100% reads", name());
-
-                    if (min_period > max_period)
-                        fatal("%s cannot have min_period > max_period", name());
-
                     if (mode == "LINEAR") {
-                        states[id] = new LinearGen(name(), masterID,
-                                                   duration, start_addr,
-                                                   end_addr, blocksize,
-                                                   min_period, max_period,
-                                                   read_percent, data_limit);
+                        states[id] = createLinear(duration, start_addr,
+                                                  end_addr, blocksize,
+                                                  min_period, max_period,
+                                                  read_percent, data_limit);
                         DPRINTF(TrafficGen, "State: %d LinearGen\n", id);
                     } else if (mode == "RANDOM") {
-                        states[id] = new RandomGen(name(), masterID,
-                                                   duration, start_addr,
+                        states[id] = createRandom(duration, start_addr,
+                                                  end_addr, blocksize,
+                                                  min_period, max_period,
+                                                  read_percent, data_limit);
+                        DPRINTF(TrafficGen, "State: %d RandomGen\n", id);
+                    } else if (mode == "DRAM" || mode == "DRAM_ROTATE" ||
+                               mode == "NVM") {
+                        // stride size (bytes) of the request for achieving
+                        // required hit length
+                        unsigned int stride_size;
+                        unsigned int page_size;
+                        unsigned int nbr_of_banks;
+                        unsigned int nbr_of_banks_util;
+                        unsigned _addr_mapping;
+                        unsigned int nbr_of_ranks;
+
+                        is >> stride_size >> page_size >> nbr_of_banks >>
+                            nbr_of_banks_util >> _addr_mapping >>
+                            nbr_of_ranks;
+                        Enums::AddrMap addr_mapping =
+                            static_cast<Enums::AddrMap>(_addr_mapping);
+
+                        if (stride_size > page_size)
+                            warn("Memory generator stride size (%d) is greater"
+                                 " than page size (%d)  of the memory\n",
+                                 blocksize, page_size);
+
+                        // count the number of sequential packets to
+                        // generate
+                        unsigned int num_seq_pkts = 1;
+
+                        if (stride_size > blocksize) {
+                            num_seq_pkts = divCeil(stride_size, blocksize);
+                            DPRINTF(TrafficGen, "stride size: %d "
+                                    "block size: %d, num_seq_pkts: %d\n",
+                                    stride_size, blocksize, num_seq_pkts);
+                        }
+
+                        if (mode == "DRAM") {
+                            states[id] = createDram(duration, start_addr,
+                                                    end_addr, blocksize,
+                                                    min_period, max_period,
+                                                    read_percent, data_limit,
+                                                    num_seq_pkts, page_size,
+                                                    nbr_of_banks,
+                                                    nbr_of_banks_util,
+                                                    addr_mapping,
+                                                    nbr_of_ranks);
+                            DPRINTF(TrafficGen, "State: %d DramGen\n", id);
+                        } else if (mode == "DRAM_ROTATE") {
+                            // Will rotate to the next rank after rotating
+                            // through all banks, for each command type.
+                            // In the 50% read case, series will be issued
+                            // for both RD & WR before the rank in incremented
+                            unsigned int max_seq_count_per_rank =
+                                (read_percent == 50) ? nbr_of_banks_util * 2
+                                                     : nbr_of_banks_util;
+
+                            states[id] = createDramRot(duration, start_addr,
+                                                       end_addr, blocksize,
+                                                       min_period, max_period,
+                                                       read_percent,
+                                                       data_limit,
+                                                       num_seq_pkts, page_size,
+                                                       nbr_of_banks,
+                                                       nbr_of_banks_util,
+                                                       addr_mapping,
+                                                       nbr_of_ranks,
+                                                       max_seq_count_per_rank);
+                            DPRINTF(TrafficGen, "State: %d DramRotGen\n", id);
+                        } else {
+                            states[id] = createNvm(duration, start_addr,
                                                    end_addr, blocksize,
                                                    min_period, max_period,
-                                                   read_percent, data_limit);
-                        DPRINTF(TrafficGen, "State: %d RandomGen\n", id);
+                                                   read_percent, data_limit,
+                                                   num_seq_pkts, page_size,
+                                                   nbr_of_banks,
+                                                   nbr_of_banks_util,
+                                                   addr_mapping,
+                                                   nbr_of_ranks);
+                            DPRINTF(TrafficGen, "State: %d NvmGen\n", id);
+                        }
                     }
                 } else {
                     fatal("%s: Unknown traffic generator mode: %s",
@@ -311,10 +308,16 @@ TrafficGen::parseConfig()
                 // set the initial state as the active state
                 is >> currState;
 
+                init_state_set = true;
+
                 DPRINTF(TrafficGen, "Initial state: %d\n", currState);
             }
         }
     }
+
+    if (!init_state_set)
+        fatal("%s: initial state not specified (add 'INIT <id>' line "
+              "to the config file)\n", name());
 
     // resize and populate state transition matrix
     transitionMatrix.resize(states.size());
@@ -345,14 +348,10 @@ TrafficGen::parseConfig()
     infile.close();
 }
 
-void
-TrafficGen::transition()
+size_t
+TrafficGen::nextState()
 {
-    // exit the current state
-    states[currState]->exit();
-
-    // determine next state
-    double p = random_mt.gen_real1();
+    double p = random_mt.random<double>();
     assert(currState < transitionMatrix.size());
     double cumulative = 0.0;
     size_t i = 0;
@@ -361,81 +360,17 @@ TrafficGen::transition()
         ++i;
     } while (cumulative < p && i < transitionMatrix[currState].size());
 
-    enterState(i - 1);
+    return i - 1;
 }
 
-void
-TrafficGen::enterState(uint32_t newState)
+std::shared_ptr<BaseGen>
+TrafficGen::nextGenerator()
 {
-    DPRINTF(TrafficGen, "Transition to state %d\n", newState);
+    // Return the initial state if there isn't an active generator,
+    // otherwise perform a state transition.
+    if (activeGenerator)
+        currState = nextState();
 
-    currState = newState;
-    // we could have been delayed and not transitioned on the exact
-    // tick when we were supposed to (due to back pressure when
-    // sending a packet)
-    nextTransitionTick = curTick() + states[currState]->duration;
-    states[currState]->enter();
-}
-
-void
-TrafficGen::recvRetry()
-{
-    assert(retryPkt != NULL);
-
-    DPRINTF(TrafficGen, "Received retry\n");
-    numRetries++;
-    // attempt to send the packet, and if we are successful start up
-    // the machinery again
-    if (port.sendTimingReq(retryPkt)) {
-        retryPkt = NULL;
-        // remember how much delay was incurred due to back-pressure
-        // when sending the request, we also use this to derive
-        // the tick for the next packet
-        Tick delay = curTick() - retryPktTick;
-        retryPktTick = 0;
-        retryTicks += delay;
-
-        if (drainManager == NULL) {
-            // packet is sent, so find out when the next one is due
-            nextPacketTick = states[currState]->nextPacketTick(elasticReq,
-                                                               delay);
-            Tick nextEventTick = std::min(nextPacketTick, nextTransitionTick);
-            schedule(updateEvent, std::max(curTick(), nextEventTick));
-        } else {
-            // shut things down
-            nextPacketTick = MaxTick;
-            nextTransitionTick = MaxTick;
-            drainManager->signalDrainDone();
-            // Clear the drain event once we're done with it.
-            drainManager = NULL;
-        }
-    }
-}
-
-void
-TrafficGen::regStats()
-{
-    // Initialise all the stats
-    using namespace Stats;
-
-    numPackets
-        .name(name() + ".numPackets")
-        .desc("Number of packets generated");
-
-    numRetries
-        .name(name() + ".numRetries")
-        .desc("Number of retries");
-
-    retryTicks
-        .name(name() + ".retryTicks")
-        .desc("Time spent waiting due to back-pressure (ticks)");
-}
-
-bool
-TrafficGen::TrafficGenPort::recvTimingResp(PacketPtr pkt)
-{
-    delete pkt->req;
-    delete pkt;
-
-    return true;
+    DPRINTF(TrafficGen, "Transition to state %d\n", currState);
+    return states[currState];
 }

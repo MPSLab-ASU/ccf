@@ -24,8 +24,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Andreas Sandberg
  */
 
 #ifndef __CPU_KVM_X86_CPU_HH__
@@ -44,10 +42,10 @@ class X86KvmCPU : public BaseKvmCPU
     X86KvmCPU(X86KvmCPUParams *params);
     virtual ~X86KvmCPU();
 
-    void startup();
+    void startup() override;
 
     /** @{ */
-    void dump();
+    void dump() const override;
     void dumpFpuRegs() const;
     void dumpIntRegs() const;
     void dumpSpecRegs() const;
@@ -61,7 +59,7 @@ class X86KvmCPU : public BaseKvmCPU
   protected:
     typedef std::vector<struct kvm_msr_entry> KvmMSRVector;
 
-    Tick kvmRun(Tick ticks);
+    Tick kvmRun(Tick ticks) override;
 
     /**
      * Run the virtual CPU until draining completes.
@@ -78,12 +76,12 @@ class X86KvmCPU : public BaseKvmCPU
      *
      * @return Number of ticks executed
      */
-    Tick kvmRunDrain();
+    Tick kvmRunDrain() override;
 
     /** Wrapper that synchronizes state in kvm_run */
     Tick kvmRunWrapper(Tick ticks);
 
-    uint64_t getHostCycles() const;
+    uint64_t getHostCycles() const override;
 
     /**
      * Methods to access CPUID information using the extended
@@ -132,8 +130,8 @@ class X86KvmCPU : public BaseKvmCPU
     void setVCpuEvents(const struct kvm_vcpu_events &events);
     /** @} */
 
-    void updateKvmState();
-    void updateThreadContext();
+    void updateKvmState() override;
+    void updateThreadContext() override;
 
     /**
      * Inject pending interrupts from gem5 into the virtual CPU.
@@ -143,9 +141,9 @@ class X86KvmCPU : public BaseKvmCPU
     /**
      * Handle x86 legacy IO (in/out)
      */
-    Tick handleKvmExitIO();
+    Tick handleKvmExitIO() override;
 
-    Tick handleKvmExitIRQWindowOpen();
+    Tick handleKvmExitIRQWindowOpen() override;
 
     /**
      * Check if there are pending events in the vCPU that prevents it
@@ -158,7 +156,7 @@ class X86KvmCPU : public BaseKvmCPU
      * @return False if there are pending events in the guest, True
      * otherwise.
      */
-    bool archIsDrained() const;
+    bool archIsDrained() const override;
 
   private:
     /**
@@ -209,13 +207,14 @@ class X86KvmCPU : public BaseKvmCPU
      * @{
      */
     /** Update integer registers */
-    void updateThreadContextRegs();
+    void updateThreadContextRegs(const struct kvm_regs &regs,
+                                 const struct kvm_sregs &sregs);
     /** Update control registers (CRx, segments, etc.) */
-    void updateThreadContextSRegs();
+    void updateThreadContextSRegs(const struct kvm_sregs &sregs);
     /** Update FPU and SIMD registers using the legacy API */
-    void updateThreadContextFPU();
+    void updateThreadContextFPU(const struct kvm_fpu &fpu);
     /** Update FPU and SIMD registers using the XSave API */
-    void updateThreadContextXSave();
+    void updateThreadContextXSave(const struct kvm_xsave &kxsave);
     /** Update MSR registers */
     void updateThreadContextMSRs();
     /** @} */
@@ -232,9 +231,6 @@ class X86KvmCPU : public BaseKvmCPU
      * @param miscreg Register to map the current IO access to.
      */
     void handleIOMiscReg32(int miscreg);
-
-    /** Reusable IO request */
-    Request io_req;
 
     /** Cached intersection of supported MSRs */
     mutable Kvm::MSRIndexVector cachedMsrIntersection;

@@ -36,8 +36,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Ali Saidi
  */
 
 
@@ -88,8 +86,7 @@ class AmbaPioDevice : public BasicPioDevice, public AmbaDevice
 class AmbaIntDevice : public AmbaPioDevice
 {
   protected:
-    int intNum;
-    BaseGic *gic;
+    ArmInterruptPin* const interrupt;
     Tick intDelay;
 
   public:
@@ -104,12 +101,11 @@ class AmbaDmaDevice : public DmaDevice, public AmbaDevice
     Addr     pioAddr;
     Addr     pioSize;
     Tick     pioDelay;
-    int      intNum;
-    BaseGic  *gic;
+    ArmInterruptPin* const interrupt;
 
   public:
     typedef AmbaDmaDeviceParams Params;
-    AmbaDmaDevice(const Params *p);
+    AmbaDmaDevice(const Params *p, Addr pio_size = 0);
 };
 
 

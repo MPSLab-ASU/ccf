@@ -5,23 +5,29 @@
 #Expected arguments or inputs - .c or .cpp files
 
 #Set Paths
-toolchain="$HOME/shail/ccf"
-llvmbuild="$toolchain/llvm/build"
-llvmbin="$llvmbuild/bin"
+ccf_root=""
+install_path=""
 obj="obj"
 objFound=0;
 searchstring=".o"
-src="$llvmbin/clang -w -g -O3 --target=armv7a-linux-eabi -isystem /usr/arm-linux-gnueabi/include";
-srcIR="$llvmbin/clang -w -g -O3 --target=armv7a-linux-eabi -isystem /usr/arm-linux-gnueabi/include -S -o - -emit-llvm";
+src="clang -w -g -O3 -mllvm -force-vector-width=1 -fno-unroll-loops -Wpadded --target=armv7a-none-linux-eabi -isystem /usr/arm-linux-gnueabi/include";
+srcIR="clang -w -g -O3 -mllvm -force-vector-width=1 -Wpadded -fno-unroll-loops --target=armv7a-none-linux-eabi -isystem /usr/arm-linux-gnueabi/include -S -o - -emit-llvm";
 linkModule="";
 combineObj=0;
 objNum=0;
 MakeType=2;
 LIB="";
 
+zero=0;
+target_arm=0;
+
+#-fno-unroll-loops
 #Check if file exists
-[ ! -f ./combinedIR.ll ] && 
-$llvmbin/clang -w -O3 -g -fno-vectorize -fno-unroll-loops -fno-slp-vectorize --target=armv7a-linux-eabi -isystem /usr/arm-linux-gnueabi/include $toolchain/scripts/CGRALib/cgra.c -S -o - -emit-llvm -o combinedIR.ll
+if [ ! -f ./combinedIR.ll ]; then 
+	clang -w -O3 --target=armv7a-none-linux-eabi -isystem /usr/arm-linux-gnueabi/include $ccf_root/scripts/CGRALib/cgra.c -S -o - -emit-llvm -o from_clang.ll
+	opt -loop-simplify -redundant-dbg-inst-elim from_clang.ll -o simplified.bc
+	llvm-dis -f simplified.bc -o combinedIR.ll
+fi
 
 j=1;
 for i in "$@"
@@ -44,6 +50,11 @@ do
 		MakeType=2;
 	    fi
 
+	fi
+	if [[ "$i" == *arm* ]]
+	then
+	  echo "Compiling for ARM!"
+	  target_arm=1;
 	fi
 	((j = j + 1))
 done
@@ -77,13 +88,16 @@ else
 		tempString=`echo $i | sed -e 's/\.[^.]*$//'`
 		echo "./$tempString.o" >> tempObjList.txt
             fi
-	done	
+	done
+	#echo "cgracc.87: src = $src - srcIR = $srcIR"
 	$src
 	if [[ $objFound -eq $zero ]]
 	then
 	    srcIR+=" -o temp.ll"
 	fi
+	#echo here
 	$srcIR
+
 	llvm-link temp.ll combinedIR.ll -S -o combinedIR.ll
 	exit
 fi
@@ -97,10 +111,10 @@ then
     do 
     	src+=" $i"
     done
+    #echo "cgracc.108: src = $src"
     $src	
     for i in "$@"
     do 
-
 	if [ $objFound -eq 1 ] && [ ! -f "$i" ]
 	then
 	    LIB+=" $i"
@@ -121,8 +135,10 @@ then
 	    srcNew="$srcIR";
 	    srcNew+=" $i"
             srcNew+=" -o temp.ll"
+	    #echo "cgracc.132: srcNew = $srcNew"
 	    $srcNew
-	    llvm-link temp.ll combinedIR.ll -S -o combinedIR.ll 
+      
+	    llvm-link temp.ll combinedIR.ll -S -o combinedIR.ll
 	fi
     done
 else
@@ -149,17 +165,36 @@ else
     done	
 fi
 
-$toolchain/scripts/opt.sh combinedIR.ll
+if [[ $target_arm == 1 ]]; then
+  $ccf_root/scripts/opt.sh combinedIR.ll ${install_path} ${ccf_root}
+fi
 
-llvm-dis combinedIR.bc -o newIR.ll
+if [[ $target_arm == 1 ]] || ([[ ! -f "CGRAGen.bc" ]] && [[ ! -d "CGRAExec" ]]); then
+    echo "Accelerating loop not found! Compiling for CPU"
+    llvm-dis CondDDGGen.bc -o CondDDGGen.ll
+    llc -march="arm" CondDDGGen.ll
+    clang -w -O3 -mllvm -force-vector-width=1 -Wpadded -static --target=armv7a-none-linux-eabi CondDDGGen.s -o $obj -lm
+    rm *.s *.bc *.ll
+    exit
+fi
 
-llc -march="arm" newIR.ll
+
+llvm-dis CGRAGen.bc -o CGRAGen.ll
+
+if [ ! -f "CGRAGen.ll" ]; then
+    echo "ERROR: CGRAGen.ll not found!"
+    exit 1
+fi
+
+llvm-dis CGRAGen.bc -o CGRAGen.ll
+
+llc -march="arm" CGRAGen.ll
 
 #apply remaining optimizations here such as vectoirize
-clang-5.0 -w -O3 -static -pthread -target armv7a-none-linux-eabi newIR.s -o $obj -lm
+clang -w -O3 -mllvm -force-vector-width=1 -Wpadded -static --target=armv7a-none-linux-eabi CGRAGen.s -o $obj -lm 
 
 #Delete temporary files
-rm *.s *.bc #*.ll
+rm *.bc *.s #*.ll
 
 # Check if CGRAExec exists.
 if [ -d "CGRAExec" ]; then
@@ -167,14 +202,20 @@ if [ -d "CGRAExec" ]; then
 	cd CGRAExec
 
 	noDir=$(ls -lR | grep ^d | wc -l)
-	echo "Total Loops Compiled for CGRA: " $noDir
+	#echo "Total Loops Compiled for CGRA: " $noDir
 	i=0;
 	#For each of the loop folders, copy and execute run file to generate CGRA instructions
 	for ((i=1; i<=noDir; i++));
 	do
 		cd L"$i"
-		cp $toolchain/scripts/CGRALib/run.sh ./
-		./run.sh ../../$obj
+    cp ../../CGRA_config.csv .
+    awk -F "[,\"]" '{print $2 }' CGRA_config.csv > CGRA_config.txt
+    #cp ../../run_command . #Debug purposes
+    #chmod +x run_command   #Debug purposes
+    #./run_command          #Debyg purposes
+		cp $ccf_root/scripts/CGRALib/run.sh ./
+        echo "start running run.sh"
+		./run.sh ../../$obj ${ccf_root}
 		cd ..
 	done
 	cd ..

@@ -1,0 +1,12 @@
+1	0	1
+14	30	gPtr1
+115	19	ld_add_gPtr1
+116	20	ld_data_gPtr1
+4	0	4
+19	30	gPtr2
+120	19	ld_add_gPtr2
+121	20	ld_data_gPtr2
+8	0	8
+22	30	gPtr3
+123	19	ld_add_gPtr3
+124	20	ld_data_gPtr3

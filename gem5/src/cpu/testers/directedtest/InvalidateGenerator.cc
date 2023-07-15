@@ -27,8 +27,10 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "cpu/testers/directedtest/DirectedGenerator.hh"
 #include "cpu/testers/directedtest/InvalidateGenerator.hh"
+
+#include "base/trace.hh"
+#include "cpu/testers/directedtest/DirectedGenerator.hh"
 #include "cpu/testers/directedtest/RubyDirectedTester.hh"
 #include "debug/DirectedTest.hh"
 
@@ -52,13 +54,14 @@ InvalidateGenerator::~InvalidateGenerator()
 bool
 InvalidateGenerator::initiate()
 {
-    MasterPort* port;
+    RequestPort* port;
     Request::Flags flags;
     PacketPtr pkt;
     Packet::Command cmd;
 
     // For simplicity, requests are assumed to be 1 byte-sized
-    Request *req = new Request(m_address, 1, flags, masterId);
+    RequestPtr req = std::make_shared<Request>(m_address, 1, flags,
+                                               requestorId);
 
     //
     // Based on the current state, issue a load or a store
@@ -76,9 +79,7 @@ InvalidateGenerator::initiate()
     } else {
         panic("initiate was unexpectedly called\n");
     }
-    uint8_t* dummyData = new uint8_t;
-    *dummyData = 0;
-    pkt->dataDynamic(dummyData);
+    pkt->allocate();
 
     if (port->sendTimingReq(pkt)) {
         DPRINTF(DirectedTest, "initiating request - successful\n");
@@ -92,7 +93,6 @@ InvalidateGenerator::initiate()
         // If the packet did not issue, must delete
         // Note: No need to delete the data, the packet destructor
         // will delete it
-        delete pkt->req;
         delete pkt;
 
         DPRINTF(DirectedTest, "failed to issue request - sequencer not ready\n");
@@ -100,10 +100,10 @@ InvalidateGenerator::initiate()
     }
 }
 
-void 
+void
 InvalidateGenerator::performCallback(uint32_t proc, Addr address)
 {
-    assert(m_address == address);  
+    assert(m_address == address);
 
     if (m_status == InvalidateGeneratorStatus_Load_Pending) {
         assert(m_active_read_node == proc);
@@ -130,8 +130,8 @@ InvalidateGenerator::performCallback(uint32_t proc, Addr address)
         //
         m_directed_tester->incrementCycleCompletions();
         m_status = InvalidateGeneratorStatus_Load_Waiting;
-    } 
-    
+    }
+
 }
 
 InvalidateGenerator *

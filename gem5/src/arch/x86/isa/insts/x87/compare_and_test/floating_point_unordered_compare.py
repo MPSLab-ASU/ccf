@@ -1,4 +1,6 @@
 # Copyright (c) 2007 The Hewlett-Packard Development Company
+# Copyright (c) 2015 Advanced Micro Devices, Inc.
+#
 # All rights reserved.
 #
 # The license below extends only to copyright in the software and shall
@@ -32,13 +34,20 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Gabe Black
 
 microcode = '''
 # FUCOM
 # FUCOMP
 # FUCOMPP
-# FUCOMI
-# FUCOMIP
+
+# fucomi
+def macroop FUCOMI_R {
+    compfp st(0), sti
+};
+
+# fucomi with stack pop (caused by spm=1)
+def macroop FUCOMIP_R {
+    compfp st(0), sti, spm=1
+};
+
 '''

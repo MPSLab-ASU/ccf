@@ -56,20 +56,8 @@ class MethodCallExprAST(ExprAST):
             self.error("Invalid method call: Type '%s' does not have a method '%s'",
                        obj_type, methodId)
 
-        if len(self.expr_ast_vec) != \
-               len(obj_type.methods[methodId].param_types):
-            # Right number of parameters
-            self.error("Wrong number of parameters for function name: '%s', " + \
-                       "expected: , actual: ", proc_name,
-                  len(obj_type.methods[methodId].param_types),
-                  len(self.expr_ast_vec))
-
-        for actual_type, expected_type in \
-                zip(paramTypes, obj_type.methods[methodId].param_types):
-            if actual_type != expected_type and \
-                   str(actual_type["interface"]) != str(expected_type):
-                self.error("Type mismatch: expected: %s actual: %s",
-                           expected_type, actual_type)
+        func = obj_type.methods[methodId]
+        func.checkArguments(self.expr_ast_vec)
 
         # Return the return type of the method
         return obj_type.methods[methodId].return_type
@@ -78,10 +66,9 @@ class MethodCallExprAST(ExprAST):
         pass
 
 class MemberMethodCallExprAST(MethodCallExprAST):
-    def __init__(self, slicc, obj_expr_ast, proc_name, expr_ast_vec):
+    def __init__(self, slicc, obj_expr_ast, func_call):
         s = super(MemberMethodCallExprAST, self)
-        s.__init__(slicc, proc_name, expr_ast_vec)
-
+        s.__init__(slicc, func_call.proc_name, func_call.exprs)
         self.obj_expr_ast = obj_expr_ast
 
     def __repr__(self):
@@ -140,38 +127,33 @@ class MemberMethodCallExprAST(MethodCallExprAST):
 
                       implemented_paramTypes.append(implemented_paramType)
 
+                  implementedMethodId = ""
                   if implements_interface:
-                      implementedMethodId = obj_type.methodIdAbstract(self.proc_name,
-                                                                      implemented_paramTypes)
-                  else:
-                      implementedMethodId = ""
+                      implementedMethodId = obj_type.methodIdAbstract(
+                              self.proc_name, implemented_paramTypes)
 
                   if implementedMethodId not in obj_type.methods:
-                      self.error("Invalid method call: " \
-                                 "Type '%s' does not have a method %s, '%s' nor '%s'",
-                                 obj_type, self.proc_name, methodId, implementedMethodId)
-                  else:
-                      #
-                      # Replace the methodId with the implementedMethodId found in
-                      # the method list.
-                      #
-                      methodId = implementedMethodId
-                      return_type = obj_type.methods[methodId].return_type
+                      self.error("Invalid method call: Type '%s' " \
+                                 "does not have a method %s, '%s' nor '%s'",
+                                 obj_type, self.proc_name, methodId,
+                                 implementedMethodId)
 
-        if return_type.isInterface:
-            prefix = "static_cast<%s &>" % return_type.c_ident
+                  # Replace the methodId with the implementedMethodId
+                  # found in the method list.
+                  methodId = implementedMethodId
+                  return_type = obj_type.methods[methodId].return_type
 
+        # Check object type or interface of entries by checking
+        # AbstractCacheEntry since AbstractCacheEntry is used in
+        # protocol files.
         if str(obj_type) == "AbstractCacheEntry" or \
-           str(obj_type) == "AbstractEntry" or \
            ("interface" in obj_type and (
-            obj_type["interface"] == "AbstractCacheEntry" or
-            obj_type["interface"] == "AbstractEntry")):
+            obj_type["interface"] == "AbstractCacheEntry")):
             prefix = "%s((*(%s))." % (prefix, code)
         else:
             prefix = "%s((%s)." % (prefix, code)
 
         return obj_type, methodId, prefix
-
 
 class ClassMethodCallExprAST(MethodCallExprAST):
     def __init__(self, slicc, type_ast, proc_name, expr_ast_vec):

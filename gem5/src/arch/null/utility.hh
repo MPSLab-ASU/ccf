@@ -33,8 +33,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Andreas Hansson
  */
 
 #ifndef __ARCH_NULL_UTILITY_HH__
@@ -43,12 +41,14 @@
 #include "base/types.hh"
 #include "cpu/thread_context.hh"
 
-namespace NullISA {
+namespace NullISA
+{
 
-inline uint64_t getArgument(ThreadContext *tc, int &number, uint16_t size,
-                            bool fp) { return 0; }
-
-inline void startupCPU(ThreadContext *tc, int cpuId) {}
+static inline uint64_t
+getArgument(ThreadContext *tc, int &number, uint16_t size, bool fp)
+{
+    return 0;
+}
 
 }
 

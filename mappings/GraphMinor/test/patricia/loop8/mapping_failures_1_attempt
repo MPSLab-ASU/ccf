@@ -1,0 +1,76 @@
+one iteration of mapping lowest:
+
+Map Mode: 0 -- completely random
+
+Manual runs:
+
+1: 14
+2: 11
+3: 14
+4: 13
+5: 10
+6: 10
+7: 11
+8: 8
+9: 9
+10: 9
+
+
+Map Mode 1: -- Nodes having outgoing recurrent edge is mapped first
+
+Manual runs: 
+
+1: 13
+2: 14
+3: 13
+4: 12
+5: 11
+6: 11
+7: 11
+8: 14
+9: 11
+10: 9
+
+
+Map Mode 2: -- nodes having incoming recurrent is maped first
+
+Manual runs:
+1: 9
+2: 13
+3: 11
+4: 7
+5: 9
+6: 17
+7: 11
+8: 9
+9: 11
+10: 12
+
+Map Mode 3: -- priority for high fan-in/fan-out highest degree mapped first
+Manual runs:
+1: 14
+2: 11
+3: 12
+4: 7
+5: 10
+6: 7
+7: 11
+8: 10
+9: 10
+10: 7
+
+
+
+Map Mode 4: -- nodes with no incoming edges are mapped first.
+
+Manual runs:
+1: 8
+2: 12
+3: 7
+4: 16
+5: 9
+6: 12
+7: 7
+8: 19
+9: 12
+10: 12

@@ -24,10 +24,9 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Nathan Binkert
- *          Steve Reinhardt
  */
+
+#include "base/inifile.hh"
 
 #include <algorithm>
 #include <fstream>
@@ -35,7 +34,6 @@
 #include <string>
 #include <vector>
 
-#include "base/inifile.hh"
 #include "base/str.hh"
 
 using namespace std;
@@ -230,6 +228,17 @@ IniFile::find(const string &sectionName, const string &entryName,
 }
 
 bool
+IniFile::entryExists(const string &sectionName, const string &entryName) const
+{
+    Section *section = findSection(sectionName);
+
+    if (!section)
+        return false;
+    else
+        return section->findEntry(entryName);
+}
+
+bool
 IniFile::sectionExists(const string &sectionName) const
 {
     return findSection(sectionName) != NULL;
@@ -279,6 +288,16 @@ IniFile::Section::printUnreferenced(const string &sectionName)
     return unref;
 }
 
+
+void
+IniFile::getSectionNames(vector<string> &list) const
+{
+    for (SectionTable::const_iterator i = table.begin();
+         i != table.end(); ++i)
+    {
+        list.push_back((*i).first);
+    }
+}
 
 bool
 IniFile::printUnreferenced()

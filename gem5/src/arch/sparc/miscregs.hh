@@ -24,9 +24,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Gabe Black
- *          Ali Saidi
  */
 
 #ifndef __ARCH_SPARC_MISCREGS_HH__
@@ -129,12 +126,27 @@ BitUnion16(PSTATE)
     Bitfield<2> priv;
     Bitfield<3> am;
     Bitfield<4> pef;
-    Bitfield<6, 7> mm;
+    Bitfield<7, 6> mm;
     Bitfield<8> tle;
     Bitfield<9> cle;
     Bitfield<10> pid0;
     Bitfield<11> pid1;
 EndBitUnion(PSTATE)
+
+BitUnion8(CCR)
+    SubBitUnion(xcc, 7, 4)
+        Bitfield<7> n;
+        Bitfield<6> z;
+        Bitfield<5> v;
+        Bitfield<4> c;
+    EndSubBitUnion(xcc)
+    SubBitUnion(icc, 3, 0)
+        Bitfield<3> n;
+        Bitfield<2> z;
+        Bitfield<1> v;
+        Bitfield<0> c;
+    EndSubBitUnion(icc)
+EndBitUnion(CCR)
 
 struct STS
 {

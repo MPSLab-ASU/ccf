@@ -1,4 +1,16 @@
 /*
+ * Copyright (c) 2020 ARM Limited
+ * All rights reserved
+ *
+ * The license below extends only to copyright in the software and shall
+ * not be construed as granting a license to any other intellectual
+ * property including but not limited to intellectual property relating
+ * to a hardware implementation of the functionality of the software
+ * licensed hereunder.  You may use the software subject to the license
+ * terms below provided that you ensure that this notice is replicated
+ * unmodified and in its entirety in all distributions of the software,
+ * modified or unmodified, in source code or in binary form.
+ *
  * Copyright (c) 2009 Mark D. Hill and David A. Wood
  * All rights reserved.
  *
@@ -26,35 +38,44 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __MEM_RUBY_SLICC_INTERFACE_RUBY_REQUEST_HH__
-#define __MEM_RUBY_SLICC_INTERFACE_RUBY_REQUEST_HH__
+#ifndef __MEM_RUBY_SLICC_INTERFACE_RUBYREQUEST_HH__
+#define __MEM_RUBY_SLICC_INTERFACE_RUBYREQUEST_HH__
 
 #include <ostream>
+#include <vector>
 
-#include "mem/protocol/Message.hh"
-#include "mem/protocol/PrefetchBit.hh"
-#include "mem/protocol/RubyAccessMode.hh"
-#include "mem/protocol/RubyRequestType.hh"
 #include "mem/ruby/common/Address.hh"
+#include "mem/ruby/common/DataBlock.hh"
+#include "mem/ruby/common/WriteMask.hh"
+#include "mem/ruby/protocol/Message.hh"
+#include "mem/ruby/protocol/PrefetchBit.hh"
+#include "mem/ruby/protocol/RubyAccessMode.hh"
+#include "mem/ruby/protocol/RubyRequestType.hh"
 
 class RubyRequest : public Message
 {
   public:
-    Address m_PhysicalAddress;
-    Address m_LineAddress;
+    Addr m_PhysicalAddress;
+    Addr m_LineAddress;
     RubyRequestType m_Type;
-    Address m_ProgramCounter;
+    Addr m_ProgramCounter;
     RubyAccessMode m_AccessMode;
     int m_Size;
     PrefetchBit m_Prefetch;
     uint8_t* data;
-    PacketPtr pkt;
-    unsigned m_contextId;
+    PacketPtr m_pkt;
+    ContextID m_contextId;
+    WriteMask m_writeMask;
+    DataBlock m_WTData;
+    int m_wfid;
+    uint64_t m_instSeqNum;
+    bool m_htmFromTransaction;
+    uint64_t m_htmTransactionUid;
 
     RubyRequest(Tick curTime, uint64_t _paddr, uint8_t* _data, int _len,
         uint64_t _pc, RubyRequestType _type, RubyAccessMode _access_mode,
         PacketPtr _pkt, PrefetchBit _pb = PrefetchBit_No,
-        unsigned _proc_id = 100)
+        ContextID _proc_id = 100, ContextID _core_id = 99)
         : Message(curTime),
           m_PhysicalAddress(_paddr),
           m_Type(_type),
@@ -63,20 +84,77 @@ class RubyRequest : public Message
           m_Size(_len),
           m_Prefetch(_pb),
           data(_data),
-          pkt(_pkt),
-          m_contextId(_proc_id)
+          m_pkt(_pkt),
+          m_contextId(_core_id),
+          m_htmFromTransaction(false),
+          m_htmTransactionUid(0)
     {
-      m_LineAddress = m_PhysicalAddress;
-      m_LineAddress.makeLineAddress();
+        m_LineAddress = makeLineAddress(m_PhysicalAddress);
+    }
+
+    RubyRequest(Tick curTime, uint64_t _paddr, uint8_t* _data, int _len,
+        uint64_t _pc, RubyRequestType _type,
+        RubyAccessMode _access_mode, PacketPtr _pkt, PrefetchBit _pb,
+        unsigned _proc_id, unsigned _core_id,
+        int _wm_size, std::vector<bool> & _wm_mask,
+        DataBlock & _Data,
+        uint64_t _instSeqNum = 0)
+        : Message(curTime),
+          m_PhysicalAddress(_paddr),
+          m_Type(_type),
+          m_ProgramCounter(_pc),
+          m_AccessMode(_access_mode),
+          m_Size(_len),
+          m_Prefetch(_pb),
+          data(_data),
+          m_pkt(_pkt),
+          m_contextId(_core_id),
+          m_writeMask(_wm_size,_wm_mask),
+          m_WTData(_Data),
+          m_wfid(_proc_id),
+          m_instSeqNum(_instSeqNum),
+          m_htmFromTransaction(false),
+          m_htmTransactionUid(0)
+    {
+        m_LineAddress = makeLineAddress(m_PhysicalAddress);
+    }
+
+    RubyRequest(Tick curTime, uint64_t _paddr, uint8_t* _data, int _len,
+        uint64_t _pc, RubyRequestType _type,
+        RubyAccessMode _access_mode, PacketPtr _pkt, PrefetchBit _pb,
+        unsigned _proc_id, unsigned _core_id,
+        int _wm_size, std::vector<bool> & _wm_mask,
+        DataBlock & _Data,
+        std::vector< std::pair<int,AtomicOpFunctor*> > _atomicOps,
+        uint64_t _instSeqNum = 0)
+        : Message(curTime),
+          m_PhysicalAddress(_paddr),
+          m_Type(_type),
+          m_ProgramCounter(_pc),
+          m_AccessMode(_access_mode),
+          m_Size(_len),
+          m_Prefetch(_pb),
+          data(_data),
+          m_pkt(_pkt),
+          m_contextId(_core_id),
+          m_writeMask(_wm_size,_wm_mask,_atomicOps),
+          m_WTData(_Data),
+          m_wfid(_proc_id),
+          m_instSeqNum(_instSeqNum),
+          m_htmFromTransaction(false),
+          m_htmTransactionUid(0)
+    {
+        m_LineAddress = makeLineAddress(m_PhysicalAddress);
     }
 
     RubyRequest(Tick curTime) : Message(curTime) {}
-    RubyRequest* clone() const { return new RubyRequest(*this); }
+    MsgPtr clone() const
+    { return std::shared_ptr<Message>(new RubyRequest(*this)); }
 
-    const Address& getLineAddress() const { return m_LineAddress; }
-    const Address& getPhysicalAddress() const { return m_PhysicalAddress; }
+    Addr getLineAddress() const { return m_LineAddress; }
+    Addr getPhysicalAddress() const { return m_PhysicalAddress; }
     const RubyRequestType& getType() const { return m_Type; }
-    const Address& getProgramCounter() const { return m_ProgramCounter; }
+    Addr getProgramCounter() const { return m_ProgramCounter; }
     const RubyAccessMode& getAccessMode() const { return m_AccessMode; }
     const int& getSize() const { return m_Size; }
     const PrefetchBit& getPrefetch() const { return m_Prefetch; }
@@ -94,4 +172,4 @@ operator<<(std::ostream& out, const RubyRequest& obj)
   return out;
 }
 
-#endif
+#endif  //__MEM_RUBY_SLICC_INTERFACE_RUBYREQUEST_HH__

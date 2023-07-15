@@ -32,12 +32,10 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Andreas Sandberg
 
-from m5.SimObject import SimObject
+from m5.objects.BaseISA import BaseISA
 
-class X86ISA(SimObject):
+class X86ISA(BaseISA):
     type = 'X86ISA'
     cxx_class = 'X86ISA::ISA'
     cxx_header = "arch/x86/isa.hh"

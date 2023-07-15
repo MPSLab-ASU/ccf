@@ -24,8 +24,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Nathan Binkert
  */
 
 #include <iostream>
@@ -34,6 +32,8 @@
 #include "base/str.hh"
 
 using namespace std;
+
+void usage(const char *progname);
 
 void
 usage(const char *progname)
@@ -46,7 +46,7 @@ usage(const char *progname)
 int
 main(int argc, char *argv[])
 {
-    SymbolTable symtab;
+    Loader::SymbolTable symtab;
 
     if (argc != 3)
         usage(argv[0]);
@@ -60,19 +60,21 @@ main(int argc, char *argv[])
     Addr address;
 
     if (!to_number(symbol, address)) {
-        if (!symtab.findAddress(symbol, address)) {
+        auto it = symtab.find(symbol);
+        if (it == symtab.end()) {
             cout << "could not find symbol: " << symbol << endl;
             exit(1);
         }
 
-        cout << symbol << " -> " << "0x" << hex << address << endl;
+        cout << symbol << " -> " << "0x" << hex << it->address << endl;
     } else {
-        if (!symtab.findSymbol(address, symbol)) {
+        auto it = symtab.find(address);
+        if (it == symtab.end()) {
             cout << "could not find address: " << address << endl;
             exit(1);
         }
 
-        cout << "0x" << hex << address << " -> " << symbol<< endl;
+        cout << "0x" << hex << address << " -> " << it->name << endl;
     }
 
     return 0;

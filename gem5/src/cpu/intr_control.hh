@@ -24,9 +24,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Nathan Binkert
- *          Ron Dreslinski
  */
 
 #ifndef __INTR_CONTROL_HH__
@@ -34,7 +31,7 @@
 
 #include <vector>
 
-#include "base/misc.hh"
+#include "base/logging.hh"
 #include "params/IntrControl.hh"
 #include "sim/sim_object.hh"
 #include "sim/system.hh"
@@ -48,6 +45,8 @@ class IntrControl : public SimObject
 
     void clear(int cpu_id, int int_num, int index);
     void post(int cpu_id, int int_num, int index);
+    void clearAll(int cpu_id);
+    bool havePosted(int cpu_id) const;
 
     void
     clear(int int_num, int index = 0)

@@ -24,21 +24,19 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Konstantinos Aisopos
  */
 
 /*
  * Official Tool Website: www.mit.edu/~kaisopos/FaultModel
  *
- * If you use our tool for academic research, we request that you cite: 
+ * If you use our tool for academic research, we request that you cite:
  * Konstantinos Aisopos, Chia-Hsin Owen Chen, and Li-Shiuan Peh. Enabling
  * System-Level Modeling of Variation-Induced Faults in Networks-on-Chip.
  * Proceedings of the 48th Design Automation Conference (DAC'11)
  */
 
-#ifndef __MEM_RUBY_NETWORK_FAULT_MODEL_HH__
-#define __MEM_RUBY_NETWORK_FAULT_MODEL_HH__
+#ifndef __MEM_RUBY_NETWORK_FAULT_MODEL_FAULTMODEL_HH__
+#define __MEM_RUBY_NETWORK_FAULT_MODEL_FAULTMODEL_HH__
 
 // tool limitations and fixed inputs
 #define MAX_VCs 40
@@ -63,7 +61,7 @@ class FaultModel : public SimObject
     /**********  THE FAULT TYPES SUPPORTED BY THE FAULT MODEL ***************/
     /************************************************************************/
 
-    enum fault_type 
+    enum fault_type
     {
         data_corruption__few_bits,
         data_corruption__all_bits,
@@ -105,27 +103,27 @@ class FaultModel : public SimObject
         float fault_type[number_of_fault_types];
     };
 
-    int declare_router(int number_of_inputs, 
-                       int number_of_outputs, 
-                       int number_of_vcs_per_vnet, 
-                       int number_of_buff_per_data_vc, 
+    int declare_router(int number_of_inputs,
+                       int number_of_outputs,
+                       int number_of_vcs_per_vnet,
+                       int number_of_buff_per_data_vc,
                        int number_of_buff_per_ctrl_vc);
 
     std::string fault_type_to_string(int fault_type_index);
- 
-    // the following 2 functions are called at runtime, to get the probability 
-    // of each fault type (fault_vector) or the aggregate fault probability 
+
+    // the following 2 functions are called at runtime, to get the probability
+    // of each fault type (fault_vector) or the aggregate fault probability
     // (fault_prob). Note: the probability values are provided by reference
     // (in the variables fault_vector[] & aggregate_fault_prob respectively).
-    // Both functions also return a success flag (which is always true if 
+    // Both functions also return a success flag (which is always true if
     // temperature ranges from 0C to 125C)
 
-    bool fault_vector(int routerID, 
-                      int temperature, 
+    bool fault_vector(int routerID,
+                      int temperature,
                       float fault_vector[]);
 
     bool fault_prob(int routerID,
-                    int temperature, 
+                    int temperature,
                     float *aggregate_fault_prob);
 
     // for debugging purposes
@@ -138,4 +136,4 @@ class FaultModel : public SimObject
     std::vector <int> temperature_weights;
 };
 
-#endif //  __MEM_RUBY_NETWORK_FAULT_MODEL_HH__
+#endif //__MEM_RUBY_NETWORK_FAULT_MODEL_FAULTMODEL_HH__

@@ -24,8 +24,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Ron Dreslinski
  */
 
 /**
@@ -33,23 +31,29 @@
  * Describes a tagged prefetcher.
  */
 
-#ifndef __MEM_CACHE_PREFETCH_TAGGED_PREFETCHER_HH__
-#define __MEM_CACHE_PREFETCH_TAGGED_PREFETCHER_HH__
+#ifndef __MEM_CACHE_PREFETCH_TAGGED_HH__
+#define __MEM_CACHE_PREFETCH_TAGGED_HH__
 
-#include "mem/cache/prefetch/base.hh"
-#include "params/TaggedPrefetcher.hh"
+#include "mem/cache/prefetch/queued.hh"
+#include "mem/packet.hh"
 
+struct TaggedPrefetcherParams;
 
-class TaggedPrefetcher : public BasePrefetcher
+namespace Prefetcher {
+
+class Tagged : public Queued
 {
+  protected:
+      const int degree;
+
   public:
+    Tagged(const TaggedPrefetcherParams *p);
+    ~Tagged() = default;
 
-    TaggedPrefetcher(const Params *p);
-
-    ~TaggedPrefetcher() {}
-
-    void calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addresses,
-                           std::list<Cycles> &delays);
+    void calculatePrefetch(const PrefetchInfo &pfi,
+                           std::vector<AddrPriority> &addresses) override;
 };
 
-#endif // __MEM_CACHE_PREFETCH_TAGGED_PREFETCHER_HH__
+} // namespace Prefetcher
+
+#endif // __MEM_CACHE_PREFETCH_TAGGED_HH__

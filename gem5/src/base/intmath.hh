@@ -24,175 +24,91 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Nathan Binkert
  */
 
 #ifndef __BASE_INTMATH_HH__
 #define __BASE_INTMATH_HH__
 
 #include <cassert>
+#include <cstdint>
+#include <type_traits>
 
-#include "base/misc.hh"
+#include "base/logging.hh"
 #include "base/types.hh"
 
-// Returns the prime number one less than n.
-int prevPrime(int n);
-
-// Determine if a number is prime
-template <class T>
-inline bool
-isPrime(T n)
-{
-    T i;
-
-    if (n == 2 || n == 3)
-        return true;
-
-    // Don't try every odd number to prove if it is a prime.
-    // Toggle between every 2nd and 4th number.
-    // (This is because every 6th odd number is divisible by 3.)
-    for (i = 5; i*i <= n; i += 6) {
-        if (((n % i) == 0 ) || ((n % (i + 2)) == 0) ) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-template <class T>
-inline T
-leastSigBit(T n)
-{
-    return n & ~(n - 1);
-}
-
-template <class T>
-inline bool
-isPowerOf2(T n)
-{
-    return n != 0 && leastSigBit(n) == n;
-}
-
+/**
+ * @ingroup api_base_utils
+ */
 inline uint64_t
 power(uint32_t n, uint32_t e)
 {
-    if (e > 20)
-        warn("Warning, power() function is quite slow for large exponents\n");
-
-    if (e == 0)
-        return 1;
-
-    uint64_t result = n;
-    uint64_t old_result = 0;
-    for (int x = 1; x < e; x++) {
-        old_result = result;
-        result *= n;
-        if (old_result > result)
-            warn("power() overflowed!\n");
+    uint64_t result = 1;
+    uint64_t component = n;
+    while (e) {
+        uint64_t last = result;
+        if (e & 0x1)
+            result *= component;
+        warn_if(result < last, "power() overflowed!");
+        e >>= 1;
+        component *= component;
     }
     return result;
 }
 
-
-inline int
-floorLog2(unsigned x)
+/**
+ * @ingroup api_base_utils
+ */
+template <class T>
+inline typename std::enable_if<std::is_integral<T>::value, int>::type
+floorLog2(T x)
 {
     assert(x > 0);
 
-    int y = 0;
+    // A guaranteed unsigned version of x.
+    uint64_t ux = (typename std::make_unsigned<T>::type)x;
 
-    if (x & 0xffff0000) { y += 16; x >>= 16; }
-    if (x & 0x0000ff00) { y +=  8; x >>=  8; }
-    if (x & 0x000000f0) { y +=  4; x >>=  4; }
-    if (x & 0x0000000c) { y +=  2; x >>=  2; }
-    if (x & 0x00000002) { y +=  1; }
+    int y = 0;
+    constexpr auto ts = sizeof(T);
+
+    if (ts >= 8 && (ux & ULL(0xffffffff00000000))) { y += 32; ux >>= 32; }
+    if (ts >= 4 && (ux & ULL(0x00000000ffff0000))) { y += 16; ux >>= 16; }
+    if (ts >= 2 && (ux & ULL(0x000000000000ff00))) { y +=  8; ux >>=  8; }
+    if (ux & ULL(0x00000000000000f0)) { y +=  4; ux >>=  4; }
+    if (ux & ULL(0x000000000000000c)) { y +=  2; ux >>=  2; }
+    if (ux & ULL(0x0000000000000002)) { y +=  1; }
 
     return y;
 }
 
-inline int
-floorLog2(unsigned long x)
-{
-    assert(x > 0);
-
-    int y = 0;
-
-#if defined(__LP64__)
-    if (x & ULL(0xffffffff00000000)) { y += 32; x >>= 32; }
-#endif
-    if (x & 0xffff0000) { y += 16; x >>= 16; }
-    if (x & 0x0000ff00) { y +=  8; x >>=  8; }
-    if (x & 0x000000f0) { y +=  4; x >>=  4; }
-    if (x & 0x0000000c) { y +=  2; x >>=  2; }
-    if (x & 0x00000002) { y +=  1; }
-
-    return y;
-}
-
-inline int
-floorLog2(unsigned long long x)
-{
-    assert(x > 0);
-
-    int y = 0;
-
-    if (x & ULL(0xffffffff00000000)) { y += 32; x >>= 32; }
-    if (x & ULL(0x00000000ffff0000)) { y += 16; x >>= 16; }
-    if (x & ULL(0x000000000000ff00)) { y +=  8; x >>=  8; }
-    if (x & ULL(0x00000000000000f0)) { y +=  4; x >>=  4; }
-    if (x & ULL(0x000000000000000c)) { y +=  2; x >>=  2; }
-    if (x & ULL(0x0000000000000002)) { y +=  1; }
-
-    return y;
-}
-
-inline int
-floorLog2(int x)
-{
-    assert(x > 0);
-    return floorLog2((unsigned)x);
-}
-
-inline int
-floorLog2(long x)
-{
-    assert(x > 0);
-    return floorLog2((unsigned long)x);
-}
-
-inline int
-floorLog2(long long x)
-{
-    assert(x > 0);
-    return floorLog2((unsigned long long)x);
-}
-
+/**
+ * @ingroup api_base_utils
+ */
 template <class T>
 inline int
-ceilLog2(T n)
+ceilLog2(const T& n)
 {
+    assert(n > 0);
     if (n == 1)
         return 0;
 
     return floorLog2(n - (T)1) + 1;
 }
 
+/**
+ * @ingroup api_base_utils
+ */
 template <class T>
-inline T
-floorPow2(T n)
+inline bool
+isPowerOf2(const T& n)
 {
-    return (T)1 << floorLog2(n);
+    // If n is non-zero, and subtracting one borrows all the way to the MSB
+    // and flips all bits, then this is a power of 2.
+    return n && !(n & (n - 1));
 }
 
-template <class T>
-inline T
-ceilPow2(T n)
-{
-    return (T)1 << ceilLog2(n);
-}
-
+/**
+ * @ingroup api_base_utils
+ */
 template <class T, class U>
 inline T
 divCeil(const T& a, const U& b)
@@ -200,55 +116,42 @@ divCeil(const T& a, const U& b)
     return (a + b - 1) / b;
 }
 
-template <class T>
+/**
+ * This function is used to align addresses in memory.
+ *
+ * @param val is the address to be aligned.
+ * @param align is the alignment. Can only be a power of 2.
+ * @return The aligned address. The smallest number divisible
+ * by @param align which is greater than or equal to @param val.
+ *
+ * @ingroup api_base_utils
+ */
+template <class T, class U>
 inline T
-roundUp(T val, int align)
+roundUp(const T& val, const U& align)
 {
+    assert(isPowerOf2(align));
     T mask = (T)align - 1;
     return (val + mask) & ~mask;
 }
 
-template <class T>
+/**
+ * This function is used to align addresses in memory.
+ *
+ * @param val is the address to be aligned.
+ * @param align is the alignment. Can only be a power of 2.
+ * @return The aligned address. The biggest number divisible
+ * by @param align which is less than or equal to @param val.
+ *
+ * @ingroup api_base_utils
+ */
+template <class T, class U>
 inline T
-roundDown(T val, int align)
+roundDown(const T& val, const U& align)
 {
+    assert(isPowerOf2(align));
     T mask = (T)align - 1;
     return val & ~mask;
-}
-
-inline bool
-isHex(char c)
-{
-    return (c >= '0' && c <= '9') ||
-        (c >= 'A' && c <= 'F') ||
-        (c >= 'a' && c <= 'f');
-}
-
-inline bool
-isOct(char c)
-{
-    return c >= '0' && c <= '7';
-}
-
-inline bool
-isDec(char c)
-{
-    return c >= '0' && c <= '9';
-}
-
-inline int
-hex2Int(char c)
-{
-  if (c >= '0' && c <= '9')
-    return (c - '0');
-
-  if (c >= 'A' && c <= 'F')
-    return (c - 'A') + 10;
-
-  if (c >= 'a' && c <= 'f')
-    return (c - 'a') + 10;
-
-  return 0;
 }
 
 #endif // __BASE_INTMATH_HH__

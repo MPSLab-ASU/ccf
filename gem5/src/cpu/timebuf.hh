@@ -24,9 +24,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Nathan Binkert
- *          Kevin Lim
  */
 
 #ifndef __BASE_TIMEBUF_HH__
@@ -49,7 +46,7 @@ class TimeBuffer
     std::vector<char *> index;
     unsigned base;
 
-    void valid(int idx)
+    void valid(int idx) const
     {
         assert (idx >= -past && idx <= future);
     }
@@ -138,7 +135,7 @@ class TimeBuffer
 
   public:
     TimeBuffer(int p, int f)
-        : past(p), future(f), size(past + future + 1), 
+        : past(p), future(f), size(past + future + 1),
           data(new char[size * sizeof(T)]), index(size), base(0)
     {
         assert(past >= 0 && future >= 0);
@@ -189,7 +186,10 @@ class TimeBuffer
         new (index[ptr]) T;
     }
 
-    T *access(int idx)
+  protected:
+    //Calculate the index into this->index for element at position idx
+    //relative to now
+    inline int calculateVectorIndex(int idx) const
     {
         //Need more complex math here to calculate index.
         valid(idx);
@@ -200,23 +200,30 @@ class TimeBuffer
         } else if (vector_index < 0) {
             vector_index += size;
         }
+
+        return vector_index;
+    }
+
+  public:
+    T *access(int idx)
+    {
+        int vector_index = calculateVectorIndex(idx);
 
         return reinterpret_cast<T *>(index[vector_index]);
     }
 
     T &operator[](int idx)
     {
-        //Need more complex math here to calculate index.
-        valid(idx);
-
-        int vector_index = idx + base;
-        if (vector_index >= (int)size) {
-            vector_index -= size;
-        } else if (vector_index < 0) {
-            vector_index += size;
-        }
+        int vector_index = calculateVectorIndex(idx);
 
         return reinterpret_cast<T &>(*index[vector_index]);
+    }
+
+    const T &operator[] (int idx) const
+    {
+        int vector_index = calculateVectorIndex(idx);
+
+        return reinterpret_cast<const T &>(*index[vector_index]);
     }
 
     wire getWire(int idx)

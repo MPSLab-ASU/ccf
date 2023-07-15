@@ -24,20 +24,23 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Nathan Binkert
  */
+
+#include "pybind11/pybind11.h"
 
 #include <iomanip>
 #include <iostream>
 #include <string>
 
 #include "base/cprintf.hh"
-#include "base/misc.hh"
+#include "base/logging.hh"
 #include "base/statistics.hh"
 #include "base/types.hh"
 #include "sim/core.hh"
+#include "sim/init.hh"
 #include "sim/stat_control.hh"
+
+namespace py = pybind11;
 
 // override the default main() code for this unittest
 const char *m5MainCommands[] = {
@@ -48,6 +51,11 @@ const char *m5MainCommands[] = {
 
 using namespace std;
 using namespace Stats;
+
+double testfunc();
+struct StatTest;
+StatTest & __stattest();
+
 
 double
 testfunc()
@@ -80,6 +88,7 @@ struct StatTest
     Vector2d s16;
     Value s17;
     Value s18;
+    Value s19;
     Histogram h01;
     Histogram h02;
     Histogram h03;
@@ -94,8 +103,8 @@ struct StatTest
     Histogram h12;
     SparseHistogram sh1;
 
-    Vector s19;
     Vector s20;
+    Vector s21;
 
     Formula f1;
     Formula f2;
@@ -116,20 +125,11 @@ __stattest()
 }
 
 void
-stattest_init()
-{
-    __stattest().init();
-}
-
-void
-stattest_run()
-{
-    __stattest().run();
-}
-
-void
 StatTest::init()
 {
+    EventQueue *q = getEventQueue(0);
+    curEventQueue(q);
+
     cprintf("sizeof(Scalar) = %d\n", sizeof(Scalar));
     cprintf("sizeof(Vector) = %d\n", sizeof(Vector));
     cprintf("sizeof(Distribution) = %d\n", sizeof(Distribution));
@@ -255,6 +255,12 @@ StatTest::init()
         .desc("this is stat 18")
         ;
 
+    s19
+        .functor([]() { return 0; })
+        .name("Stat19")
+        .desc("this is stat 19")
+        ;
+
     h01
         .init(11)
         .name("Histogram01")
@@ -362,16 +368,16 @@ StatTest::init()
         .desc("this is formula 4")
         ;
 
-    s19
-        .init(2)
-        .name("Stat19")
-        .desc("this is statistic 19 for vector op testing")
-        .flags(total | nozero | nonan)
-    ;
     s20
         .init(2)
         .name("Stat20")
         .desc("this is statistic 20 for vector op testing")
+        .flags(total | nozero | nonan)
+    ;
+    s21
+        .init(2)
+        .name("Stat21")
+        .desc("this is statistic 21 for vector op testing")
         .flags(total | nozero | nonan)
     ;
 
@@ -387,7 +393,7 @@ StatTest::init()
     f4 += constant(10.0);
     f4 += s5[3];
     f5 = constant(1);
-    f6 = s19/s20;
+    f6 = s20/s21;
 }
 
 void
@@ -419,7 +425,7 @@ StatTest::run()
     s15[9].sample(1234);
 
     s10.sample(1000000000);
-    curTick(curTick() + ULL(1000000));
+    curEventQueue()->setCurTick(curTick() + ULL(1000000));
     s10.sample(100000);
     s10.sample(100000);
     s10.sample(100000);
@@ -494,50 +500,50 @@ StatTest::run()
 
     s15[0].sample(1234);
     s15[1].sample(4134);
-    curTick(curTick() + ULL(1000000));
+    curEventQueue()->setCurTick(curTick() + ULL(1000000));
     s15[4].sample(1213);
-    curTick(curTick() + ULL(1000000));
+    curEventQueue()->setCurTick(curTick() + ULL(1000000));
     s15[3].sample(1124);
-    curTick(curTick() + ULL(1000000));
+    curEventQueue()->setCurTick(curTick() + ULL(1000000));
     s15[2].sample(1243);
-    curTick(curTick() + ULL(1000000));
+    curEventQueue()->setCurTick(curTick() + ULL(1000000));
     s15[7].sample(1244);
-    curTick(curTick() + ULL(1000000));
+    curEventQueue()->setCurTick(curTick() + ULL(1000000));
     s15[4].sample(7234);
     s15[2].sample(9234);
     s15[3].sample(1764);
     s15[7].sample(1564);
     s15[3].sample(3234);
     s15[1].sample(2234);
-    curTick(curTick() + ULL(1000000));
+    curEventQueue()->setCurTick(curTick() + ULL(1000000));
     s15[5].sample(1234);
-    curTick(curTick() + ULL(1000000));
+    curEventQueue()->setCurTick(curTick() + ULL(1000000));
     s15[9].sample(4334);
-    curTick(curTick() + ULL(1000000));
+    curEventQueue()->setCurTick(curTick() + ULL(1000000));
     s15[2].sample(1234);
-    curTick(curTick() + ULL(1000000));
+    curEventQueue()->setCurTick(curTick() + ULL(1000000));
     s15[4].sample(4334);
     s15[6].sample(1234);
-    curTick(curTick() + ULL(1000000));
+    curEventQueue()->setCurTick(curTick() + ULL(1000000));
     s15[8].sample(8734);
-    curTick(curTick() + ULL(1000000));
+    curEventQueue()->setCurTick(curTick() + ULL(1000000));
     s15[1].sample(5234);
-    curTick(curTick() + ULL(1000000));
+    curEventQueue()->setCurTick(curTick() + ULL(1000000));
     s15[3].sample(8234);
-    curTick(curTick() + ULL(1000000));
+    curEventQueue()->setCurTick(curTick() + ULL(1000000));
     s15[7].sample(5234);
     s15[4].sample(4434);
     s15[3].sample(7234);
     s15[2].sample(1934);
     s15[1].sample(9234);
-    curTick(curTick() + ULL(1000000));
+    curEventQueue()->setCurTick(curTick() + ULL(1000000));
     s15[5].sample(5634);
     s15[3].sample(1264);
     s15[7].sample(5223);
     s15[0].sample(1234);
     s15[0].sample(5434);
     s15[3].sample(8634);
-    curTick(curTick() + ULL(1000000));
+    curEventQueue()->setCurTick(curTick() + ULL(1000000));
     s15[1].sample(1234);
 
     s4 = curTick();
@@ -546,7 +552,7 @@ StatTest::run()
 
     s3 = 12;
     s3++;
-    curTick(curTick() + 9);
+    curEventQueue()->setCurTick(curTick() + 9);
 
     s1 = 9;
     s1 += 9;
@@ -621,7 +627,7 @@ StatTest::run()
     s9.sample(10);
     s9.sample(10);
 
-    curTick(curTick() + 9);
+    curEventQueue()->setCurTick(curTick() + 9);
     s4 = curTick();
     s6.sample(100);
     s6.sample(100);
@@ -664,9 +670,22 @@ StatTest::run()
         sh1.sample(random() % 10000);
     }
 
-    s19[0] = 1;
-    s19[1] = 100000;
-    s20[0] = 100000;
-    s20[1] = 1;
+    s20[0] = 1;
+    s20[1] = 100000;
+    s21[0] = 100000;
+    s21[1] = 1;
 
 }
+
+static void
+stattest_init_pybind(py::module &m_internal)
+{
+    py::module m = m_internal.def_submodule("stattest");
+
+    m
+        .def("stattest_init", []() { __stattest().init(); })
+        .def("stattest_run", []() { __stattest().run(); })
+        ;
+}
+
+static EmbeddedPyBind embed_("stattest", stattest_init_pybind);

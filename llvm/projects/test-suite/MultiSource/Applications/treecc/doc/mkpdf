@@ -1,5 +1,0 @@
-#!/bin/sh
-#
-# mkpdf - Make the PDF version of the treecc documentation
-
-exec texi2dvi --pdf treecc.texi

@@ -1,1 +1,0 @@
-RUN: tests/a.sh foo bar

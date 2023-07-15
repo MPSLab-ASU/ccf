@@ -1,30 +1,31 @@
 /*
- * Copyright (c) 2013, Andreas Sandberg
- * All rights reserved.
+ * Copyright (c) 2013 Andreas Sandberg
+ * All rights reserved
  *
  * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above
- *    copyright notice, this list of conditions and the following
- *    disclaimer in the documentation and/or other materials provided
- *    with the distribution.
+ * modification, are permitted provided that the following conditions are
+ * met: redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer;
+ * redistributions in binary form must reproduce the above copyright
+ * notice, this list of conditions and the following disclaimer in the
+ * documentation and/or other materials provided with the distribution;
+ * neither the name of the copyright holders nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Authors: Andreas Sandberg
  */
 
 #ifndef _FPBITS_H
@@ -66,6 +67,14 @@
 #define BUILD_FP64(sign, frac, exp)                             \
     { .bits = BUILD_IFP64(sign, frac, exp) }
 
+static inline fp64_t
+build_fp64(int sign, uint64_t frac, int exp)
+{
+    const fp64_t f = BUILD_FP64(sign, frac, exp);
+
+    return f;
+}
+
 #define BUILD_FP80_SE(sign, exp)                                \
     ((sign) ? FP80_SIGN_BIT : 0) |                              \
     ((exp) & FP80_EXP_MASK)
@@ -76,9 +85,18 @@
 
 #define BUILD_FP80(sign, frac, exp)                             \
     {                                                           \
+        .repr.pad = { 0 },                                      \
         .repr.se = BUILD_FP80_SE(sign, exp),                    \
         .repr.fi = BUILD_FP80_FI(frac, exp)                     \
     }
+
+static inline fp80_t
+build_fp80(int sign, uint64_t frac, int exp)
+{
+    const fp80_t f = BUILD_FP80(sign, frac, exp);
+
+    return f;
+}
 
 #define FP80_FRAC(fp80)                                         \
     (fp80.repr.fi & FP80_FRAC_MASK)
@@ -91,5 +109,6 @@
 
 #define FP64_EXP(fp80)                                          \
     ((fp64.bits & FP64_EXP_MASK) >> FP64_EXP_SHIFT)
+
 
 #endif

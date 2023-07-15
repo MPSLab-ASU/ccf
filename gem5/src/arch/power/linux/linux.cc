@@ -25,55 +25,12 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Timothy M. Jones
  */
-
-#include <fcntl.h>
 
 #include "arch/power/linux/linux.hh"
 
-// open(2) flags translation table
-OpenFlagTransTable PowerLinux::openFlagTable[] = {
-#ifdef _MSC_VER
-  { PowerLinux::TGT_O_RDONLY,    _O_RDONLY },
-  { PowerLinux::TGT_O_WRONLY,    _O_WRONLY },
-  { PowerLinux::TGT_O_RDWR,      _O_RDWR },
-  { PowerLinux::TGT_O_APPEND,    _O_APPEND },
-  { PowerLinux::TGT_O_CREAT,     _O_CREAT },
-  { PowerLinux::TGT_O_TRUNC,     _O_TRUNC },
-  { PowerLinux::TGT_O_EXCL,      _O_EXCL },
-#ifdef _O_NONBLOCK
-  { PowerLinux::TGT_O_NONBLOCK,  _O_NONBLOCK },
-#endif
-#ifdef _O_NOCTTY
-  { PowerLinux::TGT_O_NOCTTY,    _O_NOCTTY },
-#endif
-#ifdef _O_SYNC
-  { PowerLinux::TGT_O_SYNC,      _O_SYNC },
-#endif
-#ifdef _O_LARGEFILE
-  { PowerLinux::TGT_O_LARGEFILE, _O_LARGEFILE },
-#endif
-#else /* !_MSC_VER */
-  { PowerLinux::TGT_O_RDONLY,    O_RDONLY },
-  { PowerLinux::TGT_O_WRONLY,    O_WRONLY },
-  { PowerLinux::TGT_O_RDWR,      O_RDWR },
-  { PowerLinux::TGT_O_APPEND,    O_APPEND },
-  { PowerLinux::TGT_O_CREAT,     O_CREAT },
-  { PowerLinux::TGT_O_TRUNC,     O_TRUNC },
-  { PowerLinux::TGT_O_EXCL,      O_EXCL },
-  { PowerLinux::TGT_O_NONBLOCK,  O_NONBLOCK },
-  { PowerLinux::TGT_O_NOCTTY,    O_NOCTTY },
-#ifdef O_SYNC
-  { PowerLinux::TGT_O_SYNC,      O_SYNC },
-#endif
-#ifdef O_LARGEFILE
-  { PowerLinux::TGT_O_LARGEFILE, O_LARGEFILE },
-#endif
-#endif /* _MSC_VER */
-};
+#include <fcntl.h>
+#include <sys/mman.h>
 
-const int PowerLinux::NUM_OPEN_FLAGS =
-        (sizeof(PowerLinux::openFlagTable)/sizeof(PowerLinux::openFlagTable[0]));
-
+#define TARGET PowerLinux
+#include "kern/linux/flag_tables.hh"

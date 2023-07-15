@@ -29,30 +29,11 @@
 #ifndef __MEM_RUBY_SLICC_INTERFACE_RUBYSLICC_COMPONENTMAPPINGS_HH__
 #define __MEM_RUBY_SLICC_INTERFACE_RUBYSLICC_COMPONENTMAPPINGS_HH__
 
-#include "mem/protocol/MachineType.hh"
 #include "mem/ruby/common/Address.hh"
-#include "mem/ruby/common/Global.hh"
+#include "mem/ruby/common/MachineID.hh"
 #include "mem/ruby/common/NetDest.hh"
-#include "mem/ruby/system/DirectoryMemory.hh"
-#include "mem/ruby/system/MachineID.hh"
-
-// used to determine the home directory
-// returns a value between 0 and total_directories_within_the_system
-inline NodeID
-map_Address_to_DirectoryNode(const Address& addr)
-{
-    return DirectoryMemory::mapAddressToDirectoryVersion(addr);
-}
-
-// used to determine the home directory
-// returns a value between 0 and total_directories_within_the_system
-inline MachineID
-map_Address_to_Directory(const Address &addr)
-{
-    MachineID mach =
-        {MachineType_Directory, map_Address_to_DirectoryNode(addr)};
-    return mach;
-}
+#include "mem/ruby/protocol/MachineType.hh"
+#include "mem/ruby/structures/DirectoryMemory.hh"
 
 inline NetDest
 broadcast(MachineType type)
@@ -66,14 +47,14 @@ broadcast(MachineType type)
 }
 
 inline MachineID
-mapAddressToRange(const Address & addr, MachineType type, int low_bit,
+mapAddressToRange(Addr addr, MachineType type, int low_bit,
                   int num_bits, int cluster_id = 0)
 {
     MachineID mach = {type, 0};
     if (num_bits == 0)
         mach.num = cluster_id;
     else
-        mach.num = addr.bitSelect(low_bit, low_bit + num_bits - 1)
+        mach.num = bitSelect(addr, low_bit, low_bit + num_bits - 1)
             + (1 << num_bits) * cluster_id;
     return mach;
 }
@@ -100,6 +81,13 @@ inline MachineID
 createMachineID(MachineType type, NodeID id)
 {
     MachineID mach = {type, id};
+    return mach;
+}
+
+inline MachineID
+MachineTypeAndNodeIDToMachineID(MachineType type, NodeID node)
+{
+    MachineID mach = {type, node};
     return mach;
 }
 

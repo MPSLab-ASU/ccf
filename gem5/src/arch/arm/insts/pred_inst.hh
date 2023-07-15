@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 ARM Limited
+ * Copyright (c) 2010, 2012-2013, 2017-2018 ARM Limited
  * All rights reserved
  *
  * The license below extends only to copyright in the software and shall
@@ -36,22 +36,23 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Stephen Hines
  */
+
 #ifndef __ARCH_ARM_INSTS_PREDINST_HH__
 #define __ARCH_ARM_INSTS_PREDINST_HH__
 
 #include "arch/arm/insts/static_inst.hh"
+#include "base/logging.hh"
 #include "base/trace.hh"
 
 namespace ArmISA
 {
 static inline uint32_t
-rotate_imm(uint32_t immValue, int rotateValue)
+rotate_imm(uint32_t immValue, uint32_t rotateValue)
 {
-    return ((immValue >> (rotateValue & 31)) |
-            (immValue << (32 - (rotateValue & 31))));
+    rotateValue &= 31;
+    return rotateValue == 0 ? immValue :
+        (immValue >> rotateValue) | (immValue << (32 - rotateValue));
 }
 
 static inline uint32_t
@@ -78,7 +79,8 @@ modified_imm(uint8_t ctrlImm, uint8_t dataImm)
 }
 
 static inline uint64_t
-simd_modified_imm(bool op, uint8_t cmode, uint8_t data, bool &immValid)
+simd_modified_imm(bool op, uint8_t cmode, uint8_t data, bool &immValid,
+                  bool isAarch64 = false)
 {
     uint64_t bigData = data;
     immValid = true;
@@ -133,14 +135,22 @@ simd_modified_imm(bool op, uint8_t cmode, uint8_t data, bool &immValid)
         }
         break;
       case 0xf:
-        if (!op) {
-            uint64_t bVal = bits(bigData, 6) ? (0x1F) : (0x20);
-            bigData = (bits(bigData, 5, 0) << 19) |
-                      (bVal << 25) | (bits(bigData, 7) << 31);
-            bigData |= (bigData << 32);
-            break;
+        {
+            uint64_t bVal = 0;
+            if (!op) {
+                bVal = bits(bigData, 6) ? (0x1F) : (0x20);
+                bigData = (bits(bigData, 5, 0) << 19) |
+                          (bVal << 25) | (bits(bigData, 7) << 31);
+                bigData |= (bigData << 32);
+                break;
+            } else if (isAarch64) {
+                bVal = bits(bigData, 6) ? (0x0FF) : (0x100);
+                bigData = (bits(bigData, 5, 0) << 48) |
+                          (bVal << 54) | (bits(bigData, 7) << 63);
+                break;
+            }
         }
-        // Fall through, immediate encoding is invalid.
+        M5_FALLTHROUGH;
       default:
         immValid = false;
         break;
@@ -148,25 +158,51 @@ simd_modified_imm(bool op, uint8_t cmode, uint8_t data, bool &immValid)
     return bigData;
 }
 
+/** Floating point data types. */
+enum class FpDataType { Fp16, Fp32, Fp64 };
+
 static inline uint64_t
-vfp_modified_imm(uint8_t data, bool wide)
+vfp_modified_imm(uint8_t data, FpDataType dtype)
 {
     uint64_t bigData = data;
     uint64_t repData;
-    if (wide) {
-        repData = bits(data, 6) ? 0xFF : 0;
-        bigData = (bits(bigData, 5, 0) << 48) |
-                  (repData << 54) | (bits(~bigData, 6) << 62) |
-                  (bits(bigData, 7) << 63);
-    } else {
+    switch (dtype) {
+      case FpDataType::Fp16:
+        repData = bits(data, 6) ? 0x3 : 0;
+        bigData = (bits(bigData, 5, 0) << 6) |
+                  (repData << 12) | (bits(~bigData, 6) << 14) |
+                  (bits(bigData, 7) << 15);
+        break;
+      case FpDataType::Fp32:
         repData = bits(data, 6) ? 0x1F : 0;
         bigData = (bits(bigData, 5, 0) << 19) |
                   (repData << 25) | (bits(~bigData, 6) << 30) |
                   (bits(bigData, 7) << 31);
+        break;
+      case FpDataType::Fp64:
+        repData = bits(data, 6) ? 0xFF : 0;
+        bigData = (bits(bigData, 5, 0) << 48) |
+                  (repData << 54) | (bits(~bigData, 6) << 62) |
+                  (bits(bigData, 7) << 63);
+        break;
+      default:
+        panic("Unrecognized FP data type");
     }
     return bigData;
 }
 
+static inline FpDataType
+decode_fp_data_type(uint8_t encoding)
+{
+    switch (encoding) {
+      case 1: return FpDataType::Fp16;
+      case 2: return FpDataType::Fp32;
+      case 3: return FpDataType::Fp64;
+      default:
+        panic(
+            "Invalid floating point data type in VFP/SIMD or SVE instruction");
+    }
+}
 
 /**
  * Base class for predicated integer operations.
@@ -179,11 +215,14 @@ class PredOp : public ArmStaticInst
 
     /// Constructor
     PredOp(const char *mnem, ExtMachInst _machInst, OpClass __opClass) :
-           ArmStaticInst(mnem, _machInst, __opClass),
-           condCode(machInst.itstateMask ?
-                   (ConditionCode)(uint8_t)machInst.itstateCond :
-                   (ConditionCode)(unsigned)machInst.condCode)
+           ArmStaticInst(mnem, _machInst, __opClass)
     {
+        if (machInst.aarch64)
+            condCode = COND_UC;
+        else if (machInst.itstateMask)
+            condCode = (ConditionCode)(uint8_t)machInst.itstateCond;
+        else
+            condCode = (ConditionCode)(unsigned)machInst.condCode;
     }
 };
 
@@ -210,7 +249,8 @@ class PredImmOp : public PredOp
             rotated_carry = bits(rotated_imm, 31);
     }
 
-    std::string generateDisassembly(Addr pc, const SymbolTable *symtab) const;
+    std::string generateDisassembly(
+            Addr pc, const Loader::SymbolTable *symtab) const override;
 };
 
 /**
@@ -230,7 +270,8 @@ class PredIntOp : public PredOp
     {
     }
 
-    std::string generateDisassembly(Addr pc, const SymbolTable *symtab) const;
+    std::string generateDisassembly(
+            Addr pc, const Loader::SymbolTable *symtab) const override;
 };
 
 class DataImmOp : public PredOp
@@ -248,7 +289,8 @@ class DataImmOp : public PredOp
         dest(_dest), op1(_op1), imm(_imm), rotC(_rotC)
     {}
 
-    std::string generateDisassembly(Addr pc, const SymbolTable *symtab) const;
+    std::string generateDisassembly(
+            Addr pc, const Loader::SymbolTable *symtab) const override;
 };
 
 class DataRegOp : public PredOp
@@ -266,7 +308,8 @@ class DataRegOp : public PredOp
         shiftAmt(_shiftAmt), shiftType(_shiftType)
     {}
 
-    std::string generateDisassembly(Addr pc, const SymbolTable *symtab) const;
+    std::string generateDisassembly(
+            Addr pc, const Loader::SymbolTable *symtab) const override;
 };
 
 class DataRegRegOp : public PredOp
@@ -283,7 +326,8 @@ class DataRegRegOp : public PredOp
         shiftType(_shiftType)
     {}
 
-    std::string generateDisassembly(Addr pc, const SymbolTable *symtab) const;
+    std::string generateDisassembly(
+            Addr pc, const Loader::SymbolTable *symtab) const override;
 };
 
 /**
@@ -299,7 +343,7 @@ class PredMacroOp : public PredOp
     /// Constructor
     PredMacroOp(const char *mnem, ExtMachInst _machInst, OpClass __opClass) :
                 PredOp(mnem, _machInst, __opClass),
-                numMicroops(0)
+                numMicroops(0), microOps(nullptr)
     {
         // We rely on the subclasses of this object to handle the
         // initialization of the micro-operations, since they are
@@ -314,13 +358,20 @@ class PredMacroOp : public PredOp
     }
 
     StaticInstPtr
-    fetchMicroop(MicroPC microPC) const
+    fetchMicroop(MicroPC microPC) const override
     {
         assert(microPC < numMicroops);
         return microOps[microPC];
     }
 
-    std::string generateDisassembly(Addr pc, const SymbolTable *symtab) const;
+    Fault
+    execute(ExecContext *, Trace::InstRecord *) const override
+    {
+        panic("Execute method called when it shouldn't!");
+    }
+
+    std::string generateDisassembly(
+            Addr pc, const Loader::SymbolTable *symtab) const override;
 };
 
 /**
@@ -336,7 +387,7 @@ class PredMicroop : public PredOp
     }
 
     void
-    advancePC(PCState &pcState) const
+    advancePC(PCState &pcState) const override
     {
         if (flags[IsLastMicroop])
             pcState.uEnd();

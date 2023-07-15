@@ -24,15 +24,13 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Kevin Lim
  */
 
 #ifndef __CPU_PRED_BTB_HH__
 #define __CPU_PRED_BTB_HH__
 
 #include "arch/types.hh"
-#include "base/misc.hh"
+#include "base/logging.hh"
 #include "base/types.hh"
 #include "config/the_isa.hh"
 
@@ -66,7 +64,7 @@ class DefaultBTB
      *  @param instShiftAmt Offset amount for instructions to ignore alignment.
      */
     DefaultBTB(unsigned numEntries, unsigned tagBits,
-               unsigned instShiftAmt);
+               unsigned instShiftAmt, unsigned numThreads);
 
     void reset();
 
@@ -97,7 +95,7 @@ class DefaultBTB
      *  @param inst_PC The branch to look up.
      *  @return Returns the index into the BTB.
      */
-    inline unsigned getIndex(Addr instPC);
+    inline unsigned getIndex(Addr instPC, ThreadID tid);
 
     /** Returns the tag bits of a given address.
      *  @param inst_PC The branch's address.
@@ -125,6 +123,9 @@ class DefaultBTB
 
     /** Number of bits to shift PC when calculating tag. */
     unsigned tagShiftAmt;
+
+    /** Log2 NumThreads used for hashing threadid */
+    unsigned log2NumThreads;
 };
 
 #endif // __CPU_PRED_BTB_HH__

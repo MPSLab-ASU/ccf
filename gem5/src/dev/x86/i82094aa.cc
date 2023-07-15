@@ -24,23 +24,25 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Gabe Black
  */
+
+#include "dev/x86/i82094aa.hh"
+
+#include <list>
 
 #include "arch/x86/interrupts.hh"
 #include "arch/x86/intmessage.hh"
 #include "cpu/base.hh"
 #include "debug/I82094AA.hh"
-#include "dev/x86/i82094aa.hh"
 #include "dev/x86/i8259.hh"
 #include "mem/packet.hh"
 #include "mem/packet_access.hh"
 #include "sim/system.hh"
 
 X86ISA::I82094AA::I82094AA(Params *p)
-    : BasicPioDevice(p, 20), IntDevice(this, p->int_latency),
-      extIntPic(p->external_int_pic), lowestPriorityOffset(0)
+    : BasicPioDevice(p, 20), extIntPic(p->external_int_pic),
+      lowestPriorityOffset(0),
+      intRequestPort(name() + ".int_request", this, this, p->int_latency)
 {
     // This assumes there's only one I/O APIC in the system and since the apic
     // id is stored in a 8-bit field with 0xff meaning broadcast, the id must
@@ -56,35 +58,33 @@ X86ISA::I82094AA::I82094AA(Params *p)
         redirTable[i] = entry;
         pinStates[i] = false;
     }
+
+    for (int i = 0; i < p->port_inputs_connection_count; i++)
+        inputs.push_back(new IntSinkPin<I82094AA>(
+                    csprintf("%s.inputs[%d]", name(), i), i, this));
 }
 
 void
 X86ISA::I82094AA::init()
 {
-    // The io apic must register its address ranges on both its pio port
-    // via the piodevice init() function and its int port that it inherited
-    // from IntDevice.  Note IntDevice is not a SimObject itself.
-
+    // The io apic must register its address range with its pio port via
+    // the piodevice init() function.
     BasicPioDevice::init();
-    IntDevice::init();
+
+    // If the request port isn't connected, we can't send interrupts anywhere.
+    panic_if(!intRequestPort.isConnected(),
+            "Int port not connected to anything!");
 }
 
-BaseMasterPort &
-X86ISA::I82094AA::getMasterPort(const std::string &if_name, PortID idx)
+Port &
+X86ISA::I82094AA::getPort(const std::string &if_name, PortID idx)
 {
-    if (if_name == "int_master")
-        return intMasterPort;
-    return BasicPioDevice::getMasterPort(if_name, idx);
-}
-
-AddrRangeList
-X86ISA::I82094AA::getIntAddrRange() const
-{
-    AddrRangeList ranges;
-    ranges.push_back(RangeEx(x86InterruptAddress(initialApicId, 0),
-                             x86InterruptAddress(initialApicId, 0) +
-                             PhysAddrAPICRangeSize));
-    return ranges;
+    if (if_name == "int_requestor")
+        return intRequestPort;
+    if (if_name == "inputs")
+        return *inputs.at(idx);
+    else
+        return BasicPioDevice::getPort(if_name, idx);
 }
 
 Tick
@@ -94,10 +94,10 @@ X86ISA::I82094AA::read(PacketPtr pkt)
     Addr offset = pkt->getAddr() - pioAddr;
     switch(offset) {
       case 0:
-        pkt->set<uint32_t>(regSel);
+        pkt->setLE<uint32_t>(regSel);
         break;
       case 16:
-        pkt->set<uint32_t>(readReg(regSel));
+        pkt->setLE<uint32_t>(readReg(regSel));
         break;
       default:
         panic("Illegal read from I/O APIC.\n");
@@ -113,10 +113,10 @@ X86ISA::I82094AA::write(PacketPtr pkt)
     Addr offset = pkt->getAddr() - pioAddr;
     switch(offset) {
       case 0:
-        regSel = pkt->get<uint32_t>();
+        regSel = pkt->getLE<uint32_t>();
         break;
       case 16:
-        writeReg(regSel, pkt->get<uint32_t>());
+        writeReg(regSel, pkt->getLE<uint32_t>());
         break;
       default:
         panic("Illegal write to I/O APIC.\n");
@@ -197,8 +197,8 @@ X86ISA::I82094AA::signalInterrupt(int line)
         message.destMode = entry.destMode;
         message.level = entry.polarity;
         message.trigger = entry.trigger;
-        ApicList apics;
-        int numContexts = sys->numContexts();
+        std::list<int> apics;
+        int numContexts = sys->threads.size();
         if (message.destMode == 0) {
             if (message.deliveryMode == DeliveryMode::LowestPriority) {
                 panic("Lowest priority delivery mode from the "
@@ -214,8 +214,9 @@ X86ISA::I82094AA::signalInterrupt(int line)
             }
         } else {
             for (int i = 0; i < numContexts; i++) {
-                Interrupts *localApic = sys->getThreadContext(i)->
-                    getCpuPtr()->getInterruptController();
+                BaseInterrupts *base_int = sys->threads[i]->
+                    getCpuPtr()->getInterruptController(0);
+                auto *localApic = dynamic_cast<Interrupts *>(base_int);
                 if ((localApic->readReg(APIC_LOGICAL_DESTINATION) >> 24) &
                         message.destination) {
                     apics.push_back(localApic->getInitialApicId());
@@ -229,7 +230,7 @@ X86ISA::I82094AA::signalInterrupt(int line)
                 // through the set of APICs selected above.
                 uint64_t modOffset = lowestPriorityOffset % apics.size();
                 lowestPriorityOffset++;
-                ApicList::iterator apicIt = apics.begin();
+                auto apicIt = apics.begin();
                 while (modOffset--) {
                     apicIt++;
                     assert(apicIt != apics.end());
@@ -239,7 +240,10 @@ X86ISA::I82094AA::signalInterrupt(int line)
                 apics.push_back(selected);
             }
         }
-        intMasterPort.sendMessage(apics, message, sys->isTimingMode());
+        for (auto id: apics) {
+            PacketPtr pkt = buildIntTriggerPacket(id, message);
+            intRequestPort.sendMessage(pkt, sys->isTimingMode());
+        }
     }
 }
 
@@ -260,7 +264,7 @@ X86ISA::I82094AA::lowerInterruptPin(int number)
 }
 
 void
-X86ISA::I82094AA::serialize(std::ostream &os)
+X86ISA::I82094AA::serialize(CheckpointOut &cp) const
 {
     uint64_t* redirTableArray = (uint64_t*)redirTable;
     SERIALIZE_SCALAR(regSel);
@@ -273,7 +277,7 @@ X86ISA::I82094AA::serialize(std::ostream &os)
 }
 
 void
-X86ISA::I82094AA::unserialize(Checkpoint *cp, const std::string &section)
+X86ISA::I82094AA::unserialize(CheckpointIn &cp)
 {
     uint64_t redirTableArray[TableSize];
     UNSERIALIZE_SCALAR(regSel);

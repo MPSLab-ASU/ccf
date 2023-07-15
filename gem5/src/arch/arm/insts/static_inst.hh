@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 ARM Limited
+ * Copyright (c) 2010-2013,2016-2018 ARM Limited
  * All rights reserved
  *
  * The license below extends only to copyright in the software and shall
@@ -36,15 +36,20 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Stephen Hines
  */
+
 #ifndef __ARCH_ARM_INSTS_STATICINST_HH__
 #define __ARCH_ARM_INSTS_STATICINST_HH__
 
+#include <memory>
+
 #include "arch/arm/faults.hh"
 #include "arch/arm/utility.hh"
+#include "arch/arm/isa.hh"
+#include "arch/arm/self_debug.hh"
+#include "arch/arm/system.hh"
 #include "base/trace.hh"
+#include "cpu/exec_context.hh"
 #include "cpu/static_inst.hh"
 #include "sim/byteswap.hh"
 #include "sim/full_system.hh"
@@ -55,6 +60,9 @@ namespace ArmISA
 class ArmStaticInst : public StaticInst
 {
   protected:
+    bool aarch64;
+    uint8_t intWidth;
+
     int32_t shift_rm_imm(uint32_t base, uint32_t shamt,
                          uint32_t type, uint32_t cfval) const;
     int32_t shift_rm_rs(uint32_t base, uint32_t shamt,
@@ -64,6 +72,11 @@ class ArmStaticInst : public StaticInst
                          uint32_t type, uint32_t cfval) const;
     bool shift_carry_rs(uint32_t base, uint32_t shamt,
                         uint32_t type, uint32_t cfval) const;
+
+    int64_t shiftReg64(uint64_t base, uint64_t shiftAmt,
+                       ArmShiftType type, uint8_t width) const;
+    int64_t extendReg64(uint64_t base, ArmExtendType type,
+                        uint64_t shiftAmt, uint8_t width) const;
 
     template<int width>
     static inline bool
@@ -135,44 +148,78 @@ class ArmStaticInst : public StaticInst
                   OpClass __opClass)
         : StaticInst(mnem, _machInst, __opClass)
     {
+        aarch64 = machInst.aarch64;
+        if (bits(machInst, 28, 24) == 0x10)
+            intWidth = 64;  // Force 64-bit width for ADR/ADRP
+        else
+            intWidth = (aarch64 && bits(machInst, 31)) ? 64 : 32;
     }
 
     /// Print a register name for disassembly given the unique
     /// dependence tag number (FP or int).
-    void printReg(std::ostream &os, int reg) const;
+    void printIntReg(std::ostream &os, RegIndex reg_idx,
+                     uint8_t opWidth = 0) const;
+    void printFloatReg(std::ostream &os, RegIndex reg_idx) const;
+    void printVecReg(std::ostream &os, RegIndex reg_idx,
+                     bool isSveVecReg = false) const;
+    void printVecPredReg(std::ostream &os, RegIndex reg_idx) const;
+    void printCCReg(std::ostream &os, RegIndex reg_idx) const;
+    void printMiscReg(std::ostream &os, RegIndex reg_idx) const;
     void printMnemonic(std::ostream &os,
                        const std::string &suffix = "",
-                       bool withPred = true) const;
-    void printMemSymbol(std::ostream &os, const SymbolTable *symtab,
+                       bool withPred = true,
+                       bool withCond64 = false,
+                       ConditionCode cond64 = COND_UC) const;
+    void printTarget(std::ostream &os, Addr target,
+                     const Loader::SymbolTable *symtab) const;
+    void printCondition(std::ostream &os, unsigned code,
+                        bool noImplicit=false) const;
+    void printMemSymbol(std::ostream &os, const Loader::SymbolTable *symtab,
                         const std::string &prefix, const Addr addr,
                         const std::string &suffix) const;
     void printShiftOperand(std::ostream &os, IntRegIndex rm,
                            bool immShift, uint32_t shiftAmt,
                            IntRegIndex rs, ArmShiftType type) const;
-
+    void printExtendOperand(bool firstOperand, std::ostream &os,
+                            IntRegIndex rm, ArmExtendType type,
+                            int64_t shiftAmt) const;
+    void printPFflags(std::ostream &os, int flag) const;
 
     void printDataInst(std::ostream &os, bool withImm) const;
     void printDataInst(std::ostream &os, bool withImm, bool immShift, bool s,
                        IntRegIndex rd, IntRegIndex rn, IntRegIndex rm,
                        IntRegIndex rs, uint32_t shiftAmt, ArmShiftType type,
-                       uint32_t imm) const;
+                       uint64_t imm) const;
 
     void
-    advancePC(PCState &pcState) const
+    advancePC(PCState &pcState) const override
     {
         pcState.advance();
     }
 
-    std::string generateDisassembly(Addr pc, const SymbolTable *symtab) const;
+    std::string generateDisassembly(
+            Addr pc, const Loader::SymbolTable *symtab) const override;
+
+    static void
+    activateBreakpoint(ThreadContext *tc)
+    {
+        SelfDebug *sd = ArmISA::ISA::getSelfDebug(tc);
+        sd->activateDebug();
+    }
 
     static inline uint32_t
-    cpsrWriteByInstr(CPSR cpsr, uint32_t val,
-            uint8_t byteMask, bool affectState, bool nmfi)
+    cpsrWriteByInstr(CPSR cpsr, uint32_t val, SCR scr, NSACR nsacr,
+            uint8_t byteMask, bool affectState, bool nmfi, ThreadContext *tc)
     {
-        bool privileged = (cpsr.mode != MODE_USER);
+        bool privileged   = (cpsr.mode != MODE_USER);
+        bool haveVirt     = ArmSystem::haveVirtualization(tc);
+        bool isSecure     = ArmISA::isSecure(tc);
 
         uint32_t bitMask = 0;
 
+        if (affectState && byteMask==0xF){
+            activateBreakpoint(tc);
+        }
         if (bits(byteMask, 3)) {
             unsigned lowIdx = affectState ? 24 : 27;
             bitMask = bitMask | mask(31, lowIdx);
@@ -182,14 +229,53 @@ class ArmStaticInst : public StaticInst
         }
         if (bits(byteMask, 1)) {
             unsigned highIdx = affectState ? 15 : 9;
-            unsigned lowIdx = privileged ? 8 : 9;
+            unsigned lowIdx = (privileged && (isSecure || scr.aw || haveVirt))
+                            ? 8 : 9;
             bitMask = bitMask | mask(highIdx, lowIdx);
         }
         if (bits(byteMask, 0)) {
             if (privileged) {
-                bitMask = bitMask | mask(7, 6);
-                if (!badMode((OperatingMode)(val & mask(5)))) {
-                    bitMask = bitMask | mask(5);
+                bitMask |= 1 << 7;
+                if ( (!nmfi || !((val >> 6) & 0x1)) &&
+                     (isSecure || scr.fw || haveVirt) ) {
+                    bitMask |= 1 << 6;
+                }
+                // Now check the new mode is allowed
+                OperatingMode newMode = (OperatingMode) (val & mask(5));
+                OperatingMode oldMode = (OperatingMode)(uint32_t)cpsr.mode;
+                if (!badMode(tc, newMode)) {
+                    bool validModeChange = true;
+                    // Check for attempts to enter modes only permitted in
+                    // Secure state from Non-secure state. These are Monitor
+                    // mode ('10110'), and FIQ mode ('10001') if the Security
+                    // Extensions have reserved it.
+                    if (!isSecure && newMode == MODE_MON)
+                        validModeChange = false;
+                    if (!isSecure && newMode == MODE_FIQ && nsacr.rfr == '1')
+                        validModeChange = false;
+                    // There is no Hyp mode ('11010') in Secure state, so that
+                    // is UNPREDICTABLE
+                    if (scr.ns == 0 && newMode == MODE_HYP)
+                        validModeChange = false;
+                    // Cannot move into Hyp mode directly from a Non-secure
+                    // PL1 mode
+                    if (!isSecure && oldMode != MODE_HYP && newMode == MODE_HYP)
+                        validModeChange = false;
+                    // Cannot move out of Hyp mode with this function except
+                    // on an exception return
+                    if (oldMode == MODE_HYP && newMode != MODE_HYP && !affectState)
+                        validModeChange = false;
+                    // Must not change to 64 bit when running in 32 bit mode
+                    if (!opModeIs64(oldMode) && opModeIs64(newMode))
+                        validModeChange = false;
+
+                    // If we passed all of the above then set the bit mask to
+                    // copy the mode accross
+                    if (validModeChange) {
+                        bitMask = bitMask | mask(5);
+                    } else {
+                        warn_once("Illegal change to CPSR mode attempted\n");
+                    }
                 } else {
                     warn_once("Ignoring write of bad mode to CPSR.\n");
                 }
@@ -198,11 +284,7 @@ class ArmStaticInst : public StaticInst
                 bitMask = bitMask | (1 << 5);
         }
 
-        bool cpsr_f = cpsr.f;
-        uint32_t new_cpsr = ((uint32_t)cpsr & ~bitMask) | (val & bitMask);
-        if (nmfi && !cpsr_f)
-            new_cpsr &= ~(1 << 6);
-        return new_cpsr;
+        return ((uint32_t)cpsr & ~bitMask) | (val & bitMask);
     }
 
     static inline uint32_t
@@ -223,16 +305,14 @@ class ArmStaticInst : public StaticInst
         return ((spsr & ~bitMask) | (val & bitMask));
     }
 
-    template<class XC>
     static inline Addr
-    readPC(XC *xc)
+    readPC(ExecContext *xc)
     {
         return xc->pcState().instPC();
     }
 
-    template<class XC>
     static inline void
-    setNextPC(XC *xc, Addr val)
+    setNextPC(ExecContext *xc, Addr val)
     {
         PCState pc = xc->pcState();
         pc.instNPC(val);
@@ -244,9 +324,9 @@ class ArmStaticInst : public StaticInst
     cSwap(T val, bool big)
     {
         if (big) {
-            return gtobe(val);
+            return letobe(val);
         } else {
-            return gtole(val);
+            return val;
         }
     }
 
@@ -259,23 +339,22 @@ class ArmStaticInst : public StaticInst
             T tVal;
             E eVals[count];
         } conv;
-        conv.tVal = htog(val);
+        conv.tVal = htole(val);
         if (big) {
             for (unsigned i = 0; i < count; i++) {
-                conv.eVals[i] = gtobe(conv.eVals[i]);
+                conv.eVals[i] = letobe(conv.eVals[i]);
             }
         } else {
             for (unsigned i = 0; i < count; i++) {
-                conv.eVals[i] = gtole(conv.eVals[i]);
+                conv.eVals[i] = conv.eVals[i];
             }
         }
-        return gtoh(conv.tVal);
+        return letoh(conv.tVal);
     }
 
     // Perform an interworking branch.
-    template<class XC>
     static inline void
-    setIWNextPC(XC *xc, Addr val)
+    setIWNextPC(ExecContext *xc, Addr val)
     {
         PCState pc = xc->pcState();
         pc.instIWNPC(val);
@@ -284,9 +363,8 @@ class ArmStaticInst : public StaticInst
 
     // Perform an interworking branch in ARM mode, a regular branch
     // otherwise.
-    template<class XC>
     static inline void
-    setAIWNextPC(XC *xc, Addr val)
+    setAIWNextPC(ExecContext *xc, Addr val)
     {
         PCState pc = xc->pcState();
         pc.instAIWNPC(val);
@@ -296,11 +374,191 @@ class ArmStaticInst : public StaticInst
     inline Fault
     disabledFault() const
     {
-        if (FullSystem) {
-            return new UndefinedInstruction();
-        } else {
-            return new UndefinedInstruction(machInst, false, mnemonic, true);
-        }
+        return std::make_shared<UndefinedInstruction>(machInst, false,
+                                                      mnemonic, true);
+    }
+
+    // Utility function used by checkForWFxTrap32 and checkForWFxTrap64
+    // Returns true if processor has to trap a WFI/WFE instruction.
+    bool isWFxTrapping(ThreadContext *tc,
+                       ExceptionLevel targetEL, bool isWfe) const;
+
+    /**
+     * Trigger a Software Breakpoint.
+     *
+     * See aarch32/exceptions/debug/AArch32.SoftwareBreakpoint in the
+     * ARM ARM psueodcode library.
+     */
+    Fault softwareBreakpoint32(ExecContext *xc, uint16_t imm) const;
+
+    /**
+     * Trap an access to Advanced SIMD or FP registers due to access
+     * control bits.
+     *
+     * See aarch64/exceptions/traps/AArch64.AdvSIMDFPAccessTrap in the
+     * ARM ARM psueodcode library.
+     *
+     * @param el Target EL for the trap
+     */
+    Fault advSIMDFPAccessTrap64(ExceptionLevel el) const;
+
+
+    /**
+     * Check an Advaned SIMD access against CPTR_EL2 and CPTR_EL3.
+     *
+     * See aarch64/exceptions/traps/AArch64.CheckFPAdvSIMDTrap in the
+     * ARM ARM psueodcode library.
+     */
+    Fault checkFPAdvSIMDTrap64(ThreadContext *tc, CPSR cpsr) const;
+
+    /**
+     * Check an Advaned SIMD access against CPACR_EL1, CPTR_EL2, and
+     * CPTR_EL3.
+     *
+     * See aarch64/exceptions/traps/AArch64.CheckFPAdvSIMDEnabled in the
+     * ARM ARM psueodcode library.
+     */
+    Fault checkFPAdvSIMDEnabled64(ThreadContext *tc,
+                                  CPSR cpsr, CPACR cpacr) const;
+
+    /**
+     * Check if a VFP/SIMD access from aarch32 should be allowed.
+     *
+     * See aarch32/exceptions/traps/AArch32.CheckAdvSIMDOrFPEnabled in the
+     * ARM ARM psueodcode library.
+     */
+    Fault checkAdvSIMDOrFPEnabled32(ThreadContext *tc,
+                                    CPSR cpsr, CPACR cpacr,
+                                    NSACR nsacr, FPEXC fpexc,
+                                    bool fpexc_check, bool advsimd) const;
+
+    /**
+     * Check if WFE/WFI instruction execution in aarch32 should be trapped.
+     *
+     * See aarch32/exceptions/traps/AArch32.checkForWFxTrap in the
+     * ARM ARM psueodcode library.
+     */
+    Fault checkForWFxTrap32(ThreadContext *tc,
+                            ExceptionLevel tgtEl, bool isWfe) const;
+
+    /**
+     * Check if WFE/WFI instruction execution in aarch64 should be trapped.
+     *
+     * See aarch64/exceptions/traps/AArch64.checkForWFxTrap in the
+     * ARM ARM psueodcode library.
+     */
+    Fault checkForWFxTrap64(ThreadContext *tc,
+                            ExceptionLevel tgtEl, bool isWfe) const;
+
+    /**
+     * WFE/WFI trapping helper function.
+     */
+    Fault trapWFx(ThreadContext *tc, CPSR cpsr, SCR scr, bool isWfe) const;
+
+    /**
+     * Check if SETEND instruction execution in aarch32 should be trapped.
+     *
+     * See aarch32/exceptions/traps/AArch32.CheckSETENDEnabled in the
+     * ARM ARM pseudocode library.
+     */
+    Fault checkSETENDEnabled(ThreadContext *tc, CPSR cpsr) const;
+
+    /**
+     * UNDEFINED behaviour in AArch32
+     *
+     * See aarch32/exceptions/traps/AArch32.UndefinedFault in the
+     * ARM ARM pseudocode library.
+     */
+    Fault undefinedFault32(ThreadContext *tc, ExceptionLevel el) const;
+
+    /**
+     * UNDEFINED behaviour in AArch64
+     *
+     * See aarch64/exceptions/traps/AArch64.UndefinedFault in the
+     * ARM ARM pseudocode library.
+     */
+    Fault undefinedFault64(ThreadContext *tc, ExceptionLevel el) const;
+
+    /**
+     * Trap an access to SVE registers due to access control bits.
+     *
+     * @param el Target EL for the trap.
+     */
+    Fault sveAccessTrap(ExceptionLevel el) const;
+
+    /**
+     * Check an SVE access against CPACR_EL1, CPTR_EL2, and CPTR_EL3.
+     */
+    Fault checkSveEnabled(ThreadContext *tc, CPSR cpsr, CPACR cpacr) const;
+
+    /**
+     * Get the new PSTATE from a SPSR register in preparation for an
+     * exception return.
+     *
+     * See shared/functions/system/SetPSTATEFromPSR in the ARM ARM
+     * pseudocode library.
+     */
+    CPSR getPSTATEFromPSR(ThreadContext *tc, CPSR cpsr, CPSR spsr) const;
+
+    /**
+     * Return true if exceptions normally routed to EL1 are being handled
+     * at an Exception level using AArch64, because either EL1 is using
+     * AArch64 or TGE is in force and EL2 is using AArch64.
+     *
+     * See aarch32/exceptions/exceptions/AArch32.GeneralExceptionsToAArch64
+     * in the ARM ARM pseudocode library.
+     */
+    bool generalExceptionsToAArch64(ThreadContext *tc,
+                                    ExceptionLevel pstateEL) const;
+
+  public:
+    virtual void
+    annotateFault(ArmFault *fault) {}
+
+    uint8_t
+    getIntWidth() const
+    {
+        return intWidth;
+    }
+
+    /** Returns the byte size of current instruction */
+    ssize_t
+    instSize() const
+    {
+        return (!machInst.thumb || machInst.bigThumb) ? 4 : 2;
+    }
+
+    /**
+     * Returns the real encoding of the instruction:
+     * the machInst field is in fact always 64 bit wide and
+     * contains some instruction metadata, which means it differs
+     * from the real opcode.
+     */
+    MachInst
+    encoding() const
+    {
+        return static_cast<MachInst>(machInst & (mask(instSize() * 8)));
+    }
+
+    size_t
+    asBytes(void *buf, size_t max_size) override
+    {
+        return simpleAsBytes(buf, max_size, machInst);
+    }
+
+    static unsigned getCurSveVecLenInBits(ThreadContext *tc);
+
+    static unsigned
+    getCurSveVecLenInQWords(ThreadContext *tc)
+    {
+        return getCurSveVecLenInBits(tc) >> 6;
+    }
+
+    template<typename T>
+    static unsigned
+    getCurSveVecLen(ThreadContext *tc)
+    {
+        return getCurSveVecLenInBits(tc) / (8 * sizeof(T));
     }
 };
 }

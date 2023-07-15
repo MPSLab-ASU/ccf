@@ -34,20 +34,20 @@
 #include <string>
 #include <vector>
 
-#include "mem/ruby/common/DataBlock.hh"
-#include "mem/ruby/common/Global.hh"
-#include "mem/ruby/common/SubBlock.hh"
-#include "mem/ruby/system/RubyPort.hh"
-#include "mem/mem_object.hh"
 #include "mem/packet.hh"
+#include "mem/port.hh"
+#include "mem/ruby/common/DataBlock.hh"
+#include "mem/ruby/common/SubBlock.hh"
+#include "mem/ruby/common/TypeDefines.hh"
 #include "params/RubyDirectedTester.hh"
+#include "sim/clocked_object.hh"
 
 class DirectedGenerator;
 
-class RubyDirectedTester : public MemObject
+class RubyDirectedTester : public ClockedObject
 {
   public:
-    class CpuPort : public MasterPort
+    class CpuPort : public RequestPort
     {
       private:
         RubyDirectedTester *tester;
@@ -55,12 +55,12 @@ class RubyDirectedTester : public MemObject
       public:
         CpuPort(const std::string &_name, RubyDirectedTester *_tester,
                 PortID _id)
-            : MasterPort(_name, _tester, _id), tester(_tester)
+            : RequestPort(_name, _tester, _id), tester(_tester)
         {}
 
       protected:
         virtual bool recvTimingResp(PacketPtr pkt);
-        virtual void recvRetry()
+        virtual void recvReqRetry()
         { panic("%s does not expect a retry\n", name()); }
     };
 
@@ -68,12 +68,12 @@ class RubyDirectedTester : public MemObject
     RubyDirectedTester(const Params *p);
     ~RubyDirectedTester();
 
-    virtual BaseMasterPort &getMasterPort(const std::string &if_name,
-                                          PortID idx = InvalidPortID);
+    Port &getPort(const std::string &if_name,
+                  PortID idx=InvalidPortID) override;
 
-    MasterPort* getCpuPort(int idx);
+    RequestPort* getCpuPort(int idx);
 
-    virtual void init();
+    void init() override;
 
     void wakeup();
 
@@ -86,20 +86,7 @@ class RubyDirectedTester : public MemObject
     void print(std::ostream& out) const;
 
   protected:
-    class DirectedStartEvent : public Event
-    {
-      private:
-        RubyDirectedTester *tester;
-
-      public:
-        DirectedStartEvent(RubyDirectedTester *_tester)
-            : Event(CPU_Tick_Pri), tester(_tester)
-        {}
-        void process() { tester->wakeup(); }
-        virtual const char *description() const { return "Directed tick"; }
-    };
-
-    DirectedStartEvent directedStartEvent;
+    EventFunctionWrapper directedStartEvent;
 
   private:
     void hitCallback(NodeID proc, Addr addr);
@@ -110,9 +97,9 @@ class RubyDirectedTester : public MemObject
     RubyDirectedTester(const RubyDirectedTester& obj);
     RubyDirectedTester& operator=(const RubyDirectedTester& obj);
 
-    uint64 m_requests_completed;
-    std::vector<MasterPort*> ports;
-    uint64 m_requests_to_complete;
+    uint64_t m_requests_completed;
+    std::vector<RequestPort*> ports;
+    uint64_t m_requests_to_complete;
     DirectedGenerator* generator;
 };
 

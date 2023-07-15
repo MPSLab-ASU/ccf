@@ -24,13 +24,13 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Ali Saidi
  */
 
 /** @file
  * Time of date device implementation
  */
+#include "dev/sparc/dtod.hh"
+
 #include <sys/time.h>
 
 #include <deque>
@@ -39,31 +39,18 @@
 
 #include "base/time.hh"
 #include "base/trace.hh"
-#include "config/the_isa.hh"
-#include "dev/sparc/dtod.hh"
 #include "dev/platform.hh"
 #include "mem/packet_access.hh"
 #include "mem/port.hh"
 #include "sim/system.hh"
 
 using namespace std;
-using namespace TheISA;
 
 DumbTOD::DumbTOD(const Params *p)
     : BasicPioDevice(p, 0x08)
 {
     struct tm tm = p->time;
-    char *tz;
-
-    tz = getenv("TZ");
-    setenv("TZ", "", 1);
-    tzset();
-    todTime = mktime(&tm);
-    if (tz)
-        setenv("TZ", tz, 1);
-    else
-        unsetenv("TZ");
-    tzset();
+    todTime = mkutctime(&tm);
 
     DPRINTFN("Real-time clock set to %s\n", asctime(&tm));
     DPRINTFN("Real-time clock set to %d\n", todTime);
@@ -75,8 +62,7 @@ DumbTOD::read(PacketPtr pkt)
     assert(pkt->getAddr() >= pioAddr && pkt->getAddr() < pioAddr + pioSize);
     assert(pkt->getSize() == 8);
 
-    pkt->allocate();
-    pkt->set(todTime);
+    pkt->setBE(todTime);
     todTime += 1000;
 
     pkt->makeAtomicResponse();
@@ -90,13 +76,13 @@ DumbTOD::write(PacketPtr pkt)
 }
 
 void
-DumbTOD::serialize(std::ostream &os)
+DumbTOD::serialize(CheckpointOut &cp) const
 {
     SERIALIZE_SCALAR(todTime);
 }
 
 void
-DumbTOD::unserialize(Checkpoint *cp, const std::string &section)
+DumbTOD::unserialize(CheckpointIn &cp)
 {
     UNSERIALIZE_SCALAR(todTime);
 }

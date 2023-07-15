@@ -37,16 +37,13 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Gabe Black
- *          Timothy M. Jones
  */
 
 #ifndef __CPU_TRANSLATION_HH__
 #define __CPU_TRANSLATION_HH__
 
+#include "arch/generic/tlb.hh"
 #include "sim/faults.hh"
-#include "sim/tlb.hh"
 
 /**
  * This class captures the state of an address translation.  A translation
@@ -78,8 +75,8 @@ class WholeTranslationState
      * Single translation state.  We set the number of outstanding
      * translations to one and indicate that it is not split.
      */
-    WholeTranslationState(RequestPtr _req, uint8_t *_data, uint64_t *_res,
-                          BaseTLB::Mode _mode)
+    WholeTranslationState(const RequestPtr &_req, uint8_t *_data,
+                          uint64_t *_res, BaseTLB::Mode _mode)
         : outstanding(1), delay(false), isSplit(false), mainReq(_req),
           sreqLow(NULL), sreqHigh(NULL), data(_data), res(_res), mode(_mode)
     {
@@ -92,9 +89,9 @@ class WholeTranslationState
      * number of outstanding translations to two and then mark this as a
      * split translation.
      */
-    WholeTranslationState(RequestPtr _req, RequestPtr _sreqLow,
-                          RequestPtr _sreqHigh, uint8_t *_data, uint64_t *_res,
-                          BaseTLB::Mode _mode)
+    WholeTranslationState(const RequestPtr &_req, const RequestPtr &_sreqLow,
+                          const RequestPtr &_sreqHigh, uint8_t *_data,
+                          uint64_t *_res, BaseTLB::Mode _mode)
         : outstanding(2), delay(false), isSplit(true), mainReq(_req),
           sreqLow(_sreqLow), sreqHigh(_sreqHigh), data(_data), res(_res),
           mode(_mode)
@@ -111,7 +108,7 @@ class WholeTranslationState
      * request to make it easier to access them later on.
      */
     bool
-    finish(Fault fault, int index)
+    finish(const Fault &fault, int index)
     {
         assert(outstanding);
         faults[index] = fault;
@@ -153,14 +150,14 @@ class WholeTranslationState
     }
 
     /**
-     * Check if this request is uncacheable.  We only need to check the main
-     * request because the flags will have been copied here on a split
-     * translation.
+     * Check if this request is strictly ordered device access.  We
+     * only need to check the main request because the flags will have
+     * been copied here on a split translation.
      */
     bool
-    isUncacheable() const
+    isStrictlyOrdered() const
     {
-        return mainReq->isUncacheable();
+        return mainReq->isStrictlyOrdered();
     }
 
     /**
@@ -196,10 +193,10 @@ class WholeTranslationState
     void
     deleteReqs()
     {
-        delete mainReq;
+        mainReq.reset();
         if (isSplit) {
-            delete sreqLow;
-            delete sreqHigh;
+            sreqLow.reset();
+            sreqHigh.reset();
         }
     }
 };
@@ -249,12 +246,16 @@ class DataTranslation : public BaseTLB::Translation
      * translation is complete if the state says so.
      */
     void
-    finish(Fault fault, RequestPtr req, ThreadContext *tc,
+    finish(const Fault &fault, const RequestPtr &req, ThreadContext *tc,
            BaseTLB::Mode mode)
     {
         assert(state);
         assert(mode == state->mode);
         if (state->finish(fault, index)) {
+            if (state->getFault() == NoFault) {
+                // Don't access the request if faulted (due to squash)
+                req->setTranslateLatency();
+            }
             xc->finishTranslation(state);
         }
         delete this;

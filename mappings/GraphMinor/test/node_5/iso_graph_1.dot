@@ -1,0 +1,23 @@
+digraph iso_graph { 
+{
+0 [color=red ];
+
+1 [color=red ];
+
+2 [color=red ];
+
+5 [color=blue ];
+
+6 [color=blue ];
+
+7 [color=green ];
+0 -> 1
+1 -> 2
+5 -> 6 [style=dotted, color=blue, label= mem] 
+6 -> 2
+1 -> 7
+7 -> 0 [style=bold, color=red, label=1] 
+
+}
+
+}

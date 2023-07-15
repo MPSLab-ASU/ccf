@@ -26,10 +26,6 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Authors: Steve Reinhardt
-//          Korey Sewell
-//          Timothy M. Jones
 
 // Some instructions ignore the contents of Ra if Ra == 0,
 // so check for this.
@@ -104,7 +100,7 @@ def LoadStoreBase(name, Name, ea_code, memacc_code, mem_flags, inst_flags,
                         inst_flags)
 
     if mem_flags:
-        s = '\n\tmemAccessFlags = ' + string.join(mem_flags, '|') + ';'
+        s = '\n\tmemAccessFlags = ' + '|'.join(mem_flags) + ';'
         iop.constructor += s
 
     fullExecTemplate = eval(exec_template_base + 'Execute')

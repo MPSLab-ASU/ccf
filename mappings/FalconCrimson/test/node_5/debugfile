@@ -1,0 +1,33 @@
+Mapping has started
+Operating mode:3
+inserting loads for largeConstants:	4	2	1
+Starting II: 3	rec_MII: 2
+
+Trying to schedule DFG at II: 3
+5
+5
+Feasible II is 3	Schedule Len is 4
+
+II after scheduling is: 3
+Checking for DFG balance
+K : 1
+The DFG has been modified and prepare for Rescheduling.
+in reschedule. success = 1
+II in ASAP Feasible is 3	Last Time is 4	Resources are 2
+Feasible II is 3
+6
+6
+Feasible II is 3	Schedule Len is 4
+
+II after balancing is: 3
+Start Placement for II = 3
+Past CGRA reset and init
+Inside subgraph iso
+Node 0 is scheduled at 2
+Node 1 is scheduled at 3
+Node 2 is scheduled at 4
+Node 5 is scheduled at 2
+Node 6 is scheduled at 3
+Node 7 is scheduled at 4
+MII = 3	 Current II=3
+Mapping is completed

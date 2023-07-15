@@ -1,0 +1,61 @@
+Global frequency set at 1000000000000 ticks per second
+warn: DRAM device capacity (8192 Mbytes) does not match the address range assigned (512 Mbytes)
+      0: system.cpu: initializing CGRA Dcache ports
+      0: system.cpu: Setting Up CGRA
+      0: system.cpu: CGRA instantiated
+0: system.remote_gdb: listening for remote gdb on port 7000
+gem5 Simulator System.  http://gem5.org
+gem5 is copyrighted software; use the --copyright option for details.
+
+gem5 version 20.1.0.4
+gem5 compiled Jun 14 2021 14:05:26
+gem5 started Jun 14 2021 14:06:29
+gem5 executing on en4181851l, pid 607885
+command line: /home/local/ASUAD/quoclon1/CCF_INS/ins3/gem5/build/ARM/gem5.opt --debug-flags=CGRA,CGRA_Execute,CGRA_Detailed /home/local/ASUAD/quoclon1/CCF_INS/ins3/gem5/configs/example/se_Vinh.py -n 1 --cpu-type CGRA4x4R4torus -c ./add_small -o 5
+
+**** REAL SIMULATION ****
+warn: membus.slave is deprecated. `slave` is now called `cpu_side_ports`
+warn: membus.slave is deprecated. `slave` is now called `cpu_side_ports`
+warn: membus.slave is deprecated. `slave` is now called `cpu_side_ports`
+warn: membus.slave is deprecated. `slave` is now called `cpu_side_ports`
+warn: membus.slave is deprecated. `slave` is now called `cpu_side_ports`
+warn: membus.master is deprecated. `master` is now called `mem_side_ports`
+warn: No dot file generated. Please install pydot to generate the dot file and pdf.
+info: Entering event queue @ 0.  Starting simulation...
+gem5.opt: build/ARM/mem/request.hh:739: Addr Request::getVaddr() const: Assertion `privateFlags.isSet(VALID_VADDR)' failed.
+readMem() address: 9a644
+Program aborted at tick 0
+--- BEGIN LIBC BACKTRACE ---
+/home/local/ASUAD/quoclon1/CCF_INS/ins3/gem5/build/ARM/gem5.opt(+0x1e3cd70)[0x55c6321bbd70]
+/home/local/ASUAD/quoclon1/CCF_INS/ins3/gem5/build/ARM/gem5.opt(+0x1e512ae)[0x55c6321d02ae]
+/lib/x86_64-linux-gnu/libpthread.so.0(+0x153c0)[0x7fb9615743c0]
+/lib/x86_64-linux-gnu/libc.so.6(gsignal+0xcb)[0x7fb960b5018b]
+/lib/x86_64-linux-gnu/libc.so.6(abort+0x12b)[0x7fb960b2f859]
+/lib/x86_64-linux-gnu/libc.so.6(+0x25729)[0x7fb960b2f729]
+/lib/x86_64-linux-gnu/libc.so.6(+0x36f36)[0x7fb960b40f36]
+/home/local/ASUAD/quoclon1/CCF_INS/ins3/gem5/build/ARM/gem5.opt(+0x104d928)[0x55c6313cc928]
+/home/local/ASUAD/quoclon1/CCF_INS/ins3/gem5/build/ARM/gem5.opt(+0x10570a7)[0x55c6313d60a7]
+/home/local/ASUAD/quoclon1/CCF_INS/ins3/gem5/build/ARM/gem5.opt(+0x22766ec)[0x55c6325f56ec]
+/home/local/ASUAD/quoclon1/CCF_INS/ins3/gem5/build/ARM/gem5.opt(+0x227e0d4)[0x55c6325fd0d4]
+/home/local/ASUAD/quoclon1/CCF_INS/ins3/gem5/build/ARM/gem5.opt(+0x1e44de9)[0x55c6321c3de9]
+/home/local/ASUAD/quoclon1/CCF_INS/ins3/gem5/build/ARM/gem5.opt(+0x1e66988)[0x55c6321e5988]
+/home/local/ASUAD/quoclon1/CCF_INS/ins3/gem5/build/ARM/gem5.opt(+0x1e6777d)[0x55c6321e677d]
+/home/local/ASUAD/quoclon1/CCF_INS/ins3/gem5/build/ARM/gem5.opt(+0x5720c0)[0x55c6308f10c0]
+/home/local/ASUAD/quoclon1/CCF_INS/ins3/gem5/build/ARM/gem5.opt(+0x55a2e1)[0x55c6308d92e1]
+/usr/lib/x86_64-linux-gnu/libpython3.8.so.1.0(+0x2a8408)[0x7fb96182a408]
+/usr/lib/x86_64-linux-gnu/libpython3.8.so.1.0(_PyEval_EvalFrameDefault+0x8dd8)[0x7fb9615fff48]
+/usr/lib/x86_64-linux-gnu/libpython3.8.so.1.0(_PyEval_EvalCodeWithName+0x8fb)[0x7fb96174cd3b]
+/usr/lib/x86_64-linux-gnu/libpython3.8.so.1.0(_PyFunction_Vectorcall+0x94)[0x7fb961829de4]
+/usr/lib/x86_64-linux-gnu/libpython3.8.so.1.0(+0x74d6d)[0x7fb9615f6d6d]
+/usr/lib/x86_64-linux-gnu/libpython3.8.so.1.0(_PyEval_EvalFrameDefault+0x7d86)[0x7fb9615feef6]
+/usr/lib/x86_64-linux-gnu/libpython3.8.so.1.0(+0x8006b)[0x7fb96160206b]
+/usr/lib/x86_64-linux-gnu/libpython3.8.so.1.0(+0x74d6d)[0x7fb9615f6d6d]
+/usr/lib/x86_64-linux-gnu/libpython3.8.so.1.0(_PyEval_EvalFrameDefault+0x12fd)[0x7fb9615f846d]
+/usr/lib/x86_64-linux-gnu/libpython3.8.so.1.0(_PyEval_EvalCodeWithName+0x8fb)[0x7fb96174cd3b]
+/usr/lib/x86_64-linux-gnu/libpython3.8.so.1.0(_PyFunction_Vectorcall+0x94)[0x7fb961829de4]
+/usr/lib/x86_64-linux-gnu/libpython3.8.so.1.0(+0x74d6d)[0x7fb9615f6d6d]
+/usr/lib/x86_64-linux-gnu/libpython3.8.so.1.0(_PyEval_EvalFrameDefault+0x7d86)[0x7fb9615feef6]
+/usr/lib/x86_64-linux-gnu/libpython3.8.so.1.0(_PyEval_EvalCodeWithName+0x8fb)[0x7fb96174cd3b]
+/usr/lib/x86_64-linux-gnu/libpython3.8.so.1.0(PyEval_EvalCodeEx+0x42)[0x7fb96174d0c2]
+/usr/lib/x86_64-linux-gnu/libpython3.8.so.1.0(PyEval_EvalCode+0x1f)[0x7fb96174d4af]
+--- END LIBC BACKTRACE ---

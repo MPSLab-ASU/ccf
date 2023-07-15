@@ -33,8 +33,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Gabe Black
  */
 
 #ifndef __ARCH_X86_PAGE_TABLE_WALKER_HH__
@@ -45,9 +43,9 @@
 #include "arch/x86/pagetable.hh"
 #include "arch/x86/tlb.hh"
 #include "base/types.hh"
-#include "mem/mem_object.hh"
 #include "mem/packet.hh"
 #include "params/X86PagetableWalker.hh"
+#include "sim/clocked_object.hh"
 #include "sim/faults.hh"
 #include "sim/system.hh"
 
@@ -55,30 +53,22 @@ class ThreadContext;
 
 namespace X86ISA
 {
-    class Walker : public MemObject
+    class Walker : public ClockedObject
     {
       protected:
         // Port for accessing memory
-        class WalkerPort : public MasterPort
+        class WalkerPort : public RequestPort
         {
           public:
             WalkerPort(const std::string &_name, Walker * _walker) :
-                  MasterPort(_name, _walker), walker(_walker)
+                  RequestPort(_name, _walker), walker(_walker)
             {}
 
           protected:
             Walker *walker;
 
             bool recvTimingResp(PacketPtr pkt);
-
-            /**
-             * Snooping a coherence request, do nothing.
-             */
-            void recvTimingSnoopReq(PacketPtr pkt) { }
-            Tick recvAtomicSnoop(PacketPtr pkt) { return 0; }
-            void recvFunctionalSnoop(PacketPtr pkt) { }
-            void recvRetry();
-            bool isSnooping() const { return true; }
+            void recvReqRetry();
         };
 
         friend class WalkerPort;
@@ -119,14 +109,15 @@ namespace X86ISA
             bool timing;
             bool retrying;
             bool started;
+            bool squashed;
           public:
             WalkerState(Walker * _walker, BaseTLB::Translation *_translation,
-                    RequestPtr _req, bool _isFunctional = false) :
-                        walker(_walker), req(_req), state(Ready),
-                        nextState(Ready), inflight(0),
-                        translation(_translation),
-                        functional(_isFunctional), timing(false),
-                        retrying(false), started(false)
+                        const RequestPtr &_req, bool _isFunctional = false) :
+                walker(_walker), req(_req), state(Ready),
+                nextState(Ready), inflight(0),
+                translation(_translation),
+                functional(_isFunctional), timing(false),
+                retrying(false), started(false), squashed(false)
             {
             }
             void initState(ThreadContext * _tc, BaseTLB::Mode _mode,
@@ -134,10 +125,12 @@ namespace X86ISA
             Fault startWalk();
             Fault startFunctional(Addr &addr, unsigned &logBytes);
             bool recvPacket(PacketPtr pkt);
+            unsigned numInflight() const;
             bool isRetrying();
             bool wasStarted();
             bool isTiming();
             void retry();
+            void squash();
             std::string name() const {return walker->name();}
 
           private:
@@ -165,17 +158,17 @@ namespace X86ISA
       public:
         // Kick off the state machine.
         Fault start(ThreadContext * _tc, BaseTLB::Translation *translation,
-                RequestPtr req, BaseTLB::Mode mode);
+                const RequestPtr &req, BaseTLB::Mode mode);
         Fault startFunctional(ThreadContext * _tc, Addr &addr,
                 unsigned &logBytes, BaseTLB::Mode mode);
-        BaseMasterPort &getMasterPort(const std::string &if_name,
-                                      PortID idx = InvalidPortID);
+        Port &getPort(const std::string &if_name,
+                      PortID idx=InvalidPortID) override;
 
       protected:
         // The TLB we're supposed to load.
         TLB * tlb;
         System * sys;
-        MasterID masterId;
+        RequestorID requestorId;
 
         // The number of outstanding walks that can be squashed per cycle.
         unsigned numSquashable;
@@ -183,9 +176,14 @@ namespace X86ISA
         // Wrapper for checking for squashes before starting a translation.
         void startWalkWrapper();
 
+        /**
+         * Event used to call startWalkWrapper.
+         **/
+        EventFunctionWrapper startWalkWrapperEvent;
+
         // Functions for dealing with packets.
         bool recvTimingResp(PacketPtr pkt);
-        void recvRetry();
+        void recvReqRetry();
         bool sendTiming(WalkerState * sendingState, PacketPtr pkt);
 
       public:
@@ -204,10 +202,11 @@ namespace X86ISA
         }
 
         Walker(const Params *params) :
-            MemObject(params), port(name() + ".port", this),
+            ClockedObject(params), port(name() + ".port", this),
             funcState(this, NULL, NULL, true), tlb(NULL), sys(params->system),
-            masterId(sys->getMasterId(name())),
-            numSquashable(params->num_squash_per_cycle)
+            requestorId(sys->getRequestorId(this)),
+            numSquashable(params->num_squash_per_cycle),
+            startWalkWrapperEvent([this]{ startWalkWrapper(); }, name())
         {
         }
     };

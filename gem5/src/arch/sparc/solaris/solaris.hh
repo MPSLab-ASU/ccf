@@ -24,8 +24,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Ali Saidi
  */
 
 #ifndef __ARCH_SPARC_SOLARIS_SOLARIS_HH__
@@ -37,7 +35,9 @@ class SparcSolaris : public Solaris
 {
   public:
 
-    static OpenFlagTransTable openFlagTable[];
+    static const ByteOrder byteOrder = ByteOrder::big;
+
+    static SyscallFlagTransTable openFlagTable[];
 
     static const int TGT_O_RDONLY       = 0x00000000;   //!< O_RDONLY
     static const int TGT_O_WRONLY       = 0x00000001;   //!< O_WRONLY
@@ -58,8 +58,26 @@ class SparcSolaris : public Solaris
 
     static const int NUM_OPEN_FLAGS;
 
-    static const unsigned TGT_MAP_ANONYMOUS = 0x100;
-    static const unsigned TGT_MAP_FIXED     = 0x10;
+    /// For mmap().
+    static SyscallFlagTransTable mmapFlagTable[];
+
+    static const unsigned TGT_MAP_SHARED        = 0x00001;
+    static const unsigned TGT_MAP_PRIVATE       = 0x00002;
+    static const unsigned TGT_MAP_ANON          = 0x00020;
+    static const unsigned TGT_MAP_DENYWRITE     = 0x00800;
+    static const unsigned TGT_MAP_EXECUTABLE    = 0x01000;
+    static const unsigned TGT_MAP_FILE          = 0x00000;
+    static const unsigned TGT_MAP_GROWSDOWN     = 0x00100;
+    static const unsigned TGT_MAP_HUGETLB       = 0x40000;
+    static const unsigned TGT_MAP_LOCKED        = 0x02000;
+    static const unsigned TGT_MAP_NONBLOCK      = 0x10000;
+    static const unsigned TGT_MAP_NORESERVE     = 0x04000;
+    static const unsigned TGT_MAP_POPULATE      = 0x08000;
+    static const unsigned TGT_MAP_STACK         = 0x20000;
+    static const unsigned TGT_MAP_ANONYMOUS     = 0x00020;
+    static const unsigned TGT_MAP_FIXED         = 0x00010;
+
+    static const unsigned NUM_MMAP_FLAGS;
 };
 
 #endif

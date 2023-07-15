@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2013 ARM Limited
+ * Copyright (c) 2012-2013,2015,2018,2020 ARM Limited
  * All rights reserved
  *
  * The license below extends only to copyright in the software and shall
@@ -36,14 +36,13 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Steve Reinhardt
  */
 
 #ifndef __CPU_SIMPLE_TIMING_HH__
 #define __CPU_SIMPLE_TIMING_HH__
 
 #include "cpu/simple/base.hh"
+#include "cpu/simple/exec_context.hh"
 #include "cpu/translation.hh"
 #include "params/TimingSimpleCPU.hh"
 
@@ -54,7 +53,7 @@ class TimingSimpleCPU : public BaseSimpleCPU
     TimingSimpleCPU(TimingSimpleCPUParams * params);
     virtual ~TimingSimpleCPU();
 
-    virtual void init();
+    void init() override;
 
   private:
 
@@ -123,7 +122,7 @@ class TimingSimpleCPU : public BaseSimpleCPU
         }
 
         void
-        finish(Fault fault, RequestPtr req, ThreadContext *tc,
+        finish(const Fault &fault, const RequestPtr &req, ThreadContext *tc,
                BaseTLB::Mode mode)
         {
             cpu->sendFetch(fault, req, tc);
@@ -131,15 +130,19 @@ class TimingSimpleCPU : public BaseSimpleCPU
     };
     FetchTranslation fetchTranslation;
 
-    void sendData(RequestPtr req, uint8_t *data, uint64_t *res, bool read);
-    void sendSplitData(RequestPtr req1, RequestPtr req2, RequestPtr req,
+    void threadSnoop(PacketPtr pkt, ThreadID sender);
+    void sendData(const RequestPtr &req,
+                  uint8_t *data, uint64_t *res, bool read);
+    void sendSplitData(const RequestPtr &req1, const RequestPtr &req2,
+                       const RequestPtr &req,
                        uint8_t *data, bool read);
 
-    void translationFault(Fault fault);
+    void translationFault(const Fault &fault);
 
-    void buildPacket(PacketPtr &pkt, RequestPtr req, bool read);
+    PacketPtr buildPacket(const RequestPtr &req, bool read);
     void buildSplitPacket(PacketPtr &pkt1, PacketPtr &pkt2,
-            RequestPtr req1, RequestPtr req2, RequestPtr req,
+            const RequestPtr &req1, const RequestPtr &req2,
+            const RequestPtr &req,
             uint8_t *data, bool read);
 
     bool handleReadPacket(PacketPtr pkt);
@@ -152,20 +155,16 @@ class TimingSimpleCPU : public BaseSimpleCPU
      * scheduling of handling of incoming packets in the following
      * cycle.
      */
-    class TimingCPUPort : public MasterPort
+    class TimingCPUPort : public RequestPort
     {
       public:
 
         TimingCPUPort(const std::string& _name, TimingSimpleCPU* _cpu)
-            : MasterPort(_name, _cpu), cpu(_cpu), retryEvent(this)
+            : RequestPort(_name, _cpu), cpu(_cpu),
+              retryRespEvent([this]{ sendRetryResp(); }, name())
         { }
 
       protected:
-
-        /**
-         * Snooping a coherence request, do nothing.
-         */
-        virtual void recvTimingSnoopReq(PacketPtr pkt) { }
 
         TimingSimpleCPU* cpu;
 
@@ -179,7 +178,7 @@ class TimingSimpleCPU : public BaseSimpleCPU
             void schedule(PacketPtr _pkt, Tick t);
         };
 
-        EventWrapper<MasterPort, &MasterPort::sendRetry> retryEvent;
+        EventFunctionWrapper retryRespEvent;
     };
 
     class IcachePort : public TimingCPUPort
@@ -195,7 +194,7 @@ class TimingSimpleCPU : public BaseSimpleCPU
 
         virtual bool recvTimingResp(PacketPtr pkt);
 
-        virtual void recvRetry();
+        virtual void recvReqRetry();
 
         struct ITickEvent : public TickEvent
         {
@@ -217,13 +216,26 @@ class TimingSimpleCPU : public BaseSimpleCPU
         DcachePort(TimingSimpleCPU *_cpu)
             : TimingCPUPort(_cpu->name() + ".dcache_port", _cpu),
               tickEvent(_cpu)
-        { }
+        {
+           cacheBlockMask = ~(cpu->cacheLineSize() - 1);
+        }
 
+        Addr cacheBlockMask;
       protected:
+
+        /** Snoop a coherence request, we need to check if this causes
+         * a wakeup event on a cpu that is monitoring an address
+         */
+        virtual void recvTimingSnoopReq(PacketPtr pkt);
+        virtual void recvFunctionalSnoop(PacketPtr pkt);
 
         virtual bool recvTimingResp(PacketPtr pkt);
 
-        virtual void recvRetry();
+        virtual void recvReqRetry();
+
+        virtual bool isSnooping() const {
+            return true;
+        }
 
         struct DTickEvent : public TickEvent
         {
@@ -237,45 +249,56 @@ class TimingSimpleCPU : public BaseSimpleCPU
 
     };
 
+    void updateCycleCounts();
+
     IcachePort icachePort;
     DcachePort dcachePort;
 
     PacketPtr ifetch_pkt;
     PacketPtr dcache_pkt;
 
-    Tick previousCycle;
+    Cycles previousCycle;
 
   protected:
 
      /** Return a reference to the data port. */
-    virtual MasterPort &getDataPort() { return dcachePort; }
+    Port &getDataPort() override { return dcachePort; }
 
     /** Return a reference to the instruction port. */
-    virtual MasterPort &getInstPort() { return icachePort; }
+    Port &getInstPort() override { return icachePort; }
 
   public:
 
-    unsigned int drain(DrainManager *drain_manager);
-    void drainResume();
+    DrainState drain() override;
+    void drainResume() override;
 
-    void switchOut();
-    void takeOverFrom(BaseCPU *oldCPU);
+    void switchOut() override;
+    void takeOverFrom(BaseCPU *oldCPU) override;
 
-    void verifyMemoryMode() const;
+    void verifyMemoryMode() const override;
 
-    virtual void activateContext(ThreadID thread_num, Cycles delay);
-    virtual void suspendContext(ThreadID thread_num);
+    void activateContext(ThreadID thread_num) override;
+    void suspendContext(ThreadID thread_num) override;
 
-    Fault readMem(Addr addr, uint8_t *data, unsigned size, unsigned flags);
+    Fault initiateMemRead(Addr addr, unsigned size,
+            Request::Flags flags,
+            const std::vector<bool>& byte_enable =std::vector<bool>())
+        override;
 
     Fault writeMem(uint8_t *data, unsigned size,
-                   Addr addr, unsigned flags, uint64_t *res);
+                   Addr addr, Request::Flags flags, uint64_t *res,
+                   const std::vector<bool>& byte_enable = std::vector<bool>())
+        override;
+
+    Fault initiateMemAMO(Addr addr, unsigned size, Request::Flags flags,
+                         AtomicOpFunctorPtr amo_op) override;
 
     void fetch();
-    void sendFetch(Fault fault, RequestPtr req, ThreadContext *tc);
+    void sendFetch(const Fault &fault,
+                   const RequestPtr &req, ThreadContext *tc);
     void completeIfetch(PacketPtr );
     void completeDataAccess(PacketPtr pkt);
-    void advanceInst(Fault fault);
+    void advanceInst(const Fault &fault);
 
     /** This function is used by the page table walker to determine if it could
      * translate the a pending request or if the underlying request has been
@@ -297,10 +320,14 @@ class TimingSimpleCPU : public BaseSimpleCPU
      */
     void finishTranslation(WholeTranslationState *state);
 
+    /** hardware transactional memory **/
+    Fault initiateHtmCmd(Request::Flags flags) override;
+
+    void htmSendAbortSignal(HtmFailureFaultCause) override;
+
   private:
 
-    typedef EventWrapper<TimingSimpleCPU, &TimingSimpleCPU::fetch> FetchEvent;
-    FetchEvent fetchEvent;
+    EventFunctionWrapper fetchEvent;
 
     struct IprEvent : Event {
         Packet *pkt;
@@ -326,8 +353,12 @@ class TimingSimpleCPU : public BaseSimpleCPU
      *     activated it can happen.
      * </ul>
      */
-    bool isDrained() {
-        return microPC() == 0 && !stayAtPC && !fetchEvent.scheduled();
+    bool isCpuDrained() const {
+        SimpleExecContext& t_info = *threadInfo[curThread];
+        SimpleThread* thread = t_info.thread;
+
+        return thread->microPC() == 0 && !t_info.stayAtPC &&
+               !fetchEvent.scheduled();
     }
 
     /**
@@ -336,13 +367,6 @@ class TimingSimpleCPU : public BaseSimpleCPU
      * @returns true if the CPU is drained, false otherwise.
      */
     bool tryCompleteDrain();
-
-    /**
-     * Drain manager to use when signaling drain completion
-     *
-     * This pointer is non-NULL when draining and NULL otherwise.
-     */
-    DrainManager *drainManager;
 };
 
 #endif // __CPU_SIMPLE_TIMING_HH__

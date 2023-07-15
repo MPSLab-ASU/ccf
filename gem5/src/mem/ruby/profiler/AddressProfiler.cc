@@ -26,13 +26,14 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "mem/ruby/profiler/AddressProfiler.hh"
+
 #include <vector>
 
+#include "base/bitfield.hh"
 #include "base/stl_helpers.hh"
-#include "mem/protocol/RubyRequest.hh"
-#include "mem/ruby/profiler/AddressProfiler.hh"
 #include "mem/ruby/profiler/Profiler.hh"
-#include "mem/ruby/system/System.hh"
+#include "mem/ruby/protocol/RubyRequest.hh"
 
 using namespace std;
 typedef AddressProfiler::AddressMap AddressMap;
@@ -41,7 +42,7 @@ using m5::stl_helpers::operator<<;
 
 // Helper functions
 AccessTraceForAddress&
-lookupTraceForAddress(const Address& addr, AddressMap& record_map)
+lookupTraceForAddress(Addr addr, AddressMap& record_map)
 {
     // we create a static default object here that is used to insert
     // since the insertion will create a copy of the object in the
@@ -64,11 +65,11 @@ lookupTraceForAddress(const Address& addr, AddressMap& record_map)
 
 void
 printSorted(ostream& out, int num_of_sequencers, const AddressMap &record_map,
-            string description)
+            string description, Profiler *profiler)
 {
     const int records_printed = 100;
 
-    uint64 misses = 0;
+    uint64_t misses = 0;
     std::vector<const AccessTraceForAddress *> sorted;
 
     AddressMap::const_iterator i = record_map.begin();
@@ -82,7 +83,7 @@ printSorted(ostream& out, int num_of_sequencers, const AddressMap &record_map,
 
     out << "Total_entries_" << description << ": " << record_map.size()
         << endl;
-    if (g_system_ptr->getProfiler()->getAllInstructions())
+    if (profiler->getAllInstructions())
         out << "Total_Instructions_" << description << ": " << misses << endl;
     else
         out << "Total_data_misses_" << description << ": " << misses << endl;
@@ -96,8 +97,8 @@ printSorted(ostream& out, int num_of_sequencers, const AddressMap &record_map,
     Histogram all_records_log(-1);
 
     // Allows us to track how many lines where touched by n processors
-    std::vector<int64> m_touched_vec;
-    std::vector<int64> m_touched_weighted_vec;
+    std::vector<int64_t> m_touched_vec;
+    std::vector<int64_t> m_touched_weighted_vec;
     m_touched_vec.resize(num_of_sequencers+1);
     m_touched_weighted_vec.resize(num_of_sequencers+1);
     for (int j = 0; j < m_touched_vec.size(); j++) {
@@ -143,7 +144,8 @@ printSorted(ostream& out, int num_of_sequencers, const AddressMap &record_map,
         << endl;
 }
 
-AddressProfiler::AddressProfiler(int num_of_sequencers)
+AddressProfiler::AddressProfiler(int num_of_sequencers, Profiler *profiler)
+    : m_profiler(profiler)
 {
     m_num_of_sequencers = num_of_sequencers;
     clearStats();
@@ -183,20 +185,20 @@ AddressProfiler::printStats(ostream& out) const
         out << "---------------" << endl;
         out << endl;
         printSorted(out, m_num_of_sequencers, m_dataAccessTrace,
-                    "block_address");
+                    "block_address", m_profiler);
 
         out << endl;
         out << "Hot MacroData Blocks" << endl;
         out << "--------------------" << endl;
         out << endl;
         printSorted(out, m_num_of_sequencers, m_macroBlockAccessTrace,
-                    "macroblock_address");
+                    "macroblock_address", m_profiler);
 
         out << "Hot Instructions" << endl;
         out << "----------------" << endl;
         out << endl;
         printSorted(out, m_num_of_sequencers, m_programCounterAccessTrace,
-                    "pc_address");
+                    "pc_address", m_profiler);
     }
 
     if (m_all_instructions) {
@@ -205,7 +207,7 @@ AddressProfiler::printStats(ostream& out) const
         out << "-------------------------" << endl;
         out << endl;
         printSorted(out, m_num_of_sequencers, m_programCounterAccessTrace,
-                    "pc_address");
+                    "pc_address", m_profiler);
         out << endl;
     }
 
@@ -222,7 +224,7 @@ AddressProfiler::printStats(ostream& out) const
         out << endl;
 
         printSorted(out, m_num_of_sequencers, m_retryProfileMap,
-                    "block_address");
+                    "block_address", m_profiler);
         out << endl;
     }
 }
@@ -244,7 +246,7 @@ AddressProfiler::clearStats()
 }
 
 void
-AddressProfiler::profileGetX(const Address& datablock, const Address& PC,
+AddressProfiler::profileGetX(Addr datablock, Addr PC,
                              const Set& owner, const Set& sharers,
                              NodeID requestor)
 {
@@ -262,7 +264,7 @@ AddressProfiler::profileGetX(const Address& datablock, const Address& PC,
 }
 
 void
-AddressProfiler::profileGetS(const Address& datablock, const Address& PC,
+AddressProfiler::profileGetS(Addr datablock, Addr PC,
                              const Set& owner, const Set& sharers,
                              NodeID requestor)
 {
@@ -279,7 +281,7 @@ AddressProfiler::profileGetS(const Address& datablock, const Address& PC,
 }
 
 void
-AddressProfiler::addTraceSample(Address data_addr, Address pc_addr,
+AddressProfiler::addTraceSample(Addr data_addr, Addr pc_addr,
                                 RubyRequestType type,
                                 RubyAccessMode access_mode, NodeID id,
                                 bool sharing_miss)
@@ -290,14 +292,14 @@ AddressProfiler::addTraceSample(Address data_addr, Address pc_addr,
         }
 
         // record data address trace info
-        data_addr.makeLineAddress();
+        data_addr = makeLineAddress(data_addr);
         lookupTraceForAddress(data_addr, m_dataAccessTrace).
             update(type, access_mode, id, sharing_miss);
 
         // record macro data address trace info
 
         // 6 for datablock, 4 to make it 16x more coarse
-        Address macro_addr(data_addr.maskLowOrderBits(10));
+        Addr macro_addr = mbits<Addr>(data_addr, 63, 10);
         lookupTraceForAddress(macro_addr, m_macroBlockAccessTrace).
             update(type, access_mode, id, sharing_miss);
 
@@ -316,8 +318,7 @@ AddressProfiler::addTraceSample(Address data_addr, Address pc_addr,
 }
 
 void
-AddressProfiler::profileRetry(const Address& data_addr, AccessType type,
-                              int count)
+AddressProfiler::profileRetry(Addr data_addr, AccessType type, int count)
 {
     m_retryProfileHisto.add(count);
     if (type == AccessType_Read) {

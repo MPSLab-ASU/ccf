@@ -23,49 +23,59 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Ali Saidi
 
+from __future__ import print_function
+from __future__ import absolute_import
+
+from six import string_types
 import os, sys
-from os.path import isdir, join as joinpath
-from os import environ as env
 
 config_path = os.path.dirname(os.path.abspath(__file__))
 config_root = os.path.dirname(config_path)
 
-def disk(file):
-    system()
-    return joinpath(disk.dir, file)
+class PathSearchFunc(object):
+    _sys_paths = None
+    environment_variable = 'M5_PATH'
 
-def binary(file):
-    system()
-    return joinpath(binary.dir, file)
+    def __init__(self, subdirs, sys_paths=None):
+        if isinstance(subdirs, string_types):
+            subdirs = [subdirs]
+        self._subdir = os.path.join(*subdirs)
+        if sys_paths:
+            self._sys_paths = sys_paths
 
-def script(file):
-    system()
-    return joinpath(script.dir, file)
-
-def system():
-    if not system.dir:
-        try:
-                path = env['M5_PATH'].split(':')
-        except KeyError:
-                path = [ '/dist/m5/system', '/n/poolfs/z/dist/m5/system' ]
-
-        for system.dir in path:
-            if os.path.isdir(system.dir):
-                break
+    def __call__(self, filename):
+        if os.sep in filename:
+            return filename
         else:
-            raise ImportError, "Can't find a path to system files."
+            if self._sys_paths is None:
+                try:
+                    paths = os.environ[self.environment_variable].split(':')
+                except KeyError:
+                    paths = [ '/dist/m5/system', '/n/poolfs/z/dist/m5/system' ]
 
-    if not binary.dir:
-        binary.dir = joinpath(system.dir, 'binaries')
-    if not disk.dir:
-        disk.dir = joinpath(system.dir, 'disks')
-    if not script.dir:
-        script.dir = joinpath(config_root, 'boot')
+                # expand '~' and '~user' in paths
+                paths = list(map(os.path.expanduser, paths))
 
-system.dir = None
-binary.dir = None
-disk.dir = None
-script.dir = None
+                # filter out non-existent directories
+                paths = list(filter(os.path.isdir, paths))
+
+                if not paths:
+                    raise IOError(
+                        "Can't find system files directory, "
+                        "check your {} environment variable"
+                        .format(self.environment_variable))
+
+                self._sys_paths = list(paths)
+
+            filepath = os.path.join(self._subdir, filename)
+            paths = (os.path.join(p, filepath) for p in self._sys_paths)
+            try:
+                return next(p for p in paths if os.path.exists(p))
+            except StopIteration:
+                raise IOError("Can't find file '{}' on {}."
+                        .format(filename, self.environment_variable))
+
+disk = PathSearchFunc('disks')
+binary = PathSearchFunc('binaries')
+script = PathSearchFunc('boot', sys_paths=[config_root])

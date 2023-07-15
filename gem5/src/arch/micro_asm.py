@@ -23,13 +23,12 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Gabe Black
+
+from __future__ import print_function
 
 import os
 import sys
 import re
-import string
 import traceback
 # get type names
 from types import *
@@ -117,14 +116,15 @@ class Directive(Statement):
 ##########################################################################
 
 def print_error(message):
-    print
-    print "*** %s" % message
-    print
+    print()
+    print("*** %s" % message)
+    print()
 
 def handle_statement(parser, container, statement):
     if statement.is_microop:
         if statement.mnemonic not in parser.microops.keys():
-            raise Exception, "Unrecognized mnemonic: %s" % statement.mnemonic
+            raise Exception("Unrecognized mnemonic: {}".format(
+                statement.mnemonic))
         parser.symbols["__microopClassFromInsideTheAssembler"] = \
             parser.microops[statement.mnemonic]
         try:
@@ -145,7 +145,8 @@ def handle_statement(parser, container, statement):
             raise
     elif statement.is_directive:
         if statement.name not in container.directives.keys():
-            raise Exception, "Unrecognized directive: %s" % statement.name
+            raise Exception("Unrecognized directive: {}".format(
+                statement.name))
         parser.symbols["__directiveFunctionFromInsideTheAssembler"] = \
             container.directives[statement.name]
         try:
@@ -153,10 +154,11 @@ def handle_statement(parser, container, statement):
                     statement.params, {}, parser.symbols)
         except:
             print_error("Error executing directive.")
-            print container.directives
+            print(container.directives)
             raise
     else:
-        raise Exception, "Didn't recognize the type of statement", statement
+        raise Exception("Didn't recognize the type of statement {}".format(
+            statement))
 
 ##########################################################################
 #
@@ -331,7 +333,7 @@ def p_rom_block(t):
     'rom_block : DEF ROM block SEMI'
     if not t.parser.rom:
         print_error("Rom block found, but no Rom object specified.")
-        raise TypeError, "Rom block found, but no Rom object was specified."
+        raise TypeError("Rom block found, but no Rom object was specified.")
     for statement in t[3].statements:
         handle_statement(t.parser, t.parser.rom, statement)
     t[0] = t.parser.rom
@@ -340,8 +342,10 @@ def p_rom_block(t):
 def p_macroop_def_0(t):
     'macroop_def : DEF MACROOP ID LPAREN ID RPAREN SEMI'
     if not t.parser.rom_macroop_type:
-        print_error("ROM based macroop found, but no ROM macroop class was specified.")
-        raise TypeError, "ROM based macroop found, but no ROM macroop class was specified."
+        print_error("ROM based macroop found, but no ROM macroop " +
+            "class was specified.")
+        raise TypeError("ROM based macroop found, but no ROM macroop " +
+            "class was specified.")
     macroop = t.parser.rom_macroop_type(t[3], t[5])
     t.parser.macroops[t[3]] = macroop
 

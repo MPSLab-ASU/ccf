@@ -1,0 +1,60 @@
+2021-01-13  Alan Modra  <amodra@gmail.com>
+
+	* Makefile.in: Regenerate.
+
+2021-01-12  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR binutils/26792
+	* configure.ac: Use GNU_MAKE_JOBSERVER.
+	* aclocal.m4: Regenerated.
+	* configure: Likewise.
+
+2021-01-11  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/27173
+	* configure: Regenerated.
+
+2021-01-09  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* configure: Regenerated.
+
+2021-01-09  Nick Clifton  <nickc@redhat.com>
+
+	* configure: Regenerate.
+	* po/gprof.pot: Regenerate.
+
+2021-01-09  Nick Clifton  <nickc@redhat.com>
+
+	* 2.36 release branch crated.
+
+2021-01-09  Alan Modra  <amodra@gmail.com>
+
+	* configure: Regenerate.
+
+2021-01-07  Samuel Thibault  <samuel.thibault@gnu.org>
+
+	* configure: Regenerate.
+
+2021-01-01  Nicolas Boulenguez  <nicolas@debian.org>
+
+	* README: Correct grammar.
+	* gprof.texi: Likewise.
+
+2021-01-01  Alan Modra  <amodra@gmail.com>
+
+	Update year range in copyright notice of all files.
+
+For older changes see ChangeLog-2020
+
+Copyright (C) 2021 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+Local Variables:
+mode: change-log
+left-margin: 8
+fill-column: 74
+version-control: never
+End:

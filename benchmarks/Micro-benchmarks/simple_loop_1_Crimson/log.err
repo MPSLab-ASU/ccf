@@ -1,0 +1,105 @@
+4
+4
+4
+cgra4x4r4
+Compilation and simulation for CGRA for 4 x 4 with 4 registers per PE
+CPU frequency @ 2GHz
+CGRA frequency @ 0.7GHz
+[36m---------- CCF Compilation Stats Begin ----------[0m
+rm -rf add_small add_arm output* *.ll CGRAExec m5out *.s
+cgracc  -static -O3 add.c -o add_small 
+CondDDGGen Pass
+combinedIR.ll
+loop id: 0x55b423379010
+Created livein text files
+i = 0
+Attempting to add a node
+Phi node detected
+Initializing Node
+Setting Node Datatype
+Inserting Node
+Inserting Node Successful
+Attempting to add a node
+Phi node detected
+Initializing Node
+Setting Node Datatype
+Inserting Node
+Inserting Node Successful
+Attempting to add a node
+Attempting to add a node
+Attempting to add a node
+Attempting to add a node
+Attempting to add a node
+Attempting to add a node
+Added all Nodes
+Updated all Live In Variables
+Closing Live In Text files
+Creating Live Out Text files
+Created Live Out Text files
+Creating Loop Iterations file
+Closing Loop Iterations file
+Updating Live Out Variables
+Updating Live Out Variables
+Updating Live Out Variables
+Updating Live Out Variables
+Updating Live Out Variables
+usedOutside is True
+Updating Live Out Variables
+Updating Live Out Variables
+Closing LiveOut Node file
+Finished runOnLoop function
+loop id: 0x55b4233969c8
+loop id: 0x55b4233831b8
+loop id: 0x55b423383458
+loop id: 0x55b423379b90
+loop id: 0x55b4233901e8
+loop id: 0x55b423390d38
+found temp.bc
+InvokeCGRA Pass
+runOnLoop Hit
+Loop has not been iterated yet
+Finding Terminator for Preheaders
+Attempting to rewrite PHI nodes in exit block
+Updating dominator tree and removing instructions
+Dropping references
+Dropping references
+Dropping references
+Dropping references
+Dropping references
+Dropping references
+Dropping references
+Dropping references
+Erasing instructions without caring about references
+Erasing loopinfo
+hookFunc is 0x557ac67e7e48
+Loop Number is i32 1
+newInst = 0x557ac67c7a60
+the BB = 0x557ac67d73d8
+runOnLoop went well
+runOnLoop Hit
+pragma CGRA not detected
+runOnLoop Hit
+pragma CGRA not detected
+runOnLoop Hit
+pragma CGRA not detected
+runOnLoop Hit
+pragma CGRA not detected
+runOnLoop Hit
+pragma CGRA not detected
+runOnLoop Hit
+pragma CGRA not detected
+CGRAGen Pass
+/home/local/ASUAD/aabuyaz1/documents/code/ccf_1804/scripts/map.sh: line 18: /home/mahesh/git_repos/ccf/RAMP/Release/RAMP: No such file or directory
+/home/local/ASUAD/aabuyaz1/documents/code/ccf_1804/scripts/map.sh: line 20: /home/mahesh/git_repos/ccf/RAMP/DFGFiles/nodefile: No such file or directory
+./run.sh: line 87: /home/local/ASUAD/aabuyaz1/documents/code/ccf_1804/InstructionGenerator/insgen: No such file or directory
+arm-linux-gnueabi-gcc -static -O3 add.c -o add_arm
+add.c: In function ‘main’:
+add.c:22:31: warning: format ‘%f’ expects argument of type ‘double’, but argument 3 has type ‘int’ [-Wformat=]
+   22 |   printf("iterations:%d\t, c:%f\n", iterations, c );
+      |                              ~^                 ~
+      |                               |                 |
+      |                               double            int
+      |                              %d
+Total compilation time: 0:00:00:0.7148
+[36m---------- CCF Compilation Stats End ----------[0m
+exe.sh: line 72: /home/local/ASUAD/aabuyaz1/ccf/gem5/build/ARM/gem5.opt: No such file or directory

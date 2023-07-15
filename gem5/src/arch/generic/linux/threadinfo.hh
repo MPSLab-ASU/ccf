@@ -24,10 +24,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Ali Saidi
- *          Nathan Binkert
- *          Dam Sunwoo
  */
 
 #ifndef __ARCH_GENERIC_LINUX_THREADINFO_HH__
@@ -35,7 +31,6 @@
 
 #include "cpu/thread_context.hh"
 #include "sim/system.hh"
-#include "sim/vptr.hh"
 
 namespace Linux {
 
@@ -44,116 +39,114 @@ class ThreadInfo
   private:
     ThreadContext *tc;
     System *sys;
-    Addr pcbb;
+
+    ByteOrder byteOrder;
 
     template <typename T>
     bool
     get_data(const char *symbol, T &data)
     {
-        Addr addr = 0;
-        if (!sys->kernelSymtab->findAddress(symbol, addr)) {
+        auto &symtab = sys->workload->symtab(tc);
+        auto it = symtab.find(symbol);
+        if (it == symtab.end()) {
             warn_once("Unable to find kernel symbol %s\n", symbol);
             warn_once("Kernel not compiled with task_struct info; can't get "
                       "currently executing task/process/thread name/ids!\n");
             return false;
         }
 
-        CopyOut(tc, &data, addr, sizeof(T));
-
-        data = TheISA::gtoh(data);
+        data = tc->getVirtProxy().read<T>(it->address, byteOrder);
 
         return true;
     }
 
   public:
-    ThreadInfo(ThreadContext *_tc, Addr _pcbb = 0)
-        : tc(_tc), sys(tc->getSystemPtr()), pcbb(_pcbb)
+    ThreadInfo(ThreadContext *_tc)
+        : tc(_tc), sys(tc->getSystemPtr()),
+        byteOrder(tc->getSystemPtr()->getGuestByteOrder())
     {
 
     }
     ~ThreadInfo()
     {}
 
-    inline Addr
+    virtual Addr
     curThreadInfo()
     {
-        if (!TheISA::CurThreadInfoImplemented)
-            panic("curThreadInfo() not implemented for this ISA");
-
-        Addr addr = pcbb;
-        Addr sp;
-
-        if (!addr)
-            addr = tc->readMiscRegNoEffect(TheISA::CurThreadInfoReg);
-
-        PortProxy &p = tc->getPhysProxy();
-        p.readBlob(addr, (uint8_t *)&sp, sizeof(Addr));
-
-        return sp & ~ULL(0x3fff);
+        panic("curThreadInfo() not implemented.");
     }
 
-    inline Addr
+    Addr
     curTaskInfo(Addr thread_info = 0)
     {
-        int32_t offset;
+        // Note that in Linux 4.10 the thread_info struct will no longer have a
+        // pointer to the task_struct for arm64. See:
+        // https://patchwork.kernel.org/patch/9333699/
+        int32_t offset = 0;
         if (!get_data("thread_info_task", offset))
             return 0;
 
         if (!thread_info)
             thread_info = curThreadInfo();
 
-        Addr addr;
-        CopyOut(tc, &addr, thread_info + offset, sizeof(addr));
+        return tc->getVirtProxy().read<Addr>(thread_info + offset);
+    }
 
-        return addr;
+    int32_t
+    curTaskPIDFromTaskStruct(Addr task_struct)
+    {
+        int32_t offset = 0;
+        if (!get_data("task_struct_pid", offset))
+            return -1;
+
+        return tc->getVirtProxy().read<int32_t>(task_struct + offset);
     }
 
     int32_t
     curTaskPID(Addr thread_info = 0)
     {
-        int32_t offset;
-        if (!get_data("task_struct_pid", offset))
+        return curTaskPIDFromTaskStruct(curTaskInfo(thread_info));
+    }
+
+    int32_t
+    curTaskTGIDFromTaskStruct(Addr task_struct)
+    {
+        int32_t offset = 0;
+        if (!get_data("task_struct_tgid", offset))
             return -1;
 
-        int32_t pid;
-        CopyOut(tc, &pid, curTaskInfo(thread_info) + offset, sizeof(pid));
-
-        return pid;
+        return tc->getVirtProxy().read<int32_t>(task_struct + offset);
     }
 
     int32_t
     curTaskTGID(Addr thread_info = 0)
     {
-        int32_t offset;
-        if (!get_data("task_struct_tgid", offset))
+        return curTaskTGIDFromTaskStruct(curTaskInfo(thread_info));
+    }
+
+    int64_t
+    curTaskStartFromTaskStruct(Addr task_struct)
+    {
+        int32_t offset = 0;
+        if (!get_data("task_struct_start_time", offset))
             return -1;
 
-        int32_t tgid;
-        CopyOut(tc, &tgid, curTaskInfo(thread_info) + offset, sizeof(tgid));
-
-        return tgid;
+        // start_time is actually of type timespec, but if we just
+        // grab the first long, we'll get the seconds out of it
+        return tc->getVirtProxy().read<int64_t>(task_struct + offset);
     }
 
     int64_t
     curTaskStart(Addr thread_info = 0)
     {
-        int32_t offset;
-        if (!get_data("task_struct_start_time", offset))
-            return -1;
-
-        int64_t data;
-        // start_time is actually of type timespec, but if we just
-        // grab the first long, we'll get the seconds out of it
-        CopyOut(tc, &data, curTaskInfo(thread_info) + offset, sizeof(data));
-
-        return data;
+        return curTaskStartFromTaskStruct(curTaskInfo(thread_info));
     }
 
     std::string
-    curTaskName(Addr thread_info = 0)
+    curTaskNameFromTaskStruct(Addr task_struct)
     {
-        int32_t offset;
-        int32_t size;
+        int32_t offset = 0;
+        int32_t size = 0;
 
         if (!get_data("task_struct_comm", offset))
             return "FailureIn_curTaskName";
@@ -162,22 +155,31 @@ class ThreadInfo
             return "FailureIn_curTaskName";
 
         char buffer[size + 1];
-        CopyStringOut(tc, buffer, curTaskInfo(thread_info) + offset, size);
+        tc->getVirtProxy().readString(buffer, task_struct + offset, size);
 
         return buffer;
     }
 
+    std::string
+    curTaskName(Addr thread_info = 0)
+    {
+        return curTaskNameFromTaskStruct(curTaskInfo(thread_info));
+    }
+
     int32_t
-    curTaskMm(Addr thread_info = 0)
+    curTaskMmFromTaskStruct(Addr task_struct)
     {
         int32_t offset;
         if (!get_data("task_struct_mm", offset))
             return -1;
 
-        int32_t mm_ptr;
-        CopyOut(tc, &mm_ptr, curTaskInfo(thread_info) + offset, sizeof(mm_ptr));
+        return tc->getVirtProxy().read<int32_t>(task_struct + offset);
+    }
 
-        return mm_ptr;
+    int32_t
+    curTaskMm(Addr thread_info = 0)
+    {
+        return curTaskMmFromTaskStruct(curTaskInfo(thread_info));
     }
 };
 

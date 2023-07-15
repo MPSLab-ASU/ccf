@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2013 ARM Limited
+ * Copyright (c) 2012-2018 ARM Limited
  * All rights reserved.
  *
  * The license below extends only to copyright in the software and shall
@@ -36,385 +36,136 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Erik Hallnor
- *          Dave Greene
- *          Steve Reinhardt
- *          Ron Dreslinski
- *          Andreas Hansson
  */
 
 /**
  * @file
- * Describes a cache based on template policies.
+ * Describes a cache
  */
 
-#ifndef __CACHE_HH__
-#define __CACHE_HH__
+#ifndef __MEM_CACHE_CACHE_HH__
+#define __MEM_CACHE_CACHE_HH__
 
-#include "base/misc.hh" // fatal, panic, and warn
+#include <cstdint>
+#include <unordered_set>
+
+#include "base/types.hh"
 #include "mem/cache/base.hh"
-#include "mem/cache/blk.hh"
-#include "mem/cache/mshr.hh"
-#include "sim/eventq.hh"
+#include "mem/packet.hh"
 
-//Forward decleration
-class BasePrefetcher;
+class CacheBlk;
+struct CacheParams;
+class MSHR;
 
 /**
- * A template-policy based cache. The behavior of the cache can be altered by
- * supplying different template policies. TagStore handles all tag and data
- * storage @sa TagStore, \ref gem5MemorySystem "gem5 Memory System"
+ * A coherent cache that can be arranged in flexible topologies.
  */
-template <class TagStore>
 class Cache : public BaseCache
 {
-  public:
-    /** Define the type of cache block to use. */
-    typedef typename TagStore::BlkType BlkType;
-    /** A typedef for a list of BlkType pointers. */
-    typedef typename TagStore::BlkList BlkList;
-
   protected:
-    typedef CacheBlkVisitorWrapper<Cache<TagStore>, BlkType> WrappedBlkVisitor;
-
-    /**
-     * The CPU-side port extends the base cache slave port with access
-     * functions for functional, atomic and timing requests.
-     */
-    class CpuSidePort : public CacheSlavePort
-    {
-      private:
-
-        // a pointer to our specific cache implementation
-        Cache<TagStore> *cache;
-
-      protected:
-
-        virtual bool recvTimingSnoopResp(PacketPtr pkt);
-
-        virtual bool recvTimingReq(PacketPtr pkt);
-
-        virtual Tick recvAtomic(PacketPtr pkt);
-
-        virtual void recvFunctional(PacketPtr pkt);
-
-        virtual AddrRangeList getAddrRanges() const;
-
-      public:
-
-        CpuSidePort(const std::string &_name, Cache<TagStore> *_cache,
-                    const std::string &_label);
-
-    };
-
-    /**
-     * Override the default behaviour of sendDeferredPacket to enable
-     * the memory-side cache port to also send requests based on the
-     * current MSHR status. This queue has a pointer to our specific
-     * cache implementation and is used by the MemSidePort.
-     */
-    class MemSidePacketQueue : public MasterPacketQueue
-    {
-
-      protected:
-
-        Cache<TagStore> &cache;
-
-      public:
-
-        MemSidePacketQueue(Cache<TagStore> &cache, MasterPort &port,
-                           const std::string &label) :
-            MasterPacketQueue(cache, port, label), cache(cache) { }
-
-        /**
-         * Override the normal sendDeferredPacket and do not only
-         * consider the transmit list (used for responses), but also
-         * requests.
-         */
-        virtual void sendDeferredPacket();
-
-    };
-
-    /**
-     * The memory-side port extends the base cache master port with
-     * access functions for functional, atomic and timing snoops.
-     */
-    class MemSidePort : public CacheMasterPort
-    {
-      private:
-
-        /** The cache-specific queue. */
-        MemSidePacketQueue _queue;
-
-        // a pointer to our specific cache implementation
-        Cache<TagStore> *cache;
-
-      protected:
-
-        virtual void recvTimingSnoopReq(PacketPtr pkt);
-
-        virtual bool recvTimingResp(PacketPtr pkt);
-
-        virtual Tick recvAtomicSnoop(PacketPtr pkt);
-
-        virtual void recvFunctionalSnoop(PacketPtr pkt);
-
-      public:
-
-        MemSidePort(const std::string &_name, Cache<TagStore> *_cache,
-                    const std::string &_label);
-    };
-
-    /** Tag and data Storage */
-    TagStore *tags;
-
-    /** Prefetcher */
-    BasePrefetcher *prefetcher;
-
-    /** Temporary cache block for occasional transitory use */
-    BlkType *tempBlock;
-
     /**
      * This cache should allocate a block on a line-sized write miss.
      */
     const bool doFastWrites;
 
     /**
-     * Notify the prefetcher on every access, not just misses.
+     * Store the outstanding requests that we are expecting snoop
+     * responses from so we can determine which snoop responses we
+     * generated and which ones were merely forwarded.
      */
-    const bool prefetchOnAccess;
+    std::unordered_set<RequestPtr> outstandingSnoop;
 
+  protected:
     /**
-     * @todo this is a temporary workaround until the 4-phase code is committed.
-     * upstream caches need this packet until true is returned, so hold it for
-     * deletion until a subsequent call
+     * Turn line-sized writes into WriteInvalidate transactions.
      */
-    std::vector<PacketPtr> pendingDelete;
+    void promoteWholeLineWrites(PacketPtr pkt);
 
-    /**
-     * Does all the processing necessary to perform the provided request.
-     * @param pkt The memory request to perform.
-     * @param lat The latency of the access.
-     * @param writebacks List for any writebacks that need to be performed.
-     * @param update True if the replacement data should be updated.
-     * @return Boolean indicating whether the request was satisfied.
-     */
-    bool access(PacketPtr pkt, BlkType *&blk,
-                Cycles &lat, PacketList &writebacks);
+    bool access(PacketPtr pkt, CacheBlk *&blk, Cycles &lat,
+                PacketList &writebacks) override;
 
-    /**
-     *Handle doing the Compare and Swap function for SPARC.
-     */
-    void cmpAndSwap(BlkType *blk, PacketPtr pkt);
+    void handleTimingReqHit(PacketPtr pkt, CacheBlk *blk,
+                            Tick request_time) override;
 
-    /**
-     * Find a block frame for new block at address addr, assuming that
-     * the block is not currently in the cache.  Append writebacks if
-     * any to provided packet list.  Return free block frame.  May
-     * return NULL if there are no replaceable blocks at the moment.
-     */
-    BlkType *allocateBlock(Addr addr, PacketList &writebacks);
+    void handleTimingReqMiss(PacketPtr pkt, CacheBlk *blk,
+                             Tick forward_time,
+                             Tick request_time) override;
 
-    /**
-     * Populates a cache block and handles all outstanding requests for the
-     * satisfied fill request. This version takes two memory requests. One
-     * contains the fill data, the other is an optional target to satisfy.
-     * @param pkt The memory request with the fill data.
-     * @param blk The cache block if it already exists.
-     * @param writebacks List for any writebacks that need to be performed.
-     * @return Pointer to the new cache block.
-     */
-    BlkType *handleFill(PacketPtr pkt, BlkType *blk,
-                        PacketList &writebacks);
+    void recvTimingReq(PacketPtr pkt) override;
 
+    void doWritebacks(PacketList& writebacks, Tick forward_time) override;
 
-    /**
-     * Performs the access specified by the request.
-     * @param pkt The request to perform.
-     * @return The result of the access.
-     */
-    bool recvTimingReq(PacketPtr pkt);
+    void doWritebacksAtomic(PacketList& writebacks) override;
 
-    /**
-     * Handles a response (cache line fill/write ack) from the bus.
-     * @param pkt The response packet
-     */
-    void recvTimingResp(PacketPtr pkt);
+    void serviceMSHRTargets(MSHR *mshr, const PacketPtr pkt,
+                            CacheBlk *blk) override;
 
-    /**
-     * Snoops bus transactions to maintain coherence.
-     * @param pkt The current bus transaction.
-     */
-    void recvTimingSnoopReq(PacketPtr pkt);
+    void recvTimingSnoopReq(PacketPtr pkt) override;
 
-    /**
-     * Handle a snoop response.
-     * @param pkt Snoop response packet
-     */
-    void recvTimingSnoopResp(PacketPtr pkt);
+    void recvTimingSnoopResp(PacketPtr pkt) override;
 
-    /**
-     * Performs the access specified by the request.
-     * @param pkt The request to perform.
-     * @return The number of ticks required for the access.
-     */
-    Tick recvAtomic(PacketPtr pkt);
+    Cycles handleAtomicReqMiss(PacketPtr pkt, CacheBlk *&blk,
+                               PacketList &writebacks) override;
 
-    /**
-     * Snoop for the provided request in the cache and return the estimated
-     * time taken.
-     * @param pkt The memory request to snoop
-     * @return The number of ticks required for the snoop.
-     */
-    Tick recvAtomicSnoop(PacketPtr pkt);
+    Tick recvAtomic(PacketPtr pkt) override;
 
-    /**
-     * Performs the access specified by the request.
-     * @param pkt The request to perform.
-     * @param fromCpuSide from the CPU side port or the memory side port
-     */
-    void functionalAccess(PacketPtr pkt, bool fromCpuSide);
+    Tick recvAtomicSnoop(PacketPtr pkt) override;
 
-    void satisfyCpuSideRequest(PacketPtr pkt, BlkType *blk,
-                               bool deferred_response = false,
-                               bool pending_downgrade = false);
-    bool satisfyMSHR(MSHR *mshr, PacketPtr pkt, BlkType *blk);
+    void satisfyRequest(PacketPtr pkt, CacheBlk *blk,
+                        bool deferred_response = false,
+                        bool pending_downgrade = false) override;
 
-    void doTimingSupplyResponse(PacketPtr req_pkt, uint8_t *blk_data,
+    void doTimingSupplyResponse(PacketPtr req_pkt, const uint8_t *blk_data,
                                 bool already_copied, bool pending_inval);
 
     /**
-     * Sets the blk to the new state.
-     * @param blk The cache block being snooped.
-     * @param new_state The new coherence state for the block.
-     */
-    void handleSnoop(PacketPtr ptk, BlkType *blk,
-                     bool is_timing, bool is_deferred, bool pending_inval);
-
-    /**
-     * Create a writeback request for the given block.
-     * @param blk The block to writeback.
-     * @return The writeback request for the block.
-     */
-    PacketPtr writebackBlk(BlkType *blk);
-
-
-    void memWriteback();
-    void memInvalidate();
-    bool isDirty() const;
-
-    /**
-     * Cache block visitor that writes back dirty cache blocks using
-     * functional writes.
+     * Perform an upward snoop if needed, and update the block state
+     * (possibly invalidating the block). Also create a response if required.
      *
-     * \return Always returns true.
-     */
-    bool writebackVisitor(BlkType &blk);
-    /**
-     * Cache block visitor that invalidates all blocks in the cache.
+     * @param pkt Snoop packet
+     * @param blk Cache block being snooped
+     * @param is_timing Timing or atomic for the response
+     * @param is_deferred Is this a deferred snoop or not?
+     * @param pending_inval Do we have a pending invalidation?
      *
-     * @warn Dirty cache lines will not be written back to memory.
+     * @return The snoop delay incurred by the upwards snoop
+     */
+    uint32_t handleSnoop(PacketPtr pkt, CacheBlk *blk,
+                         bool is_timing, bool is_deferred, bool pending_inval);
+
+    M5_NODISCARD PacketPtr evictBlock(CacheBlk *blk) override;
+
+    /**
+     * Create a CleanEvict request for the given block.
      *
-     * \return Always returns true.
+     * @param blk The block to evict.
+     * @return The CleanEvict request for the block.
      */
-    bool invalidateVisitor(BlkType &blk);
+    PacketPtr cleanEvictBlk(CacheBlk *blk);
+
+    PacketPtr createMissPacket(PacketPtr cpu_pkt, CacheBlk *blk,
+                               bool needs_writable,
+                               bool is_whole_line_write) const override;
 
     /**
-     * Flush a cache line due to an uncacheable memory access to the
-     * line.
-     *
-     * @note This shouldn't normally happen, but we need to handle it
-     * since some architecture models don't implement cache
-     * maintenance operations. We won't even try to get a decent
-     * timing here since the line should have been flushed earlier by
-     * a cache maintenance operation.
+     * Send up a snoop request and find cached copies. If cached copies are
+     * found, set the BLOCK_CACHED flag in pkt.
      */
-    void uncacheableFlush(PacketPtr pkt);
-
-    /**
-     * Squash all requests associated with specified thread.
-     * intended for use by I-cache.
-     * @param threadNum The thread to squash.
-     */
-    void squash(int threadNum);
-
-    /**
-     * Generate an appropriate downstream bus request packet for the
-     * given parameters.
-     * @param cpu_pkt  The upstream request that needs to be satisfied.
-     * @param blk The block currently in the cache corresponding to
-     * cpu_pkt (NULL if none).
-     * @param needsExclusive  Indicates that an exclusive copy is required
-     * even if the request in cpu_pkt doesn't indicate that.
-     * @return A new Packet containing the request, or NULL if the
-     * current request in cpu_pkt should just be forwarded on.
-     */
-    PacketPtr getBusPacket(PacketPtr cpu_pkt, BlkType *blk,
-                           bool needsExclusive) const;
-
-    /**
-     * Return the next MSHR to service, either a pending miss from the
-     * mshrQueue, a buffered write from the write buffer, or something
-     * from the prefetcher.  This function is responsible for
-     * prioritizing among those sources on the fly.
-     */
-    MSHR *getNextMSHR();
-
-    /**
-     * Selects an outstanding request to service.  Called when the
-     * cache gets granted the downstream bus in timing mode.
-     * @return The request to service, NULL if none found.
-     */
-    PacketPtr getTimingPacket();
-
-    /**
-     * Marks a request as in service (sent on the bus). This can have side
-     * effect since storage for no response commands is deallocated once they
-     * are successfully sent.
-     * @param pkt The request that was sent on the bus.
-     */
-    void markInService(MSHR *mshr, PacketPtr pkt = 0);
-
-    /**
-     * Return whether there are any outstanding misses.
-     */
-    bool outstandingMisses() const
-    {
-        return mshrQueue.allocated != 0;
-    }
-
-    CacheBlk *findBlock(Addr addr) const {
-        return tags->findBlock(addr);
-    }
-
-    bool inCache(Addr addr) const {
-        return (tags->findBlock(addr) != 0);
-    }
-
-    bool inMissQueue(Addr addr) const {
-        return (mshrQueue.findMatch(addr) != 0);
-    }
-
-    /**
-     * Find next request ready time from among possible sources.
-     */
-    Tick nextMSHRReadyTime() const;
+    bool isCachedAbove(PacketPtr pkt, bool is_timing = true);
 
   public:
     /** Instantiates a basic cache object. */
-    Cache(const Params *p);
+    Cache(const CacheParams *p);
 
-    /** Non-default destructor is needed to deallocate memory. */
-    virtual ~Cache();
-
-    void regStats();
-
-    /** serialize the state of the caches
-     * We currently don't support checkpointing cache state, so this panics.
+    /**
+     * Take an MSHR, turn it into a suitable downstream packet, and
+     * send it out. This construct allows a queue entry to choose a suitable
+     * approach based on its type.
+     *
+     * @param mshr The MSHR to turn into a packet and send
+     * @return True if the port is waiting for a retry
      */
-    virtual void serialize(std::ostream &os);
-    void unserialize(Checkpoint *cp, const std::string &section);
+    bool sendMSHRQueuePacket(MSHR* mshr) override;
 };
 
-#endif // __CACHE_HH__
+#endif // __MEM_CACHE_CACHE_HH__

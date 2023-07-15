@@ -1,4 +1,5 @@
 # Copyright (c) 2007 The Hewlett-Packard Development Company
+# Copyright (c) 2012-2013 AMD
 # All rights reserved.
 #
 # The license below extends only to copyright in the software and shall
@@ -32,13 +33,11 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Gabe Black
 
 microcode = '''
 def macroop LGDT_M
 {
-    .serializing
+    .serialize_after
     .adjust_env maxOsz
 
     # Get the limit
@@ -51,7 +50,7 @@ def macroop LGDT_M
 
 def macroop LGDT_P
 {
-    .serializing
+    .serialize_after
     .adjust_env maxOsz
 
     rdip t7
@@ -70,7 +69,7 @@ def macroop LGDT_P
 
 def macroop LGDT_16_M
 {
-    .serializing
+    .serialize_after
     .adjust_env maxOsz
 
     # Get the limit
@@ -78,13 +77,13 @@ def macroop LGDT_16_M
     # Get the base
     ld t2, seg, sib, 'adjustedDisp + 2', dataSize=4
     zexti t2, t2, 23, dataSize=8
-    wrbase tsg, t2
+    wrbase tsg, t2, dataSize=8
     wrlimit tsg, t1
 };
 
 def macroop LGDT_16_P
 {
-    .serializing
+    .serialize_after
     .adjust_env maxOsz
 
     rdip t7
@@ -99,7 +98,7 @@ def macroop LGDT_16_P
 
 def macroop LIDT_M
 {
-    .serializing
+    .serialize_after
     .adjust_env maxOsz
 
     # Get the limit
@@ -112,7 +111,7 @@ def macroop LIDT_M
 
 def macroop LIDT_P
 {
-    .serializing
+    .serialize_after
     .adjust_env maxOsz
 
     rdip t7
@@ -131,7 +130,7 @@ def macroop LIDT_P
 
 def macroop LIDT_16_M
 {
-    .serializing
+    .serialize_after
     .adjust_env maxOsz
 
     # Get the limit
@@ -139,13 +138,13 @@ def macroop LIDT_16_M
     # Get the base
     ld t2, seg, sib, 'adjustedDisp + 2', dataSize=4
     zexti t2, t2, 23, dataSize=8
-    wrbase idtr, t2
+    wrbase idtr, t2, dataSize=8
     wrlimit idtr, t1
 };
 
 def macroop LIDT_16_P
 {
-    .serializing
+    .serialize_after
     .adjust_env maxOsz
 
     rdip t7
@@ -160,7 +159,7 @@ def macroop LIDT_16_P
 
 def macroop LTR_R
 {
-    .serializing
+    .serialize_after
     chks reg, t0, TRCheck
     limm t4, 0, dataSize=8
     srli t4, reg, 3, dataSize=2
@@ -177,7 +176,7 @@ def macroop LTR_R
 
 def macroop LTR_M
 {
-    .serializing
+    .serialize_after
     ld t5, seg, sib, disp, dataSize=2
     chks t5, t0, TRCheck
     limm t4, 0, dataSize=8
@@ -195,7 +194,7 @@ def macroop LTR_M
 
 def macroop LTR_P
 {
-    .serializing
+    .serialize_after
     rdip t7
     ld t5, seg, riprel, disp, dataSize=2
     chks t5, t0, TRCheck
@@ -214,7 +213,7 @@ def macroop LTR_P
 
 def macroop LLDT_R
 {
-    .serializing
+    .serialize_after
     chks reg, t0, InGDTCheck, flags=(EZF,)
     br label("end"), flags=(CEZF,)
     limm t4, 0, dataSize=8
@@ -231,7 +230,7 @@ end:
 
 def macroop LLDT_M
 {
-    .serializing
+    .serialize_after
     ld t5, seg, sib, disp, dataSize=2
     chks t5, t0, InGDTCheck, flags=(EZF,)
     br label("end"), flags=(CEZF,)
@@ -249,7 +248,7 @@ end:
 
 def macroop LLDT_P
 {
-    .serializing
+    .serialize_after
     rdip t7
     ld t5, seg, riprel, disp, dataSize=2
     chks t5, t0, InGDTCheck, flags=(EZF,)

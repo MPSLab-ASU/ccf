@@ -32,17 +32,15 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Gabe Black
 
 microcode = '''
 def macroop IRET_REAL {
-    .serializing
+    .serialize_after
     panic "Real mode iret isn't implemented!"
 };
 
 def macroop IRET_PROT {
-    .serializing
+    .serialize_after
     .adjust_env oszIn64Override
 
     # Check for a nested task. This isn't supported at the moment.
@@ -128,7 +126,7 @@ processCSDescriptor:
     # if temp_RIP > CS.limit throw #GP(0)
     rdlimit t6, cs, dataSize=8
     sub t0, t1, t6, flags=(ECF,)
-    fault "new GeneralProtection(0)", flags=(CECF,)
+    fault "std::make_shared<GeneralProtection>(0)", flags=(CECF,)
 
     #(temp_CPL!=CPL)
     srli t7, t4, 4
@@ -146,7 +144,7 @@ doPopStackStuffAndCheckRIP:
     # if t7 isn't 0 or -1, it wasn't canonical.
     br label("doPopStackStuff"), flags=(CEZF,)
     addi t0, t7, 1, flags=(EZF,), dataSize=ssz
-    fault "new GeneralProtection(0)", flags=(nCEZF,)
+    fault "std::make_shared<GeneralProtection>(0)", flags=(nCEZF,)
 
 doPopStackStuff:
     #    POP.v temp_RSP

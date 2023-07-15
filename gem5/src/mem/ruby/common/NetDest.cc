@@ -26,9 +26,9 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <algorithm>
-
 #include "mem/ruby/common/NetDest.hh"
+
+#include <algorithm>
 
 NetDest::NetDest()
 {
@@ -49,13 +49,6 @@ NetDest::addNetDest(const NetDest& netDest)
     for (int i = 0; i < m_bits.size(); i++) {
         m_bits[i].addSet(netDest.m_bits[i]);
     }
-}
-
-void
-NetDest::addRandom()
-{
-    int i = random()%m_bits.size();
-    m_bits[i].addRandom();
 }
 
 void

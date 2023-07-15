@@ -1,0 +1,445 @@
+digraph MS { 
+{
+0 [color=red ];
+
+1 [color=red ];
+
+2 [color=red ];
+
+3 [color=red ];
+
+4 [color=blue ];
+
+5 [color=blue ];
+
+6 [color=red ];
+
+7 [color=blue ];
+
+8 [color=blue ];
+
+9 [color=red ];
+
+10 [color=blue ];
+
+11 [color=blue ];
+
+12 [color=red ];
+
+13 [color=red ];
+
+14 [color=red ];
+
+15 [color=red ];
+
+16 [color=red ];
+
+17 [color=red ];
+
+18 [color=red ];
+
+19 [color=red ];
+
+20 [color=red ];
+
+21 [color=red ];
+
+22 [color=red ];
+
+23 [color=blue ];
+
+24 [color=blue ];
+
+25 [color=red ];
+
+26 [color=blue ];
+
+27 [color=blue ];
+
+28 [color=red ];
+
+36 [color=red ];
+
+39 [color=red ];
+
+47 [color=red ];
+
+50 [color=red ];
+
+53 [color=red ];
+
+56 [color=red ];
+
+58 [color=red ];
+
+60 [color=red ];
+
+61 [color=red ];
+
+66 [color=red ];
+
+68 [color=red ];
+
+70 [color=red ];
+
+71 [color=red ];
+
+73 [color=red ];
+
+74 [color=blue ];
+
+75 [color=blue ];
+
+76 [color=red ];
+
+77 [color=red ];
+
+78 [color=red ];
+
+79 [color=red ];
+
+80 [color=red ];
+
+81 [color=green ];
+
+82 [color=green ];
+
+83 [color=green ];
+
+84 [color=green ];
+
+85 [color=green ];
+
+86 [color=green ];
+
+87 [color=green ];
+
+88 [color=green ];
+
+89 [color=green ];
+
+90 [color=green ];
+
+91 [color=green ];
+
+92 [color=green ];
+
+93 [color=green ];
+
+94 [color=green ];
+
+92 [color=green ];
+
+93 [color=green ];
+
+94 [color=green ];
+
+95 [color=green ];
+
+96 [color=green ];
+
+97 [color=green ];
+
+98 [color=green ];
+
+99 [color=green ];
+
+103 [color=green ];
+
+104 [color=green ];
+
+105 [color=green ];
+
+106 [color=green ];
+
+107 [color=green ];
+
+108 [color=green ];
+
+109 [color=green ];
+
+110 [color=green ];
+
+111 [color=green ];
+
+112 [color=green ];
+
+113 [color=green ];
+
+114 [color=green ];
+
+115 [color=green ];
+
+116 [color=green ];
+
+117 [color=green ];
+
+118 [color=green ];
+
+119 [color=green ];
+
+120 [color=green ];
+
+121 [color=green ];
+
+122 [color=green ];
+
+123 [color=green ];
+
+124 [color=green ];
+
+125 [color=green ];
+
+126 [color=green ];
+
+127 [color=green ];
+
+128 [color=green ];
+
+129 [color=green ];
+
+130 [color=green ];
+
+131 [color=green ];
+
+132 [color=green ];
+
+133 [color=green ];
+
+134 [color=green ];
+
+135 [color=green ];
+
+136 [color=green ];
+
+137 [color=green ];
+
+138 [color=green ];
+
+139 [color=green ];
+
+140 [color=green ];
+
+141 [color=green ];
+
+142 [color=green ];
+
+143 [color=green ];
+
+144 [color=green ];
+
+145 [color=green ];
+
+146 [color=green ];
+
+147 [color=green ];
+
+148 [color=green ];
+
+149 [color=green ];
+
+150 [color=green ];
+
+151 [color=green ];
+
+152 [color=green ];
+
+153 [color=green ];
+
+154 [color=green ];
+
+155 [color=green ];
+
+156 [color=green ];
+
+157 [color=green ];
+
+158 [color=green ];
+
+159 [color=green ];
+
+160 [color=green ];
+
+161 [color=green ];
+
+162 [color=green ];
+
+163 [color=green ];
+
+164 [color=green ];
+
+165 [color=green ];
+
+166 [color=green ];
+
+167 [color=green ];
+
+168 [color=green ];
+
+169 [color=green ];
+
+170 [color=green ];
+
+171 [color=green ];
+
+172 [color=green ];
+
+173 [color=green ];
+
+174 [color=green ];
+96 -> 97
+4 -> 5 [style=dotted, color=blue, label= mem] 
+7 -> 8 [style=dotted, color=blue, label= mem] 
+10 -> 11 [style=dotted, color=blue, label= mem] 
+23 -> 24 [style=dotted, color=blue, label= mem] 
+26 -> 27 [style=dotted, color=blue, label= mem] 
+2 -> 6
+27 -> 0 [style=bold, color=red, label=1] 
+12 -> 13
+39 -> 6
+6 -> 7
+8 -> 9
+9 -> 10
+11 -> 12
+22 -> 23
+24 -> 25
+13 -> 14 [style=bold, color=blue ]
+1 -> 14
+0 -> 15
+15 -> 16
+16 -> 17
+17 -> 18
+18 -> 19
+2 -> 21
+19 -> 22 [style=bold, color=blue ]
+88 -> 89
+84 -> 85
+25 -> 26
+27 -> 28
+14 -> 60
+61 -> 60 [style=bold, color=red, label=1] 
+28 -> 73
+74 -> 75 [style=dotted, color=blue, label= mem] 
+36 -> 76
+76 -> 3
+66 -> 77
+73 -> 78
+78 -> 66
+2 -> 79
+56 -> 80
+0 -> 81
+81 -> 82
+82 -> 83
+83 -> 84
+85 -> 86
+86 -> 87
+87 -> 88
+89 -> 90
+90 -> 91
+91 -> 28
+94 -> 95
+95 -> 96
+2 -> 92
+92 -> 93
+93 -> 94
+94 -> 20
+97 -> 98
+98 -> 99
+99 -> 14
+150 -> 61
+158 -> 159
+3 -> 103
+103 -> 4
+5 -> 104
+104 -> 13
+145 -> 146
+14 -> 105
+105 -> 106
+106 -> 107
+107 -> 108
+112 -> 113
+108 -> 109
+109 -> 110
+110 -> 111
+111 -> 112
+146 -> 147
+149 -> 150
+113 -> 114
+114 -> 1 [style=bold, color=red, label=1] 
+20 -> 115
+115 -> 22
+21 -> 116
+116 -> 117
+117 -> 22
+23 -> 118
+118 -> 119
+119 -> 120
+120 -> 121
+125 -> 126
+121 -> 122
+122 -> 123
+123 -> 124
+124 -> 125
+126 -> 70
+160 -> 161
+161 -> 70 [style=bold, color=red, label=1] 
+24 -> 127
+127 -> 128
+128 -> 129
+129 -> 2 [style=bold, color=red, label=1] 
+147 -> 148
+36 -> 130
+130 -> 131
+131 -> 9
+47 -> 132
+132 -> 133
+133 -> 134
+134 -> 20
+50 -> 135
+135 -> 136
+136 -> 21
+53 -> 137
+137 -> 138
+138 -> 139
+139 -> 25
+56 -> 140
+140 -> 60 [style=bold, color=blue ]
+60 -> 141
+141 -> 142
+142 -> 143
+143 -> 144
+148 -> 149
+144 -> 145
+66 -> 151
+151 -> 70 [style=bold, color=blue ]
+70 -> 152
+152 -> 153
+153 -> 154
+154 -> 155
+155 -> 156
+156 -> 157
+157 -> 71
+159 -> 160
+71 -> 158
+73 -> 162
+162 -> 163
+163 -> 164
+164 -> 165
+165 -> 166
+166 -> 167
+167 -> 56 [style=bold, color=red, label=1] 
+75 -> 168
+168 -> 18
+77 -> 169
+169 -> 170
+170 -> 171
+171 -> 172
+172 -> 68
+79 -> 173
+173 -> 3
+80 -> 174
+174 -> 58
+
+}
+
+}

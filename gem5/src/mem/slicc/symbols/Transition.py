@@ -26,29 +26,39 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from slicc.symbols.Symbol import Symbol
+from slicc.symbols.State import WildcardState
 
 class Transition(Symbol):
     def __init__(self, table, machine, state, event, nextState, actions,
-                 request_types, location, pairs):
+                 request_types, location):
         ident = "%s|%s" % (state, event)
-        super(Transition, self).__init__(table, ident, location, pairs)
+        super(Transition, self).__init__(table, ident, location)
 
         self.state = machine.states[state]
         self.event = machine.events[event]
-        self.nextState = machine.states[nextState]
+        if nextState == '*':
+            # check to make sure there is a getNextState function declared
+            found = False
+            for func in machine.functions:
+                if func.c_ident == 'getNextState_Addr':
+                    found = True
+                    break
+            if not found:
+                fatal("Machine uses a wildcard transition without getNextState defined")
+            self.nextState = WildcardState(machine.symtab,
+                                           '*', location)
+        else:
+            self.nextState = machine.states[nextState]
         self.actions = [ machine.actions[a] for a in actions ]
         self.request_types = [ machine.request_types[s] for s in request_types ]
         self.resources = {}
 
         for action in self.actions:
-            for var,value in action.resources.iteritems():
-                if var.type.ident != "DNUCAStopTable":
-                    num = int(value)
-                    if var in self.resources:
-                        num += int(value)
-                    self.resources[var] = str(num)
-                else:
-                    self.resources[var] = value
+            for var,value in action.resources.items():
+                num = int(value)
+                if var in self.resources:
+                    num += int(value)
+                self.resources[var] = str(num)
 
     def __repr__(self):
       return "[Transition: (%r, %r) -> %r, %r]" % \

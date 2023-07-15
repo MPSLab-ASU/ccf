@@ -34,8 +34,6 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Andreas Sandberg
 
 Import('*')
 
@@ -44,14 +42,12 @@ if env['USE_KVM']:
     SimObject('BaseKvmCPU.py')
 
     Source('base.cc')
+    Source('device.cc')
     Source('vm.cc')
     Source('perfevent.cc')
     Source('timer.cc')
 
-    if env['TARGET_ISA'] == 'arm':
-        SimObject('ArmKvmCPU.py')
-        Source('arm_cpu.cc')
-    elif env['TARGET_ISA'] == 'x86':
+    if env['TARGET_ISA'] == 'x86':
         SimObject('X86KvmCPU.py')
         Source('x86_cpu.cc')
 

@@ -26,10 +26,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Steve Reinhardt
- *          Stephen Hines
- *          Timothy M. Jones
  */
 
 #ifndef __ARCH_POWER_LOCKED_MEM_HH__
@@ -41,30 +37,12 @@
  * ISA-specific helper functions for locked memory accesses.
  */
 
-#include "mem/packet.hh"
-#include "mem/request.hh"
+#include "arch/generic/locked_mem.hh"
 
 namespace PowerISA
 {
 
-template <class XC>
-inline void
-handleLockedSnoop(XC *xc, PacketPtr pkt, Addr cacheBlockMask)
-{
-}
-
-template <class XC>
-inline void
-handleLockedRead(XC *xc, Request *req)
-{
-}
-
-template <class XC>
-inline bool
-handleLockedWrite(XC *xc, Request *req)
-{
-    return true;
-}
+using namespace GenericISA::LockedMem;
 
 } // namespace PowerISA
 

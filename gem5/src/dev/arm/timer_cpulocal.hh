@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2011 ARM Limited
+ * Copyright (c) 2010-2011,2018 ARM Limited
  * All rights reserved
  *
  * The license below extends only to copyright in the software and shall
@@ -33,9 +33,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Ali Saidi
- *          Geoffrey Blake
  */
 
 #ifndef __DEV_ARM_LOCALTIMER_HH__
@@ -51,11 +48,12 @@
  */
 
 class BaseGic;
+class ArmInterruptPin;
 
 class CpuLocalTimer : public BasicPioDevice
 {
   protected:
-    class Timer
+    class Timer : public Serializable
     {
 
       public:
@@ -96,12 +94,9 @@ class CpuLocalTimer : public BasicPioDevice
         /** Pointer to parent class */
         CpuLocalTimer *parent;
 
-        /** Number of interrupt to cause/clear */
-        uint32_t intNumTimer;
-        uint32_t intNumWatchdog;
-
-        /** Cpu this timer is attached to */
-        uint32_t cpuNum;
+        /** Interrupt to cause/clear */
+        ArmInterruptPin *intTimer;
+        ArmInterruptPin *intWatchdog;
 
         /** Control register as specified above */
         TimerCtrl timerControl;
@@ -125,17 +120,20 @@ class CpuLocalTimer : public BasicPioDevice
 
         /** Called when the counter reaches 0 */
         void timerAtZero();
-        EventWrapper<Timer, &Timer::timerAtZero> timerZeroEvent;
+        EventFunctionWrapper timerZeroEvent;
 
         void watchdogAtZero();
-        EventWrapper<Timer, &Timer::watchdogAtZero> watchdogZeroEvent;
+        EventFunctionWrapper watchdogZeroEvent;
       public:
         /** Restart the counter ticking at val
          * @param val the value to start at */
         void restartTimerCounter(uint32_t val);
         void restartWatchdogCounter(uint32_t val);
 
-        Timer();
+        Timer(const std::string &name,
+              CpuLocalTimer* _parent,
+              ArmInterruptPin* int_timer,
+              ArmInterruptPin* int_watchdog);
 
         std::string name() const { return _name; }
 
@@ -145,19 +143,17 @@ class CpuLocalTimer : public BasicPioDevice
         /** Handle write for a single timer */
         void write(PacketPtr pkt, Addr daddr);
 
-        void serialize(std::ostream &os);
-        void unserialize(Checkpoint *cp, const std::string &section);
+        void serialize(CheckpointOut &cp) const override;
+        void unserialize(CheckpointIn &cp) override;
 
         friend class CpuLocalTimer;
     };
-
-    static const int CPU_MAX = 8;
 
     /** Pointer to the GIC for causing an interrupt */
     BaseGic *gic;
 
     /** Timers that do the actual work */
-    Timer localTimer[CPU_MAX];
+    std::vector<std::unique_ptr<Timer>> localTimer;
 
   public:
     typedef CpuLocalTimerParams Params;
@@ -172,23 +168,25 @@ class CpuLocalTimer : public BasicPioDevice
       */
     CpuLocalTimer(Params *p);
 
+    /** Inits the local timers */
+    void init() override;
+
     /**
      * Handle a read to the device
      * @param pkt The memory request.
      * @return Returns latency of device read
      */
-    virtual Tick read(PacketPtr pkt);
+    Tick read(PacketPtr pkt) override;
 
     /**
      * Handle a write to the device.
      * @param pkt The memory request.
      * @return Returns latency of device write
      */
-    virtual Tick write(PacketPtr pkt);
+    Tick write(PacketPtr pkt) override;
 
-
-    virtual void serialize(std::ostream &os);
-    virtual void unserialize(Checkpoint *cp, const std::string &section);
+    void serialize(CheckpointOut &cp) const override;
+    void unserialize(CheckpointIn &cp) override;
 };
 
 

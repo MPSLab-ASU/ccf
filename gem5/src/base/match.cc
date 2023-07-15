@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2019 The Regents of the University of California
  * Copyright (c) 2004-2005 The Regents of The University of Michigan
  * All rights reserved.
  *
@@ -24,11 +25,10 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Nathan Binkert
  */
 
 #include "base/match.hh"
+
 #include "base/str.hh"
 
 using namespace std;
@@ -40,6 +40,12 @@ ObjectMatch::ObjectMatch()
 ObjectMatch::ObjectMatch(const string &expr)
 {
     setExpression(expr);
+}
+
+void
+ObjectMatch::add(const ObjectMatch &other)
+{
+    tokens.insert(tokens.end(), other.tokens.begin(), other.tokens.end());
 }
 
 void
@@ -89,10 +95,23 @@ ObjectMatch::domatch(const string &name) const
             }
         }
 
-        if (match == true)
+        if (match)
             return true;
     }
 
     return false;
+}
+
+std::vector<std::vector<std::string> >
+ObjectMatch::getExpressions()
+{
+    std::vector<std::vector<std::string> > to_return;
+    for (const auto &expression: tokens) {
+        std::vector<std::string> to_add;
+        to_add.insert(to_add.end(), expression.begin(), expression.end());
+        to_return.push_back(to_add);
+    }
+
+    return to_return;
 }
 

@@ -24,15 +24,13 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Ali Saidi
- *          Andrew Schultz
- *          Miguel Serrano
  */
 
 /** @file
  * Malta I/O including PIC, PIT, RTC, DMA
  */
+
+#include "dev/mips/malta_io.hh"
 
 #include <sys/time.h>
 
@@ -42,11 +40,9 @@
 
 #include "base/time.hh"
 #include "base/trace.hh"
-#include "config/the_isa.hh"
 #include "debug/Malta.hh"
 #include "dev/mips/malta.hh"
 #include "dev/mips/malta_cchip.hh"
-#include "dev/mips/malta_io.hh"
 #include "dev/mips/maltareg.h"
 #include "dev/rtcreg.h"
 #include "mem/packet.hh"
@@ -56,7 +52,6 @@
 #include "sim/system.hh"
 
 using namespace std;
-using namespace TheISA;
 
 MaltaIO::RTC::RTC(const string &name, const MaltaIOParams *p)
     : MC146818(p->malta, name, p->time, p->year_is_bcd, p->frequency),
@@ -111,7 +106,7 @@ MaltaIO::clearIntr(uint8_t interrupt)
 }
 
 void
-MaltaIO::serialize(ostream &os)
+MaltaIO::serialize(CheckpointOut &cp) const
 {
     SERIALIZE_SCALAR(timerData);
     SERIALIZE_SCALAR(mask1);
@@ -122,12 +117,12 @@ MaltaIO::serialize(ostream &os)
     SERIALIZE_SCALAR(picInterrupting);
 
     // Serialize the timers
-    pitimer.serialize("pitimer", os);
-    rtc.serialize("rtc", os);
+    pitimer.serialize("pitimer", cp);
+    rtc.serialize("rtc", cp);
 }
 
 void
-MaltaIO::unserialize(Checkpoint *cp, const string &section)
+MaltaIO::unserialize(CheckpointIn &cp)
 {
     UNSERIALIZE_SCALAR(timerData);
     UNSERIALIZE_SCALAR(mask1);
@@ -138,8 +133,15 @@ MaltaIO::unserialize(Checkpoint *cp, const string &section)
     UNSERIALIZE_SCALAR(picInterrupting);
 
     // Unserialize the timers
-    pitimer.unserialize("pitimer", cp, section);
-    rtc.unserialize("rtc", cp, section);
+    pitimer.unserialize("pitimer", cp);
+    rtc.unserialize("rtc", cp);
+}
+
+void
+MaltaIO::startup()
+{
+    rtc.startup();
+    pitimer.startup();
 }
 
 MaltaIO *

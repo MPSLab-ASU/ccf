@@ -34,8 +34,6 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Authors: Gabe Black
 
 ////////////////////////////////////////////////////////////////////
 //
@@ -110,7 +108,8 @@ let {{
         def __init__(self, opTypeString):
             match = OpType.parser.search(opTypeString)
             if match == None:
-                raise Exception, "Problem parsing operand type %s" % opTypeString
+                raise Exception("Problem parsing operand type {}".format(
+                    opTypeString))
             self.reg = match.group("reg")
             self.tag = match.group("tag")
             self.size = match.group("size")
@@ -143,13 +142,19 @@ let {{
                     regString = "INTREG_R%s" % opType.reg
                 env.addReg(regString)
                 env.addToDisassembly(
-                        "printReg(out, %s, regSize);\n" % regString)
+                    "printReg(out, InstRegIndex(%s), regSize);\n" %
+                                                                     regString)
+
                 Name += "_R"
+
             elif opType.tag == "B":
                 # This refers to registers whose index is encoded as part of the opcode
                 env.addToDisassembly(
-                        "printReg(out, %s, regSize);\n" % InstRegIndex)
+                        "printReg(out, InstRegIndex(%s), regSize);\n" %
+                                                                  InstRegIndex)
+
                 Name += "_R"
+
                 env.addReg(InstRegIndex)
             elif opType.tag == "M":
                 # This refers to memory. The macroop constructor sets up modrm
@@ -159,7 +164,8 @@ let {{
                         {"3" : (doBadInstDecode,) },
                         (doRipRelativeDecode, Name, opTypes, env))
             elif opType.tag == None or opType.size == None:
-                raise Exception, "Problem parsing operand tag: %s" % opType.tag
+                raise Exception("Problem parsing operand tag: {}".format(
+                    opType.tag))
             elif opType.tag == "C":
                 # A control register indexed by the "reg" field
                 env.addReg(ModRMRegIndex)
@@ -182,8 +188,11 @@ let {{
                 # Use the "reg" field of the ModRM byte to select the register
                 env.addReg(ModRMRegIndex)
                 env.addToDisassembly(
-                        "printReg(out, %s, regSize);\n" % ModRMRegIndex)
+                        "printReg(out, InstRegIndex(%s), regSize);\n" %
+                                                                 ModRMRegIndex)
+
                 if opType.tag == "P":
+
                     Name += "_MMX"
                 elif opType.tag == "V":
                     Name += "_XMM"
@@ -195,8 +204,11 @@ let {{
                 regEnv = copy.copy(env)
                 regEnv.addReg(ModRMRMIndex)
                 regEnv.addToDisassembly(
-                        "printReg(out, %s, regSize);\n" % ModRMRMIndex)
+                        "printReg(out, InstRegIndex(%s), regSize);\n" %
+                                                                  ModRMRMIndex)
+
                 # This refers to memory. The macroop constructor should set up
+
                 # modrm addressing.
                 memEnv = copy.copy(env)
                 memEnv.doModRM = True
@@ -222,8 +234,11 @@ let {{
                 # Non register modrm settings should cause an error
                 env.addReg(ModRMRMIndex)
                 env.addToDisassembly(
-                        "printReg(out, %s, regSize);\n" % ModRMRMIndex)
+                        "printReg(out, InstRegIndex(%s), regSize);\n" %
+                                                                  ModRMRMIndex)
+
                 if opType.tag == "PR":
+
                     Name += "_MMX"
                 elif opType.tag == "VR":
                     Name += "_XMM"
@@ -244,7 +259,7 @@ let {{
                                 env.addressSize, false);''')
                 Name += "_M"
             else:
-                raise Exception, "Unrecognized tag %s." % opType.tag
+                raise Exception("Unrecognized tag {}.".format(opType.tag))
 
         # Generate code to return a macroop of the given name which will
         # operate in the "emulation environment" env

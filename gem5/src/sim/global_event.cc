@@ -25,18 +25,18 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Steve Reinhardt
  */
 
 #include "sim/global_event.hh"
 
+#include "sim/core.hh"
+
 std::mutex BaseGlobalEvent::globalQMutex;
 
 BaseGlobalEvent::BaseGlobalEvent(Priority p, Flags f)
+    : barrier(numMainEventQueues),
+      barrierEvent(numMainEventQueues, NULL)
 {
-    barrierEvent.resize(numMainEventQueues);
-    barrier = new Barrier(numMainEventQueues);
 }
 
 

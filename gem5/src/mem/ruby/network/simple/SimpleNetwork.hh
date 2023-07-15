@@ -32,23 +32,20 @@
 #include <iostream>
 #include <vector>
 
-#include "mem/ruby/common/Global.hh"
 #include "mem/ruby/network/Network.hh"
 #include "params/SimpleNetwork.hh"
-#include "sim/sim_object.hh"
 
 class NetDest;
 class MessageBuffer;
 class Throttle;
 class Switch;
-class Topology;
 
 class SimpleNetwork : public Network
 {
   public:
     typedef SimpleNetworkParams Params;
     SimpleNetwork(const Params *p);
-    ~SimpleNetwork();
+    ~SimpleNetwork() = default;
 
     void init();
 
@@ -59,26 +56,17 @@ class SimpleNetwork : public Network
     void collateStats();
     void regStats();
 
-    // returns the queue requested for the given component
-    MessageBuffer* getToNetQueue(NodeID id, bool ordered, int network_num, std::string vnet_type);
-    MessageBuffer* getFromNetQueue(NodeID id, bool ordered, int network_num, std::string vnet_type);
-    virtual const std::vector<Throttle*>* getThrottles(NodeID id) const;
-
-    bool isVNetOrdered(int vnet) { return m_ordered[vnet]; }
-    bool validVirtualNetwork(int vnet) { return m_in_use[vnet]; }
-
-    int getNumNodes() {return m_nodes; }
+    bool isVNetOrdered(int vnet) const { return m_ordered[vnet]; }
 
     // Methods used by Topology to setup the network
-    void makeOutLink(SwitchID src, NodeID dest, BasicLink* link, 
-                     LinkDirection direction, 
-                     const NetDest& routing_table_entry);
-    void makeInLink(NodeID src, SwitchID dest, BasicLink* link,
-                    LinkDirection direction, 
-                    const NetDest& routing_table_entry);
+    void makeExtOutLink(SwitchID src, NodeID dest, BasicLink* link,
+                     std::vector<NetDest>& routing_table_entry);
+    void makeExtInLink(NodeID src, SwitchID dest, BasicLink* link,
+                    std::vector<NetDest>& routing_table_entry);
     void makeInternalLink(SwitchID src, SwitchID dest, BasicLink* link,
-                          LinkDirection direction, 
-                          const NetDest& routing_table_entry);
+                          std::vector<NetDest>& routing_table_entry,
+                          PortDirection src_outport,
+                          PortDirection dst_inport);
 
     void print(std::ostream& out) const;
 
@@ -86,7 +74,6 @@ class SimpleNetwork : public Network
     uint32_t functionalWrite(Packet *pkt);
 
   private:
-    void checkNetworkAllocation(NodeID id, bool ordered, int network_num);
     void addLink(SwitchID src, SwitchID dest, int link_latency);
     void makeLink(SwitchID src, SwitchID dest,
         const NetDest& routing_table_entry, int link_latency);
@@ -96,19 +83,12 @@ class SimpleNetwork : public Network
     SimpleNetwork(const SimpleNetwork& obj);
     SimpleNetwork& operator=(const SimpleNetwork& obj);
 
-    // vector of queues from the components
-    std::vector<std::vector<MessageBuffer*> > m_toNetQueues;
-    std::vector<std::vector<MessageBuffer*> > m_fromNetQueues;
-
-    std::vector<bool> m_in_use;
-    std::vector<bool> m_ordered;
     std::vector<Switch*> m_switches;
-    std::vector<MessageBuffer*> m_buffers_to_free;
-    std::vector<Switch*> m_endpoint_switches;
-
-    int m_buffer_size;
-    int m_endpoint_bandwidth;
-    bool m_adaptive_routing;    
+    std::vector<MessageBuffer*> m_int_link_buffers;
+    int m_num_connected_buffers;
+    const int m_buffer_size;
+    const int m_endpoint_bandwidth;
+    const bool m_adaptive_routing;
 
     //Statistical variables
     Stats::Formula m_msg_counts[MessageSizeType_NUM];

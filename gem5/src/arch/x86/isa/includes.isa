@@ -35,8 +35,6 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Authors: Gabe Black
 
 ////////////////////////////////////////////////////////////////////
 //
@@ -49,6 +47,7 @@ let {{
 }};
 
 output header {{
+#include <array>
 #include <cstring>
 #include <iostream>
 #include <sstream>
@@ -65,7 +64,7 @@ output header {{
 #include "arch/x86/registers.hh"
 #include "arch/x86/types.hh"
 #include "arch/x86/utility.hh"
-#include "base/misc.hh"
+#include "base/logging.hh"
 #include "cpu/static_inst.hh"
 #include "mem/packet.hh"
 #include "sim/faults.hh"
@@ -83,7 +82,7 @@ output decoder {{
 #include "arch/x86/tlb.hh"
 #include "base/loader/symtab.hh"
 #include "base/cprintf.hh"
-#include "base/misc.hh"
+#include "base/logging.hh"
 #include "cpu/thread_context.hh"  // for Jump::branchTarget()
 #include "mem/packet.hh"
 #include "sim/full_system.hh"
@@ -114,7 +113,6 @@ output exec {{
 #include "arch/x86/faults.hh"
 #include "arch/x86/memhelpers.hh"
 #include "arch/x86/tlb.hh"
-#include "base/bigint.hh"
 #include "base/compiler.hh"
 #include "base/condcodes.hh"
 #include "cpu/base.hh"

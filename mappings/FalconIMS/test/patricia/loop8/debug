@@ -1,0 +1,3055 @@
+current_II_2: 12	max_mapping_attempts: 100
+iteration: 0
+after:
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+Get_SortOps SCCs: 
+27	26	25	21	20	2	24	23	22	19	18	17	16	15	0	
+1	14	
+71	70	
+61	60	
+4	
+3	
+12	
+11	
+10	
+9	
+8	
+7	
+6	
+58	
+56	
+68	
+13	
+66	
+73	
+28	
+5	
+36	
+39	
+47	
+50	
+53	
+75	
+74	
+Node: 71	ASAP: 16	ALAP:27	random try_time: 26
+Node: 70	ASAP: 15	ALAP:25	random try_time: 23
+Node: 61	ASAP: 11	ALAP:22	random try_time: 12
+Node: 60	ASAP: 10	ALAP:11	random try_time: 10
+Node: 14	ASAP: 9	ALAP:9	random try_time: 9
+Node: 13	ASAP: 8	ALAP:8	random try_time: 8
+Node: 12	ASAP: 7	ALAP:7	random try_time: 7
+Node: 11	ASAP: 6	ALAP:6	random try_time: 6
+Node: 9	ASAP: 4	ALAP:4	random try_time: 4
+Node: 8	ASAP: 3	ALAP:3	random try_time: 3
+Node: 6	ASAP: 1	ALAP:1	random try_time: 1
+Node: 1	ASAP: 8	ALAP:8	random try_time: 8
+Node: 39	ASAP: 0	ALAP:0	random try_time: 0
+Node: 5	ASAP: 3	ALAP:7	random try_time: 3
+Node: 3	ASAP: 1	ALAP:1	random try_time: 1
+Node: 36	ASAP: 0	ALAP:0	random try_time: 0
+Node: 68	ASAP: 15	ALAP:26	random try_time: 17
+Node: 66	ASAP: 14	ALAP:16	random try_time: 15
+Node: 73	ASAP: 13	ALAP:14	random try_time: 13
+Node: 28	ASAP: 12	ALAP:12	random try_time: 12
+Node: 27	ASAP: 11	ALAP:11	random try_time: 11
+Node: 25	ASAP: 9	ALAP:9	random try_time: 9
+Node: 24	ASAP: 8	ALAP:8	random try_time: 8
+Node: 22	ASAP: 6	ALAP:6	random try_time: 6
+Node: 19	ASAP: 5	ALAP:5	random try_time: 5
+Node: 18	ASAP: 4	ALAP:4	random try_time: 4
+Node: 17	ASAP: 3	ALAP:3	random try_time: 3
+Node: 16	ASAP: 2	ALAP:2	random try_time: 2
+Node: 15	ASAP: 1	ALAP:1	random try_time: 1
+Node: 0	ASAP: 0	ALAP:0	random try_time: 0
+Node: 75	ASAP: 1	ALAP:3	random try_time: 2
+Node: 20	ASAP: 1	ALAP:5	random try_time: 4
+Node: 47	ASAP: 0	ALAP:3	random try_time: 2
+Node: 21	ASAP: 1	ALAP:5	random try_time: 2
+Node: 2	ASAP: 0	ALAP:0	random try_time: 0
+Node: 50	ASAP: 0	ALAP:1	random try_time: 0
+Node: 53	ASAP: 0	ALAP:8	random try_time: 0
+Node: 58	ASAP: 1	ALAP:12	random try_time: 10
+Node: 56	ASAP: 0	ALAP:9	random try_time: 7
+end:
+9
+6
+7
+5
+3
+3
+2
+4
+3
+2
+3
+2
+Feasible II is 12 at 0
+Node: 0	 ASAP: 0	ALAP: 0	sched @ 0
+Node: 1	 ASAP: 8	ALAP: 8	sched @ 8
+Node: 2	 ASAP: 0	ALAP: 0	sched @ 0
+Node: 3	 ASAP: 1	ALAP: 1	sched @ 1
+Node: 4	 ASAP: 2	ALAP: 13	sched @ 2
+Node: 5	 ASAP: 3	ALAP: 7	sched @ 3
+Node: 6	 ASAP: 1	ALAP: 1	sched @ 1
+Node: 7	 ASAP: 2	ALAP: 13	sched @ 2
+Node: 8	 ASAP: 3	ALAP: 3	sched @ 3
+Node: 9	 ASAP: 4	ALAP: 4	sched @ 4
+Node: 10	 ASAP: 5	ALAP: 16	sched @ 5
+Node: 11	 ASAP: 6	ALAP: 6	sched @ 6
+Node: 12	 ASAP: 7	ALAP: 7	sched @ 7
+Node: 13	 ASAP: 8	ALAP: 8	sched @ 8
+Node: 14	 ASAP: 9	ALAP: 9	sched @ 9
+Node: 15	 ASAP: 1	ALAP: 1	sched @ 1
+Node: 16	 ASAP: 2	ALAP: 2	sched @ 2
+Node: 17	 ASAP: 3	ALAP: 3	sched @ 3
+Node: 18	 ASAP: 4	ALAP: 4	sched @ 4
+Node: 19	 ASAP: 5	ALAP: 5	sched @ 5
+Node: 20	 ASAP: 1	ALAP: 5	sched @ 4
+Node: 21	 ASAP: 1	ALAP: 5	sched @ 2
+Node: 22	 ASAP: 6	ALAP: 6	sched @ 6
+Node: 23	 ASAP: 7	ALAP: 18	sched @ 7
+Node: 24	 ASAP: 8	ALAP: 8	sched @ 8
+Node: 25	 ASAP: 9	ALAP: 9	sched @ 9
+Node: 26	 ASAP: 10	ALAP: 21	sched @ 10
+Node: 27	 ASAP: 11	ALAP: 11	sched @ 11
+Node: 28	 ASAP: 12	ALAP: 12	sched @ 12
+Node: 36	 ASAP: 0	ALAP: 0	sched @ 0
+Node: 39	 ASAP: 0	ALAP: 0	sched @ 0
+Node: 47	 ASAP: 0	ALAP: 3	sched @ 2
+Node: 50	 ASAP: 0	ALAP: 1	sched @ 0
+Node: 53	 ASAP: 0	ALAP: 8	sched @ 0
+Node: 56	 ASAP: 0	ALAP: 9	sched @ 7
+Node: 58	 ASAP: 1	ALAP: 12	sched @ 10
+Node: 60	 ASAP: 10	ALAP: 11	sched @ 10
+Node: 61	 ASAP: 11	ALAP: 22	sched @ 12
+Node: 66	 ASAP: 14	ALAP: 16	sched @ 15
+Node: 68	 ASAP: 15	ALAP: 26	sched @ 17
+Node: 70	 ASAP: 15	ALAP: 25	sched @ 23
+Node: 71	 ASAP: 16	ALAP: 27	sched @ 26
+Node: 73	 ASAP: 13	ALAP: 14	sched @ 13
+Node: 74	 ASAP: 0	ALAP: 11	sched @ 1
+Node: 75	 ASAP: 1	ALAP: 3	sched @ 2
+Node: 76	 ASAP: 15	ALAP: 16	sched @ 16
+Node: 77	 ASAP: 14	ALAP: 14	sched @ 14
+Node: 78	 ASAP: 1	ALAP: 1	sched @ 1
+Node: 79	 ASAP: 1	ALAP: 8	sched @ 8
+total nodes before routing: 49
+total nodes before scheduling: 156
+is_modified route and reschedule: 1
+Routing Node: 80	ASAP: 1	ALAP: 1
+Routing Node: 81	ASAP: 2	ALAP: 2
+Routing Node: 82	ASAP: 3	ALAP: 3
+Routing Node: 83	ASAP: 4	ALAP: 4
+Routing Node: 84	ASAP: 5	ALAP: 5
+Routing Node: 85	ASAP: 6	ALAP: 6
+Routing Node: 86	ASAP: 7	ALAP: 7
+Routing Node: 87	ASAP: 8	ALAP: 8
+Routing Node: 88	ASAP: 9	ALAP: 9
+Routing Node: 89	ASAP: 10	ALAP: 10
+Routing Node: 90	ASAP: 11	ALAP: 11
+Routing Node: 91	ASAP: 1	ALAP: 1
+Routing Node: 91	ASAP: 1	ALAP: 1
+Routing Node: 92	ASAP: 2	ALAP: 2
+Routing Node: 93	ASAP: 3	ALAP: 3
+Routing Node: 94	ASAP: 4	ALAP: 4
+Routing Node: 95	ASAP: 5	ALAP: 5
+Routing Node: 96	ASAP: 6	ALAP: 6
+Routing Node: 97	ASAP: 7	ALAP: 7
+Routing Node: 98	ASAP: 8	ALAP: 8
+Routing Node: 100	ASAP: 4	ALAP: 4
+Routing Node: 101	ASAP: 5	ALAP: 5
+Routing Node: 102	ASAP: 6	ALAP: 6
+Routing Node: 103	ASAP: 7	ALAP: 7
+Routing Node: 104	ASAP: 10	ALAP: 10
+Routing Node: 105	ASAP: 11	ALAP: 11
+Routing Node: 106	ASAP: 12	ALAP: 12
+Routing Node: 107	ASAP: 13	ALAP: 13
+Routing Node: 108	ASAP: 14	ALAP: 14
+Routing Node: 109	ASAP: 15	ALAP: 15
+Routing Node: 110	ASAP: 16	ALAP: 16
+Routing Node: 111	ASAP: 17	ALAP: 17
+Routing Node: 112	ASAP: 18	ALAP: 18
+Routing Node: 113	ASAP: 19	ALAP: 19
+Routing Node: 114	ASAP: 2	ALAP: 2
+Routing Node: 115	ASAP: 2	ALAP: 2
+Routing Node: 116	ASAP: 3	ALAP: 3
+Routing Node: 117	ASAP: 4	ALAP: 4
+Routing Node: 118	ASAP: 8	ALAP: 8
+Routing Node: 119	ASAP: 9	ALAP: 9
+Routing Node: 120	ASAP: 10	ALAP: 10
+Routing Node: 121	ASAP: 11	ALAP: 11
+Routing Node: 122	ASAP: 12	ALAP: 12
+Routing Node: 123	ASAP: 13	ALAP: 13
+Routing Node: 124	ASAP: 14	ALAP: 14
+Routing Node: 125	ASAP: 15	ALAP: 15
+Routing Node: 126	ASAP: 16	ALAP: 16
+Routing Node: 127	ASAP: 17	ALAP: 17
+Routing Node: 128	ASAP: 18	ALAP: 18
+Routing Node: 129	ASAP: 19	ALAP: 19
+Routing Node: 130	ASAP: 20	ALAP: 20
+Routing Node: 131	ASAP: 21	ALAP: 21
+Routing Node: 132	ASAP: 22	ALAP: 22
+Routing Node: 133	ASAP: 9	ALAP: 9
+Routing Node: 134	ASAP: 10	ALAP: 10
+Routing Node: 135	ASAP: 11	ALAP: 11
+Routing Node: 136	ASAP: 1	ALAP: 1
+Routing Node: 137	ASAP: 2	ALAP: 2
+Routing Node: 138	ASAP: 3	ALAP: 3
+Routing Node: 139	ASAP: 1	ALAP: 1
+Routing Node: 140	ASAP: 1	ALAP: 1
+Routing Node: 141	ASAP: 1	ALAP: 1
+Routing Node: 142	ASAP: 2	ALAP: 2
+Routing Node: 143	ASAP: 3	ALAP: 3
+Routing Node: 144	ASAP: 4	ALAP: 4
+Routing Node: 145	ASAP: 5	ALAP: 5
+Routing Node: 146	ASAP: 6	ALAP: 6
+Routing Node: 147	ASAP: 7	ALAP: 7
+Routing Node: 148	ASAP: 8	ALAP: 8
+Routing Node: 149	ASAP: 1	ALAP: 1
+Routing Node: 150	ASAP: 2	ALAP: 2
+Routing Node: 151	ASAP: 11	ALAP: 11
+Routing Node: 152	ASAP: 12	ALAP: 12
+Routing Node: 153	ASAP: 13	ALAP: 13
+Routing Node: 154	ASAP: 14	ALAP: 14
+Routing Node: 155	ASAP: 15	ALAP: 15
+Routing Node: 156	ASAP: 16	ALAP: 16
+Routing Node: 157	ASAP: 17	ALAP: 17
+Routing Node: 158	ASAP: 18	ALAP: 18
+Routing Node: 159	ASAP: 19	ALAP: 19
+Routing Node: 160	ASAP: 20	ALAP: 20
+Routing Node: 161	ASAP: 15	ALAP: 15
+Routing Node: 162	ASAP: 16	ALAP: 16
+Routing Node: 163	ASAP: 17	ALAP: 17
+Routing Node: 164	ASAP: 18	ALAP: 18
+Routing Node: 165	ASAP: 19	ALAP: 19
+Routing Node: 166	ASAP: 20	ALAP: 20
+Routing Node: 167	ASAP: 21	ALAP: 21
+Routing Node: 168	ASAP: 16	ALAP: 16
+Routing Node: 169	ASAP: 17	ALAP: 17
+Routing Node: 170	ASAP: 17	ALAP: 17
+Routing Node: 171	ASAP: 18	ALAP: 18
+Routing Node: 172	ASAP: 19	ALAP: 19
+Routing Node: 173	ASAP: 20	ALAP: 20
+Routing Node: 174	ASAP: 21	ALAP: 21
+Routing Node: 175	ASAP: 22	ALAP: 22
+Routing Node: 176	ASAP: 23	ALAP: 23
+Routing Node: 177	ASAP: 24	ALAP: 24
+Routing Node: 178	ASAP: 14	ALAP: 14
+Routing Node: 179	ASAP: 15	ALAP: 15
+Routing Node: 180	ASAP: 16	ALAP: 16
+Routing Node: 181	ASAP: 17	ALAP: 17
+Routing Node: 182	ASAP: 18	ALAP: 18
+Routing Node: 183	ASAP: 2	ALAP: 2
+Routing Node: 184	ASAP: 2	ALAP: 2
+Routing Node: 185	ASAP: 3	ALAP: 3
+Routing Node: 186	ASAP: 2	ALAP: 2
+Mod Sched time: 1
+II : 12
+Node 80 is to be scheduled at time 1, modulo time 1
+Mod Sched time: 2
+II : 12
+Node 81 is to be scheduled at time 2, modulo time 2
+Mod Sched time: 3
+II : 12
+Node 82 is to be scheduled at time 3, modulo time 3
+Mod Sched time: 4
+II : 12
+Node 83 is to be scheduled at time 4, modulo time 4
+Mod Sched time: 5
+II : 12
+Node 84 is to be scheduled at time 5, modulo time 5
+Mod Sched time: 6
+II : 12
+Node 85 is to be scheduled at time 6, modulo time 6
+Mod Sched time: 7
+II : 12
+Node 86 is to be scheduled at time 7, modulo time 7
+Mod Sched time: 8
+II : 12
+Node 87 is to be scheduled at time 8, modulo time 8
+Mod Sched time: 9
+II : 12
+Node 88 is to be scheduled at time 9, modulo time 9
+Mod Sched time: 10
+II : 12
+Node 89 is to be scheduled at time 10, modulo time 10
+Mod Sched time: 11
+II : 12
+Node 90 is to be scheduled at time 11, modulo time 11
+Mod Sched time: 1
+II : 12
+Node 91 is to be scheduled at time 1, modulo time 1
+Mod Sched time: 2
+II : 12
+Node 92 is to be scheduled at time 2, modulo time 2
+Mod Sched time: 3
+II : 12
+Node 93 is to be scheduled at time 3, modulo time 3
+Mod Sched time: 4
+II : 12
+Node 94 is to be scheduled at time 4, modulo time 4
+Mod Sched time: 5
+II : 12
+Node 95 is to be scheduled at time 5, modulo time 5
+Mod Sched time: 6
+II : 12
+Node 96 is to be scheduled at time 6, modulo time 6
+Mod Sched time: 7
+II : 12
+Node 97 is to be scheduled at time 7, modulo time 7
+Mod Sched time: 8
+II : 12
+Node 98 is to be scheduled at time 8, modulo time 8
+Mod Sched time: 4
+II : 12
+Node 100 is to be scheduled at time 4, modulo time 4
+Mod Sched time: 5
+II : 12
+Node 101 is to be scheduled at time 5, modulo time 5
+Mod Sched time: 6
+II : 12
+Node 102 is to be scheduled at time 6, modulo time 6
+Mod Sched time: 7
+II : 12
+Node 103 is to be scheduled at time 7, modulo time 7
+Mod Sched time: 10
+II : 12
+Node 104 is to be scheduled at time 10, modulo time 10
+Mod Sched time: 11
+II : 12
+Node 105 is to be scheduled at time 11, modulo time 11
+Mod Sched time: 0
+II : 12
+Node 106 is to be scheduled at time 12, modulo time 0
+Mod Sched time: 1
+II : 12
+Node 107 is to be scheduled at time 13, modulo time 1
+Mod Sched time: 2
+II : 12
+Node 108 is to be scheduled at time 14, modulo time 2
+Mod Sched time: 3
+II : 12
+Node 109 is to be scheduled at time 15, modulo time 3
+Mod Sched time: 4
+II : 12
+Node 110 is to be scheduled at time 16, modulo time 4
+Mod Sched time: 5
+II : 12
+Node 111 is to be scheduled at time 17, modulo time 5
+Mod Sched time: 6
+II : 12
+Node 112 is to be scheduled at time 18, modulo time 6
+Mod Sched time: 7
+II : 12
+Node 113 is to be scheduled at time 19, modulo time 7
+Mod Sched time: 5
+II : 12
+Node 114 is to be scheduled at time 5, modulo time 5
+Mod Sched time: 3
+II : 12
+Node 115 is to be scheduled at time 3, modulo time 3
+Mod Sched time: 4
+II : 12
+Node 116 is to be scheduled at time 4, modulo time 4
+Mod Sched time: 5
+II : 12
+Node 117 is to be scheduled at time 5, modulo time 5
+Mod Sched time: 8
+II : 12
+Node 118 is to be scheduled at time 8, modulo time 8
+Mod Sched time: 9
+II : 12
+Node 119 is to be scheduled at time 9, modulo time 9
+Mod Sched time: 10
+II : 12
+Node 120 is to be scheduled at time 10, modulo time 10
+Mod Sched time: 11
+II : 12
+Node 121 is to be scheduled at time 11, modulo time 11
+Mod Sched time: 0
+II : 12
+Node 122 is to be scheduled at time 12, modulo time 0
+Mod Sched time: 1
+II : 12
+Node 123 is to be scheduled at time 13, modulo time 1
+Mod Sched time: 2
+II : 12
+Node 124 is to be scheduled at time 14, modulo time 2
+Mod Sched time: 3
+II : 12
+Node 125 is to be scheduled at time 15, modulo time 3
+Mod Sched time: 4
+II : 12
+Node 126 is to be scheduled at time 16, modulo time 4
+Mod Sched time: 5
+II : 12
+Node 127 is to be scheduled at time 17, modulo time 5
+Mod Sched time: 6
+II : 12
+Node 128 is to be scheduled at time 18, modulo time 6
+Mod Sched time: 7
+II : 12
+Node 129 is to be scheduled at time 19, modulo time 7
+Mod Sched time: 8
+II : 12
+Node 130 is to be scheduled at time 20, modulo time 8
+Mod Sched time: 9
+II : 12
+Node 131 is to be scheduled at time 21, modulo time 9
+Mod Sched time: 10
+II : 12
+Node 132 is to be scheduled at time 22, modulo time 10
+Mod Sched time: 9
+II : 12
+Node 133 is to be scheduled at time 9, modulo time 9
+Mod Sched time: 10
+II : 12
+Node 134 is to be scheduled at time 10, modulo time 10
+Mod Sched time: 11
+II : 12
+Node 135 is to be scheduled at time 11, modulo time 11
+Mod Sched time: 1
+II : 12
+Node 136 is to be scheduled at time 1, modulo time 1
+Mod Sched time: 2
+II : 12
+Node 137 is to be scheduled at time 2, modulo time 2
+Mod Sched time: 3
+II : 12
+Node 138 is to be scheduled at time 3, modulo time 3
+Mod Sched time: 3
+II : 12
+Node 139 is to be scheduled at time 3, modulo time 3
+Mod Sched time: 1
+II : 12
+Node 140 is to be scheduled at time 1, modulo time 1
+Mod Sched time: 1
+II : 12
+Node 141 is to be scheduled at time 1, modulo time 1
+Mod Sched time: 2
+II : 12
+Node 142 is to be scheduled at time 2, modulo time 2
+Mod Sched time: 3
+II : 12
+Node 143 is to be scheduled at time 3, modulo time 3
+Mod Sched time: 4
+II : 12
+Node 144 is to be scheduled at time 4, modulo time 4
+Mod Sched time: 5
+II : 12
+Node 145 is to be scheduled at time 5, modulo time 5
+Mod Sched time: 6
+II : 12
+Node 146 is to be scheduled at time 6, modulo time 6
+Mod Sched time: 7
+II : 12
+Node 147 is to be scheduled at time 7, modulo time 7
+Mod Sched time: 8
+II : 12
+Node 148 is to be scheduled at time 8, modulo time 8
+Mod Sched time: 8
+II : 12
+Node 149 is to be scheduled at time 8, modulo time 8
+Mod Sched time: 9
+II : 12
+Node 150 is to be scheduled at time 9, modulo time 9
+Mod Sched time: 11
+II : 12
+Node 151 is to be scheduled at time 11, modulo time 11
+Mod Sched time: 1
+II : 12
+Node 152 is to be scheduled at time 13, modulo time 1
+Mod Sched time: 2
+II : 12
+Node 153 is to be scheduled at time 14, modulo time 2
+Mod Sched time: 3
+II : 12
+Node 154 is to be scheduled at time 15, modulo time 3
+Mod Sched time: 4
+II : 12
+Node 155 is to be scheduled at time 16, modulo time 4
+Mod Sched time: 5
+II : 12
+Node 156 is to be scheduled at time 17, modulo time 5
+Mod Sched time: 6
+II : 12
+Node 157 is to be scheduled at time 18, modulo time 6
+Mod Sched time: 7
+II : 12
+Node 158 is to be scheduled at time 19, modulo time 7
+Mod Sched time: 8
+II : 12
+Node 159 is to be scheduled at time 20, modulo time 8
+Mod Sched time: 9
+II : 12
+Node 160 is to be scheduled at time 21, modulo time 9
+Mod Sched time: 4
+II : 12
+Node 161 is to be scheduled at time 16, modulo time 4
+Mod Sched time: 5
+II : 12
+Node 162 is to be scheduled at time 17, modulo time 5
+Mod Sched time: 6
+II : 12
+Node 163 is to be scheduled at time 18, modulo time 6
+Mod Sched time: 7
+II : 12
+Node 164 is to be scheduled at time 19, modulo time 7
+Mod Sched time: 8
+II : 12
+Node 165 is to be scheduled at time 20, modulo time 8
+Mod Sched time: 9
+II : 12
+Node 166 is to be scheduled at time 21, modulo time 9
+Mod Sched time: 10
+II : 12
+Node 167 is to be scheduled at time 22, modulo time 10
+Mod Sched time: 0
+II : 12
+Node 168 is to be scheduled at time 24, modulo time 0
+Mod Sched time: 1
+II : 12
+Node 169 is to be scheduled at time 25, modulo time 1
+Mod Sched time: 3
+II : 12
+Node 170 is to be scheduled at time 27, modulo time 3
+Mod Sched time: 4
+II : 12
+Node 171 is to be scheduled at time 28, modulo time 4
+Mod Sched time: 5
+II : 12
+Node 172 is to be scheduled at time 29, modulo time 5
+Mod Sched time: 6
+II : 12
+Node 173 is to be scheduled at time 30, modulo time 6
+Mod Sched time: 7
+II : 12
+Node 174 is to be scheduled at time 31, modulo time 7
+Mod Sched time: 8
+II : 12
+Node 175 is to be scheduled at time 32, modulo time 8
+Mod Sched time: 9
+II : 12
+Node 176 is to be scheduled at time 33, modulo time 9
+Mod Sched time: 10
+II : 12
+Node 177 is to be scheduled at time 34, modulo time 10
+Mod Sched time: 2
+II : 12
+Node 178 is to be scheduled at time 14, modulo time 2
+Mod Sched time: 3
+II : 12
+Node 179 is to be scheduled at time 15, modulo time 3
+Mod Sched time: 4
+II : 12
+Node 180 is to be scheduled at time 16, modulo time 4
+Mod Sched time: 5
+II : 12
+Node 181 is to be scheduled at time 17, modulo time 5
+Mod Sched time: 6
+II : 12
+Node 182 is to be scheduled at time 18, modulo time 6
+Mod Sched time: 3
+II : 12
+Node 183 is to be scheduled at time 3, modulo time 3
+Not enough resources available at 3 PE used 16
+Resources: 12
+Resources: 15
+Resources: 15
+Resources: 16
+Resources: 14
+Resources: 15
+Resources: 12
+Resources: 13
+Resources: 12
+Resources: 10
+Resources: 10
+Resources: 7
+From print schedule: 102
+print from MS: 102
+The node not scheduled and failed is: 183 at time 3
+modulo_schedule: 0	redo: 1
+failure reason: 2
+total nodes after scheduling: 156
+iteration: 0
+after:
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+Get_SortOps SCCs: 
+27	26	25	21	20	2	24	23	22	19	18	17	16	15	0	
+1	14	
+71	70	
+61	60	
+4	
+3	
+12	
+11	
+10	
+9	
+8	
+7	
+6	
+58	
+56	
+68	
+13	
+66	
+73	
+28	
+5	
+36	
+39	
+47	
+50	
+53	
+75	
+74	
+Node: 71	ASAP: 16	ALAP:27	random try_time: 24
+Node: 70	ASAP: 15	ALAP:23	random try_time: 19
+Node: 61	ASAP: 11	ALAP:22	random try_time: 15
+Node: 60	ASAP: 10	ALAP:14	random try_time: 13
+Node: 14	ASAP: 9	ALAP:12	random try_time: 9
+Node: 13	ASAP: 8	ALAP:8	random try_time: 8
+Node: 12	ASAP: 7	ALAP:7	random try_time: 7
+Node: 11	ASAP: 6	ALAP:6	random try_time: 6
+Node: 9	ASAP: 4	ALAP:4	random try_time: 4
+Node: 8	ASAP: 3	ALAP:3	random try_time: 3
+Node: 6	ASAP: 1	ALAP:1	random try_time: 1
+Node: 1	ASAP: 8	ALAP:8	random try_time: 8
+Node: 39	ASAP: 0	ALAP:0	random try_time: 0
+Node: 5	ASAP: 3	ALAP:7	random try_time: 4
+Node: 3	ASAP: 1	ALAP:2	random try_time: 1
+Node: 36	ASAP: 0	ALAP:0	random try_time: 0
+Node: 68	ASAP: 15	ALAP:26	random try_time: 20
+Node: 66	ASAP: 14	ALAP:18	random try_time: 16
+Node: 73	ASAP: 13	ALAP:15	random try_time: 13
+Node: 28	ASAP: 12	ALAP:12	random try_time: 12
+Node: 27	ASAP: 11	ALAP:11	random try_time: 11
+Node: 25	ASAP: 9	ALAP:9	random try_time: 9
+Node: 24	ASAP: 8	ALAP:8	random try_time: 8
+Node: 22	ASAP: 6	ALAP:6	random try_time: 6
+Node: 19	ASAP: 5	ALAP:5	random try_time: 5
+Node: 18	ASAP: 4	ALAP:4	random try_time: 4
+Node: 17	ASAP: 3	ALAP:3	random try_time: 3
+Node: 16	ASAP: 2	ALAP:2	random try_time: 2
+Node: 15	ASAP: 1	ALAP:1	random try_time: 1
+Node: 0	ASAP: 0	ALAP:0	random try_time: 0
+Node: 75	ASAP: 1	ALAP:3	random try_time: 1
+Node: 20	ASAP: 1	ALAP:5	random try_time: 1
+Node: 47	ASAP: 0	ALAP:0	random try_time: 0
+Node: 21	ASAP: 1	ALAP:5	random try_time: 2
+Node: 2	ASAP: 0	ALAP:0	random try_time: 0
+Node: 50	ASAP: 0	ALAP:1	random try_time: 0
+Node: 53	ASAP: 0	ALAP:8	random try_time: 1
+Node: 58	ASAP: 1	ALAP:12	random try_time: 2
+Node: 56	ASAP: 0	ALAP:1	random try_time: 0
+end:
+12
+9
+4
+4
+5
+2
+2
+3
+4
+2
+1
+1
+Feasible II is 12 at 0
+Node: 0	 ASAP: 0	ALAP: 0	sched @ 0
+Node: 1	 ASAP: 8	ALAP: 8	sched @ 8
+Node: 2	 ASAP: 0	ALAP: 0	sched @ 0
+Node: 3	 ASAP: 1	ALAP: 2	sched @ 1
+Node: 4	 ASAP: 2	ALAP: 13	sched @ 3
+Node: 5	 ASAP: 3	ALAP: 7	sched @ 4
+Node: 6	 ASAP: 1	ALAP: 1	sched @ 1
+Node: 7	 ASAP: 2	ALAP: 13	sched @ 2
+Node: 8	 ASAP: 3	ALAP: 3	sched @ 3
+Node: 9	 ASAP: 4	ALAP: 4	sched @ 4
+Node: 10	 ASAP: 5	ALAP: 16	sched @ 5
+Node: 11	 ASAP: 6	ALAP: 6	sched @ 6
+Node: 12	 ASAP: 7	ALAP: 7	sched @ 7
+Node: 13	 ASAP: 8	ALAP: 8	sched @ 8
+Node: 14	 ASAP: 9	ALAP: 12	sched @ 9
+Node: 15	 ASAP: 1	ALAP: 1	sched @ 1
+Node: 16	 ASAP: 2	ALAP: 2	sched @ 2
+Node: 17	 ASAP: 3	ALAP: 3	sched @ 3
+Node: 18	 ASAP: 4	ALAP: 4	sched @ 4
+Node: 19	 ASAP: 5	ALAP: 5	sched @ 5
+Node: 20	 ASAP: 1	ALAP: 5	sched @ 1
+Node: 21	 ASAP: 1	ALAP: 5	sched @ 2
+Node: 22	 ASAP: 6	ALAP: 6	sched @ 6
+Node: 23	 ASAP: 7	ALAP: 18	sched @ 7
+Node: 24	 ASAP: 8	ALAP: 8	sched @ 8
+Node: 25	 ASAP: 9	ALAP: 9	sched @ 9
+Node: 26	 ASAP: 10	ALAP: 21	sched @ 10
+Node: 27	 ASAP: 11	ALAP: 11	sched @ 11
+Node: 28	 ASAP: 12	ALAP: 12	sched @ 12
+Node: 36	 ASAP: 0	ALAP: 0	sched @ 0
+Node: 39	 ASAP: 0	ALAP: 0	sched @ 0
+Node: 47	 ASAP: 0	ALAP: 0	sched @ 0
+Node: 50	 ASAP: 0	ALAP: 1	sched @ 0
+Node: 53	 ASAP: 0	ALAP: 8	sched @ 1
+Node: 56	 ASAP: 0	ALAP: 1	sched @ 0
+Node: 58	 ASAP: 1	ALAP: 12	sched @ 2
+Node: 60	 ASAP: 10	ALAP: 14	sched @ 13
+Node: 61	 ASAP: 11	ALAP: 22	sched @ 15
+Node: 66	 ASAP: 14	ALAP: 18	sched @ 16
+Node: 68	 ASAP: 15	ALAP: 26	sched @ 20
+Node: 70	 ASAP: 15	ALAP: 23	sched @ 19
+Node: 71	 ASAP: 16	ALAP: 27	sched @ 24
+Node: 73	 ASAP: 13	ALAP: 15	sched @ 13
+Node: 74	 ASAP: 0	ALAP: 11	sched @ 0
+Node: 75	 ASAP: 1	ALAP: 3	sched @ 1
+Node: 76	 ASAP: 15	ALAP: 17	sched @ 17
+Node: 77	 ASAP: 14	ALAP: 14	sched @ 14
+Node: 78	 ASAP: 1	ALAP: 1	sched @ 1
+Node: 79	 ASAP: 1	ALAP: 1	sched @ 1
+total nodes before routing: 49
+total nodes before scheduling: 158
+is_modified route and reschedule: 1
+Routing Node: 80	ASAP: 1	ALAP: 1
+Routing Node: 81	ASAP: 2	ALAP: 2
+Routing Node: 82	ASAP: 3	ALAP: 3
+Routing Node: 83	ASAP: 4	ALAP: 4
+Routing Node: 84	ASAP: 5	ALAP: 5
+Routing Node: 85	ASAP: 6	ALAP: 6
+Routing Node: 86	ASAP: 7	ALAP: 7
+Routing Node: 87	ASAP: 8	ALAP: 8
+Routing Node: 88	ASAP: 9	ALAP: 9
+Routing Node: 89	ASAP: 10	ALAP: 10
+Routing Node: 90	ASAP: 11	ALAP: 11
+Routing Node: 91	ASAP: 1	ALAP: 1
+Routing Node: 92	ASAP: 2	ALAP: 2
+Routing Node: 93	ASAP: 4	ALAP: 4
+Routing Node: 94	ASAP: 5	ALAP: 5
+Routing Node: 95	ASAP: 6	ALAP: 6
+Routing Node: 96	ASAP: 10	ALAP: 10
+Routing Node: 97	ASAP: 11	ALAP: 11
+Routing Node: 98	ASAP: 12	ALAP: 12
+Routing Node: 96	ASAP: 10	ALAP: 10
+Routing Node: 97	ASAP: 11	ALAP: 11
+Routing Node: 98	ASAP: 12	ALAP: 12
+Routing Node: 99	ASAP: 13	ALAP: 13
+Routing Node: 100	ASAP: 14	ALAP: 14
+Routing Node: 101	ASAP: 15	ALAP: 15
+Routing Node: 102	ASAP: 16	ALAP: 16
+Routing Node: 103	ASAP: 17	ALAP: 17
+Routing Node: 104	ASAP: 18	ALAP: 18
+Routing Node: 105	ASAP: 19	ALAP: 19
+Routing Node: 109	ASAP: 2	ALAP: 2
+Routing Node: 110	ASAP: 3	ALAP: 3
+Routing Node: 111	ASAP: 4	ALAP: 4
+Routing Node: 112	ASAP: 5	ALAP: 5
+Routing Node: 113	ASAP: 2	ALAP: 2
+Routing Node: 114	ASAP: 3	ALAP: 3
+Routing Node: 115	ASAP: 4	ALAP: 4
+Routing Node: 116	ASAP: 8	ALAP: 8
+Routing Node: 117	ASAP: 9	ALAP: 9
+Routing Node: 118	ASAP: 10	ALAP: 10
+Routing Node: 119	ASAP: 11	ALAP: 11
+Routing Node: 120	ASAP: 12	ALAP: 12
+Routing Node: 121	ASAP: 13	ALAP: 13
+Routing Node: 122	ASAP: 14	ALAP: 14
+Routing Node: 123	ASAP: 15	ALAP: 15
+Routing Node: 124	ASAP: 16	ALAP: 16
+Routing Node: 125	ASAP: 17	ALAP: 17
+Routing Node: 126	ASAP: 18	ALAP: 18
+Routing Node: 127	ASAP: 9	ALAP: 9
+Routing Node: 128	ASAP: 10	ALAP: 10
+Routing Node: 129	ASAP: 11	ALAP: 11
+Routing Node: 130	ASAP: 1	ALAP: 1
+Routing Node: 131	ASAP: 2	ALAP: 2
+Routing Node: 132	ASAP: 3	ALAP: 3
+Routing Node: 133	ASAP: 1	ALAP: 1
+Routing Node: 134	ASAP: 1	ALAP: 1
+Routing Node: 135	ASAP: 2	ALAP: 2
+Routing Node: 136	ASAP: 3	ALAP: 3
+Routing Node: 137	ASAP: 4	ALAP: 4
+Routing Node: 138	ASAP: 5	ALAP: 5
+Routing Node: 139	ASAP: 6	ALAP: 6
+Routing Node: 140	ASAP: 7	ALAP: 7
+Routing Node: 141	ASAP: 1	ALAP: 1
+Routing Node: 142	ASAP: 2	ALAP: 2
+Routing Node: 143	ASAP: 3	ALAP: 3
+Routing Node: 144	ASAP: 4	ALAP: 4
+Routing Node: 145	ASAP: 5	ALAP: 5
+Routing Node: 146	ASAP: 6	ALAP: 6
+Routing Node: 147	ASAP: 7	ALAP: 7
+Routing Node: 148	ASAP: 8	ALAP: 8
+Routing Node: 149	ASAP: 9	ALAP: 9
+Routing Node: 150	ASAP: 10	ALAP: 10
+Routing Node: 151	ASAP: 11	ALAP: 11
+Routing Node: 152	ASAP: 12	ALAP: 12
+Routing Node: 153	ASAP: 11	ALAP: 11
+Routing Node: 154	ASAP: 12	ALAP: 12
+Routing Node: 155	ASAP: 13	ALAP: 13
+Routing Node: 156	ASAP: 14	ALAP: 14
+Routing Node: 157	ASAP: 15	ALAP: 15
+Routing Node: 158	ASAP: 16	ALAP: 16
+Routing Node: 159	ASAP: 17	ALAP: 17
+Routing Node: 160	ASAP: 18	ALAP: 18
+Routing Node: 161	ASAP: 19	ALAP: 19
+Routing Node: 162	ASAP: 20	ALAP: 20
+Routing Node: 163	ASAP: 15	ALAP: 15
+Routing Node: 164	ASAP: 16	ALAP: 16
+Routing Node: 165	ASAP: 16	ALAP: 16
+Routing Node: 166	ASAP: 17	ALAP: 17
+Routing Node: 167	ASAP: 18	ALAP: 18
+Routing Node: 168	ASAP: 19	ALAP: 19
+Routing Node: 169	ASAP: 17	ALAP: 17
+Routing Node: 170	ASAP: 18	ALAP: 18
+Routing Node: 171	ASAP: 19	ALAP: 19
+Routing Node: 172	ASAP: 20	ALAP: 20
+Routing Node: 173	ASAP: 21	ALAP: 21
+Routing Node: 174	ASAP: 22	ALAP: 22
+Routing Node: 175	ASAP: 14	ALAP: 14
+Routing Node: 176	ASAP: 15	ALAP: 15
+Routing Node: 177	ASAP: 2	ALAP: 2
+Routing Node: 178	ASAP: 3	ALAP: 3
+Routing Node: 179	ASAP: 16	ALAP: 16
+Routing Node: 180	ASAP: 17	ALAP: 17
+Routing Node: 181	ASAP: 15	ALAP: 15
+Routing Node: 182	ASAP: 2	ALAP: 2
+Routing Node: 183	ASAP: 3	ALAP: 3
+Routing Node: 184	ASAP: 4	ALAP: 4
+Routing Node: 185	ASAP: 5	ALAP: 5
+Routing Node: 186	ASAP: 6	ALAP: 6
+Routing Node: 187	ASAP: 7	ALAP: 7
+Routing Node: 188	ASAP: 8	ALAP: 8
+Mod Sched time: 1
+II : 12
+Node 80 is to be scheduled at time 1, modulo time 1
+Mod Sched time: 2
+II : 12
+Node 81 is to be scheduled at time 2, modulo time 2
+Mod Sched time: 3
+II : 12
+Node 82 is to be scheduled at time 3, modulo time 3
+Mod Sched time: 4
+II : 12
+Node 83 is to be scheduled at time 4, modulo time 4
+Mod Sched time: 5
+II : 12
+Node 84 is to be scheduled at time 5, modulo time 5
+Mod Sched time: 6
+II : 12
+Node 85 is to be scheduled at time 6, modulo time 6
+Mod Sched time: 7
+II : 12
+Node 86 is to be scheduled at time 7, modulo time 7
+Mod Sched time: 8
+II : 12
+Node 87 is to be scheduled at time 8, modulo time 8
+Mod Sched time: 9
+II : 12
+Node 88 is to be scheduled at time 9, modulo time 9
+Mod Sched time: 10
+II : 12
+Node 89 is to be scheduled at time 10, modulo time 10
+Mod Sched time: 11
+II : 12
+Node 90 is to be scheduled at time 11, modulo time 11
+Mod Sched time: 1
+II : 12
+Node 91 is to be scheduled at time 1, modulo time 1
+Mod Sched time: 2
+II : 12
+Node 92 is to be scheduled at time 2, modulo time 2
+Mod Sched time: 5
+II : 12
+Node 93 is to be scheduled at time 5, modulo time 5
+Mod Sched time: 6
+II : 12
+Node 94 is to be scheduled at time 6, modulo time 6
+Mod Sched time: 7
+II : 12
+Node 95 is to be scheduled at time 7, modulo time 7
+Mod Sched time: 10
+II : 12
+Node 96 is to be scheduled at time 10, modulo time 10
+Mod Sched time: 11
+II : 12
+Node 97 is to be scheduled at time 11, modulo time 11
+Mod Sched time: 0
+II : 12
+Node 98 is to be scheduled at time 12, modulo time 0
+Mod Sched time: 1
+II : 12
+Node 99 is to be scheduled at time 13, modulo time 1
+Mod Sched time: 2
+II : 12
+Node 100 is to be scheduled at time 14, modulo time 2
+Mod Sched time: 3
+II : 12
+Node 101 is to be scheduled at time 15, modulo time 3
+Mod Sched time: 4
+II : 12
+Node 102 is to be scheduled at time 16, modulo time 4
+Mod Sched time: 5
+II : 12
+Node 103 is to be scheduled at time 17, modulo time 5
+Mod Sched time: 6
+II : 12
+Node 104 is to be scheduled at time 18, modulo time 6
+Mod Sched time: 7
+II : 12
+Node 105 is to be scheduled at time 19, modulo time 7
+Mod Sched time: 2
+II : 12
+Node 109 is to be scheduled at time 2, modulo time 2
+Mod Sched time: 3
+II : 12
+Node 110 is to be scheduled at time 3, modulo time 3
+Mod Sched time: 4
+II : 12
+Node 111 is to be scheduled at time 4, modulo time 4
+Mod Sched time: 5
+II : 12
+Node 112 is to be scheduled at time 5, modulo time 5
+Mod Sched time: 3
+II : 12
+Node 113 is to be scheduled at time 3, modulo time 3
+Mod Sched time: 4
+II : 12
+Node 114 is to be scheduled at time 4, modulo time 4
+Mod Sched time: 5
+II : 12
+Node 115 is to be scheduled at time 5, modulo time 5
+Mod Sched time: 8
+II : 12
+Node 116 is to be scheduled at time 8, modulo time 8
+Mod Sched time: 9
+II : 12
+Node 117 is to be scheduled at time 9, modulo time 9
+Mod Sched time: 10
+II : 12
+Node 118 is to be scheduled at time 10, modulo time 10
+Mod Sched time: 11
+II : 12
+Node 119 is to be scheduled at time 11, modulo time 11
+Mod Sched time: 0
+II : 12
+Node 120 is to be scheduled at time 12, modulo time 0
+Mod Sched time: 1
+II : 12
+Node 121 is to be scheduled at time 13, modulo time 1
+Mod Sched time: 2
+II : 12
+Node 122 is to be scheduled at time 14, modulo time 2
+Mod Sched time: 3
+II : 12
+Node 123 is to be scheduled at time 15, modulo time 3
+Mod Sched time: 4
+II : 12
+Node 124 is to be scheduled at time 16, modulo time 4
+Mod Sched time: 5
+II : 12
+Node 125 is to be scheduled at time 17, modulo time 5
+Mod Sched time: 6
+II : 12
+Node 126 is to be scheduled at time 18, modulo time 6
+Mod Sched time: 9
+II : 12
+Node 127 is to be scheduled at time 9, modulo time 9
+Mod Sched time: 10
+II : 12
+Node 128 is to be scheduled at time 10, modulo time 10
+Mod Sched time: 11
+II : 12
+Node 129 is to be scheduled at time 11, modulo time 11
+Mod Sched time: 1
+II : 12
+Node 130 is to be scheduled at time 1, modulo time 1
+Mod Sched time: 2
+II : 12
+Node 131 is to be scheduled at time 2, modulo time 2
+Mod Sched time: 3
+II : 12
+Node 132 is to be scheduled at time 3, modulo time 3
+Mod Sched time: 1
+II : 12
+Node 133 is to be scheduled at time 1, modulo time 1
+Mod Sched time: 2
+II : 12
+Node 134 is to be scheduled at time 2, modulo time 2
+Mod Sched time: 3
+II : 12
+Node 135 is to be scheduled at time 3, modulo time 3
+Mod Sched time: 4
+II : 12
+Node 136 is to be scheduled at time 4, modulo time 4
+Mod Sched time: 5
+II : 12
+Node 137 is to be scheduled at time 5, modulo time 5
+Mod Sched time: 6
+II : 12
+Node 138 is to be scheduled at time 6, modulo time 6
+Mod Sched time: 7
+II : 12
+Node 139 is to be scheduled at time 7, modulo time 7
+Mod Sched time: 8
+II : 12
+Node 140 is to be scheduled at time 8, modulo time 8
+Mod Sched time: 1
+II : 12
+Node 141 is to be scheduled at time 1, modulo time 1
+Mod Sched time: 2
+II : 12
+Node 142 is to be scheduled at time 2, modulo time 2
+Mod Sched time: 3
+II : 12
+Node 143 is to be scheduled at time 3, modulo time 3
+Mod Sched time: 4
+II : 12
+Node 144 is to be scheduled at time 4, modulo time 4
+Mod Sched time: 5
+II : 12
+Node 145 is to be scheduled at time 5, modulo time 5
+Mod Sched time: 6
+II : 12
+Node 146 is to be scheduled at time 6, modulo time 6
+Mod Sched time: 7
+II : 12
+Node 147 is to be scheduled at time 7, modulo time 7
+Mod Sched time: 8
+II : 12
+Node 148 is to be scheduled at time 8, modulo time 8
+Mod Sched time: 9
+II : 12
+Node 149 is to be scheduled at time 9, modulo time 9
+Mod Sched time: 10
+II : 12
+Node 150 is to be scheduled at time 10, modulo time 10
+Mod Sched time: 11
+II : 12
+Node 151 is to be scheduled at time 11, modulo time 11
+Mod Sched time: 0
+II : 12
+Node 152 is to be scheduled at time 12, modulo time 0
+Mod Sched time: 2
+II : 12
+Node 153 is to be scheduled at time 14, modulo time 2
+Mod Sched time: 4
+II : 12
+Node 154 is to be scheduled at time 16, modulo time 4
+Mod Sched time: 5
+II : 12
+Node 155 is to be scheduled at time 17, modulo time 5
+Mod Sched time: 6
+II : 12
+Node 156 is to be scheduled at time 18, modulo time 6
+Mod Sched time: 7
+II : 12
+Node 157 is to be scheduled at time 19, modulo time 7
+Mod Sched time: 8
+II : 12
+Node 158 is to be scheduled at time 20, modulo time 8
+Mod Sched time: 9
+II : 12
+Node 159 is to be scheduled at time 21, modulo time 9
+Mod Sched time: 10
+II : 12
+Node 160 is to be scheduled at time 22, modulo time 10
+Mod Sched time: 11
+II : 12
+Node 161 is to be scheduled at time 23, modulo time 11
+Mod Sched time: 0
+II : 12
+Node 162 is to be scheduled at time 24, modulo time 0
+Mod Sched time: 5
+II : 12
+Node 163 is to be scheduled at time 17, modulo time 5
+Mod Sched time: 6
+II : 12
+Node 164 is to be scheduled at time 18, modulo time 6
+Mod Sched time: 8
+II : 12
+Node 165 is to be scheduled at time 20, modulo time 8
+Mod Sched time: 9
+II : 12
+Node 166 is to be scheduled at time 21, modulo time 9
+Mod Sched time: 10
+II : 12
+Node 167 is to be scheduled at time 22, modulo time 10
+Mod Sched time: 11
+II : 12
+Node 168 is to be scheduled at time 23, modulo time 11
+Mod Sched time: 1
+II : 12
+Node 169 is to be scheduled at time 25, modulo time 1
+Not enough resources available at 25 PE used 16
+Resources: 16
+Resources: 16
+Resources: 13
+Resources: 12
+Resources: 13
+Resources: 12
+Resources: 10
+Resources: 9
+Resources: 10
+Resources: 8
+Resources: 8
+Resources: 8
+From print schedule: 86
+print from MS: 86
+The node not scheduled and failed is: 169 at time 25
+modulo_schedule: 0	redo: 1
+failure reason: 2
+total nodes after scheduling: 158
+iteration: 0
+after:
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+Get_SortOps SCCs: 
+27	26	25	21	20	2	24	23	22	19	18	17	16	15	0	
+1	14	
+71	70	
+61	60	
+4	
+3	
+12	
+11	
+10	
+9	
+8	
+7	
+6	
+58	
+56	
+68	
+13	
+66	
+73	
+28	
+5	
+36	
+39	
+47	
+50	
+53	
+75	
+74	
+Node: 71	ASAP: 16	ALAP:27	random try_time: 22
+Node: 70	ASAP: 15	ALAP:21	random try_time: 19
+Node: 61	ASAP: 11	ALAP:22	random try_time: 15
+Node: 60	ASAP: 10	ALAP:14	random try_time: 10
+Node: 14	ASAP: 9	ALAP:9	random try_time: 9
+Node: 13	ASAP: 8	ALAP:8	random try_time: 8
+Node: 12	ASAP: 7	ALAP:7	random try_time: 7
+Node: 11	ASAP: 6	ALAP:6	random try_time: 6
+Node: 9	ASAP: 4	ALAP:4	random try_time: 4
+Node: 8	ASAP: 3	ALAP:3	random try_time: 3
+Node: 6	ASAP: 1	ALAP:1	random try_time: 1
+Node: 1	ASAP: 8	ALAP:8	random try_time: 8
+Node: 39	ASAP: 0	ALAP:0	random try_time: 0
+Node: 5	ASAP: 3	ALAP:7	random try_time: 4
+Node: 3	ASAP: 1	ALAP:2	random try_time: 1
+Node: 36	ASAP: 0	ALAP:0	random try_time: 0
+Node: 68	ASAP: 15	ALAP:26	random try_time: 20
+Node: 66	ASAP: 14	ALAP:18	random try_time: 14
+Node: 73	ASAP: 13	ALAP:13	random try_time: 13
+Node: 28	ASAP: 12	ALAP:12	random try_time: 12
+Node: 27	ASAP: 11	ALAP:11	random try_time: 11
+Node: 25	ASAP: 9	ALAP:9	random try_time: 9
+Node: 24	ASAP: 8	ALAP:8	random try_time: 8
+Node: 22	ASAP: 6	ALAP:6	random try_time: 6
+Node: 19	ASAP: 5	ALAP:5	random try_time: 5
+Node: 18	ASAP: 4	ALAP:4	random try_time: 4
+Node: 17	ASAP: 3	ALAP:3	random try_time: 3
+Node: 16	ASAP: 2	ALAP:2	random try_time: 2
+Node: 15	ASAP: 1	ALAP:1	random try_time: 1
+Node: 0	ASAP: 0	ALAP:0	random try_time: 0
+Node: 75	ASAP: 1	ALAP:3	random try_time: 2
+Node: 20	ASAP: 1	ALAP:5	random try_time: 4
+Node: 47	ASAP: 0	ALAP:3	random try_time: 0
+Node: 21	ASAP: 1	ALAP:5	random try_time: 4
+Node: 2	ASAP: 0	ALAP:0	random try_time: 0
+Node: 50	ASAP: 0	ALAP:3	random try_time: 0
+Node: 53	ASAP: 0	ALAP:8	random try_time: 1
+Node: 58	ASAP: 1	ALAP:12	random try_time: 6
+Node: 56	ASAP: 0	ALAP:5	random try_time: 3
+end:
+8
+6
+5
+6
+5
+2
+3
+3
+4
+2
+3
+1
+Feasible II is 12 at 0
+Node: 0	 ASAP: 0	ALAP: 0	sched @ 0
+Node: 1	 ASAP: 8	ALAP: 8	sched @ 8
+Node: 2	 ASAP: 0	ALAP: 0	sched @ 0
+Node: 3	 ASAP: 1	ALAP: 2	sched @ 1
+Node: 4	 ASAP: 2	ALAP: 13	sched @ 3
+Node: 5	 ASAP: 3	ALAP: 7	sched @ 4
+Node: 6	 ASAP: 1	ALAP: 1	sched @ 1
+Node: 7	 ASAP: 2	ALAP: 13	sched @ 2
+Node: 8	 ASAP: 3	ALAP: 3	sched @ 3
+Node: 9	 ASAP: 4	ALAP: 4	sched @ 4
+Node: 10	 ASAP: 5	ALAP: 16	sched @ 5
+Node: 11	 ASAP: 6	ALAP: 6	sched @ 6
+Node: 12	 ASAP: 7	ALAP: 7	sched @ 7
+Node: 13	 ASAP: 8	ALAP: 8	sched @ 8
+Node: 14	 ASAP: 9	ALAP: 9	sched @ 9
+Node: 15	 ASAP: 1	ALAP: 1	sched @ 1
+Node: 16	 ASAP: 2	ALAP: 2	sched @ 2
+Node: 17	 ASAP: 3	ALAP: 3	sched @ 3
+Node: 18	 ASAP: 4	ALAP: 4	sched @ 4
+Node: 19	 ASAP: 5	ALAP: 5	sched @ 5
+Node: 20	 ASAP: 1	ALAP: 5	sched @ 4
+Node: 21	 ASAP: 1	ALAP: 5	sched @ 4
+Node: 22	 ASAP: 6	ALAP: 6	sched @ 6
+Node: 23	 ASAP: 7	ALAP: 18	sched @ 7
+Node: 24	 ASAP: 8	ALAP: 8	sched @ 8
+Node: 25	 ASAP: 9	ALAP: 9	sched @ 9
+Node: 26	 ASAP: 10	ALAP: 21	sched @ 10
+Node: 27	 ASAP: 11	ALAP: 11	sched @ 11
+Node: 28	 ASAP: 12	ALAP: 12	sched @ 12
+Node: 36	 ASAP: 0	ALAP: 0	sched @ 0
+Node: 39	 ASAP: 0	ALAP: 0	sched @ 0
+Node: 47	 ASAP: 0	ALAP: 3	sched @ 0
+Node: 50	 ASAP: 0	ALAP: 3	sched @ 0
+Node: 53	 ASAP: 0	ALAP: 8	sched @ 1
+Node: 56	 ASAP: 0	ALAP: 5	sched @ 3
+Node: 58	 ASAP: 1	ALAP: 12	sched @ 6
+Node: 60	 ASAP: 10	ALAP: 14	sched @ 10
+Node: 61	 ASAP: 11	ALAP: 22	sched @ 15
+Node: 66	 ASAP: 14	ALAP: 18	sched @ 14
+Node: 68	 ASAP: 15	ALAP: 26	sched @ 20
+Node: 70	 ASAP: 15	ALAP: 21	sched @ 19
+Node: 71	 ASAP: 16	ALAP: 27	sched @ 22
+Node: 73	 ASAP: 13	ALAP: 13	sched @ 13
+Node: 74	 ASAP: 0	ALAP: 11	sched @ 1
+Node: 75	 ASAP: 1	ALAP: 3	sched @ 2
+Node: 76	 ASAP: 15	ALAP: 15	sched @ 15
+Node: 77	 ASAP: 1	ALAP: 1	sched @ 1
+Node: 78	 ASAP: 1	ALAP: 4	sched @ 4
+total nodes before routing: 48
+total nodes before scheduling: 155
+is_modified route and reschedule: 1
+Routing Node: 79	ASAP: 1	ALAP: 1
+Routing Node: 80	ASAP: 2	ALAP: 2
+Routing Node: 81	ASAP: 3	ALAP: 3
+Routing Node: 82	ASAP: 4	ALAP: 4
+Routing Node: 83	ASAP: 5	ALAP: 5
+Routing Node: 84	ASAP: 6	ALAP: 6
+Routing Node: 85	ASAP: 7	ALAP: 7
+Routing Node: 86	ASAP: 8	ALAP: 8
+Routing Node: 87	ASAP: 9	ALAP: 9
+Routing Node: 88	ASAP: 10	ALAP: 10
+Routing Node: 89	ASAP: 11	ALAP: 11
+Routing Node: 90	ASAP: 1	ALAP: 1
+Routing Node: 91	ASAP: 2	ALAP: 2
+Routing Node: 92	ASAP: 3	ALAP: 3
+Routing Node: 90	ASAP: 1	ALAP: 1
+Routing Node: 91	ASAP: 2	ALAP: 2
+Routing Node: 92	ASAP: 3	ALAP: 3
+Routing Node: 93	ASAP: 4	ALAP: 4
+Routing Node: 94	ASAP: 5	ALAP: 5
+Routing Node: 95	ASAP: 6	ALAP: 6
+Routing Node: 96	ASAP: 7	ALAP: 7
+Routing Node: 97	ASAP: 8	ALAP: 8
+Routing Node: 101	ASAP: 2	ALAP: 2
+Routing Node: 102	ASAP: 4	ALAP: 4
+Routing Node: 103	ASAP: 5	ALAP: 5
+Routing Node: 104	ASAP: 6	ALAP: 6
+Routing Node: 105	ASAP: 10	ALAP: 10
+Routing Node: 106	ASAP: 11	ALAP: 11
+Routing Node: 107	ASAP: 12	ALAP: 12
+Routing Node: 108	ASAP: 13	ALAP: 13
+Routing Node: 109	ASAP: 14	ALAP: 14
+Routing Node: 110	ASAP: 15	ALAP: 15
+Routing Node: 111	ASAP: 16	ALAP: 16
+Routing Node: 112	ASAP: 17	ALAP: 17
+Routing Node: 113	ASAP: 18	ALAP: 18
+Routing Node: 114	ASAP: 19	ALAP: 19
+Routing Node: 115	ASAP: 2	ALAP: 2
+Routing Node: 116	ASAP: 2	ALAP: 2
+Routing Node: 117	ASAP: 8	ALAP: 8
+Routing Node: 118	ASAP: 9	ALAP: 9
+Routing Node: 119	ASAP: 10	ALAP: 10
+Routing Node: 120	ASAP: 11	ALAP: 11
+Routing Node: 121	ASAP: 12	ALAP: 12
+Routing Node: 122	ASAP: 13	ALAP: 13
+Routing Node: 123	ASAP: 14	ALAP: 14
+Routing Node: 124	ASAP: 15	ALAP: 15
+Routing Node: 125	ASAP: 16	ALAP: 16
+Routing Node: 126	ASAP: 17	ALAP: 17
+Routing Node: 127	ASAP: 18	ALAP: 18
+Routing Node: 128	ASAP: 9	ALAP: 9
+Routing Node: 129	ASAP: 10	ALAP: 10
+Routing Node: 130	ASAP: 11	ALAP: 11
+Routing Node: 131	ASAP: 1	ALAP: 1
+Routing Node: 132	ASAP: 2	ALAP: 2
+Routing Node: 133	ASAP: 3	ALAP: 3
+Routing Node: 134	ASAP: 1	ALAP: 1
+Routing Node: 135	ASAP: 2	ALAP: 2
+Routing Node: 136	ASAP: 3	ALAP: 3
+Routing Node: 137	ASAP: 1	ALAP: 1
+Routing Node: 138	ASAP: 2	ALAP: 2
+Routing Node: 139	ASAP: 3	ALAP: 3
+Routing Node: 140	ASAP: 1	ALAP: 1
+Routing Node: 141	ASAP: 2	ALAP: 2
+Routing Node: 142	ASAP: 3	ALAP: 3
+Routing Node: 143	ASAP: 4	ALAP: 4
+Routing Node: 144	ASAP: 5	ALAP: 5
+Routing Node: 145	ASAP: 6	ALAP: 6
+Routing Node: 146	ASAP: 7	ALAP: 7
+Routing Node: 147	ASAP: 1	ALAP: 1
+Routing Node: 148	ASAP: 2	ALAP: 2
+Routing Node: 149	ASAP: 3	ALAP: 3
+Routing Node: 150	ASAP: 4	ALAP: 4
+Routing Node: 151	ASAP: 5	ALAP: 5
+Routing Node: 152	ASAP: 6	ALAP: 6
+Routing Node: 153	ASAP: 11	ALAP: 11
+Routing Node: 154	ASAP: 12	ALAP: 12
+Routing Node: 155	ASAP: 13	ALAP: 13
+Routing Node: 156	ASAP: 14	ALAP: 14
+Routing Node: 157	ASAP: 12	ALAP: 12
+Routing Node: 158	ASAP: 13	ALAP: 13
+Routing Node: 159	ASAP: 14	ALAP: 14
+Routing Node: 160	ASAP: 15	ALAP: 15
+Routing Node: 161	ASAP: 16	ALAP: 16
+Routing Node: 162	ASAP: 17	ALAP: 17
+Routing Node: 163	ASAP: 15	ALAP: 15
+Routing Node: 164	ASAP: 16	ALAP: 16
+Routing Node: 165	ASAP: 17	ALAP: 17
+Routing Node: 166	ASAP: 18	ALAP: 18
+Routing Node: 167	ASAP: 16	ALAP: 16
+Routing Node: 168	ASAP: 17	ALAP: 17
+Routing Node: 169	ASAP: 17	ALAP: 17
+Routing Node: 170	ASAP: 18	ALAP: 18
+Routing Node: 171	ASAP: 19	ALAP: 19
+Routing Node: 172	ASAP: 20	ALAP: 20
+Routing Node: 173	ASAP: 21	ALAP: 21
+Routing Node: 174	ASAP: 22	ALAP: 22
+Routing Node: 175	ASAP: 23	ALAP: 23
+Routing Node: 176	ASAP: 24	ALAP: 24
+Routing Node: 177	ASAP: 14	ALAP: 14
+Routing Node: 178	ASAP: 2	ALAP: 2
+Routing Node: 179	ASAP: 16	ALAP: 16
+Routing Node: 180	ASAP: 17	ALAP: 17
+Routing Node: 181	ASAP: 18	ALAP: 18
+Routing Node: 182	ASAP: 19	ALAP: 19
+Routing Node: 183	ASAP: 2	ALAP: 2
+Routing Node: 184	ASAP: 3	ALAP: 3
+Routing Node: 185	ASAP: 2	ALAP: 2
+Mod Sched time: 1
+II : 12
+Node 79 is to be scheduled at time 1, modulo time 1
+Mod Sched time: 2
+II : 12
+Node 80 is to be scheduled at time 2, modulo time 2
+Mod Sched time: 3
+II : 12
+Node 81 is to be scheduled at time 3, modulo time 3
+Mod Sched time: 4
+II : 12
+Node 82 is to be scheduled at time 4, modulo time 4
+Mod Sched time: 5
+II : 12
+Node 83 is to be scheduled at time 5, modulo time 5
+Mod Sched time: 6
+II : 12
+Node 84 is to be scheduled at time 6, modulo time 6
+Mod Sched time: 7
+II : 12
+Node 85 is to be scheduled at time 7, modulo time 7
+Mod Sched time: 8
+II : 12
+Node 86 is to be scheduled at time 8, modulo time 8
+Mod Sched time: 9
+II : 12
+Node 87 is to be scheduled at time 9, modulo time 9
+Mod Sched time: 10
+II : 12
+Node 88 is to be scheduled at time 10, modulo time 10
+Mod Sched time: 11
+II : 12
+Node 89 is to be scheduled at time 11, modulo time 11
+Mod Sched time: 1
+II : 12
+Node 90 is to be scheduled at time 1, modulo time 1
+Mod Sched time: 2
+II : 12
+Node 91 is to be scheduled at time 2, modulo time 2
+Mod Sched time: 3
+II : 12
+Node 92 is to be scheduled at time 3, modulo time 3
+Mod Sched time: 4
+II : 12
+Node 93 is to be scheduled at time 4, modulo time 4
+Mod Sched time: 5
+II : 12
+Node 94 is to be scheduled at time 5, modulo time 5
+Mod Sched time: 6
+II : 12
+Node 95 is to be scheduled at time 6, modulo time 6
+Mod Sched time: 7
+II : 12
+Node 96 is to be scheduled at time 7, modulo time 7
+Mod Sched time: 8
+II : 12
+Node 97 is to be scheduled at time 8, modulo time 8
+Mod Sched time: 2
+II : 12
+Node 101 is to be scheduled at time 2, modulo time 2
+Mod Sched time: 5
+II : 12
+Node 102 is to be scheduled at time 5, modulo time 5
+Mod Sched time: 6
+II : 12
+Node 103 is to be scheduled at time 6, modulo time 6
+Mod Sched time: 7
+II : 12
+Node 104 is to be scheduled at time 7, modulo time 7
+Mod Sched time: 10
+II : 12
+Node 105 is to be scheduled at time 10, modulo time 10
+Mod Sched time: 11
+II : 12
+Node 106 is to be scheduled at time 11, modulo time 11
+Mod Sched time: 0
+II : 12
+Node 107 is to be scheduled at time 12, modulo time 0
+Mod Sched time: 1
+II : 12
+Node 108 is to be scheduled at time 13, modulo time 1
+Mod Sched time: 2
+II : 12
+Node 109 is to be scheduled at time 14, modulo time 2
+Mod Sched time: 3
+II : 12
+Node 110 is to be scheduled at time 15, modulo time 3
+Mod Sched time: 4
+II : 12
+Node 111 is to be scheduled at time 16, modulo time 4
+Mod Sched time: 5
+II : 12
+Node 112 is to be scheduled at time 17, modulo time 5
+Mod Sched time: 6
+II : 12
+Node 113 is to be scheduled at time 18, modulo time 6
+Mod Sched time: 7
+II : 12
+Node 114 is to be scheduled at time 19, modulo time 7
+Mod Sched time: 5
+II : 12
+Node 115 is to be scheduled at time 5, modulo time 5
+Mod Sched time: 5
+II : 12
+Node 116 is to be scheduled at time 5, modulo time 5
+Mod Sched time: 8
+II : 12
+Node 117 is to be scheduled at time 8, modulo time 8
+Mod Sched time: 9
+II : 12
+Node 118 is to be scheduled at time 9, modulo time 9
+Mod Sched time: 10
+II : 12
+Node 119 is to be scheduled at time 10, modulo time 10
+Mod Sched time: 11
+II : 12
+Node 120 is to be scheduled at time 11, modulo time 11
+Mod Sched time: 0
+II : 12
+Node 121 is to be scheduled at time 12, modulo time 0
+Mod Sched time: 1
+II : 12
+Node 122 is to be scheduled at time 13, modulo time 1
+Mod Sched time: 2
+II : 12
+Node 123 is to be scheduled at time 14, modulo time 2
+Mod Sched time: 3
+II : 12
+Node 124 is to be scheduled at time 15, modulo time 3
+Mod Sched time: 4
+II : 12
+Node 125 is to be scheduled at time 16, modulo time 4
+Mod Sched time: 5
+II : 12
+Node 126 is to be scheduled at time 17, modulo time 5
+Mod Sched time: 6
+II : 12
+Node 127 is to be scheduled at time 18, modulo time 6
+Mod Sched time: 9
+II : 12
+Node 128 is to be scheduled at time 9, modulo time 9
+Mod Sched time: 10
+II : 12
+Node 129 is to be scheduled at time 10, modulo time 10
+Mod Sched time: 11
+II : 12
+Node 130 is to be scheduled at time 11, modulo time 11
+Mod Sched time: 1
+II : 12
+Node 131 is to be scheduled at time 1, modulo time 1
+Mod Sched time: 2
+II : 12
+Node 132 is to be scheduled at time 2, modulo time 2
+Mod Sched time: 3
+II : 12
+Node 133 is to be scheduled at time 3, modulo time 3
+Mod Sched time: 1
+II : 12
+Node 134 is to be scheduled at time 1, modulo time 1
+Mod Sched time: 2
+II : 12
+Node 135 is to be scheduled at time 2, modulo time 2
+Mod Sched time: 3
+II : 12
+Node 136 is to be scheduled at time 3, modulo time 3
+Mod Sched time: 1
+II : 12
+Node 137 is to be scheduled at time 1, modulo time 1
+Mod Sched time: 2
+II : 12
+Node 138 is to be scheduled at time 2, modulo time 2
+Mod Sched time: 3
+II : 12
+Node 139 is to be scheduled at time 3, modulo time 3
+Mod Sched time: 2
+II : 12
+Node 140 is to be scheduled at time 2, modulo time 2
+Mod Sched time: 3
+II : 12
+Node 141 is to be scheduled at time 3, modulo time 3
+Mod Sched time: 4
+II : 12
+Node 142 is to be scheduled at time 4, modulo time 4
+Mod Sched time: 5
+II : 12
+Node 143 is to be scheduled at time 5, modulo time 5
+Mod Sched time: 6
+II : 12
+Node 144 is to be scheduled at time 6, modulo time 6
+Mod Sched time: 7
+II : 12
+Node 145 is to be scheduled at time 7, modulo time 7
+Mod Sched time: 8
+II : 12
+Node 146 is to be scheduled at time 8, modulo time 8
+Mod Sched time: 4
+II : 12
+Node 147 is to be scheduled at time 4, modulo time 4
+Mod Sched time: 5
+II : 12
+Node 148 is to be scheduled at time 5, modulo time 5
+Mod Sched time: 6
+II : 12
+Node 149 is to be scheduled at time 6, modulo time 6
+Mod Sched time: 7
+II : 12
+Node 150 is to be scheduled at time 7, modulo time 7
+Mod Sched time: 8
+II : 12
+Node 151 is to be scheduled at time 8, modulo time 8
+Mod Sched time: 9
+II : 12
+Node 152 is to be scheduled at time 9, modulo time 9
+Mod Sched time: 11
+II : 12
+Node 153 is to be scheduled at time 11, modulo time 11
+Mod Sched time: 0
+II : 12
+Node 154 is to be scheduled at time 12, modulo time 0
+Mod Sched time: 1
+II : 12
+Node 155 is to be scheduled at time 13, modulo time 1
+Mod Sched time: 2
+II : 12
+Node 156 is to be scheduled at time 14, modulo time 2
+Mod Sched time: 4
+II : 12
+Node 157 is to be scheduled at time 16, modulo time 4
+Mod Sched time: 5
+II : 12
+Node 158 is to be scheduled at time 17, modulo time 5
+Mod Sched time: 6
+II : 12
+Node 159 is to be scheduled at time 18, modulo time 6
+Mod Sched time: 7
+II : 12
+Node 160 is to be scheduled at time 19, modulo time 7
+Mod Sched time: 8
+II : 12
+Node 161 is to be scheduled at time 20, modulo time 8
+Mod Sched time: 9
+II : 12
+Node 162 is to be scheduled at time 21, modulo time 9
+Mod Sched time: 3
+II : 12
+Node 163 is to be scheduled at time 15, modulo time 3
+Mod Sched time: 4
+II : 12
+Node 164 is to be scheduled at time 16, modulo time 4
+Mod Sched time: 5
+II : 12
+Node 165 is to be scheduled at time 17, modulo time 5
+Mod Sched time: 6
+II : 12
+Node 166 is to be scheduled at time 18, modulo time 6
+Mod Sched time: 8
+II : 12
+Node 167 is to be scheduled at time 20, modulo time 8
+Mod Sched time: 9
+II : 12
+Node 168 is to be scheduled at time 21, modulo time 9
+Mod Sched time: 11
+II : 12
+Node 169 is to be scheduled at time 23, modulo time 11
+Mod Sched time: 0
+II : 12
+Node 170 is to be scheduled at time 24, modulo time 0
+Mod Sched time: 1
+II : 12
+Node 171 is to be scheduled at time 25, modulo time 1
+Mod Sched time: 2
+II : 12
+Node 172 is to be scheduled at time 26, modulo time 2
+Mod Sched time: 3
+II : 12
+Node 173 is to be scheduled at time 27, modulo time 3
+Mod Sched time: 4
+II : 12
+Node 174 is to be scheduled at time 28, modulo time 4
+Mod Sched time: 5
+II : 12
+Node 175 is to be scheduled at time 29, modulo time 5
+Mod Sched time: 6
+II : 12
+Node 176 is to be scheduled at time 30, modulo time 6
+Mod Sched time: 2
+II : 12
+Node 177 is to be scheduled at time 14, modulo time 2
+Not enough resources available at 14 PE used 16
+Resources: 12
+Resources: 15
+Resources: 16
+Resources: 16
+Resources: 14
+Resources: 14
+Resources: 13
+Resources: 10
+Resources: 11
+Resources: 8
+Resources: 7
+Resources: 7
+From print schedule: 95
+print from MS: 95
+The node not scheduled and failed is: 177 at time 14
+modulo_schedule: 0	redo: 1
+failure reason: 2
+total nodes after scheduling: 155
+iteration: 0
+after:
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+Get_SortOps SCCs: 
+27	26	25	21	20	2	24	23	22	19	18	17	16	15	0	
+1	14	
+71	70	
+61	60	
+4	
+3	
+12	
+11	
+10	
+9	
+8	
+7	
+6	
+58	
+56	
+68	
+13	
+66	
+73	
+28	
+5	
+36	
+39	
+47	
+50	
+53	
+75	
+74	
+Node: 71	ASAP: 16	ALAP:27	random try_time: 25
+Node: 70	ASAP: 15	ALAP:24	random try_time: 17
+Node: 61	ASAP: 11	ALAP:22	random try_time: 20
+Node: 60	ASAP: 10	ALAP:19	random try_time: 18
+Node: 14	ASAP: 9	ALAP:17	random try_time: 16
+Node: 13	ASAP: 8	ALAP:15	random try_time: 8
+Node: 12	ASAP: 7	ALAP:7	random try_time: 7
+Node: 11	ASAP: 6	ALAP:6	random try_time: 6
+Node: 9	ASAP: 4	ALAP:4	random try_time: 4
+Node: 8	ASAP: 3	ALAP:3	random try_time: 3
+Node: 6	ASAP: 1	ALAP:1	random try_time: 1
+Node: 39	ASAP: 0	ALAP:0	random try_time: 0
+Node: 5	ASAP: 3	ALAP:7	random try_time: 3
+Node: 3	ASAP: 1	ALAP:1	random try_time: 1
+Node: 36	ASAP: 0	ALAP:0	random try_time: 0
+Node: 1	ASAP: 8	ALAP:15	random try_time: 10
+Node: 68	ASAP: 15	ALAP:26	random try_time: 18
+Node: 66	ASAP: 14	ALAP:16	random try_time: 14
+Node: 73	ASAP: 13	ALAP:13	random try_time: 13
+Node: 28	ASAP: 12	ALAP:12	random try_time: 12
+Node: 27	ASAP: 11	ALAP:11	random try_time: 11
+Node: 25	ASAP: 9	ALAP:9	random try_time: 9
+Node: 24	ASAP: 8	ALAP:8	random try_time: 8
+Node: 22	ASAP: 6	ALAP:6	random try_time: 6
+Node: 19	ASAP: 5	ALAP:5	random try_time: 5
+Node: 18	ASAP: 4	ALAP:4	random try_time: 4
+Node: 17	ASAP: 3	ALAP:3	random try_time: 3
+Node: 16	ASAP: 2	ALAP:2	random try_time: 2
+Node: 15	ASAP: 1	ALAP:1	random try_time: 1
+Node: 0	ASAP: 0	ALAP:0	random try_time: 0
+Node: 75	ASAP: 1	ALAP:3	random try_time: 1
+Node: 20	ASAP: 1	ALAP:5	random try_time: 4
+Node: 47	ASAP: 0	ALAP:3	random try_time: 1
+Node: 21	ASAP: 1	ALAP:5	random try_time: 1
+Node: 2	ASAP: 0	ALAP:0	random try_time: 0
+Node: 50	ASAP: 0	ALAP:0	random try_time: 0
+Node: 53	ASAP: 0	ALAP:8	random try_time: 0
+Node: 58	ASAP: 1	ALAP:12	random try_time: 9
+Node: 56	ASAP: 0	ALAP:8	random try_time: 1
+iteration: 1
+iteration: 0
+after:
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+Get_SortOps SCCs: 
+27	26	25	21	20	2	24	23	22	19	18	17	16	15	0	
+1	14	
+71	70	
+61	60	
+4	
+3	
+12	
+11	
+10	
+9	
+8	
+7	
+6	
+58	
+56	
+68	
+13	
+66	
+73	
+28	
+5	
+36	
+39	
+47	
+50	
+53	
+75	
+74	
+Node: 71	ASAP: 16	ALAP:27	random try_time: 24
+Node: 70	ASAP: 15	ALAP:23	random try_time: 20
+Node: 61	ASAP: 11	ALAP:22	random try_time: 13
+Node: 60	ASAP: 10	ALAP:12	random try_time: 11
+Node: 14	ASAP: 9	ALAP:10	random try_time: 9
+Node: 13	ASAP: 8	ALAP:8	random try_time: 8
+Node: 12	ASAP: 7	ALAP:7	random try_time: 7
+Node: 11	ASAP: 6	ALAP:6	random try_time: 6
+Node: 9	ASAP: 4	ALAP:4	random try_time: 4
+Node: 8	ASAP: 3	ALAP:3	random try_time: 3
+Node: 6	ASAP: 1	ALAP:1	random try_time: 1
+Node: 1	ASAP: 8	ALAP:8	random try_time: 8
+Node: 39	ASAP: 0	ALAP:0	random try_time: 0
+Node: 5	ASAP: 3	ALAP:7	random try_time: 6
+Node: 3	ASAP: 1	ALAP:4	random try_time: 1
+Node: 36	ASAP: 0	ALAP:0	random try_time: 0
+Node: 68	ASAP: 15	ALAP:26	random try_time: 17
+Node: 66	ASAP: 14	ALAP:16	random try_time: 14
+Node: 73	ASAP: 13	ALAP:13	random try_time: 13
+Node: 28	ASAP: 12	ALAP:12	random try_time: 12
+Node: 27	ASAP: 11	ALAP:11	random try_time: 11
+Node: 25	ASAP: 9	ALAP:9	random try_time: 9
+Node: 24	ASAP: 8	ALAP:8	random try_time: 8
+Node: 22	ASAP: 6	ALAP:6	random try_time: 6
+Node: 19	ASAP: 5	ALAP:5	random try_time: 5
+Node: 18	ASAP: 4	ALAP:4	random try_time: 4
+Node: 17	ASAP: 3	ALAP:3	random try_time: 3
+Node: 16	ASAP: 2	ALAP:2	random try_time: 2
+Node: 15	ASAP: 1	ALAP:1	random try_time: 1
+Node: 0	ASAP: 0	ALAP:0	random try_time: 0
+Node: 75	ASAP: 1	ALAP:3	random try_time: 2
+Node: 20	ASAP: 1	ALAP:5	random try_time: 4
+Node: 47	ASAP: 0	ALAP:3	random try_time: 2
+Node: 21	ASAP: 1	ALAP:5	random try_time: 2
+Node: 2	ASAP: 0	ALAP:0	random try_time: 0
+Node: 50	ASAP: 0	ALAP:1	random try_time: 0
+Node: 53	ASAP: 0	ALAP:8	random try_time: 0
+Node: 58	ASAP: 1	ALAP:12	random try_time: 1
+Node: 56	ASAP: 0	ALAP:0	random try_time: 0
+end:
+10
+7
+7
+2
+3
+4
+3
+2
+4
+2
+1
+2
+Feasible II is 12 at 0
+Node: 0	 ASAP: 0	ALAP: 0	sched @ 0
+Node: 1	 ASAP: 8	ALAP: 8	sched @ 8
+Node: 2	 ASAP: 0	ALAP: 0	sched @ 0
+Node: 3	 ASAP: 1	ALAP: 4	sched @ 1
+Node: 4	 ASAP: 2	ALAP: 13	sched @ 5
+Node: 5	 ASAP: 3	ALAP: 7	sched @ 6
+Node: 6	 ASAP: 1	ALAP: 1	sched @ 1
+Node: 7	 ASAP: 2	ALAP: 13	sched @ 2
+Node: 8	 ASAP: 3	ALAP: 3	sched @ 3
+Node: 9	 ASAP: 4	ALAP: 4	sched @ 4
+Node: 10	 ASAP: 5	ALAP: 16	sched @ 5
+Node: 11	 ASAP: 6	ALAP: 6	sched @ 6
+Node: 12	 ASAP: 7	ALAP: 7	sched @ 7
+Node: 13	 ASAP: 8	ALAP: 8	sched @ 8
+Node: 14	 ASAP: 9	ALAP: 10	sched @ 9
+Node: 15	 ASAP: 1	ALAP: 1	sched @ 1
+Node: 16	 ASAP: 2	ALAP: 2	sched @ 2
+Node: 17	 ASAP: 3	ALAP: 3	sched @ 3
+Node: 18	 ASAP: 4	ALAP: 4	sched @ 4
+Node: 19	 ASAP: 5	ALAP: 5	sched @ 5
+Node: 20	 ASAP: 1	ALAP: 5	sched @ 4
+Node: 21	 ASAP: 1	ALAP: 5	sched @ 2
+Node: 22	 ASAP: 6	ALAP: 6	sched @ 6
+Node: 23	 ASAP: 7	ALAP: 18	sched @ 7
+Node: 24	 ASAP: 8	ALAP: 8	sched @ 8
+Node: 25	 ASAP: 9	ALAP: 9	sched @ 9
+Node: 26	 ASAP: 10	ALAP: 21	sched @ 10
+Node: 27	 ASAP: 11	ALAP: 11	sched @ 11
+Node: 28	 ASAP: 12	ALAP: 12	sched @ 12
+Node: 36	 ASAP: 0	ALAP: 0	sched @ 0
+Node: 39	 ASAP: 0	ALAP: 0	sched @ 0
+Node: 47	 ASAP: 0	ALAP: 3	sched @ 2
+Node: 50	 ASAP: 0	ALAP: 1	sched @ 0
+Node: 53	 ASAP: 0	ALAP: 8	sched @ 0
+Node: 56	 ASAP: 0	ALAP: 0	sched @ 0
+Node: 58	 ASAP: 1	ALAP: 12	sched @ 1
+Node: 60	 ASAP: 10	ALAP: 12	sched @ 11
+Node: 61	 ASAP: 11	ALAP: 22	sched @ 13
+Node: 66	 ASAP: 14	ALAP: 16	sched @ 14
+Node: 68	 ASAP: 15	ALAP: 26	sched @ 17
+Node: 70	 ASAP: 15	ALAP: 23	sched @ 20
+Node: 71	 ASAP: 16	ALAP: 27	sched @ 24
+Node: 73	 ASAP: 13	ALAP: 13	sched @ 13
+Node: 74	 ASAP: 0	ALAP: 11	sched @ 1
+Node: 75	 ASAP: 1	ALAP: 3	sched @ 2
+Node: 76	 ASAP: 15	ALAP: 15	sched @ 15
+Node: 77	 ASAP: 1	ALAP: 1	sched @ 1
+total nodes before routing: 47
+total nodes before scheduling: 155
+is_modified route and reschedule: 1
+Routing Node: 78	ASAP: 1	ALAP: 1
+Routing Node: 79	ASAP: 2	ALAP: 2
+Routing Node: 80	ASAP: 3	ALAP: 3
+Routing Node: 81	ASAP: 4	ALAP: 4
+Routing Node: 82	ASAP: 5	ALAP: 5
+Routing Node: 83	ASAP: 6	ALAP: 6
+Routing Node: 84	ASAP: 7	ALAP: 7
+Routing Node: 85	ASAP: 8	ALAP: 8
+Routing Node: 86	ASAP: 9	ALAP: 9
+Routing Node: 87	ASAP: 10	ALAP: 10
+Routing Node: 88	ASAP: 11	ALAP: 11
+Routing Node: 89	ASAP: 1	ALAP: 1
+Routing Node: 89	ASAP: 1	ALAP: 1
+Routing Node: 90	ASAP: 2	ALAP: 2
+Routing Node: 91	ASAP: 3	ALAP: 3
+Routing Node: 93	ASAP: 2	ALAP: 2
+Routing Node: 94	ASAP: 3	ALAP: 3
+Routing Node: 95	ASAP: 4	ALAP: 4
+Routing Node: 96	ASAP: 4	ALAP: 4
+Routing Node: 97	ASAP: 10	ALAP: 10
+Routing Node: 97	ASAP: 10	ALAP: 10
+Routing Node: 98	ASAP: 11	ALAP: 11
+Routing Node: 99	ASAP: 12	ALAP: 12
+Routing Node: 100	ASAP: 13	ALAP: 13
+Routing Node: 101	ASAP: 14	ALAP: 14
+Routing Node: 102	ASAP: 15	ALAP: 15
+Routing Node: 103	ASAP: 16	ALAP: 16
+Routing Node: 104	ASAP: 17	ALAP: 17
+Routing Node: 105	ASAP: 18	ALAP: 18
+Routing Node: 106	ASAP: 19	ALAP: 19
+Routing Node: 108	ASAP: 2	ALAP: 2
+Routing Node: 109	ASAP: 2	ALAP: 2
+Routing Node: 110	ASAP: 3	ALAP: 3
+Routing Node: 111	ASAP: 4	ALAP: 4
+Routing Node: 112	ASAP: 8	ALAP: 8
+Routing Node: 113	ASAP: 9	ALAP: 9
+Routing Node: 114	ASAP: 10	ALAP: 10
+Routing Node: 115	ASAP: 11	ALAP: 11
+Routing Node: 116	ASAP: 12	ALAP: 12
+Routing Node: 117	ASAP: 13	ALAP: 13
+Routing Node: 118	ASAP: 14	ALAP: 14
+Routing Node: 119	ASAP: 15	ALAP: 15
+Routing Node: 120	ASAP: 16	ALAP: 16
+Routing Node: 121	ASAP: 17	ALAP: 17
+Routing Node: 122	ASAP: 18	ALAP: 18
+Routing Node: 123	ASAP: 19	ALAP: 19
+Routing Node: 124	ASAP: 9	ALAP: 9
+Routing Node: 125	ASAP: 10	ALAP: 10
+Routing Node: 126	ASAP: 11	ALAP: 11
+Routing Node: 127	ASAP: 1	ALAP: 1
+Routing Node: 128	ASAP: 2	ALAP: 2
+Routing Node: 129	ASAP: 3	ALAP: 3
+Routing Node: 130	ASAP: 1	ALAP: 1
+Routing Node: 131	ASAP: 1	ALAP: 1
+Routing Node: 132	ASAP: 1	ALAP: 1
+Routing Node: 133	ASAP: 2	ALAP: 2
+Routing Node: 134	ASAP: 3	ALAP: 3
+Routing Node: 135	ASAP: 4	ALAP: 4
+Routing Node: 136	ASAP: 5	ALAP: 5
+Routing Node: 137	ASAP: 6	ALAP: 6
+Routing Node: 138	ASAP: 7	ALAP: 7
+Routing Node: 139	ASAP: 8	ALAP: 8
+Routing Node: 140	ASAP: 1	ALAP: 1
+Routing Node: 141	ASAP: 2	ALAP: 2
+Routing Node: 142	ASAP: 3	ALAP: 3
+Routing Node: 143	ASAP: 4	ALAP: 4
+Routing Node: 144	ASAP: 5	ALAP: 5
+Routing Node: 145	ASAP: 6	ALAP: 6
+Routing Node: 146	ASAP: 7	ALAP: 7
+Routing Node: 147	ASAP: 8	ALAP: 8
+Routing Node: 148	ASAP: 9	ALAP: 9
+Routing Node: 149	ASAP: 10	ALAP: 10
+Routing Node: 150	ASAP: 11	ALAP: 11
+Routing Node: 151	ASAP: 12	ALAP: 12
+Routing Node: 152	ASAP: 13	ALAP: 13
+Routing Node: 153	ASAP: 14	ALAP: 14
+Routing Node: 154	ASAP: 15	ALAP: 15
+Routing Node: 155	ASAP: 16	ALAP: 16
+Routing Node: 156	ASAP: 17	ALAP: 17
+Routing Node: 157	ASAP: 18	ALAP: 18
+Routing Node: 158	ASAP: 19	ALAP: 19
+Routing Node: 159	ASAP: 20	ALAP: 20
+Routing Node: 160	ASAP: 15	ALAP: 15
+Routing Node: 161	ASAP: 16	ALAP: 16
+Routing Node: 162	ASAP: 17	ALAP: 17
+Routing Node: 163	ASAP: 18	ALAP: 18
+Routing Node: 164	ASAP: 19	ALAP: 19
+Routing Node: 165	ASAP: 16	ALAP: 16
+Routing Node: 166	ASAP: 17	ALAP: 17
+Routing Node: 167	ASAP: 18	ALAP: 18
+Routing Node: 168	ASAP: 17	ALAP: 17
+Routing Node: 169	ASAP: 18	ALAP: 18
+Routing Node: 170	ASAP: 19	ALAP: 19
+Routing Node: 171	ASAP: 20	ALAP: 20
+Routing Node: 172	ASAP: 21	ALAP: 21
+Routing Node: 173	ASAP: 22	ALAP: 22
+Routing Node: 174	ASAP: 23	ALAP: 23
+Routing Node: 175	ASAP: 14	ALAP: 14
+Routing Node: 176	ASAP: 15	ALAP: 15
+Routing Node: 177	ASAP: 2	ALAP: 2
+Routing Node: 178	ASAP: 16	ALAP: 16
+Routing Node: 179	ASAP: 2	ALAP: 2
+Routing Node: 180	ASAP: 3	ALAP: 3
+Routing Node: 181	ASAP: 4	ALAP: 4
+Routing Node: 182	ASAP: 5	ALAP: 5
+Routing Node: 183	ASAP: 6	ALAP: 6
+Routing Node: 184	ASAP: 7	ALAP: 7
+Routing Node: 185	ASAP: 8	ALAP: 8
+Mod Sched time: 1
+II : 12
+Node 78 is to be scheduled at time 1, modulo time 1
+Mod Sched time: 2
+II : 12
+Node 79 is to be scheduled at time 2, modulo time 2
+Mod Sched time: 3
+II : 12
+Node 80 is to be scheduled at time 3, modulo time 3
+Mod Sched time: 4
+II : 12
+Node 81 is to be scheduled at time 4, modulo time 4
+Mod Sched time: 5
+II : 12
+Node 82 is to be scheduled at time 5, modulo time 5
+Mod Sched time: 6
+II : 12
+Node 83 is to be scheduled at time 6, modulo time 6
+Mod Sched time: 7
+II : 12
+Node 84 is to be scheduled at time 7, modulo time 7
+Mod Sched time: 8
+II : 12
+Node 85 is to be scheduled at time 8, modulo time 8
+Mod Sched time: 9
+II : 12
+Node 86 is to be scheduled at time 9, modulo time 9
+Mod Sched time: 10
+II : 12
+Node 87 is to be scheduled at time 10, modulo time 10
+Mod Sched time: 11
+II : 12
+Node 88 is to be scheduled at time 11, modulo time 11
+Mod Sched time: 1
+II : 12
+Node 89 is to be scheduled at time 1, modulo time 1
+Mod Sched time: 2
+II : 12
+Node 90 is to be scheduled at time 2, modulo time 2
+Mod Sched time: 3
+II : 12
+Node 91 is to be scheduled at time 3, modulo time 3
+Mod Sched time: 2
+II : 12
+Node 93 is to be scheduled at time 2, modulo time 2
+Mod Sched time: 3
+II : 12
+Node 94 is to be scheduled at time 3, modulo time 3
+Mod Sched time: 4
+II : 12
+Node 95 is to be scheduled at time 4, modulo time 4
+Mod Sched time: 7
+II : 12
+Node 96 is to be scheduled at time 7, modulo time 7
+Mod Sched time: 10
+II : 12
+Node 97 is to be scheduled at time 10, modulo time 10
+Mod Sched time: 11
+II : 12
+Node 98 is to be scheduled at time 11, modulo time 11
+Mod Sched time: 0
+II : 12
+Node 99 is to be scheduled at time 12, modulo time 0
+Mod Sched time: 1
+II : 12
+Node 100 is to be scheduled at time 13, modulo time 1
+Mod Sched time: 2
+II : 12
+Node 101 is to be scheduled at time 14, modulo time 2
+Mod Sched time: 3
+II : 12
+Node 102 is to be scheduled at time 15, modulo time 3
+Mod Sched time: 4
+II : 12
+Node 103 is to be scheduled at time 16, modulo time 4
+Mod Sched time: 5
+II : 12
+Node 104 is to be scheduled at time 17, modulo time 5
+Mod Sched time: 6
+II : 12
+Node 105 is to be scheduled at time 18, modulo time 6
+Mod Sched time: 7
+II : 12
+Node 106 is to be scheduled at time 19, modulo time 7
+Mod Sched time: 5
+II : 12
+Node 108 is to be scheduled at time 5, modulo time 5
+Mod Sched time: 3
+II : 12
+Node 109 is to be scheduled at time 3, modulo time 3
+Mod Sched time: 4
+II : 12
+Node 110 is to be scheduled at time 4, modulo time 4
+Mod Sched time: 5
+II : 12
+Node 111 is to be scheduled at time 5, modulo time 5
+Mod Sched time: 8
+II : 12
+Node 112 is to be scheduled at time 8, modulo time 8
+Mod Sched time: 9
+II : 12
+Node 113 is to be scheduled at time 9, modulo time 9
+Mod Sched time: 10
+II : 12
+Node 114 is to be scheduled at time 10, modulo time 10
+Mod Sched time: 11
+II : 12
+Node 115 is to be scheduled at time 11, modulo time 11
+Mod Sched time: 0
+II : 12
+Node 116 is to be scheduled at time 12, modulo time 0
+Mod Sched time: 1
+II : 12
+Node 117 is to be scheduled at time 13, modulo time 1
+Mod Sched time: 2
+II : 12
+Node 118 is to be scheduled at time 14, modulo time 2
+Mod Sched time: 3
+II : 12
+Node 119 is to be scheduled at time 15, modulo time 3
+Mod Sched time: 4
+II : 12
+Node 120 is to be scheduled at time 16, modulo time 4
+Mod Sched time: 5
+II : 12
+Node 121 is to be scheduled at time 17, modulo time 5
+Mod Sched time: 6
+II : 12
+Node 122 is to be scheduled at time 18, modulo time 6
+Mod Sched time: 7
+II : 12
+Node 123 is to be scheduled at time 19, modulo time 7
+Mod Sched time: 9
+II : 12
+Node 124 is to be scheduled at time 9, modulo time 9
+Mod Sched time: 10
+II : 12
+Node 125 is to be scheduled at time 10, modulo time 10
+Mod Sched time: 11
+II : 12
+Node 126 is to be scheduled at time 11, modulo time 11
+Mod Sched time: 1
+II : 12
+Node 127 is to be scheduled at time 1, modulo time 1
+Mod Sched time: 2
+II : 12
+Node 128 is to be scheduled at time 2, modulo time 2
+Mod Sched time: 3
+II : 12
+Node 129 is to be scheduled at time 3, modulo time 3
+Mod Sched time: 3
+II : 12
+Node 130 is to be scheduled at time 3, modulo time 3
+Mod Sched time: 1
+II : 12
+Node 131 is to be scheduled at time 1, modulo time 1
+Mod Sched time: 1
+II : 12
+Node 132 is to be scheduled at time 1, modulo time 1
+Mod Sched time: 2
+II : 12
+Node 133 is to be scheduled at time 2, modulo time 2
+Mod Sched time: 3
+II : 12
+Node 134 is to be scheduled at time 3, modulo time 3
+Mod Sched time: 4
+II : 12
+Node 135 is to be scheduled at time 4, modulo time 4
+Mod Sched time: 5
+II : 12
+Node 136 is to be scheduled at time 5, modulo time 5
+Mod Sched time: 6
+II : 12
+Node 137 is to be scheduled at time 6, modulo time 6
+Mod Sched time: 7
+II : 12
+Node 138 is to be scheduled at time 7, modulo time 7
+Mod Sched time: 8
+II : 12
+Node 139 is to be scheduled at time 8, modulo time 8
+Mod Sched time: 1
+II : 12
+Node 140 is to be scheduled at time 1, modulo time 1
+Mod Sched time: 2
+II : 12
+Node 141 is to be scheduled at time 2, modulo time 2
+Mod Sched time: 3
+II : 12
+Node 142 is to be scheduled at time 3, modulo time 3
+Mod Sched time: 4
+II : 12
+Node 143 is to be scheduled at time 4, modulo time 4
+Mod Sched time: 5
+II : 12
+Node 144 is to be scheduled at time 5, modulo time 5
+Mod Sched time: 6
+II : 12
+Node 145 is to be scheduled at time 6, modulo time 6
+Mod Sched time: 7
+II : 12
+Node 146 is to be scheduled at time 7, modulo time 7
+Mod Sched time: 8
+II : 12
+Node 147 is to be scheduled at time 8, modulo time 8
+Mod Sched time: 9
+II : 12
+Node 148 is to be scheduled at time 9, modulo time 9
+Mod Sched time: 10
+II : 12
+Node 149 is to be scheduled at time 10, modulo time 10
+Mod Sched time: 0
+II : 12
+Node 150 is to be scheduled at time 12, modulo time 0
+Mod Sched time: 2
+II : 12
+Node 151 is to be scheduled at time 14, modulo time 2
+Mod Sched time: 3
+II : 12
+Node 152 is to be scheduled at time 15, modulo time 3
+Mod Sched time: 4
+II : 12
+Node 153 is to be scheduled at time 16, modulo time 4
+Mod Sched time: 5
+II : 12
+Node 154 is to be scheduled at time 17, modulo time 5
+Mod Sched time: 6
+II : 12
+Node 155 is to be scheduled at time 18, modulo time 6
+Mod Sched time: 7
+II : 12
+Node 156 is to be scheduled at time 19, modulo time 7
+Mod Sched time: 8
+II : 12
+Node 157 is to be scheduled at time 20, modulo time 8
+Mod Sched time: 9
+II : 12
+Node 158 is to be scheduled at time 21, modulo time 9
+Mod Sched time: 10
+II : 12
+Node 159 is to be scheduled at time 22, modulo time 10
+Mod Sched time: 3
+II : 12
+Node 160 is to be scheduled at time 15, modulo time 3
+Mod Sched time: 4
+II : 12
+Node 161 is to be scheduled at time 16, modulo time 4
+Mod Sched time: 5
+II : 12
+Node 162 is to be scheduled at time 17, modulo time 5
+Mod Sched time: 6
+II : 12
+Node 163 is to be scheduled at time 18, modulo time 6
+Mod Sched time: 7
+II : 12
+Node 164 is to be scheduled at time 19, modulo time 7
+Mod Sched time: 9
+II : 12
+Node 165 is to be scheduled at time 21, modulo time 9
+Mod Sched time: 10
+II : 12
+Node 166 is to be scheduled at time 22, modulo time 10
+Mod Sched time: 11
+II : 12
+Node 167 is to be scheduled at time 23, modulo time 11
+Mod Sched time: 1
+II : 12
+Node 168 is to be scheduled at time 25, modulo time 1
+Mod Sched time: 2
+II : 12
+Node 169 is to be scheduled at time 26, modulo time 2
+Not enough resources available at 26 PE used 16
+Resources: 13
+Resources: 16
+Resources: 16
+Resources: 14
+Resources: 12
+Resources: 13
+Resources: 10
+Resources: 10
+Resources: 9
+Resources: 8
+Resources: 8
+Resources: 7
+From print schedule: 89
+print from MS: 89
+The node not scheduled and failed is: 169 at time 26
+modulo_schedule: 0	redo: 1
+failure reason: 2
+total nodes after scheduling: 155
+iteration: 0
+after:
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+Get_SortOps SCCs: 
+27	26	25	21	20	2	24	23	22	19	18	17	16	15	0	
+1	14	
+71	70	
+61	60	
+4	
+3	
+12	
+11	
+10	
+9	
+8	
+7	
+6	
+58	
+56	
+68	
+13	
+66	
+73	
+28	
+5	
+36	
+39	
+47	
+50	
+53	
+75	
+74	
+Node: 71	ASAP: 16	ALAP:27	random try_time: 24
+Node: 70	ASAP: 15	ALAP:23	random try_time: 17
+Node: 61	ASAP: 11	ALAP:22	random try_time: 21
+Node: 60	ASAP: 10	ALAP:20	random try_time: 10
+Node: 14	ASAP: 9	ALAP:9	random try_time: 9
+Node: 13	ASAP: 8	ALAP:8	random try_time: 8
+Node: 12	ASAP: 7	ALAP:7	random try_time: 7
+Node: 11	ASAP: 6	ALAP:6	random try_time: 6
+Node: 9	ASAP: 4	ALAP:4	random try_time: 4
+Node: 8	ASAP: 3	ALAP:3	random try_time: 3
+Node: 6	ASAP: 1	ALAP:1	random try_time: 1
+Node: 1	ASAP: 8	ALAP:8	random try_time: 8
+Node: 39	ASAP: 0	ALAP:0	random try_time: 0
+Node: 5	ASAP: 3	ALAP:7	random try_time: 6
+Node: 3	ASAP: 1	ALAP:4	random try_time: 3
+Node: 36	ASAP: 0	ALAP:2	random try_time: 1
+Node: 68	ASAP: 15	ALAP:26	random try_time: 21
+Node: 66	ASAP: 14	ALAP:16	random try_time: 15
+Node: 73	ASAP: 13	ALAP:14	random try_time: 13
+Node: 28	ASAP: 12	ALAP:12	random try_time: 12
+Node: 27	ASAP: 11	ALAP:11	random try_time: 11
+Node: 25	ASAP: 9	ALAP:9	random try_time: 9
+Node: 24	ASAP: 8	ALAP:8	random try_time: 8
+Node: 22	ASAP: 6	ALAP:6	random try_time: 6
+Node: 19	ASAP: 5	ALAP:5	random try_time: 5
+Node: 18	ASAP: 4	ALAP:4	random try_time: 4
+Node: 17	ASAP: 3	ALAP:3	random try_time: 3
+Node: 16	ASAP: 2	ALAP:2	random try_time: 2
+Node: 15	ASAP: 1	ALAP:1	random try_time: 1
+Node: 0	ASAP: 0	ALAP:0	random try_time: 0
+Node: 75	ASAP: 1	ALAP:3	random try_time: 2
+Node: 20	ASAP: 1	ALAP:5	random try_time: 4
+Node: 47	ASAP: 0	ALAP:3	random try_time: 0
+Node: 21	ASAP: 1	ALAP:5	random try_time: 3
+Node: 2	ASAP: 0	ALAP:0	random try_time: 0
+Node: 50	ASAP: 0	ALAP:2	random try_time: 0
+Node: 53	ASAP: 0	ALAP:8	random try_time: 5
+Node: 58	ASAP: 1	ALAP:12	random try_time: 11
+Node: 56	ASAP: 0	ALAP:9	random try_time: 8
+end:
+8
+7
+3
+6
+3
+5
+3
+2
+5
+4
+2
+2
+Feasible II is 12 at 0
+Node: 0	 ASAP: 0	ALAP: 0	sched @ 0
+Node: 1	 ASAP: 8	ALAP: 8	sched @ 8
+Node: 2	 ASAP: 0	ALAP: 0	sched @ 0
+Node: 3	 ASAP: 1	ALAP: 4	sched @ 3
+Node: 4	 ASAP: 2	ALAP: 13	sched @ 5
+Node: 5	 ASAP: 3	ALAP: 7	sched @ 6
+Node: 6	 ASAP: 1	ALAP: 1	sched @ 1
+Node: 7	 ASAP: 2	ALAP: 13	sched @ 2
+Node: 8	 ASAP: 3	ALAP: 3	sched @ 3
+Node: 9	 ASAP: 4	ALAP: 4	sched @ 4
+Node: 10	 ASAP: 5	ALAP: 16	sched @ 5
+Node: 11	 ASAP: 6	ALAP: 6	sched @ 6
+Node: 12	 ASAP: 7	ALAP: 7	sched @ 7
+Node: 13	 ASAP: 8	ALAP: 8	sched @ 8
+Node: 14	 ASAP: 9	ALAP: 9	sched @ 9
+Node: 15	 ASAP: 1	ALAP: 1	sched @ 1
+Node: 16	 ASAP: 2	ALAP: 2	sched @ 2
+Node: 17	 ASAP: 3	ALAP: 3	sched @ 3
+Node: 18	 ASAP: 4	ALAP: 4	sched @ 4
+Node: 19	 ASAP: 5	ALAP: 5	sched @ 5
+Node: 20	 ASAP: 1	ALAP: 5	sched @ 4
+Node: 21	 ASAP: 1	ALAP: 5	sched @ 3
+Node: 22	 ASAP: 6	ALAP: 6	sched @ 6
+Node: 23	 ASAP: 7	ALAP: 18	sched @ 7
+Node: 24	 ASAP: 8	ALAP: 8	sched @ 8
+Node: 25	 ASAP: 9	ALAP: 9	sched @ 9
+Node: 26	 ASAP: 10	ALAP: 21	sched @ 10
+Node: 27	 ASAP: 11	ALAP: 11	sched @ 11
+Node: 28	 ASAP: 12	ALAP: 12	sched @ 12
+Node: 36	 ASAP: 0	ALAP: 2	sched @ 1
+Node: 39	 ASAP: 0	ALAP: 0	sched @ 0
+Node: 47	 ASAP: 0	ALAP: 3	sched @ 0
+Node: 50	 ASAP: 0	ALAP: 2	sched @ 0
+Node: 53	 ASAP: 0	ALAP: 8	sched @ 5
+Node: 56	 ASAP: 0	ALAP: 9	sched @ 8
+Node: 58	 ASAP: 1	ALAP: 12	sched @ 11
+Node: 60	 ASAP: 10	ALAP: 20	sched @ 10
+Node: 61	 ASAP: 11	ALAP: 22	sched @ 21
+Node: 66	 ASAP: 14	ALAP: 16	sched @ 15
+Node: 68	 ASAP: 15	ALAP: 26	sched @ 21
+Node: 70	 ASAP: 15	ALAP: 23	sched @ 17
+Node: 71	 ASAP: 16	ALAP: 27	sched @ 24
+Node: 73	 ASAP: 13	ALAP: 14	sched @ 13
+Node: 74	 ASAP: 0	ALAP: 11	sched @ 1
+Node: 75	 ASAP: 1	ALAP: 3	sched @ 2
+Node: 76	 ASAP: 1	ALAP: 2	sched @ 2
+Node: 77	 ASAP: 15	ALAP: 16	sched @ 16
+Node: 78	 ASAP: 14	ALAP: 14	sched @ 14
+Node: 79	 ASAP: 1	ALAP: 1	sched @ 1
+Node: 80	 ASAP: 1	ALAP: 9	sched @ 9
+total nodes before routing: 50
+total nodes before scheduling: 144
+is_modified route and reschedule: 1
+Routing Node: 81	ASAP: 1	ALAP: 1
+Routing Node: 82	ASAP: 2	ALAP: 2
+Routing Node: 83	ASAP: 3	ALAP: 3
+Routing Node: 84	ASAP: 4	ALAP: 4
+Routing Node: 85	ASAP: 5	ALAP: 5
+Routing Node: 86	ASAP: 6	ALAP: 6
+Routing Node: 87	ASAP: 7	ALAP: 7
+Routing Node: 88	ASAP: 8	ALAP: 8
+Routing Node: 89	ASAP: 9	ALAP: 9
+Routing Node: 90	ASAP: 10	ALAP: 10
+Routing Node: 91	ASAP: 11	ALAP: 11
+Routing Node: 92	ASAP: 1	ALAP: 1
+Routing Node: 93	ASAP: 2	ALAP: 2
+Routing Node: 94	ASAP: 3	ALAP: 3
+Routing Node: 92	ASAP: 1	ALAP: 1
+Routing Node: 93	ASAP: 2	ALAP: 2
+Routing Node: 94	ASAP: 3	ALAP: 3
+Routing Node: 95	ASAP: 4	ALAP: 4
+Routing Node: 96	ASAP: 5	ALAP: 5
+Routing Node: 97	ASAP: 6	ALAP: 6
+Routing Node: 98	ASAP: 7	ALAP: 7
+Routing Node: 99	ASAP: 8	ALAP: 8
+Routing Node: 103	ASAP: 2	ALAP: 2
+Routing Node: 104	ASAP: 4	ALAP: 4
+Routing Node: 105	ASAP: 10	ALAP: 10
+Routing Node: 106	ASAP: 11	ALAP: 11
+Routing Node: 107	ASAP: 12	ALAP: 12
+Routing Node: 108	ASAP: 13	ALAP: 13
+Routing Node: 109	ASAP: 14	ALAP: 14
+Routing Node: 110	ASAP: 15	ALAP: 15
+Routing Node: 111	ASAP: 16	ALAP: 16
+Routing Node: 112	ASAP: 17	ALAP: 17
+Routing Node: 113	ASAP: 18	ALAP: 18
+Routing Node: 114	ASAP: 19	ALAP: 19
+Routing Node: 115	ASAP: 2	ALAP: 2
+Routing Node: 116	ASAP: 2	ALAP: 2
+Routing Node: 117	ASAP: 3	ALAP: 3
+Routing Node: 118	ASAP: 8	ALAP: 8
+Routing Node: 119	ASAP: 9	ALAP: 9
+Routing Node: 120	ASAP: 10	ALAP: 10
+Routing Node: 121	ASAP: 11	ALAP: 11
+Routing Node: 122	ASAP: 12	ALAP: 12
+Routing Node: 123	ASAP: 13	ALAP: 13
+Routing Node: 124	ASAP: 14	ALAP: 14
+Routing Node: 125	ASAP: 15	ALAP: 15
+Routing Node: 126	ASAP: 16	ALAP: 16
+Routing Node: 127	ASAP: 9	ALAP: 9
+Routing Node: 128	ASAP: 10	ALAP: 10
+Routing Node: 129	ASAP: 11	ALAP: 11
+Routing Node: 130	ASAP: 1	ALAP: 1
+Routing Node: 131	ASAP: 2	ALAP: 2
+Routing Node: 132	ASAP: 1	ALAP: 1
+Routing Node: 133	ASAP: 2	ALAP: 2
+Routing Node: 134	ASAP: 3	ALAP: 3
+Routing Node: 135	ASAP: 1	ALAP: 1
+Routing Node: 136	ASAP: 2	ALAP: 2
+Routing Node: 137	ASAP: 1	ALAP: 1
+Routing Node: 138	ASAP: 2	ALAP: 2
+Routing Node: 139	ASAP: 3	ALAP: 3
+Routing Node: 140	ASAP: 1	ALAP: 1
+Routing Node: 141	ASAP: 11	ALAP: 11
+Routing Node: 142	ASAP: 12	ALAP: 12
+Routing Node: 143	ASAP: 13	ALAP: 13
+Routing Node: 144	ASAP: 14	ALAP: 14
+Routing Node: 145	ASAP: 15	ALAP: 15
+Routing Node: 146	ASAP: 16	ALAP: 16
+Routing Node: 147	ASAP: 17	ALAP: 17
+Routing Node: 148	ASAP: 18	ALAP: 18
+Routing Node: 149	ASAP: 19	ALAP: 19
+Routing Node: 150	ASAP: 20	ALAP: 20
+Routing Node: 151	ASAP: 15	ALAP: 15
+Routing Node: 152	ASAP: 16	ALAP: 16
+Routing Node: 153	ASAP: 17	ALAP: 17
+Routing Node: 154	ASAP: 18	ALAP: 18
+Routing Node: 155	ASAP: 19	ALAP: 19
+Routing Node: 156	ASAP: 20	ALAP: 20
+Routing Node: 157	ASAP: 21	ALAP: 21
+Routing Node: 158	ASAP: 17	ALAP: 17
+Routing Node: 159	ASAP: 18	ALAP: 18
+Routing Node: 160	ASAP: 19	ALAP: 19
+Routing Node: 161	ASAP: 20	ALAP: 20
+Routing Node: 162	ASAP: 14	ALAP: 14
+Routing Node: 163	ASAP: 15	ALAP: 15
+Routing Node: 164	ASAP: 16	ALAP: 16
+Routing Node: 165	ASAP: 17	ALAP: 17
+Routing Node: 166	ASAP: 18	ALAP: 18
+Routing Node: 167	ASAP: 19	ALAP: 19
+Routing Node: 168	ASAP: 2	ALAP: 2
+Routing Node: 169	ASAP: 16	ALAP: 16
+Routing Node: 170	ASAP: 17	ALAP: 17
+Routing Node: 171	ASAP: 18	ALAP: 18
+Routing Node: 172	ASAP: 19	ALAP: 19
+Routing Node: 173	ASAP: 2	ALAP: 2
+Routing Node: 174	ASAP: 2	ALAP: 2
+Mod Sched time: 1
+II : 12
+Node 81 is to be scheduled at time 1, modulo time 1
+Mod Sched time: 2
+II : 12
+Node 82 is to be scheduled at time 2, modulo time 2
+Mod Sched time: 3
+II : 12
+Node 83 is to be scheduled at time 3, modulo time 3
+Mod Sched time: 4
+II : 12
+Node 84 is to be scheduled at time 4, modulo time 4
+Mod Sched time: 5
+II : 12
+Node 85 is to be scheduled at time 5, modulo time 5
+Mod Sched time: 6
+II : 12
+Node 86 is to be scheduled at time 6, modulo time 6
+Mod Sched time: 7
+II : 12
+Node 87 is to be scheduled at time 7, modulo time 7
+Mod Sched time: 8
+II : 12
+Node 88 is to be scheduled at time 8, modulo time 8
+Mod Sched time: 9
+II : 12
+Node 89 is to be scheduled at time 9, modulo time 9
+Mod Sched time: 10
+II : 12
+Node 90 is to be scheduled at time 10, modulo time 10
+Mod Sched time: 11
+II : 12
+Node 91 is to be scheduled at time 11, modulo time 11
+Mod Sched time: 1
+II : 12
+Node 92 is to be scheduled at time 1, modulo time 1
+Mod Sched time: 2
+II : 12
+Node 93 is to be scheduled at time 2, modulo time 2
+Mod Sched time: 3
+II : 12
+Node 94 is to be scheduled at time 3, modulo time 3
+Mod Sched time: 4
+II : 12
+Node 95 is to be scheduled at time 4, modulo time 4
+Mod Sched time: 5
+II : 12
+Node 96 is to be scheduled at time 5, modulo time 5
+Mod Sched time: 6
+II : 12
+Node 97 is to be scheduled at time 6, modulo time 6
+Mod Sched time: 7
+II : 12
+Node 98 is to be scheduled at time 7, modulo time 7
+Mod Sched time: 8
+II : 12
+Node 99 is to be scheduled at time 8, modulo time 8
+Mod Sched time: 4
+II : 12
+Node 103 is to be scheduled at time 4, modulo time 4
+Mod Sched time: 7
+II : 12
+Node 104 is to be scheduled at time 7, modulo time 7
+Mod Sched time: 10
+II : 12
+Node 105 is to be scheduled at time 10, modulo time 10
+Mod Sched time: 11
+II : 12
+Node 106 is to be scheduled at time 11, modulo time 11
+Mod Sched time: 0
+II : 12
+Node 107 is to be scheduled at time 12, modulo time 0
+Mod Sched time: 1
+II : 12
+Node 108 is to be scheduled at time 13, modulo time 1
+Mod Sched time: 2
+II : 12
+Node 109 is to be scheduled at time 14, modulo time 2
+Mod Sched time: 3
+II : 12
+Node 110 is to be scheduled at time 15, modulo time 3
+Mod Sched time: 4
+II : 12
+Node 111 is to be scheduled at time 16, modulo time 4
+Mod Sched time: 5
+II : 12
+Node 112 is to be scheduled at time 17, modulo time 5
+Mod Sched time: 6
+II : 12
+Node 113 is to be scheduled at time 18, modulo time 6
+Mod Sched time: 7
+II : 12
+Node 114 is to be scheduled at time 19, modulo time 7
+Mod Sched time: 5
+II : 12
+Node 115 is to be scheduled at time 5, modulo time 5
+Mod Sched time: 4
+II : 12
+Node 116 is to be scheduled at time 4, modulo time 4
+Mod Sched time: 5
+II : 12
+Node 117 is to be scheduled at time 5, modulo time 5
+Mod Sched time: 8
+II : 12
+Node 118 is to be scheduled at time 8, modulo time 8
+Mod Sched time: 9
+II : 12
+Node 119 is to be scheduled at time 9, modulo time 9
+Mod Sched time: 10
+II : 12
+Node 120 is to be scheduled at time 10, modulo time 10
+Mod Sched time: 11
+II : 12
+Node 121 is to be scheduled at time 11, modulo time 11
+Mod Sched time: 0
+II : 12
+Node 122 is to be scheduled at time 12, modulo time 0
+Mod Sched time: 1
+II : 12
+Node 123 is to be scheduled at time 13, modulo time 1
+Mod Sched time: 2
+II : 12
+Node 124 is to be scheduled at time 14, modulo time 2
+Mod Sched time: 3
+II : 12
+Node 125 is to be scheduled at time 15, modulo time 3
+Mod Sched time: 4
+II : 12
+Node 126 is to be scheduled at time 16, modulo time 4
+Mod Sched time: 9
+II : 12
+Node 127 is to be scheduled at time 9, modulo time 9
+Mod Sched time: 10
+II : 12
+Node 128 is to be scheduled at time 10, modulo time 10
+Mod Sched time: 11
+II : 12
+Node 129 is to be scheduled at time 11, modulo time 11
+Mod Sched time: 2
+II : 12
+Node 130 is to be scheduled at time 2, modulo time 2
+Mod Sched time: 3
+II : 12
+Node 131 is to be scheduled at time 3, modulo time 3
+Mod Sched time: 1
+II : 12
+Node 132 is to be scheduled at time 1, modulo time 1
+Mod Sched time: 2
+II : 12
+Node 133 is to be scheduled at time 2, modulo time 2
+Mod Sched time: 3
+II : 12
+Node 134 is to be scheduled at time 3, modulo time 3
+Mod Sched time: 1
+II : 12
+Node 135 is to be scheduled at time 1, modulo time 1
+Mod Sched time: 2
+II : 12
+Node 136 is to be scheduled at time 2, modulo time 2
+Mod Sched time: 6
+II : 12
+Node 137 is to be scheduled at time 6, modulo time 6
+Mod Sched time: 7
+II : 12
+Node 138 is to be scheduled at time 7, modulo time 7
+Mod Sched time: 8
+II : 12
+Node 139 is to be scheduled at time 8, modulo time 8
+Mod Sched time: 9
+II : 12
+Node 140 is to be scheduled at time 9, modulo time 9
+Mod Sched time: 11
+II : 12
+Node 141 is to be scheduled at time 11, modulo time 11
+Mod Sched time: 0
+II : 12
+Node 142 is to be scheduled at time 12, modulo time 0
+Mod Sched time: 1
+II : 12
+Node 143 is to be scheduled at time 13, modulo time 1
+Mod Sched time: 2
+II : 12
+Node 144 is to be scheduled at time 14, modulo time 2
+Mod Sched time: 3
+II : 12
+Node 145 is to be scheduled at time 15, modulo time 3
+Mod Sched time: 4
+II : 12
+Node 146 is to be scheduled at time 16, modulo time 4
+Mod Sched time: 5
+II : 12
+Node 147 is to be scheduled at time 17, modulo time 5
+Mod Sched time: 6
+II : 12
+Node 148 is to be scheduled at time 18, modulo time 6
+Mod Sched time: 7
+II : 12
+Node 149 is to be scheduled at time 19, modulo time 7
+Mod Sched time: 8
+II : 12
+Node 150 is to be scheduled at time 20, modulo time 8
+Mod Sched time: 4
+II : 12
+Node 151 is to be scheduled at time 16, modulo time 4
+Mod Sched time: 6
+II : 12
+Node 152 is to be scheduled at time 18, modulo time 6
+Mod Sched time: 7
+II : 12
+Node 153 is to be scheduled at time 19, modulo time 7
+Mod Sched time: 8
+II : 12
+Node 154 is to be scheduled at time 20, modulo time 8
+Mod Sched time: 9
+II : 12
+Node 155 is to be scheduled at time 21, modulo time 9
+Mod Sched time: 10
+II : 12
+Node 156 is to be scheduled at time 22, modulo time 10
+Mod Sched time: 11
+II : 12
+Node 157 is to be scheduled at time 23, modulo time 11
+Mod Sched time: 1
+II : 12
+Node 158 is to be scheduled at time 25, modulo time 1
+Mod Sched time: 2
+II : 12
+Node 159 is to be scheduled at time 26, modulo time 2
+Mod Sched time: 3
+II : 12
+Node 160 is to be scheduled at time 27, modulo time 3
+Mod Sched time: 4
+II : 12
+Node 161 is to be scheduled at time 28, modulo time 4
+Mod Sched time: 2
+II : 12
+Node 162 is to be scheduled at time 14, modulo time 2
+Mod Sched time: 3
+II : 12
+Node 163 is to be scheduled at time 15, modulo time 3
+Mod Sched time: 4
+II : 12
+Node 164 is to be scheduled at time 16, modulo time 4
+Mod Sched time: 5
+II : 12
+Node 165 is to be scheduled at time 17, modulo time 5
+Mod Sched time: 6
+II : 12
+Node 166 is to be scheduled at time 18, modulo time 6
+Mod Sched time: 7
+II : 12
+Node 167 is to be scheduled at time 19, modulo time 7
+Mod Sched time: 3
+II : 12
+Node 168 is to be scheduled at time 3, modulo time 3
+Mod Sched time: 5
+II : 12
+Node 169 is to be scheduled at time 17, modulo time 5
+Mod Sched time: 6
+II : 12
+Node 170 is to be scheduled at time 18, modulo time 6
+Mod Sched time: 7
+II : 12
+Node 171 is to be scheduled at time 19, modulo time 7
+Mod Sched time: 8
+II : 12
+Node 172 is to be scheduled at time 20, modulo time 8
+Mod Sched time: 2
+II : 12
+Node 173 is to be scheduled at time 2, modulo time 2
+Mod Sched time: 10
+II : 12
+Node 174 is to be scheduled at time 10, modulo time 10
+modulo_schedule: 1	redo: 0
+failure reason: 0
+total nodes after scheduling: 144
+Success Usage: 
+PEs[0]:11
+PEs[1]:15
+PEs[2]:14
+PEs[3]:16
+PEs[4]:13
+PEs[5]:13
+PEs[6]:11
+PEs[7]:11
+PEs[8]:12
+PEs[9]:9
+PEs[10]:8
+PEs[11]:8
+j: 0	 -> 0 15 50 27 
+j: 1	 -> 1 14 83 
+j: 2	 -> 2 6 21 48 61 64 98 
+j: 3	 -> 3 72 45 142 
+j: 4	 -> 4 5 72 
+j: 5	 -> 4 5 73 
+j: 6	 -> 2 6 7 30 
+j: 7	 -> 6 7 8 
+j: 8	 -> 7 8 9 
+j: 9	 -> 8 9 10 100 
+j: 10	 -> 9 10 11 
+j: 11	 -> 10 11 12 
+j: 12	 -> 11 12 13 
+j: 13	 -> 12 13 14 73 
+j: 14	 -> 1 13 14 36 74 71 
+j: 15	 -> 0 15 16 
+j: 16	 -> 15 16 17 
+j: 17	 -> 16 17 18 
+j: 18	 -> 17 18 19 137 
+j: 19	 -> 18 19 22 
+j: 20	 -> 20 84 63 66 103 
+j: 21	 -> 2 21 85 105 
+j: 22	 -> 19 22 23 84 86 
+j: 23	 -> 22 23 24 87 
+j: 24	 -> 23 24 25 96 
+j: 25	 -> 24 25 26 108 
+j: 26	 -> 25 26 27 
+j: 27	 -> 26 0 27 28 
+j: 28	 -> 27 28 42 60 
+j: 29	 -> 29 45 99 
+j: 30	 -> 6 30 
+j: 31	 -> 31 101 
+j: 32	 -> 32 104 
+j: 33	 -> 33 106 
+j: 34	 -> 34 49 109 136 
+j: 35	 -> 35 143 
+j: 36	 -> 14 36 110 37 109 
+j: 37	 -> 36 37 119 
+j: 38	 -> 38 46 120 47 
+j: 39	 -> 39 141 
+j: 40	 -> 40 121 95 120 130 
+j: 41	 -> 41 127 126 
+j: 42	 -> 28 42 47 131 
+j: 43	 -> 43 44 
+j: 44	 -> 43 44 137 
+j: 45	 -> 29 3 45 
+j: 46	 -> 38 46 138 
+j: 47	 -> 42 38 47 
+j: 48	 -> 2 48 142 
+j: 49	 -> 34 49 143 
+j: 50	 -> 0 50 51 
+j: 51	 -> 50 51 52 
+j: 52	 -> 51 52 53 
+j: 53	 -> 52 53 54 
+j: 54	 -> 53 54 55 
+j: 55	 -> 54 55 56 
+j: 56	 -> 55 56 57 
+j: 57	 -> 56 57 58 
+j: 58	 -> 57 58 59 
+j: 59	 -> 58 59 60 
+j: 60	 -> 59 28 60 
+j: 61	 -> 2 61 62 65 
+j: 62	 -> 61 62 63 66 64 
+j: 63	 -> 62 20 63 67 65 
+j: 64	 -> 2 62 64 65 
+j: 65	 -> 61 64 63 65 66 
+j: 66	 -> 62 65 20 66 67 
+j: 67	 -> 63 66 67 68 
+j: 68	 -> 67 68 69 
+j: 69	 -> 68 69 70 
+j: 70	 -> 69 70 71 
+j: 71	 -> 70 14 71 
+j: 72	 -> 3 4 72 
+j: 73	 -> 5 13 73 
+j: 74	 -> 14 74 75 
+j: 75	 -> 74 75 76 
+j: 76	 -> 75 76 77 
+j: 77	 -> 76 77 78 
+j: 78	 -> 77 78 79 
+j: 79	 -> 78 79 80 
+j: 80	 -> 79 80 81 
+j: 81	 -> 80 81 82 
+j: 82	 -> 81 82 83 
+j: 83	 -> 82 1 83 
+j: 84	 -> 20 22 84 
+j: 85	 -> 21 85 86 
+j: 86	 -> 85 22 86 
+j: 87	 -> 23 87 88 
+j: 88	 -> 87 88 89 
+j: 89	 -> 88 89 90 
+j: 90	 -> 89 90 91 
+j: 91	 -> 90 91 92 
+j: 92	 -> 91 92 93 
+j: 93	 -> 92 93 94 
+j: 94	 -> 93 94 95 
+j: 95	 -> 94 40 95 
+j: 96	 -> 24 96 97 
+j: 97	 -> 96 97 98 
+j: 98	 -> 97 2 98 
+j: 99	 -> 29 99 100 
+j: 100	 -> 99 9 100 
+j: 101	 -> 31 101 102 
+j: 102	 -> 101 102 103 
+j: 103	 -> 102 20 103 
+j: 104	 -> 32 104 105 
+j: 105	 -> 104 21 105 
+j: 106	 -> 33 106 107 
+j: 107	 -> 106 107 108 
+j: 108	 -> 107 25 108 
+j: 109	 -> 34 36 109 
+j: 110	 -> 36 110 111 
+j: 111	 -> 110 111 112 
+j: 112	 -> 111 112 113 
+j: 113	 -> 112 113 114 
+j: 114	 -> 113 114 115 
+j: 115	 -> 114 115 116 
+j: 116	 -> 115 116 117 
+j: 117	 -> 116 117 118 
+j: 118	 -> 117 118 119 
+j: 119	 -> 118 37 119 
+j: 120	 -> 38 40 120 
+j: 121	 -> 40 121 122 
+j: 122	 -> 121 122 123 
+j: 123	 -> 122 123 124 
+j: 124	 -> 123 124 125 
+j: 125	 -> 124 125 126 
+j: 126	 -> 125 41 126 
+j: 127	 -> 41 127 128 
+j: 128	 -> 127 128 129 
+j: 129	 -> 128 129 130 
+j: 130	 -> 129 40 130 
+j: 131	 -> 42 131 132 
+j: 132	 -> 131 132 133 
+j: 133	 -> 132 133 134 
+j: 134	 -> 133 134 135 
+j: 135	 -> 134 135 136 
+j: 136	 -> 135 34 136 
+j: 137	 -> 44 18 137 
+j: 138	 -> 46 138 139 
+j: 139	 -> 138 139 140 
+j: 140	 -> 139 140 141 
+j: 141	 -> 140 39 141 
+j: 142	 -> 48 3 142 
+j: 143	 -> 49 35 143 
+left node unmapped: 153
+left node unmapped: 23
+left node unmapped: 85
+left node unmapped: 21
+left node unmapped: 92
+left node unmapped: 93
+left node unmapped: 99
+left node unmapped: 132
+left node unmapped: 76
+left node unmapped: 11
+left node unmapped: 10
+left node unmapped: 109
+left node unmapped: 146
+left node unmapped: 110
+left nodes vector: 5
+left node unmapped: 116	 Instr: 27
+left node unmapped: 75	 Instr: 20
+left node unmapped: 74	 Instr: 19
+left node unmapped: 82	 Instr: 27
+left node unmapped: 83	 Instr: 27
+47  	107  	-100  	28  	
+2  	142  	39  	0  	
+-100  	71  	-100  	-100  	
+122  	50  	-100  	-100  	
+132  	108  	73  	-100  	
+15  	92  	92  	6  	
+79  	143  	-100  	81  	
+135  	158  	36  	123  	
+109  	78  	162  	133  	
+7  	93  	93  	16  	
+136  	-100  	144  	173  	
+124  	159  	76  	130  	
+94  	160  	134  	17  	
+21  	94  	8  	168  	
+125  	145  	-100  	131  	
+110  	66  	163  	3  	
+111  	20  	-100  	18  	
+95  	-100  	-100  	9  	
+126  	151  	146  	103  	
+77  	161  	84  	164  	
+53  	-100  	19  	165  	
+112  	-100  	10  	96  	
+169  	70  	147  	4  	
+-100  	115  	117  	85  	
+113  	137  	-100  	-100  	
+11  	-100  	148  	97  	
+-100  	5  	152  	86  	
+170  	-100  	22  	166  	
+114  	-100  	-100  	98  	
+12  	138  	153  	149  	
+171  	104  	87  	167  	
+-100  	-100  	-100  	23  	
+1  	-100  	99  	-100  	
+139  	13  	150  	56  	
+-100  	88  	154  	172  	
+24  	-100  	118  	-100  	
+25  	14  	-100  	-100  	
+140  	-100  	61  	68  	
+127  	155  	89  	80  	
+-100  	-100  	-100  	119  	
+26  	105  	-100  	120  	
+-100  	60  	-100  	-100  	
+-100  	-100  	-100  	128  	
+-100  	156  	90  	174  	
+121  	106  	-100  	27  	
+141  	-100  	-100  	-100  	
+129  	157  	-100  	-100  	
+58  	-100  	-100  	91  	
+lowest left_nodes: 5
+
+Total mapping steps: 100

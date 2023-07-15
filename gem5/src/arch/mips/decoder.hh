@@ -24,23 +24,23 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Gabe Black
  */
 
 #ifndef __ARCH_MIPS_DECODER_HH__
 #define __ARCH_MIPS_DECODER_HH__
 
 #include "arch/generic/decode_cache.hh"
+#include "arch/generic/decoder.hh"
 #include "arch/mips/types.hh"
-#include "base/misc.hh"
+#include "base/logging.hh"
 #include "base/types.hh"
 #include "cpu/static_inst.hh"
 
 namespace MipsISA
 {
 
-class Decoder
+class ISA;
+class Decoder : public InstDecoder
 {
   protected:
     //The extended machine instruction being generated
@@ -48,7 +48,7 @@ class Decoder
     bool instDone;
 
   public:
-    Decoder() : instDone(false)
+    Decoder(ISA* isa = nullptr) : instDone(false)
     {}
 
     void
@@ -67,7 +67,7 @@ class Decoder
     void
     moreBytes(const PCState &pc, Addr fetchPC, MachInst inst)
     {
-        emi = inst;
+        emi = letoh(inst);
         instDone = true;
     }
 

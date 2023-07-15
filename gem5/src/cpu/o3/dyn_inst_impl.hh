@@ -36,21 +36,17 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Kevin Lim
  */
 
 #ifndef __CPU_O3_DYN_INST_IMPL_HH__
 #define __CPU_O3_DYN_INST_IMPL_HH__
 
-#include "base/cp_annotate.hh"
 #include "cpu/o3/dyn_inst.hh"
-#include "sim/full_system.hh"
 #include "debug/O3PipeView.hh"
 
 template <class Impl>
-BaseO3DynInst<Impl>::BaseO3DynInst(StaticInstPtr staticInst,
-                                   StaticInstPtr macroop,
+BaseO3DynInst<Impl>::BaseO3DynInst(const StaticInstPtr &staticInst,
+                                   const StaticInstPtr &macroop,
                                    TheISA::PCState pc, TheISA::PCState predPC,
                                    InstSeqNum seq_num, O3CPU *cpu)
     : BaseDynInst<Impl>(staticInst, macroop, pc, predPC, seq_num, cpu)
@@ -59,8 +55,8 @@ BaseO3DynInst<Impl>::BaseO3DynInst(StaticInstPtr staticInst,
 }
 
 template <class Impl>
-BaseO3DynInst<Impl>::BaseO3DynInst(StaticInstPtr _staticInst,
-                                   StaticInstPtr _macroop)
+BaseO3DynInst<Impl>::BaseO3DynInst(const StaticInstPtr &_staticInst,
+                                   const StaticInstPtr &_macroop)
     : BaseDynInst<Impl>(_staticInst, _macroop)
 {
     initVars();
@@ -106,17 +102,6 @@ template <class Impl>
 void
 BaseO3DynInst<Impl>::initVars()
 {
-    // Make sure to have the renamed register entries set to the same
-    // as the normal register entries.  It will allow the IQ to work
-    // without any modifications.
-    for (int i = 0; i < this->staticInst->numDestRegs(); i++) {
-        this->_destRegIdx[i] = this->staticInst->destRegIdx(i);
-    }
-
-    for (int i = 0; i < this->staticInst->numSrcRegs(); i++) {
-        this->_srcRegIdx[i] = this->staticInst->srcRegIdx(i);
-    }
-
     this->_readySrcRegIdx.reset();
 
     _numDestMiscRegs = 0;
@@ -196,62 +181,21 @@ BaseO3DynInst<Impl>::completeAcc(PacketPtr pkt)
 }
 
 template <class Impl>
-Fault
-BaseO3DynInst<Impl>::hwrei()
-{
-#if THE_ISA == ALPHA_ISA
-    // Can only do a hwrei when in pal mode.
-    if (!(this->instAddr() & 0x3))
-        return new AlphaISA::UnimplementedOpcodeFault;
-
-    // Set the next PC based on the value of the EXC_ADDR IPR.
-    AlphaISA::PCState pc = this->pcState();
-    pc.npc(this->cpu->readMiscRegNoEffect(AlphaISA::IPR_EXC_ADDR,
-                                          this->threadNumber));
-    this->pcState(pc);
-    if (CPA::available()) {
-        ThreadContext *tc = this->cpu->tcBase(this->threadNumber);
-        CPA::cpa()->swAutoBegin(tc, this->nextInstAddr());
-    }
-
-    // Tell CPU to clear any state it needs to if a hwrei is taken.
-    this->cpu->hwrei(this->threadNumber);
-#else
-
-#endif
-    // FIXME: XXX check for interrupts? XXX
-    return NoFault;
-}
-
-template <class Impl>
 void
-BaseO3DynInst<Impl>::trap(Fault fault)
+BaseO3DynInst<Impl>::trap(const Fault &fault)
 {
     this->cpu->trap(fault, this->threadNumber, this->staticInst);
 }
 
 template <class Impl>
-bool
-BaseO3DynInst<Impl>::simPalCheck(int palFunc)
-{
-#if THE_ISA != ALPHA_ISA
-    panic("simPalCheck called, but PAL only exists in Alpha!\n");
-#endif
-    return this->cpu->simPalCheck(palFunc, this->threadNumber);
-}
-
-template <class Impl>
 void
-BaseO3DynInst<Impl>::syscall(int64_t callnum)
+BaseO3DynInst<Impl>::syscall()
 {
-    if (FullSystem)
-        panic("Syscall emulation isn't available in FS mode.\n");
-
     // HACK: check CPU's nextPC before and after syscall. If it
     // changes, update this instruction's nextPC because the syscall
     // must have changed the nextPC.
     TheISA::PCState curPC = this->cpu->pcState(this->threadNumber);
-    this->cpu->syscall(callnum, this->threadNumber);
+    this->cpu->syscall(this->threadNumber);
     TheISA::PCState newPC = this->cpu->pcState(this->threadNumber);
     if (!(curPC == newPC)) {
         this->pcState(newPC);

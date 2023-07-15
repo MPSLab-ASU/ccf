@@ -33,8 +33,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Gabe Black
  */
 
 #ifndef __ARCH_X86_INSTS_MICROREGOP_HH__
@@ -64,7 +62,7 @@ namespace X86ISA
                 OpClass __opClass) :
             X86MicroopBase(_machInst, mnem, _instMnem, setFlags,
                     __opClass),
-            src1(_src1.idx), dest(_dest.idx),
+            src1(_src1.index()), dest(_dest.index()),
             dataSize(_dataSize), ext(_ext)
         {
             foldOBit = (dataSize == 1 && !_machInst.rex.present) ? 1 << 6 : 0;
@@ -90,12 +88,12 @@ namespace X86ISA
             RegOpBase(_machInst, mnem, _instMnem, setFlags,
                     _src1, _dest, _dataSize, _ext,
                     __opClass),
-            src2(_src2.idx)
+            src2(_src2.index())
         {
         }
 
-        std::string generateDisassembly(Addr pc,
-            const SymbolTable *symtab) const;
+        std::string generateDisassembly(
+                Addr pc, const Loader::SymbolTable *symtab) const override;
     };
 
     class RegOpImm : public RegOpBase
@@ -116,8 +114,8 @@ namespace X86ISA
         {
         }
 
-        std::string generateDisassembly(Addr pc,
-            const SymbolTable *symtab) const;
+        std::string generateDisassembly(
+                Addr pc, const Loader::SymbolTable *symtab) const override;
     };
 }
 

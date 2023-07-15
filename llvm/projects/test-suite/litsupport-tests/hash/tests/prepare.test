@@ -1,2 +1,0 @@
-RUN: rm -f /tmp/litoutput/does_not_exist
-RUN: tests/foo.sh

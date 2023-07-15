@@ -25,15 +25,10 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Gabe Black
- *          Korey Sewell
- *          Jaidev Patwardhan
- *          Zhengxing Li
- *          Deyuan Guo
  */
 
 #include "arch/mips/faults.hh"
+
 #include "arch/mips/pra_constants.hh"
 #include "base/trace.hh"
 #include "cpu/base.hh"
@@ -131,7 +126,7 @@ MipsFaultBase::setExceptionState(ThreadContext *tc, uint8_t excCode)
 }
 
 void
-MipsFaultBase::invoke(ThreadContext *tc, StaticInstPtr inst)
+MipsFaultBase::invoke(ThreadContext *tc, const StaticInstPtr &inst)
 {
     if (FullSystem) {
         DPRINTF(MipsPRA, "Fault %s encountered.\n", name());
@@ -143,7 +138,7 @@ MipsFaultBase::invoke(ThreadContext *tc, StaticInstPtr inst)
 }
 
 void
-ResetFault::invoke(ThreadContext *tc, StaticInstPtr inst)
+ResetFault::invoke(ThreadContext *tc, const StaticInstPtr &inst)
 {
     if (FullSystem) {
         DPRINTF(MipsPRA, "%s encountered.\n", name());
@@ -160,13 +155,13 @@ ResetFault::invoke(ThreadContext *tc, StaticInstPtr inst)
 }
 
 void
-SoftResetFault::invoke(ThreadContext *tc, StaticInstPtr inst)
+SoftResetFault::invoke(ThreadContext *tc, const StaticInstPtr &inst)
 {
     panic("Soft reset not implemented.\n");
 }
 
 void
-NonMaskableInterrupt::invoke(ThreadContext *tc, StaticInstPtr inst)
+NonMaskableInterrupt::invoke(ThreadContext *tc, const StaticInstPtr &inst)
 {
     panic("Non maskable interrupt not implemented.\n");
 }

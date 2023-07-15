@@ -23,25 +23,23 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Andreas Sandberg
 
 from m5.params import *
-from BaseKvmCPU import BaseKvmCPU
+from m5.SimObject import *
+
+from m5.objects.BaseKvmCPU import BaseKvmCPU
 
 class X86KvmCPU(BaseKvmCPU):
     type = 'X86KvmCPU'
     cxx_header = "cpu/kvm/x86_cpu.hh"
 
-    @classmethod
-    def export_methods(cls, code):
-        code('''
-      void dumpFpuRegs();
-      void dumpIntRegs();
-      void dumpSpecRegs();
-      void dumpXCRs();
-      void dumpXSave();
-      void dumpVCpuEvents();
-''')
+    cxx_exports = [
+        PyBindMethod("dumpFpuRegs"),
+        PyBindMethod("dumpIntRegs"),
+        PyBindMethod("dumpSpecRegs"),
+        PyBindMethod("dumpXCRs"),
+        PyBindMethod("dumpXSave"),
+        PyBindMethod("dumpVCpuEvents"),
+    ]
 
     useXSave = Param.Bool(True, "Use XSave to synchronize FPU/SIMD registers")

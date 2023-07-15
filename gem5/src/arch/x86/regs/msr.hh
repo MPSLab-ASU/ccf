@@ -24,21 +24,20 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Gabe Black
  */
 
 #ifndef __ARCH_X86_REG_MSR_HH__
 #define __ARCH_X86_REG_MSR_HH__
 
+#include <unordered_map>
+
 #include "arch/x86/regs/misc.hh"
-#include "base/hashmap.hh"
 #include "base/types.hh"
 
 namespace X86ISA
 {
 
-typedef m5::hash_map<Addr, MiscRegIndex> MsrMap;
+typedef std::unordered_map<Addr, MiscRegIndex> MsrMap;
 
 /**
  * Map between MSR addresses and their corresponding misc registers.

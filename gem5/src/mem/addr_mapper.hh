@@ -33,27 +33,26 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Andreas Hansson
  */
 
 #ifndef __MEM_ADDR_MAPPER_HH__
 #define __MEM_ADDR_MAPPER_HH__
 
-#include "mem/mem_object.hh"
+#include "mem/port.hh"
 #include "params/AddrMapper.hh"
 #include "params/RangeAddrMapper.hh"
+#include "sim/sim_object.hh"
 
 /**
  * An address mapper changes the packet addresses in going from the
- * slave port side of the mapper to the master port side. When the
- * slave port is queried for the address ranges, it also performs the
+ * response port side of the mapper to the request port side. When the
+ * response port is queried for the address ranges, it also performs the
  * necessary range updates. Note that snoop requests that travel from
- * the master port (i.e. the memory side) to the slave port are
+ * the request port (i.e. the memory side) to the response port are
  * currently not modified.
  */
 
-class AddrMapper : public MemObject
+class AddrMapper : public SimObject
 {
 
   public:
@@ -62,13 +61,10 @@ class AddrMapper : public MemObject
 
     virtual ~AddrMapper() { }
 
-    virtual BaseMasterPort& getMasterPort(const std::string& if_name,
-                                          PortID idx = InvalidPortID);
+    Port &getPort(const std::string &if_name,
+                  PortID idx=InvalidPortID) override;
 
-    virtual BaseSlavePort& getSlavePort(const std::string& if_name,
-                                        PortID idx = InvalidPortID);
-
-    virtual void init();
+    void init() override;
 
   protected:
 
@@ -102,13 +98,13 @@ class AddrMapper : public MemObject
 
     };
 
-    class MapperMasterPort : public MasterPort
+    class MapperRequestPort : public RequestPort
     {
 
       public:
 
-        MapperMasterPort(const std::string& _name, AddrMapper& _mapper)
-            : MasterPort(_name, &_mapper), mapper(_mapper)
+        MapperRequestPort(const std::string& _name, AddrMapper& _mapper)
+            : RequestPort(_name, &_mapper), mapper(_mapper)
         { }
 
       protected:
@@ -143,9 +139,9 @@ class AddrMapper : public MemObject
             return mapper.isSnooping();
         }
 
-        void recvRetry()
+        void recvReqRetry()
         {
-            mapper.recvRetryMaster();
+            mapper.recvReqRetry();
         }
 
       private:
@@ -154,16 +150,16 @@ class AddrMapper : public MemObject
 
     };
 
-    /** Instance of master port, facing the memory side */
-    MapperMasterPort masterPort;
+    /** Instance of request port, facing the memory side */
+    MapperRequestPort memSidePort;
 
-    class MapperSlavePort : public SlavePort
+    class MapperResponsePort : public ResponsePort
     {
 
       public:
 
-        MapperSlavePort(const std::string& _name, AddrMapper& _mapper)
-            : SlavePort(_name, &_mapper), mapper(_mapper)
+        MapperResponsePort(const std::string& _name, AddrMapper& _mapper)
+            : ResponsePort(_name, &_mapper), mapper(_mapper)
         { }
 
       protected:
@@ -193,9 +189,9 @@ class AddrMapper : public MemObject
             return mapper.getAddrRanges();
         }
 
-        void recvRetry()
+        void recvRespRetry()
         {
-            mapper.recvRetrySlave();
+            mapper.recvRespRetry();
         }
 
       private:
@@ -204,8 +200,8 @@ class AddrMapper : public MemObject
 
     };
 
-    /** Instance of slave port, i.e. on the CPU side */
-    MapperSlavePort slavePort;
+    /** Instance of response port, i.e. on the CPU side */
+    MapperResponsePort cpuSidePort;
 
     void recvFunctional(PacketPtr pkt);
 
@@ -227,9 +223,9 @@ class AddrMapper : public MemObject
 
     bool isSnooping() const;
 
-    void recvRetryMaster();
+    void recvReqRetry();
 
-    void recvRetrySlave();
+    void recvRespRetry();
 
     void recvRangeChange();
 };

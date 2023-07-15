@@ -24,13 +24,12 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Steve Raasch
  */
 
 #ifndef __CPU_FUNC_UNIT_HH__
 #define __CPU_FUNC_UNIT_HH__
 
+#include <array>
 #include <bitset>
 #include <string>
 #include <vector>
@@ -52,11 +51,11 @@ class OpDesc : public SimObject
   public:
     OpClass opClass;
     Cycles opLat;
-    Cycles issueLat;
+    bool pipelined;
 
     OpDesc(const OpDescParams *p)
         : SimObject(p), opClass(p->opClass), opLat(p->opLat),
-          issueLat(p->issueLat) {};
+          pipelined(p->pipelined) {};
 };
 
 class FUDesc : public SimObject
@@ -84,8 +83,8 @@ typedef std::vector<FUDesc *>::const_iterator FUDDiterator;
 class FuncUnit
 {
   private:
-    unsigned opLatencies[Num_OpClasses];
-    unsigned issueLatencies[Num_OpClasses];
+    std::array<unsigned, Num_OpClasses> opLatencies;
+    std::array<bool, Num_OpClasses> pipelined;
     std::bitset<Num_OpClasses> capabilityList;
 
   public:
@@ -94,13 +93,13 @@ class FuncUnit
 
     std::string name;
 
-    void addCapability(OpClass cap, unsigned oplat, unsigned issuelat);
+    void addCapability(OpClass cap, unsigned oplat, bool pipelined);
 
     bool provides(OpClass capability);
     std::bitset<Num_OpClasses> capabilities();
 
     unsigned &opLatency(OpClass capability);
-    unsigned issueLatency(OpClass capability);
+    bool isPipelined(OpClass capability);
 };
 
 #endif // __FU_POOL_HH__

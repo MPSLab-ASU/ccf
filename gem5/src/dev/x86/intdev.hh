@@ -36,211 +36,114 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Gabe Black
  */
 
 #ifndef __DEV_X86_INTDEV_HH__
 #define __DEV_X86_INTDEV_HH__
 
 #include <cassert>
-#include <list>
+#include <functional>
 #include <string>
 
-#include "arch/x86/intmessage.hh"
-#include "arch/x86/x86_traits.hh"
-#include "mem/mem_object.hh"
-#include "mem/mport.hh"
-#include "params/X86IntLine.hh"
-#include "params/X86IntSinkPin.hh"
-#include "params/X86IntSourcePin.hh"
+#include "base/cast.hh"
+#include "mem/tport.hh"
 #include "sim/sim_object.hh"
 
-namespace X86ISA {
-
-typedef std::list<int> ApicList;
-
-class IntDevice
+namespace X86ISA
 {
-  protected:
-    class IntSlavePort : public MessageSlavePort
+
+template <class Device>
+class IntResponsePort : public SimpleTimingPort
+{
+    Device * device;
+
+  public:
+    IntResponsePort(const std::string& _name, SimObject* _parent,
+                 Device* dev) :
+        SimpleTimingPort(_name, _parent), device(dev)
     {
-        IntDevice * device;
+    }
 
-      public:
-        IntSlavePort(const std::string& _name, MemObject* _parent,
-                     IntDevice* dev) :
-            MessageSlavePort(_name, _parent), device(dev)
-        {
-        }
+    AddrRangeList
+    getAddrRanges() const
+    {
+        return device->getIntAddrRange();
+    }
 
-        AddrRangeList getAddrRanges() const
-        {
-            return device->getIntAddrRange();
-        }
+    Tick
+    recvAtomic(PacketPtr pkt)
+    {
+        panic_if(pkt->cmd != MemCmd::WriteReq,
+                "%s received unexpected command %s from %s.\n",
+                name(), pkt->cmd.toString(), getPeer());
+        pkt->headerDelay = pkt->payloadDelay = 0;
+        return device->recvMessage(pkt);
+    }
+};
 
-        Tick recvMessage(PacketPtr pkt)
-        {
-            // @todo someone should pay for this
-            pkt->busFirstWordDelay = pkt->busLastWordDelay = 0;
-            return device->recvMessage(pkt);
-        }
+template<class T>
+PacketPtr
+buildIntPacket(Addr addr, T payload)
+{
+    RequestPtr req = std::make_shared<Request>(
+        addr, sizeof(T), Request::UNCACHEABLE, Request::intRequestorId);
+    PacketPtr pkt = new Packet(req, MemCmd::WriteReq);
+    pkt->allocate();
+    pkt->setRaw<T>(payload);
+    return pkt;
+}
+
+template <class Device>
+class IntRequestPort : public QueuedRequestPort
+{
+  private:
+    ReqPacketQueue reqQueue;
+    SnoopRespPacketQueue snoopRespQueue;
+
+    Device* device;
+    Tick latency;
+
+    typedef std::function<void(PacketPtr)> OnCompletionFunc;
+    struct OnCompletion : public Packet::SenderState
+    {
+        OnCompletionFunc func;
+        OnCompletion(OnCompletionFunc _func) : func(_func) {}
     };
-
-    class IntMasterPort : public MessageMasterPort
-    {
-        IntDevice* device;
-        Tick latency;
-      public:
-        IntMasterPort(const std::string& _name, MemObject* _parent,
-                      IntDevice* dev, Tick _latency) :
-            MessageMasterPort(_name, _parent), device(dev), latency(_latency)
-        {
-        }
-
-        Tick recvResponse(PacketPtr pkt)
-        {
-            return device->recvResponse(pkt);
-        }
-
-        // This is x86 focused, so if this class becomes generic, this would
-        // need to be moved into a subclass.
-        void sendMessage(ApicList apics,
-                TriggerIntMessage message, bool timing);
-    };
-
-    IntMasterPort intMasterPort;
+    // If nothing extra needs to happen, just clean up the packet.
+    static void defaultOnCompletion(PacketPtr pkt) { delete pkt; }
 
   public:
-    IntDevice(MemObject * parent, Tick latency = 0) :
-        intMasterPort(parent->name() + ".int_master", parent, this, latency)
+    IntRequestPort(const std::string& _name, SimObject* _parent,
+                  Device* dev, Tick _latency) :
+        QueuedRequestPort(_name, _parent, reqQueue, snoopRespQueue),
+        reqQueue(*_parent, *this), snoopRespQueue(*_parent, *this),
+        device(dev), latency(_latency)
     {
     }
 
-    virtual ~IntDevice()
-    {}
-
-    virtual void init();
-
-    virtual void
-    signalInterrupt(int line)
+    bool
+    recvTimingResp(PacketPtr pkt) override
     {
-        panic("signalInterrupt not implemented.\n");
-    }
-
-    virtual void
-    raiseInterruptPin(int number)
-    {
-        panic("raiseInterruptPin not implemented.\n");
-    }
-
-    virtual void
-    lowerInterruptPin(int number)
-    {
-        panic("lowerInterruptPin not implemented.\n");
-    }
-
-    virtual Tick
-    recvMessage(PacketPtr pkt)
-    {
-        panic("recvMessage not implemented.\n");
-        return 0;
-    }
-
-    virtual Tick
-    recvResponse(PacketPtr pkt)
-    {
-        return 0;
-    }
-
-    virtual AddrRangeList
-    getIntAddrRange() const
-    {
-        panic("intAddrRange not implemented.\n");
-    }
-};
-
-class IntSinkPin : public SimObject
-{
-  public:
-    IntDevice * device;
-    int number;
-
-    typedef X86IntSinkPinParams Params;
-
-    const Params *
-    params() const
-    {
-        return dynamic_cast<const Params *>(_params);
-    }
-
-    IntSinkPin(Params *p) : SimObject(p),
-            device(dynamic_cast<IntDevice *>(p->device)), number(p->number)
-    {
-        assert(device);
-    }
-};
-
-class IntSourcePin : public SimObject
-{
-  protected:
-    std::vector<IntSinkPin *> sinks;
-
-  public:
-    typedef X86IntSourcePinParams Params;
-
-    const Params *
-    params() const
-    {
-        return dynamic_cast<const Params *>(_params);
+        assert(pkt->isResponse());
+        auto *oc = safe_cast<OnCompletion *>(pkt->popSenderState());
+        oc->func(pkt);
+        delete oc;
+        return true;
     }
 
     void
-    addSink(IntSinkPin *sink)
+    sendMessage(PacketPtr pkt, bool timing,
+            OnCompletionFunc func=defaultOnCompletion)
     {
-        sinks.push_back(sink);
-    }
-
-    void
-    raise()
-    {
-        for (int i = 0; i < sinks.size(); i++) {
-            const IntSinkPin &pin = *sinks[i];
-            pin.device->raiseInterruptPin(pin.number);
+        if (timing) {
+            pkt->pushSenderState(new OnCompletion(func));
+            schedTimingReq(pkt, curTick() + latency);
+            // The target handles cleaning up the packet in timing mode.
+        } else {
+            // ignore the latency involved in the atomic transaction
+            sendAtomic(pkt);
+            func(pkt);
         }
-    }
-    
-    void
-    lower()
-    {
-        for (int i = 0; i < sinks.size(); i++) {
-            const IntSinkPin &pin = *sinks[i];
-            pin.device->lowerInterruptPin(pin.number);
-        }
-    }
-
-    IntSourcePin(Params *p) : SimObject(p)
-    {}
-};
-
-class IntLine : public SimObject
-{
-  protected:
-    IntSourcePin *source;
-    IntSinkPin *sink;
-
-  public:
-    typedef X86IntLineParams Params;
-
-    const Params *
-    params() const
-    {
-        return dynamic_cast<const Params *>(_params);
-    }
-
-    IntLine(Params *p) : SimObject(p), source(p->source), sink(p->sink)
-    {
-        source->addSink(sink);
     }
 };
 

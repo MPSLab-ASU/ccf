@@ -23,19 +23,14 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Nilay Vaish
 
 import m5, os, optparse, sys
 from m5.objects import *
-m5.util.addToPath('../configs/common')
-from Benchmarks import SysConfig
-import FSConfig
-
-m5.util.addToPath('../configs/ruby')
-m5.util.addToPath('../configs/topologies')
-import Ruby
-import Options
+m5.util.addToPath('../configs/')
+from common.Benchmarks import SysConfig
+from common import FSConfig, SysPaths
+from ruby import Ruby
+from common import Options
 
 # Add the ruby specific and protocol specific options
 parser = optparse.OptionParser()
@@ -54,9 +49,10 @@ options.l2_assoc=2
 options.num_cpus = 2
 
 #the system
-mdesc = SysConfig(disk = 'linux-x86.img')
+mdesc = SysConfig(disks = ['linux-x86.img'])
 system = FSConfig.makeLinuxX86System('timing', options.num_cpus,
                                      mdesc=mdesc, Ruby=True)
+system.kernel = SysPaths.binary('x86_64-vmlinux-2.6.22.9')
 # Dummy voltage domain for all our clock domains
 system.voltage_domain = VoltageDomain(voltage = options.sys_voltage)
 
@@ -66,33 +62,30 @@ system.clk_domain = SrcClockDomain(clock = '1GHz',
 system.cpu_clk_domain = SrcClockDomain(clock = '2GHz',
                                        voltage_domain = system.voltage_domain)
 system.cpu = [TimingSimpleCPU(cpu_id=i, clk_domain = system.cpu_clk_domain)
-              for i in xrange(options.num_cpus)]
+              for i in range(options.num_cpus)]
 
-Ruby.create_system(options, system, system.piobus, system._dma_ports)
+Ruby.create_system(options, True, system, system.iobus, system._dma_ports)
 
 # Create a seperate clock domain for Ruby
 system.ruby.clk_domain = SrcClockDomain(clock = options.ruby_clock,
                                         voltage_domain = system.voltage_domain)
 
+# Connect the ruby io port to the PIO bus,
+# assuming that there is just one such port.
+system.iobus.master = system.ruby._io_port.slave
+
 for (i, cpu) in enumerate(system.cpu):
     # create the interrupt controller
     cpu.createInterruptController()
     # Tie the cpu ports to the correct ruby system ports
-    cpu.icache_port = system.ruby._cpu_ruby_ports[i].slave
-    cpu.dcache_port = system.ruby._cpu_ruby_ports[i].slave
-    cpu.itb.walker.port = system.ruby._cpu_ruby_ports[i].slave
-    cpu.dtb.walker.port = system.ruby._cpu_ruby_ports[i].slave
-    cpu.interrupts.pio = system.piobus.master
-    cpu.interrupts.int_master = system.piobus.slave
-    cpu.interrupts.int_slave = system.piobus.master
+    cpu.icache_port = system.ruby._cpu_ports[i].slave
+    cpu.dcache_port = system.ruby._cpu_ports[i].slave
+    cpu.itb.walker.port = system.ruby._cpu_ports[i].slave
+    cpu.dtb.walker.port = system.ruby._cpu_ports[i].slave
 
-    # Set access_phys_mem to True for ruby port
-    system.ruby._cpu_ruby_ports[i].access_phys_mem = True
-
-system.physmem = [DDR3_1600_x64(range = r)
-                  for r in system.mem_ranges]
-for i in xrange(len(system.physmem)):
-    system.physmem[i].port = system.piobus.master
+    cpu.interrupts[0].pio = system.ruby._cpu_ports[i].master
+    cpu.interrupts[0].int_master = system.ruby._cpu_ports[i].slave
+    cpu.interrupts[0].int_slave = system.ruby._cpu_ports[i].master
 
 root = Root(full_system = True, system = system)
 m5.ticks.setGlobalFrequency('1THz')

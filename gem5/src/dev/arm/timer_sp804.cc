@@ -33,29 +33,31 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Ali Saidi
  */
+
+#include "dev/arm/timer_sp804.hh"
 
 #include "base/intmath.hh"
 #include "base/trace.hh"
 #include "debug/Checkpoint.hh"
 #include "debug/Timer.hh"
 #include "dev/arm/base_gic.hh"
-#include "dev/arm/timer_sp804.hh"
 #include "mem/packet.hh"
 #include "mem/packet_access.hh"
 
 Sp804::Sp804(Params *p)
-    : AmbaPioDevice(p, 0xfff), gic(p->gic),
-      timer0(name() + ".timer0", this, p->int_num0, p->clock0),
-      timer1(name() + ".timer1", this, p->int_num1, p->clock1)
+    : AmbaPioDevice(p, 0x1000),
+      timer0(name() + ".timer0", this, p->int0->get(), p->clock0),
+      timer1(name() + ".timer1", this, p->int1->get(), p->clock1)
 {
 }
 
-Sp804::Timer::Timer(std::string __name, Sp804 *_parent, int int_num, Tick _clock)
-    : _name(__name), parent(_parent), intNum(int_num), clock(_clock), control(0x20),
-      rawInt(false), pendingInt(false), loadValue(0xffffffff), zeroEvent(this)
+Sp804::Timer::Timer(std::string __name, Sp804 *_parent,
+                    ArmInterruptPin *_interrupt, Tick _clock)
+    : _name(__name), parent(_parent), interrupt(_interrupt),
+      clock(_clock), control(0x20),
+      rawInt(false), pendingInt(false), loadValue(0xffffffff),
+      zeroEvent([this]{ counterAtZero(); }, name())
 {
 }
 
@@ -66,7 +68,6 @@ Sp804::read(PacketPtr pkt)
     assert(pkt->getAddr() >= pioAddr && pkt->getAddr() < pioAddr + pioSize);
     assert(pkt->getSize() == 4);
     Addr daddr = pkt->getAddr() - pioAddr;
-    pkt->allocate();
     DPRINTF(Timer, "Reading from DualTimer at offset: %#x\n", daddr);
 
     if (daddr < Timer::Size)
@@ -85,7 +86,7 @@ Sp804::Timer::read(PacketPtr pkt, Addr daddr)
 {
     switch(daddr) {
       case LoadReg:
-        pkt->set<uint32_t>(loadValue);
+        pkt->setLE<uint32_t>(loadValue);
         break;
       case CurrentReg:
         DPRINTF(Timer, "Event schedule for %d, clock=%d, prescale=%d\n",
@@ -94,25 +95,26 @@ Sp804::Timer::read(PacketPtr pkt, Addr daddr)
         time = zeroEvent.when() - curTick();
         time = time / clock / power(16, control.timerPrescale);
         DPRINTF(Timer, "-- returning counter at %d\n", time);
-        pkt->set<uint32_t>(time);
+        pkt->setLE<uint32_t>(time);
         break;
       case ControlReg:
-        pkt->set<uint32_t>(control);
+        pkt->setLE<uint32_t>(control);
         break;
       case RawISR:
-        pkt->set<uint32_t>(rawInt);
+        pkt->setLE<uint32_t>(rawInt);
         break;
       case MaskedISR:
-        pkt->set<uint32_t>(pendingInt);
+        pkt->setLE<uint32_t>(pendingInt);
         break;
       case BGLoad:
-        pkt->set<uint32_t>(loadValue);
+        pkt->setLE<uint32_t>(loadValue);
         break;
       default:
         panic("Tried to read SP804 timer at offset %#x\n", daddr);
         break;
     }
-    DPRINTF(Timer, "Reading %#x from Timer at offset: %#x\n", pkt->get<uint32_t>(), daddr);
+    DPRINTF(Timer, "Reading %#x from Timer at offset: %#x\n",
+            pkt->getLE<uint32_t>(), daddr);
 }
 
 Tick
@@ -121,7 +123,6 @@ Sp804::write(PacketPtr pkt)
     assert(pkt->getAddr() >= pioAddr && pkt->getAddr() < pioAddr + pioSize);
     assert(pkt->getSize() == 4);
     Addr daddr = pkt->getAddr() - pioAddr;
-    pkt->allocate();
     DPRINTF(Timer, "Writing to DualTimer at offset: %#x\n", daddr);
 
     if (daddr < Timer::Size)
@@ -137,10 +138,11 @@ Sp804::write(PacketPtr pkt)
 void
 Sp804::Timer::write(PacketPtr pkt, Addr daddr)
 {
-    DPRINTF(Timer, "Writing %#x to Timer at offset: %#x\n", pkt->get<uint32_t>(), daddr);
+    DPRINTF(Timer, "Writing %#x to Timer at offset: %#x\n",
+            pkt->getLE<uint32_t>(), daddr);
     switch (daddr) {
       case LoadReg:
-        loadValue = pkt->get<uint32_t>();
+        loadValue = pkt->getLE<uint32_t>();
         restartCounter(loadValue);
         break;
       case CurrentReg:
@@ -149,7 +151,7 @@ Sp804::Timer::write(PacketPtr pkt, Addr daddr)
       case ControlReg:
         bool old_enable;
         old_enable = control.timerEnable;
-        control = pkt->get<uint32_t>();
+        control = pkt->getLE<uint32_t>();
         if ((old_enable == 0) && control.timerEnable)
             restartCounter(loadValue);
         break;
@@ -158,11 +160,11 @@ Sp804::Timer::write(PacketPtr pkt, Addr daddr)
         if (pendingInt) {
             pendingInt = false;
             DPRINTF(Timer, "Clearing interrupt\n");
-            parent->gic->clearInt(intNum);
+            interrupt->clear();
         }
         break;
       case BGLoad:
-        loadValue = pkt->get<uint32_t>();
+        loadValue = pkt->getLE<uint32_t>();
         break;
       default:
         panic("Tried to write SP804 timer at offset %#x\n", daddr);
@@ -205,7 +207,7 @@ Sp804::Timer::counterAtZero()
         pendingInt = true;
     if (pendingInt && !old_pending) {
         DPRINTF(Timer, "-- Causing interrupt\n");
-        parent->gic->sendInt(intNum);
+        interrupt->raise();
     }
 
     if (control.oneShot)
@@ -219,7 +221,7 @@ Sp804::Timer::counterAtZero()
 }
 
 void
-Sp804::Timer::serialize(std::ostream &os)
+Sp804::Timer::serialize(CheckpointOut &cp) const
 {
     DPRINTF(Checkpoint, "Serializing Arm Sp804\n");
 
@@ -241,7 +243,7 @@ Sp804::Timer::serialize(std::ostream &os)
 }
 
 void
-Sp804::Timer::unserialize(Checkpoint *cp, const std::string &section)
+Sp804::Timer::unserialize(CheckpointIn &cp)
 {
     DPRINTF(Checkpoint, "Unserializing Arm Sp804\n");
 
@@ -266,19 +268,17 @@ Sp804::Timer::unserialize(Checkpoint *cp, const std::string &section)
 
 
 void
-Sp804::serialize(std::ostream &os)
+Sp804::serialize(CheckpointOut &cp) const
 {
-    nameOut(os, csprintf("%s.timer0", name()));
-    timer0.serialize(os);
-    nameOut(os, csprintf("%s.timer1", name()));
-    timer1.serialize(os);
+    timer0.serializeSection(cp, "timer0");
+    timer1.serializeSection(cp, "timer1");
 }
 
 void
-Sp804::unserialize(Checkpoint *cp, const std::string &section)
+Sp804::unserialize(CheckpointIn &cp)
 {
-    timer0.unserialize(cp, csprintf("%s.timer0", section));
-    timer1.unserialize(cp, csprintf("%s.timer1", section));
+    timer0.unserializeSection(cp, "timer0");
+    timer1.unserializeSection(cp, "timer1");
 }
 
 Sp804 *

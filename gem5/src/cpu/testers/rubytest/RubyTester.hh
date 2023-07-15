@@ -47,20 +47,22 @@
 #include <vector>
 
 #include "cpu/testers/rubytest/CheckTable.hh"
-#include "mem/ruby/common/Global.hh"
-#include "mem/ruby/common/SubBlock.hh"
-#include "mem/ruby/system/RubyPort.hh"
-#include "mem/mem_object.hh"
 #include "mem/packet.hh"
+#include "mem/port.hh"
+#include "mem/ruby/common/SubBlock.hh"
+#include "mem/ruby/common/TypeDefines.hh"
 #include "params/RubyTester.hh"
+#include "sim/clocked_object.hh"
 
-class RubyTester : public MemObject
+class RubyTester : public ClockedObject
 {
   public:
-    class CpuPort : public MasterPort
+    class CpuPort : public RequestPort
     {
       private:
         RubyTester *tester;
+        // index for m_last_progress_vector and hitCallback
+        PortID globalIdx;
 
       public:
         //
@@ -69,13 +71,15 @@ class RubyTester : public MemObject
         // RubyPorts that support both types of requests, separate InstOnly
         // and DataOnly CpuPorts will map to that RubyPort
 
-        CpuPort(const std::string &_name, RubyTester *_tester, PortID _id)
-            : MasterPort(_name, _tester, _id), tester(_tester)
+        CpuPort(const std::string &_name, RubyTester *_tester, PortID _id,
+                PortID _index)
+            : RequestPort(_name, _tester, _id), tester(_tester),
+              globalIdx(_index)
         {}
 
       protected:
         virtual bool recvTimingResp(PacketPtr pkt);
-        virtual void recvRetry()
+        virtual void recvReqRetry()
         { panic("%s does not expect a retry\n", name()); }
     };
 
@@ -83,7 +87,7 @@ class RubyTester : public MemObject
     {
         SubBlock subBlock;
 
-        SenderState(Address addr, int size) : subBlock(addr, size) {}
+        SenderState(Addr addr, int size) : subBlock(addr, size) {}
 
     };
 
@@ -91,15 +95,16 @@ class RubyTester : public MemObject
     RubyTester(const Params *p);
     ~RubyTester();
 
-    virtual BaseMasterPort &getMasterPort(const std::string &if_name,
-                                          PortID idx = InvalidPortID);
+    Port &getPort(const std::string &if_name,
+                  PortID idx=InvalidPortID) override;
 
-    bool isInstReadableCpuPort(int idx);
+    bool isInstOnlyCpuPort(int idx);
+    bool isInstDataCpuPort(int idx);
 
-    MasterPort* getReadableCpuPort(int idx);
-    MasterPort* getWritableCpuPort(int idx);
+    RequestPort* getReadableCpuPort(int idx);
+    RequestPort* getWritableCpuPort(int idx);
 
-    virtual void init();
+    void init() override;
 
     void wakeup();
 
@@ -112,24 +117,11 @@ class RubyTester : public MemObject
     void print(std::ostream& out) const;
     bool getCheckFlush() { return m_check_flush; }
 
-    MasterID masterId() { return _masterId; }
+    RequestorID requestorId() { return _requestorId; }
   protected:
-    class CheckStartEvent : public Event
-    {
-      private:
-        RubyTester *tester;
+    EventFunctionWrapper checkStartEvent;
 
-      public:
-        CheckStartEvent(RubyTester *_tester)
-            : Event(CPU_Tick_Pri), tester(_tester)
-        {}
-        void process() { tester->wakeup(); }
-        virtual const char *description() const { return "RubyTester tick"; }
-    };
-
-    CheckStartEvent checkStartEvent;
-
-    MasterID _masterId;
+    RequestorID _requestorId;
 
   private:
     void hitCallback(NodeID proc, SubBlock* data);
@@ -141,19 +133,20 @@ class RubyTester : public MemObject
     RubyTester& operator=(const RubyTester& obj);
 
     CheckTable* m_checkTable_ptr;
-    std::vector<Time> m_last_progress_vector;
+    std::vector<Cycles> m_last_progress_vector;
 
     int m_num_cpus;
-    uint64 m_checks_completed;
-    std::vector<MasterPort*> writePorts;
-    std::vector<MasterPort*> readPorts;
-    uint64 m_checks_to_complete;
+    uint64_t m_checks_completed;
+    std::vector<RequestPort*> writePorts;
+    std::vector<RequestPort*> readPorts;
+    uint64_t m_checks_to_complete;
     int m_deadlock_threshold;
     int m_num_writers;
     int m_num_readers;
     int m_wakeup_frequency;
     bool m_check_flush;
-    int m_num_inst_ports;
+    int m_num_inst_only_ports;
+    int m_num_inst_data_ports;
 };
 
 inline std::ostream&

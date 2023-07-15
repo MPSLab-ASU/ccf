@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2015 LabWare
  * Copyright (c) 2002-2005 The Regents of The University of Michigan
  * All rights reserved.
  *
@@ -24,8 +25,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Nathan Binkert
  */
 
 #ifndef __ARCH_SPARC_REMOTE_GDB_HH__
@@ -33,10 +32,7 @@
 
 #include <map>
 
-#include "arch/sparc/types.hh"
-#include "base/pollevent.hh"
 #include "base/remote_gdb.hh"
-#include "cpu/pc_event.hh"
 
 class System;
 class ThreadContext;
@@ -47,32 +43,69 @@ namespace SparcISA
 class RemoteGDB : public BaseRemoteGDB
 {
   protected:
-    enum RegisterConstants
-    {
-        RegG0 = 0, RegO0 = 8, RegL0 = 16, RegI0 = 24,
-        RegF0 = 32,
-        RegPc = 64, RegNpc, RegState, RegFsr, RegFprs, RegY,
-        /*RegState contains data in same format as tstate */
-        Reg32Y = 64, Reg32Psr = 65, Reg32Tbr = 66, Reg32Pc = 67,
-        Reg32Npc = 68, Reg32Fsr = 69, Reg32Csr = 70,
-        NumGDBRegs
-    };
-
-  public:
-    RemoteGDB(System *system, ThreadContext *context);
-
     bool acc(Addr addr, size_t len);
 
-  protected:
-    void getregs();
-    void setregs();
+    class SPARCGdbRegCache : public BaseGdbRegCache
+    {
+      using BaseGdbRegCache::BaseGdbRegCache;
+      private:
+        struct {
+            uint32_t gpr[32];
+            uint32_t hole[32];
+            uint32_t y;
+            uint32_t psr;
+            uint32_t wim;
+            uint32_t tbr;
+            uint32_t pc;
+            uint32_t npc;
+            uint32_t fsr;
+            uint32_t csr;
+        } r;
+      public:
+        char *data() const { return (char *)&r; }
+        size_t size() const { return sizeof(r); }
+        void getRegs(ThreadContext*);
+        void setRegs(ThreadContext*) const;
+        const std::string
+        name() const
+        {
+            return gdb->name() + ".SPARCGdbRegCache";
+        }
+    };
 
-    void clearSingleStep();
-    void setSingleStep();
+    class SPARC64GdbRegCache : public BaseGdbRegCache
+    {
+      using BaseGdbRegCache::BaseGdbRegCache;
+      private:
+        struct {
+            uint64_t gpr[32];
+            uint64_t fpr[32];
+            uint64_t pc;
+            uint64_t npc;
+            uint64_t state;
+            uint64_t fsr;
+            uint64_t fprs;
+            uint64_t y;
+        } r;
+      public:
+        char *data() const { return (char *)&r; }
+        size_t size() const { return sizeof(r); }
+        void getRegs(ThreadContext*);
+        void setRegs(ThreadContext*) const;
+        const std::string
+        name() const
+        {
+            return gdb->name() + ".SPARC64GdbRegCache";
+        }
+    };
 
-    Addr nextBkpt;
+    SPARCGdbRegCache regCache32;
+    SPARC64GdbRegCache regCache64;
+
+  public:
+    RemoteGDB(System *_system, ThreadContext *tc, int _port);
+    BaseGdbRegCache *gdbRegs();
 };
-
-}
+} // namespace SparcISA
 
 #endif /* __ARCH_SPARC_REMOTE_GDB_H__ */

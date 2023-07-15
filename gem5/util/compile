@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
 # Copyright (c) 2006 The Regents of The University of Michigan
 # All rights reserved.
 #
@@ -24,8 +24,6 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Nathan Binkert
 
 import os, re, sys
 from os.path import isdir, isfile, join as joinpath
@@ -147,7 +145,7 @@ add_option('-E', "--experimental", action='store_true', default=False,
            help="enable experimental builds")
 add_option('-v', "--verbose", default=False, action='store_true',
            help="be verbose")
-          
+
 set_group("Output binary types")
 bool_option("debug", default=False, help="compile debug binaries")
 bool_option("opt", default=False, help="compile opt binaries")
@@ -157,7 +155,6 @@ add_option('-a', "--all-bin", default=False, action='store_true',
            help="compile debug, opt, and fast binaries")
 
 set_group("ISA options")
-bool_option("alpha", default=False, help="compile Alpha")
 bool_option("mips", default=False, help="compile MIPS")
 bool_option("sparc", default=False, help="compile SPARC")
 add_option('-i', "--all-isa", default=False, action='store_true',
@@ -200,20 +197,14 @@ if not binaries:
     binaries.append('m5.debug')
 
 if options.all_isa:
-    options.alpha = True
     options.mips = True
     options.sparc = True
 
 isas = []
-if options.alpha:
-    isas.append('alpha')
 if options.mips:
     isas.append('mips')
 if options.sparc:
     isas.append('sparc')
-
-if not isas:
-    isas.append('alpha')
 
 modes = []
 if options.syscall:
@@ -229,10 +220,9 @@ if not modes:
 #
 
 # valid combinations of ISA and emulation mode
-valid = { ('alpha', 'syscall') : 'ALPHA_SE',
-          ('alpha', 'fullsys') : 'ALPHA_FS',
-          ('mips',  'syscall') : 'MIPS_SE',
-          ('sparc', 'syscall') : 'SPARC_SE' }
+valid = {
+    ('mips',  'syscall') : 'MIPS_SE',
+    ('sparc', 'syscall') : 'SPARC_SE' }
 
 # experimental combinations of ISA and emulation mode
 experiment = { ('mips', 'fullsys') : 'MIPS_FS',

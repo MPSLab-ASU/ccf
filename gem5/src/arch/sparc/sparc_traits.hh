@@ -24,8 +24,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Gabe Black
  */
 
 #ifndef __ARCH_SPARC_SPARC_TRAITS_HH__
@@ -41,15 +39,6 @@ const int MaxPGL = 2;
 
 // Number of register windows, can legally be 3 to 32
 const int NWindows = 8;
-// const int NumMicroIntRegs = 1;
-const int NumMicroIntRegs = 9;
-
-// const int NumRegularIntRegs = MaxGL * 8 + NWindows * 16;
-// const int NumMicroIntRegs = 1;
-// const int NumIntRegs = NumRegularIntRegs + NumMicroIntRegs;
-const int NumFloatRegs = 64;
-const int NumFloatArchRegs = NumFloatRegs;
-// const int NumMiscRegs = 40;
 }
 
 #endif // __ARCH_SPARC_SPARC_TRAITS_HH__

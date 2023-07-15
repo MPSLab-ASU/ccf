@@ -1,4 +1,0 @@
-Throwing in bar(): "hello world"
-Throwing in unexpected(): 42
-Caught in foo(): 42
-exit 0

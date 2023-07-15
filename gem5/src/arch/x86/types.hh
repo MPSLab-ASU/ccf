@@ -33,8 +33,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Gabe Black
  */
 
 #ifndef __ARCH_X86_TYPES_HH__
@@ -45,7 +43,6 @@
 #include "arch/generic/types.hh"
 #include "base/bitunion.hh"
 #include "base/cprintf.hh"
-#include "base/hashmap.hh"
 #include "base/types.hh"
 #include "sim/serialize.hh"
 
@@ -67,7 +64,10 @@ namespace X86ISA
         AddressSizeOverride,
         Lock,
         Rep,
-        Repne
+        Repne,
+        Vex2Prefix,
+        Vex3Prefix,
+        XopPrefix,
     };
 
     BitUnion8(LegacyPrefixVector)
@@ -104,6 +104,73 @@ namespace X86ISA
         Bitfield<0> b;
     EndBitUnion(Rex)
 
+    BitUnion8(Vex2Of3)
+        // Inverted bits from the REX prefix.
+        Bitfield<7> r;
+        Bitfield<6> x;
+        Bitfield<5> b;
+        // Selector for what would be two or three byte opcode types.
+        Bitfield<4, 0> m;
+    EndBitUnion(Vex2Of3)
+
+    BitUnion8(Vex3Of3)
+        // Bit from the REX prefix.
+        Bitfield<7> w;
+        // Inverted extra register index.
+        Bitfield<6, 3>  v;
+        // Vector length specifier.
+        Bitfield<2> l;
+        // Implied 66, F2, or F3 opcode prefix.
+        Bitfield<1, 0> p;
+    EndBitUnion(Vex3Of3)
+
+    BitUnion8(Vex2Of2)
+        // Inverted bit from the REX prefix.
+        Bitfield<7> r;
+        // Inverted extra register index.
+        Bitfield<6, 3>  v;
+        // Vector length specifier
+        Bitfield<2> l;
+        // Implied 66, F2, or F3 opcode prefix.
+        Bitfield<1, 0> p;
+    EndBitUnion(Vex2Of2)
+
+    BitUnion8(VexInfo)
+        // Extra register index.
+        Bitfield<6, 3> v;
+        // Vector length specifier.
+        Bitfield<2> l;
+        // Whether the VEX prefix was used.
+        Bitfield<0> present;
+    EndBitUnion(VexInfo)
+
+    enum OpcodeType {
+        BadOpcode,
+        OneByteOpcode,
+        TwoByteOpcode,
+        ThreeByte0F38Opcode,
+        ThreeByte0F3AOpcode,
+    };
+
+    static inline const char *
+    opcodeTypeToStr(OpcodeType type)
+    {
+        switch (type) {
+          case BadOpcode:
+            return "bad";
+          case OneByteOpcode:
+            return "one byte";
+          case TwoByteOpcode:
+            return "two byte";
+          case ThreeByte0F38Opcode:
+            return "three byte 0f38";
+          case ThreeByte0F3AOpcode:
+            return "three byte 0f3a";
+          default:
+            return "unrecognized!";
+        }
+    }
+
     BitUnion8(Opcode)
         Bitfield<7,3> top5;
         Bitfield<2,0> bottom3;
@@ -130,22 +197,19 @@ namespace X86ISA
     //The intermediate structure used by the x86 decoder.
     struct ExtMachInst
     {
+        void reset() {
+            memset(static_cast<void *>(this), 0, sizeof(*this));
+        }
+
         //Prefixes
         LegacyPrefixVector legacy;
         Rex rex;
+        VexInfo vex;
+
         //This holds all of the bytes of the opcode
         struct
         {
-            //The number of bytes in this opcode. Right now, we ignore that
-            //this can be 3 in some cases
-            uint8_t num;
-            //The first byte detected in a 2+ byte opcode. Should be 0xF0.
-            uint8_t prefixA;
-            //The second byte detected in a 3+ byte opcode. Could be 0x38-0x3F
-            //for some SSE instructions. 3dNow! instructions are handled as
-            //two byte opcodes and then split out further by the immediate
-            //byte.
-            uint8_t prefixB;
+            OpcodeType type;
             //The main opcode byte. The highest addressed byte in the opcode.
             Opcode op;
         } opcode;
@@ -173,14 +237,14 @@ namespace X86ISA
         operator << (std::ostream & os, const ExtMachInst & emi)
     {
         ccprintf(os, "\n{\n\tleg = %#x,\n\trex = %#x,\n\t"
-                     "op = {\n\t\tnum = %d,\n\t\top = %#x,\n\t\t"
-                           "prefixA = %#x,\n\t\tprefixB = %#x\n\t},\n\t"
+                     "vex/xop = %#x,\n\t"
+                     "op = {\n\t\ttype = %s,\n\t\top = %#x,\n\t\t},\n\t"
                      "modRM = %#x,\n\tsib = %#x,\n\t"
                      "immediate = %#x,\n\tdisplacement = %#x\n\t"
                      "dispSize = %d}\n",
                      (uint8_t)emi.legacy, (uint8_t)emi.rex,
-                     emi.opcode.num, (uint8_t)emi.opcode.op,
-                     emi.opcode.prefixA, emi.opcode.prefixB,
+                     (uint8_t)emi.vex,
+                     opcodeTypeToStr(emi.opcode.type), (uint8_t)emi.opcode.op,
                      (uint8_t)emi.modRM, (uint8_t)emi.sib,
                      emi.immediate, emi.displacement, emi.dispSize);
         return os;
@@ -189,35 +253,33 @@ namespace X86ISA
     inline static bool
         operator == (const ExtMachInst &emi1, const ExtMachInst &emi2)
     {
-        if(emi1.legacy != emi2.legacy)
+        if (emi1.legacy != emi2.legacy)
             return false;
-        if(emi1.rex != emi2.rex)
+        if (emi1.rex != emi2.rex)
             return false;
-        if(emi1.opcode.num != emi2.opcode.num)
+        if (emi1.vex != emi2.vex)
             return false;
-        if(emi1.opcode.op != emi2.opcode.op)
+        if (emi1.opcode.type != emi2.opcode.type)
             return false;
-        if(emi1.opcode.prefixA != emi2.opcode.prefixA)
+        if (emi1.opcode.op != emi2.opcode.op)
             return false;
-        if(emi1.opcode.prefixB != emi2.opcode.prefixB)
+        if (emi1.modRM != emi2.modRM)
             return false;
-        if(emi1.modRM != emi2.modRM)
+        if (emi1.sib != emi2.sib)
             return false;
-        if(emi1.sib != emi2.sib)
+        if (emi1.immediate != emi2.immediate)
             return false;
-        if(emi1.immediate != emi2.immediate)
+        if (emi1.displacement != emi2.displacement)
             return false;
-        if(emi1.displacement != emi2.displacement)
+        if (emi1.mode != emi2.mode)
             return false;
-        if(emi1.mode != emi2.mode)
+        if (emi1.opSize != emi2.opSize)
             return false;
-        if(emi1.opSize != emi2.opSize)
+        if (emi1.addrSize != emi2.addrSize)
             return false;
-        if(emi1.addrSize != emi2.addrSize)
+        if (emi1.stackSize != emi2.stackSize)
             return false;
-        if(emi1.stackSize != emi2.stackSize)
-            return false;
-        if(emi1.dispSize != emi2.dispSize)
+        if (emi1.dispSize != emi2.dispSize)
             return false;
         return true;
     }
@@ -240,13 +302,21 @@ namespace X86ISA
         PCState() {}
         PCState(Addr val) { set(val); }
 
+        void
+        setNPC(Addr val)
+        {
+            Base::setNPC(val);
+            _size = 0;
+        }
+
         uint8_t size() const { return _size; }
         void size(uint8_t newSize) { _size = newSize; }
 
         bool
         branching() const
         {
-            return this->npc() != this->pc() + size();
+            return (this->npc() != this->pc() + size()) ||
+                   (this->nupc() != this->upc() + 1);
         }
 
         void
@@ -264,33 +334,32 @@ namespace X86ISA
         }
 
         void
-        serialize(std::ostream &os)
+        serialize(CheckpointOut &cp) const
         {
-            Base::serialize(os);
+            Base::serialize(cp);
             SERIALIZE_SCALAR(_size);
         }
 
         void
-        unserialize(Checkpoint *cp, const std::string &section)
+        unserialize(CheckpointIn &cp)
         {
-            Base::unserialize(cp, section);
+            Base::unserialize(cp);
             UNSERIALIZE_SCALAR(_size);
         }
     };
 
 }
 
-__hash_namespace_begin
+namespace std {
     template<>
     struct hash<X86ISA::ExtMachInst> {
         size_t operator()(const X86ISA::ExtMachInst &emi) const {
-            return (((uint64_t)emi.legacy << 56) |
-                    ((uint64_t)emi.rex  << 48) |
-                    ((uint64_t)emi.modRM << 40) |
-                    ((uint64_t)emi.sib << 32) |
-                    ((uint64_t)emi.opcode.num << 24) |
-                    ((uint64_t)emi.opcode.prefixA << 16) |
-                    ((uint64_t)emi.opcode.prefixB << 8) |
+            return (((uint64_t)emi.legacy << 48) |
+                    ((uint64_t)emi.rex << 40) |
+                    ((uint64_t)emi.vex << 32) |
+                    ((uint64_t)emi.modRM << 24) |
+                    ((uint64_t)emi.sib << 16) |
+                    ((uint64_t)emi.opcode.type << 8) |
                     ((uint64_t)emi.opcode.op)) ^
                     emi.immediate ^ emi.displacement ^
                     emi.mode ^
@@ -298,17 +367,17 @@ __hash_namespace_begin
                     emi.stackSize ^ emi.dispSize;
         };
     };
-__hash_namespace_end
+}
 
 // These two functions allow ExtMachInst to be used with SERIALIZE_SCALAR
 // and UNSERIALIZE_SCALAR.
 template <>
 void
-paramOut(std::ostream &os, const std::string &name,
+paramOut(CheckpointOut &cp, const std::string &name,
          const X86ISA::ExtMachInst &machInst);
 template <>
 void
-paramIn(Checkpoint *cp, const std::string &section,
-        const std::string &name, X86ISA::ExtMachInst &machInst);
+paramIn(CheckpointIn &cp, const std::string &name,
+        X86ISA::ExtMachInst &machInst);
 
 #endif // __ARCH_X86_TYPES_HH__

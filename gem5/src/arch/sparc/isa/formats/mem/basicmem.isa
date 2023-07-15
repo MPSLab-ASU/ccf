@@ -25,9 +25,6 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Authors: Ali Saidi
-//          Gabe Black
 
 ////////////////////////////////////////////////////////////////////
 //
@@ -45,13 +42,11 @@ def template MemDeclare {{
             /// Constructor.
             %(class_name)s(ExtMachInst machInst);
 
-            %(BasicExecDeclare)s
-
-            %(EACompDeclare)s
-
-            %(InitiateAccDeclare)s
-
-            %(CompleteAccDeclare)s
+            Fault execute(ExecContext *, Trace::InstRecord *) const override;
+            Fault initiateAcc(ExecContext *,
+                              Trace::InstRecord *) const override;
+            Fault completeAcc(PacketPtr, ExecContext *,
+                              Trace::InstRecord *) const override;
         };
 }};
 
@@ -73,8 +68,6 @@ let {{
         exec_output = doDualSplitExecute(code, postacc_code, addrCalcReg,
                 addrCalcImm, execute, faultCode, name, name + "Imm",
                 Name, Name + "Imm", asi, opt_flags)
-        exec_output +=  EACompExecute.subst(iop);
-        exec_output +=  EACompExecute.subst(iop_imm);
         return (header_output, decoder_output, exec_output, decode_block)
 }};
 

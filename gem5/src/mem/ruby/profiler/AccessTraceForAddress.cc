@@ -26,8 +26,9 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "mem/ruby/common/Histogram.hh"
 #include "mem/ruby/profiler/AccessTraceForAddress.hh"
+
+#include "mem/ruby/common/Histogram.hh"
 
 AccessTraceForAddress::~AccessTraceForAddress()
 {
@@ -64,9 +65,9 @@ AccessTraceForAddress::update(RubyRequestType type,
 {
     m_touched_by.add(cpu);
     m_total++;
-    if(type == RubyRequestType_ATOMIC) {
+    if (type == RubyRequestType_ATOMIC) {
         m_atomics++;
-    } else if(type == RubyRequestType_LD){
+    } else if (type == RubyRequestType_LD){
         m_loads++;
     } else if (type == RubyRequestType_ST){
         m_stores++;

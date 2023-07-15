@@ -1,4 +1,6 @@
 /*
+ * Copyright 2015-2020 LabWare
+ * Copyright 2014 Google, Inc.
  * Copyright (c) 2007 The Regents of The University of Michigan
  * All rights reserved.
  *
@@ -24,8 +26,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Nathan Binkert
  */
 
 #ifndef __ARCH_MIPS_REMOTE_GDB_HH__
@@ -41,52 +41,52 @@ class ThreadContext;
 namespace MipsISA
 {
 
-    // The number of special regs depends on gdb.
-    // Two 32-bit regs are packed into one 64-bit reg.
-    const int GdbIntArchRegs = NumIntArchRegs / 2;
-    const int GdbIntSpecialRegs = 6 / 2;
-    const int GdbFloatArchRegs = NumFloatArchRegs / 2;
-    const int GdbFloatSpecialRegs = 2 / 2;
+class RemoteGDB : public BaseRemoteGDB
+{
+  protected:
+    bool acc(Addr addr, size_t len);
 
-    const int GdbIntRegs = GdbIntArchRegs + GdbIntSpecialRegs;
-    const int GdbFloatRegs = GdbFloatArchRegs + GdbFloatSpecialRegs;
-    const int GdbNumRegs = GdbIntRegs + GdbFloatRegs;
-
-    class RemoteGDB : public BaseRemoteGDB
+    class MipsGdbRegCache : public BaseGdbRegCache
     {
-      protected:
-        Addr notTakenBkpt;
-        Addr takenBkpt;
-
-      public:
-        RemoteGDB(System *_system, ThreadContext *tc);
-
-      protected:
-        bool acc(Addr addr, size_t len);
-
-        void getregs();
-        void setregs();
-
-        void clearSingleStep();
-        void setSingleStep();
-
+      using BaseGdbRegCache::BaseGdbRegCache;
       private:
-        uint64_t
-        pack(uint32_t lo, uint32_t hi)
+        struct {
+            uint32_t gpr[32];
+            uint32_t sr;
+            uint32_t lo;
+            uint32_t hi;
+            uint32_t badvaddr;
+            uint32_t cause;
+            uint32_t pc;
+            uint32_t fpr[32];
+            uint32_t fsr;
+            uint32_t fir;
+        } r;
+      public:
+        char *data() const { return (char *)&r; }
+        size_t size() const { return sizeof(r); }
+        void getRegs(ThreadContext*);
+        void setRegs(ThreadContext*) const;
+        const std::string
+        name() const
         {
-            return static_cast<uint64_t>(hi) << 32 | lo;
-        }
-        uint32_t
-        unpackLo(uint64_t val)
-        {
-            return bits(val, 31, 0);
-        }
-        uint32_t
-        unpackHi(uint64_t val)
-        {
-            return bits(val, 63, 32);
+            return gdb->name() + ".MipsGdbRegCache";
         }
     };
-}
+
+    MipsGdbRegCache regCache;
+
+  public:
+    RemoteGDB(System *_system, ThreadContext *tc, int _port);
+    BaseGdbRegCache *gdbRegs();
+    std::vector<std::string>
+    availableFeatures() const
+    {
+        return {"qXfer:features:read+"};
+    };
+    bool getXferFeaturesRead(const std::string &annex, std::string &output);
+};
+
+} // namespace MipsISA
 
 #endif /* __ARCH_MIPS_REMOTE_GDB_H__ */

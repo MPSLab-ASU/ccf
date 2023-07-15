@@ -1,5 +1,17 @@
 # -*- mode:python -*-
 
+# Copyright (c) 2020 ARM Limited
+# All rights reserved.
+#
+# The license below extends only to copyright in the software and shall
+# not be construed as granting a license to any other intellectual
+# property including but not limited to intellectual property relating
+# to a hardware implementation of the functionality of the software
+# licensed hereunder.  You may use the software subject to the license
+# terms below provided that you ensure that this notice is replicated
+# unmodified and in its entirety in all distributions of the software,
+# modified or unmodified, in source code or in binary form.
+#
 # Copyright (c) 2006 The Regents of The University of Michigan
 # All rights reserved.
 #
@@ -25,120 +37,16 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Steve Reinhardt
 
 Import('*')
-
-if env['TARGET_ISA'] == 'null':
-    SimObject('IntrControl.py')
-    Source('intr_control_noisa.cc')
-    Return()
-
-#################################################################
-#
-# Generate StaticInst execute() method signatures.
-#
-# There must be one signature for each CPU model compiled in.
-# Since the set of compiled-in models is flexible, we generate a
-# header containing the appropriate set of signatures on the fly.
-#
-#################################################################
-
-# Template for execute() signature.
-exec_sig_template = '''
-virtual Fault execute(%(type)s *xc, Trace::InstRecord *traceData) const = 0;
-virtual Fault eaComp(%(type)s *xc, Trace::InstRecord *traceData) const
-{ panic("eaComp not defined!"); M5_DUMMY_RETURN };
-virtual Fault initiateAcc(%(type)s *xc, Trace::InstRecord *traceData) const
-{ panic("initiateAcc not defined!"); M5_DUMMY_RETURN };
-virtual Fault completeAcc(Packet *pkt, %(type)s *xc,
-                          Trace::InstRecord *traceData) const
-{ panic("completeAcc not defined!"); M5_DUMMY_RETURN };
-'''
-
-mem_ini_sig_template = '''
-virtual Fault eaComp(%(type)s *xc, Trace::InstRecord *traceData) const
-{ panic("eaComp not defined!"); M5_DUMMY_RETURN };
-virtual Fault initiateAcc(%s *xc, Trace::InstRecord *traceData) const { panic("Not defined!"); M5_DUMMY_RETURN };
-'''
-
-mem_comp_sig_template = '''
-virtual Fault completeAcc(uint8_t *data, %s *xc, Trace::InstRecord *traceData) const { panic("Not defined!"); return NoFault; M5_DUMMY_RETURN };
-'''
-
-# Generate a temporary CPU list, including the CheckerCPU if
-# it's enabled.  This isn't used for anything else other than StaticInst
-# headers.
-temp_cpu_list = env['CPU_MODELS'][:]
-temp_cpu_list.append('CheckerCPU')
-SimObject('CheckerCPU.py')
-
-# Generate header.
-def gen_cpu_exec_signatures(target, source, env):
-    f = open(str(target[0]), 'w')
-    print >> f, '''
-#ifndef __CPU_STATIC_INST_EXEC_SIGS_HH__
-#define __CPU_STATIC_INST_EXEC_SIGS_HH__
-'''
-    for cpu in temp_cpu_list:
-        xc_type = CpuModel.dict[cpu].strings['CPU_exec_context']
-        print >> f, exec_sig_template % { 'type' : xc_type }
-    print >> f, '''
-#endif  // __CPU_STATIC_INST_EXEC_SIGS_HH__
-'''
-
-# Generate string that gets printed when header is rebuilt
-def gen_sigs_string(target, source, env):
-    return " [GENERATE] static_inst_exec_sigs.hh: " \
-           + ', '.join(temp_cpu_list)
-
-# Add command to generate header to environment.
-env.Command('static_inst_exec_sigs.hh', (),
-            Action(gen_cpu_exec_signatures, gen_sigs_string,
-                   varlist = temp_cpu_list))
-
-env.Depends('static_inst_exec_sigs.hh', Value(env['CPU_MODELS']))
-
-SimObject('BaseCPU.py')
-SimObject('FuncUnit.py')
-SimObject('ExeTracer.py')
-SimObject('IntelTrace.py')
-SimObject('IntrControl.py')
-SimObject('NativeTrace.py')
-
-Source('activity.cc')
-Source('base.cc')
-Source('cpuevent.cc')
-Source('exetrace.cc')
-Source('func_unit.cc')
-Source('inteltrace.cc')
-Source('intr_control.cc')
-Source('nativetrace.cc')
-Source('pc_event.cc')
-Source('profile.cc')
-Source('quiesce_event.cc')
-Source('reg_class.cc')
-Source('static_inst.cc')
-Source('simple_thread.cc')
-Source('thread_context.cc')
-Source('thread_state.cc')
-
-if env['TARGET_ISA'] == 'sparc':
-    SimObject('LegionTrace.py')
-    Source('legiontrace.cc')
-
-SimObject('DummyChecker.py')
-Source('checker/cpu.cc')
-Source('dummy_checker.cc')
-DebugFlag('Checker')
 
 DebugFlag('Activity')
 DebugFlag('Commit')
 DebugFlag('Context')
 DebugFlag('Decode')
 DebugFlag('DynInst')
-DebugFlag('ExecEnable', 'Filter: Enable exec tracing (no tracing without this)')
+DebugFlag('ExecEnable',
+        'Filter: Enable exec tracing (no tracing without this)')
 DebugFlag('ExecCPSeq', 'Format: Instruction sequence number')
 DebugFlag('ExecEffAddr', 'Format: Include effective address')
 DebugFlag('ExecFaulting', 'Trace faulting instructions')
@@ -146,31 +54,70 @@ DebugFlag('ExecFetchSeq', 'Format: Fetch sequence number')
 DebugFlag('ExecOpClass', 'Format: Include operand class')
 DebugFlag('ExecRegDelta')
 DebugFlag('ExecResult', 'Format: Include results from execution')
-DebugFlag('ExecSpeculative', 'Format: Include a miss-/speculation flag (-/+)')
 DebugFlag('ExecSymbol', 'Format: Try to include symbol names')
 DebugFlag('ExecThread', 'Format: Include thread ID in trace')
-DebugFlag('ExecTicks', 'Format: Include tick count')
 DebugFlag('ExecMicro', 'Filter: Include microops')
 DebugFlag('ExecMacro', 'Filter: Include macroops')
 DebugFlag('ExecUser', 'Filter: Trace user mode instructions')
 DebugFlag('ExecKernel', 'Filter: Trace kernel mode instructions')
 DebugFlag('ExecAsid', 'Format: Include ASID in trace')
-DebugFlag('ExecTraceOnCore', 'Format: Trace loop execution on core for acceleration')	#Added by Shail June 5, 2017
+DebugFlag('ExecFlags', 'Format: Include instruction flags in trace')
 DebugFlag('Fetch')
+DebugFlag('HtmCpu', 'Hardware Transactional Memory (CPU side)')
 DebugFlag('IntrControl')
 DebugFlag('O3PipeView')
 DebugFlag('PCEvent')
 DebugFlag('Quiesce')
+DebugFlag('Mwait')
 
 CompoundFlag('ExecAll', [ 'ExecEnable', 'ExecCPSeq', 'ExecEffAddr',
     'ExecFaulting', 'ExecFetchSeq', 'ExecOpClass', 'ExecRegDelta',
-    'ExecResult', 'ExecSpeculative', 'ExecSymbol', 'ExecThread',
-    'ExecTicks', 'ExecMicro', 'ExecMacro', 'ExecUser', 'ExecKernel',
-    'ExecAsid' ])
-CompoundFlag('Exec', [ 'ExecEnable', 'ExecTicks', 'ExecOpClass', 'ExecThread',
-    'ExecEffAddr', 'ExecResult', 'ExecSymbol', 'ExecMicro', 'ExecFaulting',
-    'ExecUser', 'ExecKernel' ])
-CompoundFlag('ExecNoTicks', [ 'ExecEnable', 'ExecOpClass', 'ExecThread',
-    'ExecEffAddr', 'ExecResult', 'ExecMicro', 'ExecFaulting',
-    'ExecUser', 'ExecKernel' ])
-CompoundFlag('Profile', [ 'ExecEnable', 'ExecTraceOnCore', 'ExecUser' ])
+    'ExecResult', 'ExecSymbol', 'ExecThread',
+    'ExecMicro', 'ExecMacro', 'ExecUser', 'ExecKernel',
+    'ExecAsid', 'ExecFlags' ])
+CompoundFlag('Exec', [ 'ExecEnable', 'ExecOpClass', 'ExecThread',
+    'ExecEffAddr', 'ExecResult', 'ExecSymbol', 'ExecMicro', 'ExecMacro',
+    'ExecFaulting', 'ExecUser', 'ExecKernel' ])
+CompoundFlag('ExecNoTicks', [ 'Exec', 'FmtTicksOff' ])
+
+Source('pc_event.cc')
+
+if env['TARGET_ISA'] == 'null':
+    SimObject('IntrControl.py')
+    Source('intr_control_noisa.cc')
+    Return()
+
+# Only build the protocol buffer instructions tracer if we have protobuf support
+if env['HAVE_PROTOBUF'] and env['TARGET_ISA'] != 'x86':
+    SimObject('InstPBTrace.py')
+    Source('inst_pb_trace.cc')
+
+SimObject('CheckerCPU.py')
+
+SimObject('BaseCPU.py')
+SimObject('CPUTracers.py')
+SimObject('FuncUnit.py')
+SimObject('IntrControl.py')
+SimObject('TimingExpr.py')
+
+Source('activity.cc')
+Source('base.cc')
+Source('exetrace.cc')
+Source('exec_context.cc')
+Source('func_unit.cc')
+Source('inteltrace.cc')
+Source('intr_control.cc')
+Source('nativetrace.cc')
+Source('profile.cc')
+Source('reg_class.cc')
+Source('static_inst.cc')
+Source('simple_thread.cc')
+Source('thread_context.cc')
+Source('thread_state.cc')
+Source('timing_expr.cc')
+
+SimObject('DummyChecker.py')
+SimObject('StaticInstFlags.py')
+Source('checker/cpu.cc')
+Source('dummy_checker.cc')
+DebugFlag('Checker')

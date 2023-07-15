@@ -32,8 +32,6 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Gabe Black
 
 microcode = '''
 
@@ -174,19 +172,19 @@ def macroop MOVZX_W_R_P {
 };
 
 def macroop MOV_C_R {
-    .serializing
+    .serialize_after
     .adjust_env maxOsz
     wrcr reg, regm
 };
 
 def macroop MOV_R_C {
-    .serializing
+    .serialize_after
     .adjust_env maxOsz
     rdcr reg, regm
 };
 
 def macroop MOV_D_R {
-    .serializing
+    .serialize_after
     .adjust_env maxOsz
     wrdr reg, regm
 };
@@ -215,7 +213,7 @@ def macroop MOV_REAL_S_R {
     zexti t2, regm, 15, dataSize=8
     slli t3, t2, 4, dataSize=8
     wrsel reg, regm
-    wrbase reg, t3
+    wrbase reg, t3, dataSize=8
 };
 
 def macroop MOV_REAL_S_M {
@@ -223,7 +221,7 @@ def macroop MOV_REAL_S_M {
     zexti t2, t1, 15, dataSize=8
     slli t3, t2, 4, dataSize=8
     wrsel reg, t1
-    wrbase reg, t3
+    wrbase reg, t3, dataSize=8
 };
 
 def macroop MOV_REAL_S_P {
@@ -333,10 +331,12 @@ processDescriptor:
 };
 
 def macroop MOVNTI_M_R {
+    warn_once "MOVNTI: Ignoring non-temporal hint, modeling as cacheable!"
     st reg, seg, sib, disp
 };
 
 def macroop MOVNTI_P_R {
+    warn_once "MOVNTI_P: Ignoring non-temporal hint, modeling as cacheable!"
     rdip t7
     st reg, seg, riprel, disp
 };

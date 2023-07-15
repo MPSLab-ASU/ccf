@@ -25,17 +25,10 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Nathan Binkert
 
 import sys
 
 Import('*')
-
-if 'O3CPU' in env['CPU_MODELS'] or 'OzoneCPU' in env['CPU_MODELS']:
-    DebugFlag('CommitRate')
-    DebugFlag('IEW')
-    DebugFlag('IQ')
 
 if 'O3CPU' in env['CPU_MODELS']:
     SimObject('FUPool.py')
@@ -64,6 +57,9 @@ if 'O3CPU' in env['CPU_MODELS']:
     Source('store_set.cc')
     Source('thread_context.cc')
 
+    DebugFlag('CommitRate')
+    DebugFlag('IEW')
+    DebugFlag('IQ')
     DebugFlag('LSQ')
     DebugFlag('LSQUnit')
     DebugFlag('MemDepUnit')

@@ -30,36 +30,36 @@
 #define __MEM_RUBY_PROFILER_ADDRESSPROFILER_HH__
 
 #include <iostream>
+#include <unordered_map>
 
-#include "base/hashmap.hh"
-#include "mem/protocol/AccessType.hh"
-#include "mem/protocol/RubyRequest.hh"
 #include "mem/ruby/common/Address.hh"
-#include "mem/ruby/common/Global.hh"
 #include "mem/ruby/common/Histogram.hh"
 #include "mem/ruby/profiler/AccessTraceForAddress.hh"
+#include "mem/ruby/profiler/Profiler.hh"
+#include "mem/ruby/protocol/AccessType.hh"
+#include "mem/ruby/protocol/RubyRequest.hh"
 
 class Set;
 
 class AddressProfiler
 {
   public:
-    typedef m5::hash_map<Address, AccessTraceForAddress> AddressMap;
+    typedef std::unordered_map<Addr, AccessTraceForAddress> AddressMap;
 
   public:
-    AddressProfiler(int num_of_sequencers);
+    AddressProfiler(int num_of_sequencers, Profiler *profiler);
     ~AddressProfiler();
 
     void printStats(std::ostream& out) const;
     void clearStats();
 
-    void addTraceSample(Address data_addr, Address pc_addr,
+    void addTraceSample(Addr data_addr, Addr pc_addr,
                         RubyRequestType type, RubyAccessMode access_mode,
                         NodeID id, bool sharing_miss);
-    void profileRetry(const Address& data_addr, AccessType type, int count);
-    void profileGetX(const Address& datablock, const Address& PC,
+    void profileRetry(Addr data_addr, AccessType type, int count);
+    void profileGetX(Addr datablock, Addr PC,
                      const Set& owner, const Set& sharers, NodeID requestor);
-    void profileGetS(const Address& datablock, const Address& PC,
+    void profileGetS(Addr datablock, Addr PC,
                      const Set& owner, const Set& sharers, NodeID requestor);
 
     void print(std::ostream& out) const;
@@ -67,13 +67,15 @@ class AddressProfiler
     //added by SS
     void setHotLines(bool hot_lines);
     void setAllInstructions(bool all_instructions);
+    void regStats(const std::string &name) {}
+    void collateStats() {}
 
   private:
     // Private copy constructor and assignment operator
     AddressProfiler(const AddressProfiler& obj);
     AddressProfiler& operator=(const AddressProfiler& obj);
 
-    int64 m_sharing_miss_counter;
+    int64_t m_sharing_miss_counter;
 
     AddressMap m_dataAccessTrace;
     AddressMap m_macroBlockAccessTrace;
@@ -85,6 +87,8 @@ class AddressProfiler
     Histogram m_getx_sharing_histogram;
     Histogram m_gets_sharing_histogram;
 
+    Profiler *m_profiler;
+
     //added by SS
     bool m_hot_lines;
     bool m_all_instructions;
@@ -92,13 +96,13 @@ class AddressProfiler
     int m_num_of_sequencers;
 };
 
-AccessTraceForAddress& lookupTraceForAddress(const Address& addr,
+AccessTraceForAddress& lookupTraceForAddress(Addr addr,
                                              AddressProfiler::AddressMap&
                                              record_map);
 
 void printSorted(std::ostream& out, int num_of_sequencers,
                  const AddressProfiler::AddressMap &record_map,
-                 std::string description);
+                 std::string description, Profiler *profiler);
 
 inline std::ostream&
 operator<<(std::ostream& out, const AddressProfiler& obj)

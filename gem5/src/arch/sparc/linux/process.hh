@@ -24,8 +24,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Steve Reinhardt
  */
 
 #ifndef __SPARC_LINUX_PROCESS_HH__
@@ -34,6 +32,7 @@
 #include "arch/sparc/linux/linux.hh"
 #include "arch/sparc/process.hh"
 #include "sim/process.hh"
+#include "sim/syscall_desc.hh"
 
 namespace SparcISA {
 
@@ -43,54 +42,42 @@ namespace SparcISA {
 class SparcLinuxProcess
 {
   public:
-     /// Array of syscall descriptors, indexed by call number.
-    static SyscallDesc syscallDescs[];
+    /// 64 bit syscall descriptors, indexed by call number.
+    static SyscallDescTable<Sparc64Process::SyscallABI> syscallDescs;
 
-     /// Array of 32 bit compatibility syscall descriptors,
-     /// indexed by call number.
-    static SyscallDesc syscall32Descs[];
-
-    SyscallDesc* getDesc(int callnum);
-    SyscallDesc* getDesc32(int callnum);
-
-    static const int Num_Syscall_Descs;
-    static const int Num_Syscall32_Descs;
+    /// 32 bit compatibility syscall descriptors, indexed by call number.
+    static SyscallDescTable<Sparc32Process::SyscallABI> syscall32Descs;
 };
 
 /// A process with emulated SPARC/Linux syscalls.
-class Sparc32LinuxProcess : public SparcLinuxProcess, public Sparc32LiveProcess
+class Sparc32LinuxProcess : public SparcLinuxProcess, public Sparc32Process
 {
   public:
     /// Constructor.
-    Sparc32LinuxProcess(LiveProcessParams * params, ObjectFile *objFile);
+    Sparc32LinuxProcess(ProcessParams * params, ::Loader::ObjectFile *objFile);
 
-    SyscallDesc*
-    getDesc(int callnum)
-    {
-        return SparcLinuxProcess::getDesc32(callnum);
-    }
+    void syscall(ThreadContext *tc) override;
 
-    void handleTrap(int trapNum, ThreadContext *tc);
+    void handleTrap(int trapNum, ThreadContext *tc) override;
 };
 
 /// A process with emulated 32 bit SPARC/Linux syscalls.
-class Sparc64LinuxProcess : public SparcLinuxProcess, public Sparc64LiveProcess
+class Sparc64LinuxProcess : public SparcLinuxProcess, public Sparc64Process
 {
   public:
     /// Constructor.
-    Sparc64LinuxProcess(LiveProcessParams * params, ObjectFile *objFile);
+    Sparc64LinuxProcess(ProcessParams * params, ::Loader::ObjectFile *objFile);
 
-    SyscallDesc*
-    getDesc(int callnum)
-    {
-        return SparcLinuxProcess::getDesc(callnum);
-    }
+    void syscall(ThreadContext *tc) override;
 
-    void handleTrap(int trapNum, ThreadContext *tc);
+    void getContext(ThreadContext *tc);
+    void setContext(ThreadContext *tc);
+
+    void handleTrap(int trapNum, ThreadContext *tc) override;
 };
 
-SyscallReturn getresuidFunc(SyscallDesc *desc, int num,
-                                 LiveProcess *p, ThreadContext *tc);
+SyscallReturn getresuidFunc(SyscallDesc *desc, ThreadContext *tc,
+                            Addr ruid, Addr euid, Addr suid);
 
 } // namespace SparcISA
 #endif // __SPARC_LINUX_PROCESS_HH__

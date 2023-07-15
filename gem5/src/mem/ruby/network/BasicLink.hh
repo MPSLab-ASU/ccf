@@ -26,20 +26,21 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __MEM_RUBY_NETWORK_BASIC_LINK_HH__
-#define __MEM_RUBY_NETWORK_BASIC_LINK_HH__
+#ifndef __MEM_RUBY_NETWORK_BASICLINK_HH__
+#define __MEM_RUBY_NETWORK_BASICLINK_HH__
 
 #include <iostream>
 #include <string>
 #include <vector>
 
+#include "mem/ruby/network/BasicRouter.hh"
+#include "mem/ruby/slicc_interface/AbstractController.hh"
 #include "params/BasicExtLink.hh"
 #include "params/BasicIntLink.hh"
 #include "params/BasicLink.hh"
-#include "mem/ruby/network/BasicRouter.hh"
-#include "mem/ruby/network/Topology.hh"
-#include "mem/ruby/slicc_interface/AbstractController.hh"
 #include "sim/sim_object.hh"
+
+class Topology;
 
 class BasicLink : public SimObject
 {
@@ -55,6 +56,7 @@ class BasicLink : public SimObject
     Cycles m_latency;
     int m_bandwidth_factor;
     int m_weight;
+    std::vector<int> mVnets;
 };
 
 inline std::ostream&
@@ -73,10 +75,6 @@ class BasicExtLink : public BasicLink
     const Params *params() const { return (const Params *)_params; }
 
     friend class Topology;
-
-  protected:
-    BasicRouter* m_int_node;
-    AbstractController* m_ext_node;
 };
 
 class BasicIntLink : public BasicLink
@@ -87,10 +85,6 @@ class BasicIntLink : public BasicLink
     const Params *params() const { return (const Params *)_params; }
 
     friend class Topology;
-
-  protected:
-    BasicRouter* m_node_a;
-    BasicRouter* m_node_b;
 };
 
-#endif // __MEM_RUBY_NETWORK_BASIC_LINK_HH__
+#endif //__MEM_RUBY_NETWORK_BASICLINK_HH__

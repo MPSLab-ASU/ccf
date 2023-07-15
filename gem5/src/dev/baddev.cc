@@ -24,22 +24,17 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Ali Saidi
  */
 
 /** @file
  * BadDevice implemenation
  */
 
-#include <deque>
+#include "dev/baddev.hh"
+
 #include <string>
-#include <vector>
 
 #include "base/trace.hh"
-#include "config/the_isa.hh"
-#include "dev/baddev.hh"
-#include "mem/port.hh"
 #include "params/BadDevice.hh"
 #include "sim/system.hh"
 

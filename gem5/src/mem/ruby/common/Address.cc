@@ -26,134 +26,55 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "arch/isa_traits.hh"
-#include "config/the_isa.hh"
 #include "mem/ruby/common/Address.hh"
-#include "mem/ruby/system/System.hh"
 
-physical_address_t
-Address::getLineAddress() const
+#include "base/bitfield.hh"
+#include "mem/ruby/system/RubySystem.hh"
+
+Addr
+bitSelect(Addr addr, unsigned int small, unsigned int big)
 {
-    return bitSelect(RubySystem::getBlockSizeBits(), ADDRESS_WIDTH);
+    assert(big >= small);
+    return bits<Addr>(addr, big, small);
 }
 
-physical_address_t
-Address::getOffset() const
+Addr
+maskLowOrderBits(Addr addr, unsigned int number)
 {
-    return bitSelect(0, RubySystem::getBlockSizeBits() - 1);
+    return mbits<Addr>(addr, 63, number);
 }
 
-void
-Address::makeLineAddress()
+Addr
+getOffset(Addr addr)
 {
-    m_address = maskLowOrderBits(RubySystem::getBlockSizeBits());
+    return bitSelect(addr, 0, RubySystem::getBlockSizeBits() - 1);
+}
+
+Addr
+makeLineAddress(Addr addr)
+{
+    return mbits<Addr>(addr, 63, RubySystem::getBlockSizeBits());
+}
+
+Addr
+makeLineAddress(Addr addr, int cacheLineBits)
+{
+    return maskLowOrderBits(addr, cacheLineBits);
 }
 
 // returns the next stride address based on line address
-void
-Address::makeNextStrideAddress(int stride)
+Addr
+makeNextStrideAddress(Addr addr, int stride)
 {
-    m_address = maskLowOrderBits(RubySystem::getBlockSizeBits())
-        + RubySystem::getBlockSizeBytes()*stride;
+    return makeLineAddress(addr) +
+        static_cast<int>(RubySystem::getBlockSizeBytes()) * stride;
 }
 
-Index
-Address::memoryModuleIndex() const
+std::string
+printAddress(Addr addr)
 {
-    Index index =
-        bitSelect(RubySystem::getBlockSizeBits() +
-                  RubySystem::getMemorySizeBits(), ADDRESS_WIDTH);
-    assert (index >= 0);
-    return index;
-
-    // Index indexHighPortion =
-    //     address.bitSelect(MEMORY_SIZE_BITS - 1,
-    //                       PAGE_SIZE_BITS + NUMBER_OF_MEMORY_MODULE_BITS);
-    // Index indexLowPortion =
-    //     address.bitSelect(DATA_BLOCK_BITS, PAGE_SIZE_BITS - 1);
-    //
-    // Index index = indexLowPortion |
-    //     (indexHighPortion << (PAGE_SIZE_BITS - DATA_BLOCK_BITS));
-
-    /*
-      Round-robin mapping of addresses, at page size granularity
-
-ADDRESS_WIDTH    MEMORY_SIZE_BITS        PAGE_SIZE_BITS  DATA_BLOCK_BITS
-  |                    |                       |               |
- \ /                  \ /                     \ /             \ /       0
-  -----------------------------------------------------------------------
-  |       unused        |xxxxxxxxxxxxxxx|       |xxxxxxxxxxxxxxx|       |
-  |                     |xxxxxxxxxxxxxxx|       |xxxxxxxxxxxxxxx|       |
-  -----------------------------------------------------------------------
-                        indexHighPortion         indexLowPortion
-                                        <------->
-                               NUMBER_OF_MEMORY_MODULE_BITS
-    */
-}
-
-void
-Address::print(std::ostream& out) const
-{
-    using namespace std;
-    out << "[" << hex << "0x" << m_address << "," << " line 0x"
-        << maskLowOrderBits(RubySystem::getBlockSizeBits()) << dec << "]"
-        << flush;
-}
-
-void
-Address::output(std::ostream& out) const
-{
-    // Note: this outputs addresses in the form "ffff", not "0xffff".
-    // This code should always be able to write out addresses in a
-    // format that can be read in by the below input() method.  Please
-    // don't change this without talking to Milo first.
-    out << std::hex << m_address << std::dec;
-}
-
-void
-Address::input(std::istream& in)
-{
-    // Note: this only works with addresses in the form "ffff", not
-    // "0xffff".  This code should always be able to read in addresses
-    // written out by the above output() method.  Please don't change
-    // this without talking to Milo first.
-    in >> std::hex >> m_address >> std::dec;
-}
-
-Address::Address(const Address& obj)
-{
-    m_address = obj.m_address;
-}
-
-Address&
-Address::operator=(const Address& obj)
-{
-    if (this == &obj) {
-        // assert(false);
-    } else {
-        m_address = obj.m_address;
-    }
-    return *this;
-}
-
-void
-Address::makePageAddress()
-{
-    m_address = maskLowOrderBits(TheISA::LogVMPageSize);
-}
-
-Address
-page_address(const Address& addr)
-{
-    Address temp = addr;
-    temp.makePageAddress();
-    return temp;
-}
-
-Address
-next_stride_address(const Address& addr, int stride)
-{
-    Address temp = addr;
-    temp.makeNextStrideAddress(stride);
-    return temp;
+    std::stringstream out;
+    out << "[" << std::hex << "0x" << addr << "," << " line 0x"
+       << makeLineAddress(addr) << std::dec << "]";
+    return out.str();
 }

@@ -27,18 +27,11 @@
  */
 
 
-#ifndef TYPEDEFINES_H
-#define TYPEDEFINES_H
+#ifndef __MEM_RUBY_COMMON_TYPEDEFINES_HH__
+#define __MEM_RUBY_COMMON_TYPEDEFINES_HH__
 
-typedef unsigned long long uint64;
-typedef long long int64;
-
-typedef int64 Time;
-typedef uint64 physical_address_t;
-
-typedef int64 Index;            // what the address bit ripper returns
 typedef unsigned int LinkID;
 typedef unsigned int NodeID;
 typedef unsigned int SwitchID;
 
-#endif
+#endif //__MEM_RUBY_COMMON_TYPEDEFINES_HH__

@@ -24,8 +24,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Timothy M. Jones
  */
 
 #include "arch/power/insts/floating.hh"
@@ -33,7 +31,7 @@
 using namespace PowerISA;
 
 std::string
-FloatOp::generateDisassembly(Addr pc, const SymbolTable *symtab) const
+FloatOp::generateDisassembly(Addr pc, const Loader::SymbolTable *symtab) const
 {
     std::stringstream ss;
 

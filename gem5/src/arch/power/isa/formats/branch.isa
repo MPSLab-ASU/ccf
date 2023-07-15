@@ -25,8 +25,6 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Authors: Timothy M. Jones
 
 ////////////////////////////////////////////////////////////////////
 //
@@ -48,7 +46,7 @@
 let {{
 
 # Simple code to update link register (LR).
-updateLrCode = 'LR = PC + 4;'
+updateLrCode = 'LR = CIA + 4;'
 
 }};
 
@@ -105,7 +103,7 @@ def GetCondCode(br_code):
     cond_code =  'if(condOk(CR)) {\n'
     cond_code += '    ' + br_code + '\n'
     cond_code += '} else {\n'
-    cond_code += '    NPC = NPC;\n'
+    cond_code += '    NIA = NIA;\n'
     cond_code += '}\n'
     return cond_code
 
@@ -119,7 +117,7 @@ def GetCtrCondCode(br_code):
     cond_code += 'if(ctr_ok && cond_ok) {\n'
     cond_code += '    ' + br_code + '\n'
     cond_code += '} else {\n'
-    cond_code += '    NPC = NPC;\n'
+    cond_code += '    NIA = NIA;\n'
     cond_code += '}\n'
     cond_code += 'CTR = ctr;\n'
     return cond_code

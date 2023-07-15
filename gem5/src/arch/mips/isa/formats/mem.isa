@@ -25,9 +25,6 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Authors: Steve Reinhardt
-//          Korey Sewell
 
 ////////////////////////////////////////////////////////////////////
 //
@@ -47,15 +44,14 @@ output header {{
         /// Displacement for EA calculation (signed).
         int32_t disp;
 
-        /// Constructor
         Memory(const char *mnem, MachInst _machInst, OpClass __opClass)
             : MipsStaticInst(mnem, _machInst, __opClass),
               disp(sext<16>(OFFSET))
         {
         }
 
-        std::string
-        generateDisassembly(Addr pc, const SymbolTable *symtab) const;
+        std::string generateDisassembly(
+                Addr pc, const Loader::SymbolTable *symtab) const override;
     };
 
      /**
@@ -65,28 +61,26 @@ output header {{
     class MemoryNoDisp : public Memory
     {
       protected:
-        /// Constructor
-        MemoryNoDisp(const char *mnem, ExtMachInst _machInst, OpClass __opClass)
-            : Memory(mnem, _machInst, __opClass)
-        {
-        }
+        using Memory::Memory;
 
-        std::string
-        generateDisassembly(Addr pc, const SymbolTable *symtab) const;
+        std::string generateDisassembly(
+                Addr pc, const Loader::SymbolTable *symtab) const override;
     };
 }};
 
 
 output decoder {{
     std::string
-    Memory::generateDisassembly(Addr pc, const SymbolTable *symtab) const
+    Memory::generateDisassembly(
+            Addr pc, const Loader::SymbolTable *symtab) const
     {
         return csprintf("%-10s %c%d, %d(r%d)", mnemonic,
                         flags[IsFloating] ? 'f' : 'r', RT, disp, RS);
     }
 
     std::string
-    MemoryNoDisp::generateDisassembly(Addr pc, const SymbolTable *symtab) const
+    MemoryNoDisp::generateDisassembly(
+            Addr pc, const Loader::SymbolTable *symtab) const
     {
         return csprintf("%-10s %c%d, r%d(r%d)", mnemonic,
                         flags[IsFloating] ? 'f' : 'r',
@@ -97,7 +91,7 @@ output decoder {{
 }};
 
 output header {{
-    uint64_t getMemData(%(CPU_exec_context)s *xc, Packet *packet);
+    uint64_t getMemData(ExecContext *xc, Packet *packet);
 
 }};
 
@@ -105,25 +99,23 @@ output exec {{
     /** return data in cases where there the size of data is only
         known in the packet
     */
-    uint64_t getMemData(%(CPU_exec_context)s *xc, Packet *packet) {
+    uint64_t getMemData(ExecContext *xc, Packet *packet) {
         switch (packet->getSize())
         {
           case 1:
-            return packet->get<uint8_t>();
+            return packet->getLE<uint8_t>();
 
           case 2:
-            return packet->get<uint16_t>();
+            return packet->getLE<uint16_t>();
 
           case 4:
-            return packet->get<uint32_t>();
+            return packet->getLE<uint32_t>();
 
           case 8:
-            return packet->get<uint64_t>();
+            return packet->getLE<uint64_t>();
 
           default:
-            std::cerr << "bad store data size = " << packet->getSize() << std::endl;
-
-            assert(0);
+            panic("bad store data size = %d", packet->getSize());
             return 0;
         }
     }
@@ -142,68 +134,24 @@ def template LoadStoreDeclare {{
         /// Constructor.
         %(class_name)s(ExtMachInst machInst);
 
-        %(BasicExecDeclare)s
-
-        %(EACompDeclare)s
-
-        %(InitiateAccDeclare)s
-
-        %(CompleteAccDeclare)s
+        Fault execute(ExecContext *, Trace::InstRecord *) const override;
+        Fault initiateAcc(ExecContext *, Trace::InstRecord *) const override;
+        Fault completeAcc(Packet *, ExecContext *,
+                          Trace::InstRecord *) const override;
     };
 }};
 
-def template EACompDeclare {{
-    Fault eaComp(%(CPU_exec_context)s *, Trace::InstRecord *) const;
-}};
-
-def template InitiateAccDeclare {{
-    Fault initiateAcc(%(CPU_exec_context)s *, Trace::InstRecord *) const;
-}};
-
-
-def template CompleteAccDeclare {{
-    Fault completeAcc(Packet *, %(CPU_exec_context)s *, Trace::InstRecord *) const;
-}};
 
 def template LoadStoreConstructor {{
-    inline %(class_name)s::%(class_name)s(ExtMachInst machInst)
+    %(class_name)s::%(class_name)s(ExtMachInst machInst)
          : %(base_class)s("%(mnemonic)s", machInst, %(op_class)s)
     {
         %(constructor)s;
     }
 }};
 
-
-def template EACompExecute {{
-    Fault
-    %(class_name)s::eaComp(%(CPU_exec_context)s *xc,
-                                   Trace::InstRecord *traceData) const
-    {
-        Addr EA;
-        Fault fault = NoFault;
-
-        if (this->isFloating()) {
-            %(fp_enable_check)s;
-
-            if(fault != NoFault)
-                return fault;
-        }
-
-        %(op_decl)s;
-        %(op_rd)s;
-        %(ea_code)s;
-
-        // NOTE: Trace Data is written using execute or completeAcc templates
-        if (fault == NoFault) {
-            xc->setEA(EA);
-        }
-
-        return fault;
-    }
-}};
-
 def template LoadExecute {{
-    Fault %(class_name)s::execute(%(CPU_exec_context)s *xc,
+    Fault %(class_name)s::execute(ExecContext *xc,
                                   Trace::InstRecord *traceData) const
     {
         Addr EA;
@@ -221,7 +169,7 @@ def template LoadExecute {{
         %(ea_code)s;
 
         if (fault == NoFault) {
-            fault = readMemAtomic(xc, traceData, EA, Mem, memAccessFlags);
+            fault = readMemAtomicLE(xc, traceData, EA, Mem, memAccessFlags);
             %(memacc_code)s;
         }
 
@@ -235,7 +183,7 @@ def template LoadExecute {{
 
 
 def template LoadInitiateAcc {{
-    Fault %(class_name)s::initiateAcc(%(CPU_exec_context)s *xc,
+    Fault %(class_name)s::initiateAcc(ExecContext *xc,
                                       Trace::InstRecord *traceData) const
     {
         Addr EA;
@@ -253,7 +201,7 @@ def template LoadInitiateAcc {{
         %(ea_code)s;
 
         if (fault == NoFault) {
-            fault = readMemTiming(xc, traceData, EA, Mem, memAccessFlags);
+            fault = initiateMemRead(xc, traceData, EA, Mem, memAccessFlags);
         }
 
         return fault;
@@ -261,8 +209,7 @@ def template LoadInitiateAcc {{
 }};
 
 def template LoadCompleteAcc {{
-    Fault %(class_name)s::completeAcc(Packet *pkt,
-                                      %(CPU_exec_context)s *xc,
+    Fault %(class_name)s::completeAcc(Packet *pkt, ExecContext *xc,
                                       Trace::InstRecord *traceData) const
     {
         Fault fault = NoFault;
@@ -277,7 +224,7 @@ def template LoadCompleteAcc {{
         %(op_decl)s;
         %(op_rd)s;
 
-        getMem(pkt, Mem, traceData);
+        getMemLE(pkt, Mem, traceData);
 
         if (fault == NoFault) {
             %(memacc_code)s;
@@ -292,7 +239,7 @@ def template LoadCompleteAcc {{
 }};
 
 def template StoreExecute {{
-    Fault %(class_name)s::execute(%(CPU_exec_context)s *xc,
+    Fault %(class_name)s::execute(ExecContext *xc,
                                   Trace::InstRecord *traceData) const
     {
         Addr EA;
@@ -308,7 +255,7 @@ def template StoreExecute {{
         }
 
         if (fault == NoFault) {
-            fault = writeMemAtomic(xc, traceData, Mem, EA, memAccessFlags,
+            fault = writeMemAtomicLE(xc, traceData, Mem, EA, memAccessFlags,
                     NULL);
         }
 
@@ -326,7 +273,7 @@ def template StoreExecute {{
 
 
 def template StoreFPExecute {{
-    Fault %(class_name)s::execute(%(CPU_exec_context)s *xc,
+    Fault %(class_name)s::execute(ExecContext *xc,
                                   Trace::InstRecord *traceData) const
     {
         Addr EA;
@@ -344,7 +291,7 @@ def template StoreFPExecute {{
         }
 
         if (fault == NoFault) {
-            fault = writeMemAtomic(xc, traceData, Mem, EA, memAccessFlags,
+            fault = writeMemAtomicLE(xc, traceData, Mem, EA, memAccessFlags,
                     NULL);
         }
 
@@ -361,7 +308,7 @@ def template StoreFPExecute {{
 }};
 
 def template StoreCondExecute {{
-    Fault %(class_name)s::execute(%(CPU_exec_context)s *xc,
+    Fault %(class_name)s::execute(ExecContext *xc,
                                   Trace::InstRecord *traceData) const
     {
         Addr EA;
@@ -378,7 +325,7 @@ def template StoreCondExecute {{
         }
 
         if (fault == NoFault) {
-            fault = writeMemAtomic(xc, traceData, Mem, EA, memAccessFlags,
+            fault = writeMemAtomicLE(xc, traceData, Mem, EA, memAccessFlags,
                     &write_result);
         }
 
@@ -395,7 +342,7 @@ def template StoreCondExecute {{
 }};
 
 def template StoreInitiateAcc {{
-    Fault %(class_name)s::initiateAcc(%(CPU_exec_context)s *xc,
+    Fault %(class_name)s::initiateAcc(ExecContext *xc,
                                       Trace::InstRecord *traceData) const
     {
         Addr EA;
@@ -411,7 +358,7 @@ def template StoreInitiateAcc {{
         }
 
         if (fault == NoFault) {
-            fault = writeMemTiming(xc, traceData, Mem, EA, memAccessFlags,
+            fault = writeMemTimingLE(xc, traceData, Mem, EA, memAccessFlags,
                     NULL);
         }
 
@@ -422,7 +369,7 @@ def template StoreInitiateAcc {{
 
 def template StoreCompleteAcc {{
     Fault %(class_name)s::completeAcc(Packet *pkt,
-                                      %(CPU_exec_context)s *xc,
+                                      ExecContext *xc,
                                       Trace::InstRecord *traceData) const
     {
         return NoFault;
@@ -431,7 +378,7 @@ def template StoreCompleteAcc {{
 
 def template StoreCondCompleteAcc {{
     Fault %(class_name)s::completeAcc(Packet *pkt,
-                                      %(CPU_exec_context)s *xc,
+                                      ExecContext *xc,
                                       Trace::InstRecord *traceData) const
     {
         Fault fault = NoFault;
@@ -454,7 +401,7 @@ def template StoreCondCompleteAcc {{
 }};
 
 def template MiscExecute {{
-    Fault %(class_name)s::execute(%(CPU_exec_context)s *xc,
+    Fault %(class_name)s::execute(ExecContext *xc,
                                   Trace::InstRecord *traceData) const
     {
         Addr EA M5_VAR_USED = 0;
@@ -474,7 +421,7 @@ def template MiscExecute {{
 }};
 
 def template MiscInitiateAcc {{
-    Fault %(class_name)s::initiateAcc(%(CPU_exec_context)s *xc,
+    Fault %(class_name)s::initiateAcc(ExecContext *xc,
                                       Trace::InstRecord *traceData) const
     {
         panic("Misc instruction does not support split access method!");
@@ -484,8 +431,7 @@ def template MiscInitiateAcc {{
 
 
 def template MiscCompleteAcc {{
-    Fault %(class_name)s::completeAcc(Packet *pkt,
-                                      %(CPU_exec_context)s *xc,
+    Fault %(class_name)s::completeAcc(Packet *pkt, ExecContext *xc,
                                       Trace::InstRecord *traceData) const
     {
         panic("Misc instruction does not support split access method!");
@@ -551,7 +497,7 @@ def format LoadUnalignedMemory(memacc_code, ea_code = {{ EA = (Rs + disp) & ~3; 
         uint32_t mem_word = Mem_uw;
         uint32_t unalign_addr = Rs + disp;
         uint32_t byte_offset = unalign_addr & 3;
-        if (GuestByteOrder == BigEndianByteOrder)
+        if (GuestByteOrder == ByteOrder::big)
             byte_offset ^= 3;
     '''
 
@@ -569,9 +515,9 @@ def format StoreUnalignedMemory(memacc_code, ea_code = {{ EA = (Rs + disp) & ~3;
         uint32_t mem_word = 0;
         uint32_t unaligned_addr = Rs + disp;
         uint32_t byte_offset = unaligned_addr & 3;
-        if (GuestByteOrder == BigEndianByteOrder)
+        if (GuestByteOrder == ByteOrder::big)
             byte_offset ^= 3;
-        fault = readMemAtomic(xc, traceData, EA, mem_word, memAccessFlags);
+        fault = readMemAtomicLE(xc, traceData, EA, mem_word, memAccessFlags);
     '''
     memacc_code = decl_code + memacc_code + '\nMem = mem_word;\n'
 

@@ -36,8 +36,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Kevin Lim
  */
 
 #ifndef __CPU_O3_DECODE_HH__
@@ -102,13 +100,14 @@ class DefaultDecode
     DefaultDecode(O3CPU *_cpu, DerivO3CPUParams *params);
 
     void startupStage();
+
+    /** Clear all thread-specific states */
+    void clearStates(ThreadID tid);
+
     void resetStage();
 
     /** Returns the name of decode. */
     std::string name() const;
-
-    /** Registers statistics. */
-    void regStats();
 
     /** Sets the main backwards communication time buffer pointer. */
     void setTimeBuffer(TimeBuffer<TimeStruct> *tb_ptr);
@@ -126,7 +125,7 @@ class DefaultDecode
     void drainSanityCheck() const;
 
     /** Has the stage drained? */
-    bool isDrained() const { return true; }
+    bool isDrained() const;
 
     /** Takes over from another CPU's thread. */
     void takeOverFrom() { resetStage(); }
@@ -194,7 +193,7 @@ class DefaultDecode
     /** Squashes if there is a PC-relative branch that was predicted
      * incorrectly. Sends squash information back to fetch.
      */
-    void squash(DynInstPtr &inst, ThreadID tid);
+    void squash(const DynInstPtr &inst, ThreadID tid);
 
   public:
     /** Squashes due to commit signalling a squash. Changes status to
@@ -249,8 +248,6 @@ class DefaultDecode
     /** Source of possible stalls. */
     struct Stalls {
         bool rename;
-        bool iew;
-        bool commit;
     };
 
     /** Tracks which stages are telling decode to stall. */
@@ -295,29 +292,32 @@ class DefaultDecode
      */
     bool squashAfterDelaySlot[Impl::MaxThreads];
 
+    struct DecodeStats : public Stats::Group {
+        DecodeStats(O3CPU *cpu);
 
-    /** Stat for total number of idle cycles. */
-    Stats::Scalar decodeIdleCycles;
-    /** Stat for total number of blocked cycles. */
-    Stats::Scalar decodeBlockedCycles;
-    /** Stat for total number of normal running cycles. */
-    Stats::Scalar decodeRunCycles;
-    /** Stat for total number of unblocking cycles. */
-    Stats::Scalar decodeUnblockCycles;
-    /** Stat for total number of squashing cycles. */
-    Stats::Scalar decodeSquashCycles;
-    /** Stat for number of times a branch is resolved at decode. */
-    Stats::Scalar decodeBranchResolved;
-    /** Stat for number of times a branch mispredict is detected. */
-    Stats::Scalar decodeBranchMispred;
-    /** Stat for number of times decode detected a non-control instruction
-     * incorrectly predicted as a branch.
-     */
-    Stats::Scalar decodeControlMispred;
-    /** Stat for total number of decoded instructions. */
-    Stats::Scalar decodeDecodedInsts;
-    /** Stat for total number of squashed instructions. */
-    Stats::Scalar decodeSquashedInsts;
+        /** Stat for total number of idle cycles. */
+        Stats::Scalar idleCycles;
+        /** Stat for total number of blocked cycles. */
+        Stats::Scalar blockedCycles;
+        /** Stat for total number of normal running cycles. */
+        Stats::Scalar runCycles;
+        /** Stat for total number of unblocking cycles. */
+        Stats::Scalar unblockCycles;
+        /** Stat for total number of squashing cycles. */
+        Stats::Scalar squashCycles;
+        /** Stat for number of times a branch is resolved at decode. */
+        Stats::Scalar branchResolved;
+        /** Stat for number of times a branch mispredict is detected. */
+        Stats::Scalar branchMispred;
+        /** Stat for number of times decode detected a non-control instruction
+         * incorrectly predicted as a branch.
+         */
+        Stats::Scalar controlMispred;
+        /** Stat for total number of decoded instructions. */
+        Stats::Scalar decodedInsts;
+        /** Stat for total number of squashed instructions. */
+        Stats::Scalar squashedInsts;
+    } stats;
 };
 
 #endif // __CPU_O3_DECODE_HH__

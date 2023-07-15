@@ -26,22 +26,20 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Nathan Binkert
- *          Steve Reinhardt
  */
+
+#include "sim/simulate.hh"
 
 #include <mutex>
 #include <thread>
 
-#include "base/misc.hh"
+#include "base/logging.hh"
 #include "base/pollevent.hh"
 #include "base/types.hh"
 #include "sim/async.hh"
-#include "sim/eventq_impl.hh"
+#include "sim/eventq.hh"
 #include "sim/sim_events.hh"
 #include "sim/sim_exit.hh"
-#include "sim/simulate.hh"
 #include "sim/stat_control.hh"
 
 //! Mutex for handling async events.
@@ -71,9 +69,11 @@ thread_loop(EventQueue *queue)
     }
 }
 
+GlobalSimLoopExitEvent *simulate_limit_event = nullptr;
+
 /** Simulate for num_cycles additional cycles.  If num_cycles is -1
  * (the default), do not limit simulation; some other event must
- * terminate the loop.  Exported to Python via SWIG.
+ * terminate the loop.  Exported to Python.
  * @return The SimLoopExitEvent that caused the loop to exit.
  */
 GlobalSimLoopExitEvent *
@@ -96,6 +96,9 @@ simulate(Tick num_cycles)
         }
 
         threads_initialized = true;
+        simulate_limit_event =
+            new GlobalSimLoopExitEvent(mainEventQueue[0]->getCurTick(),
+                                       "simulate() limit reached", 0);
     }
 
     inform("Entering event queue @ %d.  Starting simulation...\n", curTick());
@@ -105,8 +108,7 @@ simulate(Tick num_cycles)
     else // counter would roll over or be set to MaxTick anyhow
         num_cycles = MaxTick;
 
-    GlobalEvent *limit_event = new GlobalSimLoopExitEvent(num_cycles,
-                                "simulate() limit reached", 0, 0);
+    simulate_limit_event->reschedule(num_cycles);
 
     GlobalSyncEvent *quantum_event = NULL;
     if (numMainEventQueues > 1) {
@@ -114,7 +116,7 @@ simulate(Tick num_cycles)
             fatal("Quantum for multi-eventq simulation not specified");
         }
 
-        quantum_event = new GlobalSyncEvent(simQuantum, simQuantum,
+        quantum_event = new GlobalSyncEvent(curTick() + simQuantum, simQuantum,
                             EventBase::Progress_Event_Pri, 0);
 
         inParallelMode = true;
@@ -136,13 +138,6 @@ simulate(Tick num_cycles)
     GlobalSimLoopExitEvent *global_exit_event =
         dynamic_cast<GlobalSimLoopExitEvent *>(global_event);
     assert(global_exit_event != NULL);
-
-    // if we didn't hit limit_event, delete it.
-    if (global_exit_event != limit_event) {
-        assert(limit_event->scheduled());
-        limit_event->deschedule();
-        delete limit_event;
-    }
 
     //! Delete the simulation quantum event.
     if (quantum_event != NULL) {
@@ -192,22 +187,14 @@ doSimLoop(EventQueue *eventq)
         assert(curTick() <= eventq->nextTick() &&
                "event scheduled in the past");
 
-        Event *exit_event = eventq->serviceOne();
-        if (exit_event != NULL) {
-            return exit_event;
-        }
-
         if (async_event && testAndClearAsyncEvent()) {
-            async_event = false;
+            // Take the event queue lock in case any of the service
+            // routines want to schedule new events.
+            std::lock_guard<EventQueue> lock(*eventq);
             if (async_statdump || async_statreset) {
                 Stats::schedStatEvent(async_statdump, async_statreset);
                 async_statdump = false;
                 async_statreset = false;
-            }
-
-            if (async_exit) {
-                async_exit = false;
-                exitSimLoop("user interrupt received");
             }
 
             if (async_io) {
@@ -215,10 +202,20 @@ doSimLoop(EventQueue *eventq)
                 pollQueue.service();
             }
 
+            if (async_exit) {
+                async_exit = false;
+                exitSimLoop("user interrupt received");
+            }
+
             if (async_exception) {
                 async_exception = false;
                 return NULL;
             }
+        }
+
+        Event *exit_event = eventq->serviceOne();
+        if (exit_event != NULL) {
+            return exit_event;
         }
     }
 

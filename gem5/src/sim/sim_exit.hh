@@ -24,9 +24,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Nathan Binkert
- *          Steve Reinhardt
  */
 
 #ifndef __SIM_EXIT_HH__
@@ -35,14 +32,12 @@
 #include <string>
 
 #include "base/types.hh"
-#include "sim/core.hh"
 
-// forward declaration
-class Callback;
+Tick curTick();
 
 /// Register a callback to be called when Python exits.  Defined in
 /// sim/main.cc.
-void registerExitCallback(Callback *);
+void registerExitCallback(const std::function<void()> &);
 
 /// Schedule an event to exit the simulation loop (returning to
 /// Python) at the end of the current cycle (curTick()).  The message
@@ -51,5 +46,9 @@ void registerExitCallback(Callback *);
 void exitSimLoop(const std::string &message, int exit_code = 0,
                  Tick when = curTick(), Tick repeat = 0,
                  bool serialize = false);
+/// Schedule an event as above, but make it high priority so it runs before
+/// any normal events which are schedule at the current time.
+void exitSimLoopNow(const std::string &message, int exit_code = 0,
+                    Tick repeat = 0, bool serialize = false);
 
 #endif // __SIM_EXIT_HH__

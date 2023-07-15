@@ -51,10 +51,12 @@ class FormalParamAST(AST):
         v = Var(self.symtab, self.ident, self.location, type, param,
                 self.pairs)
         self.symtab.newSymbol(v)
+
         if self.pointer or str(type) == "TBE" or (
+        # Check whether type is entry by checking the interface since
+        # in protocol files, entries use AbstractCacheEntry as interfaces.
            "interface" in type and (
-               type["interface"] == "AbstractCacheEntry" or
-               type["interface"] == "AbstractEntry")):
+               type["interface"] == "AbstractCacheEntry")):
             return type, "%s* %s" % (type.c_ident, param)
         else:
             return type, "const %s& %s" % (type.c_ident, param)

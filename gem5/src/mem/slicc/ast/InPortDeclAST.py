@@ -58,8 +58,9 @@ class InPortDeclAST(DeclAST):
                        queue_type)
 
         type = self.queue_type.type
+        self.pairs["buffer_expr"] = self.var_expr
         in_port = Var(self.symtab, self.ident, self.location, type, str(code),
-                      self.pairs)
+                      self.pairs, machine)
         symtab.newSymbol(in_port)
 
         symtab.pushFrame()
@@ -72,9 +73,9 @@ class InPortDeclAST(DeclAST):
         param_types.append(type)
 
         # Check for Address
-        type = symtab.find("Address", Type)
+        type = symtab.find("Addr", Type)
         if type is None:
-            self.error("in_port decls require 'Address' type to be defined")
+            self.error("in_port decls require 'Addr' type to be defined")
 
         param_types.append(type)
 
@@ -85,8 +86,17 @@ class InPortDeclAST(DeclAST):
 
         # Add the trigger method - FIXME, this is a bit dirty
         pairs = { "external" : "yes" }
-        func = Func(self.symtab, "trigger", self.location, void_type,
-                    param_types, [], "", pairs)
+        trigger_func_name = "trigger"
+        for param in param_types:
+            trigger_func_name += "_" + param.ident
+        func = Func(self.symtab, trigger_func_name, "trigger", self.location,
+                    void_type, param_types, [], "", pairs)
+        symtab.newSymbol(func)
+
+        # Add the stallPort method - this hacks reschedules the controller
+        # for stalled messages that don't trigger events
+        func = Func(self.symtab, "stallPort", "stallPort", self.location,
+                    void_type, [], [], "", pairs)
         symtab.newSymbol(func)
 
         param_types = []
@@ -98,9 +108,9 @@ class InPortDeclAST(DeclAST):
         param_types.append(type)
 
         # Check for Address2
-        type = symtab.find("Address", Type)
+        type = symtab.find("Addr", Type)
         if type is None:
-            self.error("in_port decls require 'Address' type to be defined")
+            self.error("in_port decls require 'Addr' type to be defined")
 
         param_types.append(type)
 

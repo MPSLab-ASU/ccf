@@ -41,12 +41,6 @@ class SymbolTable(object):
         self.machine_components = {}
 
         pairs = {}
-        pairs["enumeration"] = "yes"
-        location = Location("init", 0, no_warning=not slicc.verbose)
-        MachineType = Type(self, "MachineType", location, pairs)
-        self.newSymbol(MachineType)
-
-        pairs = {}
         pairs["primitive"] = "yes"
         pairs["external"] = "yes"
         location = Location("init", 0, no_warning=not slicc.verbose)
@@ -70,7 +64,7 @@ class SymbolTable(object):
 
         for sym_map in self.sym_map_vec:
             if id in sym_map:
-                if type(self.sym_map_vec[0][id]) != type(sym):
+                if type(sym_map[id]) != type(sym):
                     sym.error("Conflicting declaration of Symbol '%s'", id)
 
         # FIXME - warn on masking of a declaration in a previous frame
@@ -85,8 +79,8 @@ class SymbolTable(object):
 
             if types is not None:
                 if not isinstance(symbol, types):
-                    symbol.error("Symbol '%s' is not of types '%s'.",
-                                 symbol, types)
+                    continue # there could be a name clash with other symbol
+                             # so rather than producing an error, keep trying
 
             return symbol
 
@@ -139,7 +133,7 @@ class SymbolTable(object):
 
         for symbol in self.sym_vec:
             if isinstance(symbol, Type) and not symbol.isPrimitive:
-                code('#include "mem/protocol/${{symbol.c_ident}}.hh"')
+                code('#include "mem/ruby/protocol/${{symbol.c_ident}}.hh"')
 
         code.write(path, "Types.hh")
 

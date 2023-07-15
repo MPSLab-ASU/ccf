@@ -23,14 +23,10 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Steve Reinhardt
-#          Brad Beckmann
 
 from m5.params import *
-from m5.SimObject import SimObject
-from ClockedObject import ClockedObject
-from BasicLink import BasicLink
+from m5.objects.ClockedObject import ClockedObject
+from m5.objects.BasicLink import BasicLink
 
 class RubyNetwork(ClockedObject):
     type = 'RubyNetwork'
@@ -40,10 +36,20 @@ class RubyNetwork(ClockedObject):
     topology = Param.String("Not Specified",
                             "the name of the imported topology module")
 
-    number_of_virtual_networks = Param.Int(10, "")
+    number_of_virtual_networks = Param.Unsigned("Number of virtual networks "
+           "used by the coherence protocol in use.  The on-chip network "
+           "assumes the protocol numbers vnets starting from 0.  Therefore, "
+           "the number of virtual networks should be one more than the "
+           "highest numbered vnet in use.")
     control_msg_size = Param.Int(8, "")
     ruby_system = Param.RubySystem("")
 
     routers = VectorParam.BasicRouter("Network routers")
+    netifs = VectorParam.ClockedObject("Network Interfaces")
     ext_links = VectorParam.BasicExtLink("Links to external nodes")
     int_links = VectorParam.BasicIntLink("Links between internal nodes")
+
+    in_port = VectorResponsePort("CPU input port")
+    slave = DeprecatedParam(in_port, '`slave` is now called `in_port`')
+    out_port = VectorRequestPort("CPU output port")
+    master = DeprecatedParam(out_port, '`master` is now called `out_port`')
